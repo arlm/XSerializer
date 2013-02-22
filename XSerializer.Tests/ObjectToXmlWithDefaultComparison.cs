@@ -13,10 +13,10 @@
         [TestCaseSource("TestCaseData")]
         public void RoundTripsCorrectly(object instance, Type type)
         {
-            var interfaceSerializer = InterfaceSerializer.GetSerializer(type, null, null, null);
+            var customSerializer = CustomSerializer.GetSerializer(type, null, null, null);
             var defaultSerializer = DefaultSerializer.GetSerializer(type, null, null, null);
 
-            var interfaceXml = interfaceSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, null);
+            var interfaceXml = customSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, null);
             var defaultXml = defaultSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, null);
 
             Console.WriteLine("Default XML:");

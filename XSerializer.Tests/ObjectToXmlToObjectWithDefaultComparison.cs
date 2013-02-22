@@ -12,10 +12,10 @@ namespace XSerializer.Tests
         [TestCaseSource("TestCaseData")]
         public void RoundTripsCorrectly(object instance, Type type)
         {
-            var interfaceSerializer = InterfaceSerializer.GetSerializer(type, null, null, null);
+            var customSerializer = CustomSerializer.GetSerializer(type, null, null, null);
             var defaultSerializer = DefaultSerializer.GetSerializer(type, null, null, null);
 
-            var interfaceXml = interfaceSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, null);
+            var interfaceXml = customSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, null);
             var defaultXml = defaultSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, null);
 
             Console.WriteLine("Default XML:");
@@ -26,7 +26,7 @@ namespace XSerializer.Tests
 
             Assert.That(interfaceXml, Is.EqualTo(defaultXml));
 
-            var interfaceInstance = interfaceSerializer.DeserializeObject(interfaceXml);
+            var interfaceInstance = customSerializer.DeserializeObject(interfaceXml);
             var defaultInstance = defaultSerializer.DeserializeObject(defaultXml);
 
             Assert.That(interfaceInstance, Has.PropertiesEqualTo(defaultInstance));

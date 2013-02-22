@@ -38,7 +38,7 @@ namespace XSerializer
             {
                 if (!TryGetDefaultSerializer(defaultNamespace, extraTypes, rootElementName, out serializer))
                 {
-                    serializer = (IXmlSerializer<T>)InterfaceSerializer.GetSerializer(typeof(T), defaultNamespace, extraTypes, rootElementName);
+                    serializer = (IXmlSerializer<T>)CustomSerializer.GetSerializer(typeof(T), defaultNamespace, extraTypes, rootElementName);
                 }
 
                 CacheSerializer(defaultNamespace, extraTypes, rootElementName, serializer);

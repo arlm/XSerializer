@@ -8,7 +8,7 @@ using System.Xml.Serialization;
 
 namespace XSerializer
 {
-    public class InterfaceSerializer
+    public class CustomSerializer
     {
         private static readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
         protected static readonly Dictionary<int, Type> _typeCache = new Dictionary<int, Type>();
@@ -20,7 +20,7 @@ namespace XSerializer
 
             if (!_serializerCache.TryGetValue(key, out serializer))
             {
-                serializer = (IXmlSerializer)Activator.CreateInstance(typeof(InterfaceSerializer<>).MakeGenericType(type), defaultNamespace, extraTypes, rootElementName);
+                serializer = (IXmlSerializer)Activator.CreateInstance(typeof(CustomSerializer<>).MakeGenericType(type), defaultNamespace, extraTypes, rootElementName);
                 _serializerCache[key] = serializer;
             }
 
@@ -38,13 +38,13 @@ namespace XSerializer
         }
     }
 
-    public class InterfaceSerializer<T> : InterfaceSerializer, IXmlSerializer<T> // : ProxySerializer, IProxySerializer<T>
+    public class CustomSerializer<T> : CustomSerializer, IXmlSerializer<T>
     {
         private readonly string _defaultNamespace;
         private readonly string _rootElementName;
         private readonly Dictionary<Type, SerializableProperty[]> _serializablePropertiesMap = new Dictionary<Type, SerializableProperty[]>();
 
-        public InterfaceSerializer(string defaultNamespace, Type[] extraTypes, string rootElementName)
+        public CustomSerializer(string defaultNamespace, Type[] extraTypes, string rootElementName)
         {
             _defaultNamespace = defaultNamespace;
             if (!string.IsNullOrWhiteSpace(rootElementName))

@@ -26,15 +26,15 @@ namespace XSerializer.Tests
                     defaultNamespace,
                     extraTypes,
                     rootElementName);
-            var interfaceSerializer = 
+            var customSerializer = 
                 (IXmlSerializer)Activator.CreateInstance(
-                    typeof(InterfaceSerializer<>).MakeGenericType(instance.GetType()),
+                    typeof(CustomSerializer<>).MakeGenericType(instance.GetType()),
                     defaultNamespace,
                     extraTypes,
                     rootElementName);
 
             var defaultXml = defaultSerializer.SerializeObject(instance, encoding, formatting, namespaces);
-            var proxyXml = interfaceSerializer.SerializeObject(instance, encoding, formatting, namespaces);
+            var proxyXml = customSerializer.SerializeObject(instance, encoding, formatting, namespaces);
 
             Console.WriteLine("Default XML:");
             Console.WriteLine(defaultXml);
@@ -75,15 +75,15 @@ namespace XSerializer.Tests
                     defaultNamespace,
                     extraTypes,
                     rootElementName);
-            var interfaceSerializer =
+            var customSerializer =
                 (IXmlSerializer)Activator.CreateInstance(
-                    typeof(InterfaceSerializer<>).MakeGenericType(instanceWithInterface.GetType()),
+                    typeof(CustomSerializer<>).MakeGenericType(instanceWithInterface.GetType()),
                     defaultNamespace,
                     extraTypes,
                     rootElementName);
 
             var defaultXml = defaultSerializer.SerializeObject(instanceWithAbstract, encoding, formatting, namespaces);
-            var proxyXml = interfaceSerializer.SerializeObject(instanceWithInterface, encoding, formatting, namespaces);
+            var proxyXml = customSerializer.SerializeObject(instanceWithInterface, encoding, formatting, namespaces);
 
             Console.WriteLine("Default XML:");
             Console.WriteLine(defaultXml);

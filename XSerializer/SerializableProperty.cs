@@ -55,7 +55,6 @@ namespace XSerializer
                     _serializer =
                         new Lazy<IXmlSerializer>(
                             () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo.PropertyType, defaultNamespace, extraTypes, rootElementName));
-                            //() => InterfaceSerializer.GetSerializer(propertyInfo.PropertyType, defaultNamespace, extraTypes, rootElementName));
                 }
             }
         }
@@ -119,14 +118,14 @@ namespace XSerializer
             _setValueFunc(instance, value);
         }
 
+        public bool ShouldSerialize(object instance)
+        {
+            return this._shouldSerializeFunc(instance);
+        }
+
         public void ReadValue(XmlReader reader, object instance)
         {
             SetValue(instance, Serializer.DeserializeObject(reader));
-        }
-
-        public bool ShouldSerialize(object instance)
-        {
-            return _shouldSerializeFunc(instance);
         }
 
         public void WriteValue(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces)
