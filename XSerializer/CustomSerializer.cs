@@ -229,7 +229,7 @@ namespace XSerializer
             return instance;
         }
 
-        private static T CreateInstance(IReadOnlyDictionary<string, string> attributes)
+        private static T CreateInstance(IDictionary<string, string> attributes)
         {
             T instance;
 

@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>XSerializer</id>
+        <version>0.0.1</version>
+        <title>XSerizlier - an XML serializer that works with interfaces (!)</title>
+        <authors>Brian Friesen</authors>
+        <owners />
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>An XML serializer that successfully serializes and deserializes interfaces, dictionaries, and collections.</description>
+        <summary>An XML serializer that successfully serializes and deserializes interfaces, dictionaries, and collections.</summary>
+    </metadata>
+    <files>
+        <file src="XSerializer\bin\Release\XSerializer.dll" target="lib\net40\XSerializer.dll" />
+        <file src="XSerializer\bin\Release\XSerializer.pdb" target="lib\net40\XSerializer.pdb" />
+        <file src="XSerializer\bin\Release\XSerializer.xml" target="lib\net40\XSerializer.xml" />
+    </files>
+</package>
