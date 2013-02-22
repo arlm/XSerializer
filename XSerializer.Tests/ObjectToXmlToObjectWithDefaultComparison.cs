@@ -15,22 +15,28 @@ namespace XSerializer.Tests
             var customSerializer = CustomSerializer.GetSerializer(type, null, null, null);
             var defaultSerializer = DefaultSerializer.GetSerializer(type, null, null, null);
 
-            var interfaceXml = customSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, null);
+            var customXml = customSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, null);
             var defaultXml = defaultSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, null);
 
             Console.WriteLine("Default XML:");
             Console.WriteLine(defaultXml);
             Console.WriteLine();
-            Console.WriteLine("Interface XML:");
-            Console.WriteLine(interfaceXml);
+            Console.WriteLine("Custom XML:");
+            Console.WriteLine(customXml);
 
-            Assert.That(interfaceXml, Is.EqualTo(defaultXml));
+            Assert.That(customXml, Is.EqualTo(defaultXml));
 
-            var interfaceInstance = customSerializer.DeserializeObject(interfaceXml);
+            var customInstance = customSerializer.DeserializeObject(customXml);
             var defaultInstance = defaultSerializer.DeserializeObject(defaultXml);
 
-            Assert.That(interfaceInstance, Has.PropertiesEqualTo(defaultInstance));
-            Assert.That(interfaceInstance, Has.PropertiesEqualTo(instance));
+            Assert.That(customInstance, Has.PropertiesEqualTo(defaultInstance));
+            Assert.That(customInstance, Has.PropertiesEqualTo(instance));
+
+            AdditionalAssertions(instance, type, customXml, defaultXml, customInstance, defaultInstance);
+        }
+
+        protected virtual void AdditionalAssertions(object instance, Type type, string customXml, string defaultXml, object customInstance, object defaultInstance)
+        {
         }
 
         protected IEnumerable<TestCaseData> TestCaseData

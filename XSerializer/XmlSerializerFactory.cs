@@ -4,6 +4,8 @@ using System.Linq;
 
 namespace XSerializer
 {
+    using System.Collections;
+
     public class XmlSerializerFactory
     {
         private readonly Dictionary<Type, Func<string, Type[], string, IXmlSerializer>> _getSerializerMap = new Dictionary<Type, Func<string, Type[], string, IXmlSerializer>>();
@@ -38,7 +40,14 @@ namespace XSerializer
             {
                 if (!TryGetDefaultSerializer(defaultNamespace, extraTypes, rootElementName, out serializer))
                 {
-                    serializer = (IXmlSerializer<T>)CustomSerializer.GetSerializer(typeof(T), defaultNamespace, extraTypes, rootElementName);
+                    if (typeof(IDictionary).IsAssignableFrom(typeof(T)))
+                    {
+                        serializer = (IXmlSerializer<T>)DictionarySerializer.GetSerializer(typeof(T), defaultNamespace, extraTypes, rootElementName);
+                    }
+                    else
+                    {
+                        serializer = (IXmlSerializer<T>)CustomSerializer.GetSerializer(typeof(T), defaultNamespace, extraTypes, rootElementName);
+                    }
                 }
 
                 CacheSerializer(defaultNamespace, extraTypes, rootElementName, serializer);

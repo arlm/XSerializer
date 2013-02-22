@@ -1,8 +1,11 @@
-﻿using System.Linq;
+﻿using System.Collections;
+using System.Linq;
 using NUnit.Framework.Constraints;
 
 namespace XSerializer.Tests
 {
+    using System;
+
     internal static class Has
     {
         public static IResolveConstraint PropertiesEqualTo(object expected)
@@ -38,37 +41,23 @@ namespace XSerializer.Tests
 
             public override bool Matches(object actualValue)
             {
-                if (AreSimpleTypes(actualValue, _expectedValue))
-                {
-                    if (Equals(_expectedValue, actualValue))
-                    {
-                        return true;
-                    }
-                    
-                    _failedExpectedValue = _expectedValue;
-                    _failedActualValue = actualValue;
-                    return false;
-                }
-
                 return Matches(actualValue, _expectedValue, null);
-            }
-
-            private bool AreSimpleTypes(object actualValue, object expectedValue)
-            {
-                if (actualValue == null || expectedValue == null)
-                {
-                    return false;
-                }
-
-                var actualValueType = actualValue.GetType();
-                var expectedValueType = expectedValue.GetType();
-
-                return (actualValueType.IsValueType && expectedValueType.IsValueType)
-                       || (actualValueType == typeof(string) && expectedValueType == typeof(string));
             }
 
             private bool Matches(object actualValue, object expectedValue, string path)
             {
+                if (AreSimpleTypes(actualValue, expectedValue))
+                {
+                    if (Equals(expectedValue, actualValue))
+                    {
+                        return true;
+                    }
+
+                    _failedExpectedValue = expectedValue;
+                    _failedActualValue = actualValue;
+                    return false;
+                }
+
                 if (actualValue == null && expectedValue == null)
                 {
                     return true;
@@ -115,30 +104,90 @@ namespace XSerializer.Tests
                     var actualPropertyValue = property.GetValue(actualValue, null);
                     var expectedPropertyValue = property.GetValue(expectedValue, null);
 
-                    if (property.PropertyType.IsValueType || property.PropertyType == typeof(string))
+                    var propertyType = property.PropertyType;
+                    var propertyName = property.Name;
+
+                    if (!this.DoPropertyValuesMatch(actualPropertyValue, expectedPropertyValue, propertyType, propertyName, path))
                     {
-                        if (!Equals(actualPropertyValue, expectedPropertyValue))
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            private bool AreSimpleTypes(object actualValue, object expectedValue)
+            {
+                if (actualValue == null || expectedValue == null)
+                {
+                    return false;
+                }
+
+                var actualValueType = actualValue.GetType();
+                var expectedValueType = expectedValue.GetType();
+
+                return (actualValueType.IsValueType && expectedValueType.IsValueType)
+                       || (actualValueType == typeof(string) && expectedValueType == typeof(string));
+            }
+
+            private bool DoPropertyValuesMatch(object actualPropertyValue, object expectedPropertyValue, Type propertyType, string propertyName, string path)
+            {
+                if (propertyType.IsValueType || propertyType == typeof(string))
+                {
+                    if (!Equals(actualPropertyValue, expectedPropertyValue))
+                    {
+                        if (propertyType == typeof(string))
                         {
-                            if (property.PropertyType == typeof(string))
-                            {
-                                _failedExpectedValue = string.Format("{0}.{1} to be \"{2}\"", path, property.Name, expectedPropertyValue);
-                                _failedActualValue = string.Format("\"{0}\"", actualPropertyValue);
-                            }
-                            else
-                            {
-                                _failedExpectedValue = string.Format("{0}.{1} to be {2}", path, property.Name, expectedPropertyValue);
-                                _failedActualValue = actualPropertyValue.ToString();
-                            }
-                            
+                            this._failedExpectedValue = string.Format("{0}.{1} to be \"{2}\"", path, propertyName, expectedPropertyValue);
+                            this._failedActualValue = string.Format("\"{0}\"", actualPropertyValue);
+                        }
+                        else
+                        {
+                            this._failedExpectedValue = string.Format("{0}.{1} to be {2}", path, propertyName, expectedPropertyValue);
+                            this._failedActualValue = actualPropertyValue.ToString();
+                        }
+
+                        return false;
+                    }
+                }
+                else if (typeof(IDictionary).IsAssignableFrom(propertyType))
+                {
+                    var actualDictionary = (IDictionary)actualPropertyValue;
+                    var expectedDictionary = (IDictionary)expectedPropertyValue;
+
+                    var actualEnumerator = actualDictionary.GetEnumerator();
+                    while (actualEnumerator.MoveNext())
+                    {
+                        if (!expectedDictionary.Contains(actualEnumerator.Key))
+                        {
+                            return false;
+                        }
+
+                        if (!Matches(actualEnumerator.Value, expectedDictionary[actualEnumerator.Key], string.Format("{0}.{1}[]", path, propertyName)))
+                        {
                             return false;
                         }
                     }
-                    else
+
+                    var expectedEnumerator = expectedDictionary.GetEnumerator();
+                    while (expectedEnumerator.MoveNext())
                     {
-                        if (!Matches(actualPropertyValue, expectedPropertyValue, string.Concat(path, ".", property.Name)))
+                        if (!actualDictionary.Contains(expectedEnumerator.Key))
                         {
                             return false;
                         }
+
+                        if (!Matches(expectedEnumerator.Value, actualDictionary[expectedEnumerator.Key], path + "[]"))
+                        {
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    if (!this.Matches(actualPropertyValue, expectedPropertyValue, string.Concat(path, ".", propertyName)))
+                    {
+                        return false;
                     }
                 }
 

@@ -5,6 +5,8 @@ using System.Xml.Serialization;
 
 namespace XSerializer
 {
+    using System.Collections;
+
     public sealed class SerializableProperty
     {
         private readonly Lazy<IXmlSerializer> _serializer;
@@ -16,7 +18,10 @@ namespace XSerializer
         public SerializableProperty(PropertyInfo propertyInfo, string defaultNamespace, Type[] extraTypes)
         {
             _getValueFunc = DynamicMethodFactory.CreateGetMethod<object>(propertyInfo.GetGetMethod());
-            _setValueFunc = DynamicMethodFactory.CreateSetMethod(propertyInfo.GetSetMethod());
+            _setValueFunc =
+                propertyInfo.IsSerializableReadOnlyProperty()
+                    ? GetSerializableReadonlyPropertySetValueFunc(propertyInfo)
+                    : DynamicMethodFactory.CreateSetMethod(propertyInfo.GetSetMethod());
             _shouldSerializeFunc = GetShouldSerializeFunc(propertyInfo);
             _serializer = new Lazy<IXmlSerializer>(GetCreateSerializerFunc(propertyInfo, defaultNamespace, extraTypes));
         }
@@ -76,6 +81,24 @@ namespace XSerializer
             NodeType = NodeType.Element;
             Name = rootElementName;
             return () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo.PropertyType, defaultNamespace, extraTypes, rootElementName);
+        }
+
+        private Action<object, object> GetSerializableReadonlyPropertySetValueFunc(PropertyInfo propertyInfo)
+        {
+            if (typeof(IDictionary).IsAssignableFrom(propertyInfo.PropertyType))
+            {
+                return (instance, value) =>
+                    {
+                        var instanceDictionary = (IDictionary)_getValueFunc(instance);
+                        var valueEnumerator = ((IDictionary)value).GetEnumerator();
+                        while (valueEnumerator.MoveNext())
+                        {
+                            instanceDictionary.Add(valueEnumerator.Key, valueEnumerator.Value);
+                        }
+                    };
+            }
+
+            return (instance, value) => { };
         }
 
         private Func<object, bool> GetShouldSerializeFunc(PropertyInfo propertyInfo)

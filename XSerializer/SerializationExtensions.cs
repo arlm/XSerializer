@@ -5,6 +5,7 @@ using System.Xml.Serialization;
 
 namespace XSerializer
 {
+    using System.Collections;
     using System.Reflection;
 
     public static class SerializationExtensions
@@ -153,12 +154,30 @@ namespace XSerializer
 
         public static bool IsSerializable(this PropertyInfo property)
         {
-            return property.CanRead && (property.CanWrite || CanSerializeSpecial(property) && property.GetIndexParameters().Length == 0);
+            return property.GetIndexParameters().Length == 0 && (property.IsReadWriteProperty() || property.IsSerializableReadOnlyProperty());
         }
 
-        private static bool CanSerializeSpecial(PropertyInfo property)
+        public static bool IsReadWriteProperty(this PropertyInfo property)
         {
-            return false; // TODO: implement
+            return property.CanCallGetter() && property.CanCallSetter();
+        }
+
+        public static bool IsSerializableReadOnlyProperty(this PropertyInfo property)
+        {
+            // TODO: add additional serializable types
+            return
+                (property.CanCallGetter() && !property.CanCallSetter())
+                && typeof(IDictionary).IsAssignableFrom(property.PropertyType);
+        }
+
+        public static bool CanCallGetter(this PropertyInfo property)
+        {
+            return property.CanRead && property.GetGetMethod() != null;
+        }
+
+        public static bool CanCallSetter(this PropertyInfo property)
+        {
+            return property.CanWrite && property.GetSetMethod() != null;
         }
 
         private class StringWriterWithEncoding : StringWriter

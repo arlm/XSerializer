@@ -7,30 +7,22 @@ using NUnit.Framework;
 
 namespace XSerializer.Tests
 {
-    public abstract class ObjectToXmlWithDefaultComparison
+    public abstract class ObjectToXml
     {
         [TestCaseSource("TestCaseData")]
-        public void RoundTripsCorrectly(object instance, Type type)
+        public void SerializesCorrectly(object instance, Type type, string expectedXml)
         {
             var customSerializer = CustomSerializer.GetSerializer(type, null, null, null);
-            var defaultSerializer = DefaultSerializer.GetSerializer(type, null, null, null);
 
             var customXml = customSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, null);
-            var defaultXml = defaultSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, null);
 
-            Console.WriteLine("Default XML:");
-            Console.WriteLine(defaultXml);
+            Console.WriteLine("Expected XML:");
+            Console.WriteLine(expectedXml);
             Console.WriteLine();
-            Console.WriteLine("Custom XML:");
+            Console.WriteLine("Actual XML:");
             Console.WriteLine(customXml);
 
-            Assert.That(customXml, Is.EqualTo(defaultXml));
-
-            AdditionalAssertions(instance, type, customXml, defaultXml);
-        }
-
-        protected virtual void AdditionalAssertions(object instance, Type type, string customXml, string defaultXml)
-        {
+            Assert.That(customXml, Is.EqualTo(expectedXml));
         }
 
         protected IEnumerable<TestCaseData> TestCaseData
