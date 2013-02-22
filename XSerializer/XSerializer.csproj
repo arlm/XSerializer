@@ -39,9 +39,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CustomSerializer.cs" />
     <Compile Include="DefaultSerializer.cs" />
     <Compile Include="DynamicMethodFactory.cs" />
-    <Compile Include="InterfaceSerializer.cs" />
     <Compile Include="NodeType.cs" />
     <Compile Include="SerializationExtensions.cs" />
     <Compile Include="IXmlSerializer.cs" />
