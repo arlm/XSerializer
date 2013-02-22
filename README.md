@@ -1,7 +1,6 @@
-=XSerizlier=
-===An XML serializer that works with interfaces===
+#XSerizlier - an XML serializer that works with interfaces (!)#
 
-==Typical Usage==
+##Typical Usage##
 
 You can serialize/deserialize like this:
 
