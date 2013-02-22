@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConditionalSerializationTests.cs" />
+    <Compile Include="IgnoreAttributeTests.cs" />
     <Compile Include="NonAbstractClassesWithOnlySimpleElements.cs" />
     <Compile Include="ObjectToXmlToObjectWithDefaultComparison.cs" />
     <Compile Include="ObjectToXmlWithDefaultComparison.cs" />
