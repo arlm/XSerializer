@@ -129,4 +129,8 @@ namespace XSerializer.Tests
     {
         public IBar Bar { get; set; }
     }
+
+    public class JitPreparation
+    {
+    }
 }

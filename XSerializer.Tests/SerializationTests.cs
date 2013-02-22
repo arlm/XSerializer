@@ -11,7 +11,7 @@ namespace XSerializer.Tests
     public class SerializationTests
     {
         [TestCaseSource("NoInterfaceTestSource")]
-        public void ForTypesWithoutInterfacesProxySerializerSerializesTheSameAsDefaultSerializer(
+        public void ForTypesWithoutInterfacesCustomSerializerSerializesTheSameAsDefaultSerializer(
             object instance,
             string defaultNamespace,
             Type[] extraTypes,
@@ -34,15 +34,15 @@ namespace XSerializer.Tests
                     rootElementName);
 
             var defaultXml = defaultSerializer.SerializeObject(instance, encoding, formatting, namespaces);
-            var proxyXml = customSerializer.SerializeObject(instance, encoding, formatting, namespaces);
+            var customXml = customSerializer.SerializeObject(instance, encoding, formatting, namespaces);
 
             Console.WriteLine("Default XML:");
             Console.WriteLine(defaultXml);
             Console.WriteLine();
-            Console.WriteLine("Proxy XML:");
-            Console.WriteLine(proxyXml);
+            Console.WriteLine("Custom XML:");
+            Console.WriteLine(customXml);
 
-            Assert.That(proxyXml, Is.EqualTo(defaultXml));
+            Assert.That(customXml, Is.EqualTo(defaultXml));
         }
 
         public TestCaseData[] NoInterfaceTestSource = new[]
@@ -83,20 +83,20 @@ namespace XSerializer.Tests
                     rootElementName);
 
             var defaultXml = defaultSerializer.SerializeObject(instanceWithAbstract, encoding, formatting, namespaces);
-            var proxyXml = customSerializer.SerializeObject(instanceWithInterface, encoding, formatting, namespaces);
+            var customXml = customSerializer.SerializeObject(instanceWithInterface, encoding, formatting, namespaces);
 
             Console.WriteLine("Default XML:");
             Console.WriteLine(defaultXml);
             Console.WriteLine();
-            Console.WriteLine("Proxy XML:");
-            Console.WriteLine(proxyXml);
+            Console.WriteLine("Custom XML:");
+            Console.WriteLine(customXml);
 
             if (defaultXmlReplacements != null)
             {
                 defaultXml = defaultXmlReplacements.Aggregate(defaultXml, (current, replacement) => current.Replace(replacement.Item1, replacement.Item2));
             }
 
-            Assert.That(proxyXml, Is.EqualTo(defaultXml));
+            Assert.That(customXml, Is.EqualTo(defaultXml));
         }
 
         public TestCaseData[] InterfaceVersusAbstractTestSource = new[]
