@@ -5,6 +5,8 @@ using System.Xml.Serialization;
 
 namespace XSerializer
 {
+    using System.Reflection;
+
     public static class SerializationExtensions
     {
         public static string Serialize<T>(
@@ -147,6 +149,16 @@ namespace XSerializer
         {
             var xmlReader = new XmlTextReader(reader);
             return serializer.DeserializeObject(xmlReader);
+        }
+
+        public static bool IsSerializable(this PropertyInfo property)
+        {
+            return property.CanRead && (property.CanWrite || CanSerializeSpecial(property) && property.GetIndexParameters().Length == 0);
+        }
+
+        private static bool CanSerializeSpecial(PropertyInfo property)
+        {
+            return false; // TODO: implement
         }
 
         private class StringWriterWithEncoding : StringWriter

@@ -83,7 +83,7 @@ namespace XSerializer
                     t => t,
                     t =>
                         t.GetProperties()
-                        .Where(p => p.CanRead && p.CanWrite)
+                        .Where(p => p.IsSerializable())
                         .Select(p => new SerializableProperty(p, defaultNamespace, extraTypes))
                         .OrderBy(p => p.NodeType)
                         .ToArray());

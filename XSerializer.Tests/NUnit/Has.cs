@@ -110,7 +110,7 @@ namespace XSerializer.Tests
                     path = actualValue.GetType().Name;
                 }
 
-                foreach (var property in actualValue.GetType().GetProperties().Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0))
+                foreach (var property in actualValue.GetType().GetProperties().Where(p => p.IsSerializable()))
                 {
                     var actualPropertyValue = property.GetValue(actualValue, null);
                     var expectedPropertyValue = property.GetValue(expectedValue, null);
