@@ -7,56 +7,75 @@ namespace XSerializer
 {
     public sealed class SerializableProperty
     {
+        private readonly Lazy<IXmlSerializer> _serializer;
+
         private readonly Func<object, object> _getValueFunc;
         private readonly Action<object, object> _setValueFunc;
         private readonly Func<object, bool> _shouldSerializeFunc;
-
-        private readonly Lazy<IXmlSerializer> _serializer;
 
         public SerializableProperty(PropertyInfo propertyInfo, string defaultNamespace, Type[] extraTypes)
         {
             _getValueFunc = DynamicMethodFactory.CreateGetMethod<object>(propertyInfo.GetGetMethod());
             _setValueFunc = DynamicMethodFactory.CreateSetMethod(propertyInfo.GetSetMethod());
             _shouldSerializeFunc = GetShouldSerializeFunc(propertyInfo);
+            _serializer = new Lazy<IXmlSerializer>(GetCreateSerializerFunc(propertyInfo, defaultNamespace, extraTypes));
+        }
 
+        public string Name { get; private set; }
+
+        public NodeType NodeType { get; private set; }
+
+        public void ReadValue(XmlReader reader, object instance)
+        {
+            _setValueFunc(instance, _serializer.Value.DeserializeObject(reader));
+        }
+
+        public void WriteValue(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces)
+        {
+            if (_shouldSerializeFunc(instance))
+            {
+                var value = _getValueFunc(instance);
+                if (value != null)
+                {
+                    _serializer.Value.SerializeObject(value, writer, namespaces);
+                }
+            }
+        }
+
+        private Func<IXmlSerializer> GetCreateSerializerFunc(PropertyInfo propertyInfo, string defaultNamespace, Type[] extraTypes)
+        {
             var attributeAttribute = (XmlAttributeAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlAttributeAttribute));
             if (attributeAttribute != null)
             {
                 var attributeName = !string.IsNullOrWhiteSpace(attributeAttribute.AttributeName) ? attributeAttribute.AttributeName : propertyInfo.Name;
                 NodeType = NodeType.Attribute;
                 Name = attributeName;
-                _serializer = new Lazy<IXmlSerializer>(() => new XmlAttributeSerializer(attributeName, propertyInfo.PropertyType));
+                return () => new XmlAttributeSerializer(attributeName, propertyInfo.PropertyType);
+            }
+
+            var textAttribute = (XmlTextAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlTextAttribute));
+            if (textAttribute != null)
+            {
+                NodeType = NodeType.Text;
+                Name = propertyInfo.Name;
+                return () => new XmlTextSerializer(propertyInfo.PropertyType);
+            }
+
+            var elementAttribute = (XmlElementAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlElementAttribute));
+
+            string rootElementName;
+            if (elementAttribute != null && !string.IsNullOrWhiteSpace(elementAttribute.ElementName))
+            {
+                rootElementName = elementAttribute.ElementName;
             }
             else
             {
-                var textAttribute = (XmlTextAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlTextAttribute));
-                if (textAttribute != null)
-                {
-                    NodeType = NodeType.Text;
-                    Name = propertyInfo.Name;
-                    _serializer = new Lazy<IXmlSerializer>(() => new XmlTextSerializer(propertyInfo.PropertyType));
-                }
-                else
-                {
-                    var elementAttribute = (XmlElementAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlElementAttribute));
-
-                    string rootElementName;
-                    if (elementAttribute != null && !string.IsNullOrWhiteSpace(elementAttribute.ElementName))
-                    {
-                        rootElementName = elementAttribute.ElementName;
-                    }
-                    else
-                    {
-                        rootElementName = propertyInfo.Name;
-                    }
-
-                    NodeType = NodeType.Element;
-                    Name = rootElementName;
-                    _serializer =
-                        new Lazy<IXmlSerializer>(
-                            () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo.PropertyType, defaultNamespace, extraTypes, rootElementName));
-                }
+                rootElementName = propertyInfo.Name;
             }
+
+            NodeType = NodeType.Element;
+            Name = rootElementName;
+            return () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo.PropertyType, defaultNamespace, extraTypes, rootElementName);
         }
 
         private Func<object, bool> GetShouldSerializeFunc(PropertyInfo propertyInfo)
@@ -97,47 +116,6 @@ namespace XSerializer
             }
 
             return instance => specifiedFunc(instance) && shouldSerializeFunc(instance);
-        }
-
-        public IXmlSerializer Serializer
-        {
-            get { return _serializer.Value; }
-        }
-
-        public string Name { get; private set; }
-
-        public NodeType NodeType { get; private set; }
-
-        public object GetValue(object instance)
-        {
-            return _getValueFunc(instance);
-        }
-
-        public void SetValue(object instance, object value)
-        {
-            _setValueFunc(instance, value);
-        }
-
-        public bool ShouldSerialize(object instance)
-        {
-            return this._shouldSerializeFunc(instance);
-        }
-
-        public void ReadValue(XmlReader reader, object instance)
-        {
-            SetValue(instance, Serializer.DeserializeObject(reader));
-        }
-
-        public void WriteValue(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces)
-        {
-            if (ShouldSerialize(instance))
-            {
-                var value = GetValue(instance);
-                if (value != null)
-                {
-                    Serializer.SerializeObject(value, writer, namespaces);
-                }
-            }
         }
     }
 }

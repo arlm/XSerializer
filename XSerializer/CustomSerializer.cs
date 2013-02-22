@@ -174,7 +174,7 @@ namespace XSerializer
             var property = _serializablePropertiesMap[instance.GetType()].SingleOrDefault(p => reader.Name == p.Name);
             if (property != null)
             {
-                property.SetValue(instance, property.Serializer.DeserializeObject(reader));
+                property.ReadValue(reader, instance);
             }
         }
 
@@ -188,7 +188,7 @@ namespace XSerializer
             var property = _serializablePropertiesMap[instance.GetType()].SingleOrDefault(p => p.NodeType == NodeType.Text);
             if (property != null)
             {
-                property.SetValue(instance, property.Serializer.DeserializeObject(reader));
+                property.ReadValue(reader, instance);
             }
         }
 
@@ -222,7 +222,7 @@ namespace XSerializer
                         .SingleOrDefault(p => p.NodeType == NodeType.Attribute && p.Name == attribute.Key);
                 if (property != null)
                 {
-                    property.SetValue(instance, property.Serializer.DeserializeObject(reader));
+                    property.ReadValue(reader, instance);
                 }
             }
 
