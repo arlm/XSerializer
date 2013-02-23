@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Xml;
+
 using NUnit.Framework;
 
 namespace XSerializer.Tests
@@ -12,6 +11,9 @@ namespace XSerializer.Tests
         [TestCaseSource("TestCaseData")]
         public void SerializesCorrectly(string xml, Type type, object expectedObject)
         {
+            Console.WriteLine("Input XML:");
+            Console.WriteLine(xml);
+
             var customSerializer = CustomSerializer.GetSerializer(type, null, null, null);
 
             var customObject = customSerializer.DeserializeObject(xml);

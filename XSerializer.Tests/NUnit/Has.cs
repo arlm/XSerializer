@@ -5,6 +5,9 @@ using NUnit.Framework.Constraints;
 namespace XSerializer.Tests
 {
     using System;
+    using System.Collections.Generic;
+    using System.Dynamic;
+    using System.Reflection;
 
     internal static class Has
     {
@@ -85,7 +88,6 @@ namespace XSerializer.Tests
 
                 if (actualValue.GetType() != expectedValue.GetType())
                 {
-                    _failedExpectedValue = string.Format("{0} to be of type {1}", path, expectedValue.GetType().FullName);
                     _failedExpectedValue =
                         path == null
                         ? string.Format("instance to type of {0}", expectedValue.GetType())
@@ -99,21 +101,100 @@ namespace XSerializer.Tests
                     path = actualValue.GetType().Name;
                 }
 
-                foreach (var property in actualValue.GetType().GetProperties().Where(p => p.IsSerializable()))
+                IEnumerable<Property> properties;
+
+                var actualExpando = actualValue as ExpandoObject;
+                if (actualExpando != null)
                 {
-                    var actualPropertyValue = property.GetValue(actualValue, null);
-                    var expectedPropertyValue = property.GetValue(expectedValue, null);
+                    var actualExpandoMap = (IDictionary<string, object>)actualValue;
+                    var expectedExpandoMap = (IDictionary<string, object>)expectedValue;
 
-                    var propertyType = property.PropertyType;
-                    var propertyName = property.Name;
-
-                    if (!this.DoPropertyValuesMatch(actualPropertyValue, expectedPropertyValue, propertyType, propertyName, path))
+                    foreach (var expectedKey in expectedExpandoMap.Keys)
                     {
-                        return false;
+                        if (!actualExpandoMap.ContainsKey(expectedKey))
+                        {
+                            _failedExpectedValue =
+                                path == null
+                                ? string.Format("ExpandoObject to have a {0} property", expectedKey)
+                                : string.Format("{0} to have a {1} property", path, expectedKey);
+                            _failedActualValue = string.Format("no {0} property", expectedKey);
+                            return false;
+                        }
                     }
+
+                    foreach (var actualKey in actualExpandoMap.Keys)
+                    {
+                        if (!expectedExpandoMap.ContainsKey(actualKey))
+                        {
+                            _failedExpectedValue =
+                                path == null
+                                ? string.Format("ExpandoObject to not have a {0} property", actualKey)
+                                : string.Format("{0} to not have a {1} property", path, actualKey);
+                            _failedActualValue = string.Format("a {0} property", actualKey);
+                            return false;
+                        }
+                    }
+
+                    properties = actualExpando.Select(item => Property.FromActual(item, (ExpandoObject)expectedValue));
+                }
+                else
+                {
+                    properties = actualValue.GetType().GetProperties().Where(p => p.IsSerializable()).Select(p => new Property(p, actualValue, expectedValue));
                 }
 
-                return true;
+                return properties.All(property => this.DoPropertyValuesMatch(property.ActualValue, property.ExpectedValue, property.Type, property.Name, path));
+            }
+
+            private class Property
+            {
+                private Property()
+                {
+                }
+
+                public Property(PropertyInfo propertyInfo, object actualContainer, object expectedContainer)
+                {
+                    Name = propertyInfo.Name;
+                    Type = propertyInfo.PropertyType;
+                    ActualValue = propertyInfo.GetValue(actualContainer, null);
+                    ExpectedValue = propertyInfo.GetValue(expectedContainer, null);
+                }
+
+                public static Property FromActual(KeyValuePair<string, object> actualItem, IDictionary<string, object> expectedValuesMap)
+                {
+                    var property = new Property();
+                    property.Name = actualItem.Key;
+                    property.Type = actualItem.Value == null ? typeof(object) : actualItem.Value.GetType();
+                    property.ActualValue = actualItem.Value;
+                    object expectedValue;
+                    expectedValuesMap.TryGetValue(actualItem.Key, out expectedValue);
+                    property.ExpectedValue = expectedValue;
+                    if (property.ActualValue == null && property.ExpectedValue != null)
+                    {
+                        property.Type = property.ExpectedValue.GetType();
+                    }
+                    return property;
+                }
+
+                public static Property FromExpected(KeyValuePair<string, object> expectedItem, IDictionary<string, object> actualValuesMap)
+                {
+                    var property = new Property();
+                    property.Name = expectedItem.Key;
+                    property.Type = expectedItem.Value == null ? typeof(object) : expectedItem.Value.GetType();
+                    property.ExpectedValue = expectedItem.Value;
+                    object actualValue;
+                    actualValuesMap.TryGetValue(expectedItem.Key, out actualValue);
+                    property.ActualValue = actualValue;
+                    if (property.ExpectedValue == null && property.ActualValue != null)
+                    {
+                        property.Type = property.ActualValue.GetType();
+                    }
+                    return property;
+                }
+
+                public string Name { get; private set; }
+                public Type Type { get; private set; }
+                public object ActualValue { get; private set; }
+                public object ExpectedValue { get; private set; }
             }
 
             private bool AreSimpleTypes(object actualValue, object expectedValue)

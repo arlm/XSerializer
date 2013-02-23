@@ -40,7 +40,7 @@ namespace XSerializer
             {
                 if (!TryGetDefaultSerializer(defaultNamespace, extraTypes, rootElementName, out serializer))
                 {
-                    if (typeof(IDictionary).IsAssignableFrom(typeof(T)))
+                    if (typeof(T).IsAssignableToNonGenericIDictionary() || typeof(T).IsAssignableToGenericIDictionary())
                     {
                         serializer = (IXmlSerializer<T>)DictionarySerializer.GetSerializer(typeof(T), defaultNamespace, extraTypes, rootElementName);
                     }

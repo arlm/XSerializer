@@ -5,8 +5,12 @@ using System.Xml.Serialization;
 
 namespace XSerializer
 {
+    using System;
     using System.Collections;
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Reflection;
+    using System.Reflection.Emit;
 
     public static class SerializationExtensions
     {
@@ -152,32 +156,68 @@ namespace XSerializer
             return serializer.DeserializeObject(xmlReader);
         }
 
+        public static bool HasDefaultConstructor(this Type type)
+        {
+            return type.GetConstructor(Type.EmptyTypes) != null;
+        }
+
         public static bool IsSerializable(this PropertyInfo property)
         {
-            return property.GetIndexParameters().Length == 0 && (property.IsReadWriteProperty() || property.IsSerializableReadOnlyProperty());
+            var isSerializable = property.GetIndexParameters().Length == 0 && (property.IsReadWriteProperty() || property.IsSerializableReadOnlyProperty());
+            return isSerializable;
         }
 
         public static bool IsReadWriteProperty(this PropertyInfo property)
         {
-            return property.CanCallGetter() && property.CanCallSetter();
+            var isReadWriteProperty = property.CanCallGetter() && property.CanCallSetter();
+            return isReadWriteProperty;
         }
 
         public static bool IsSerializableReadOnlyProperty(this PropertyInfo property)
         {
-            // TODO: add additional serializable types
+            var canCallGetter = property.CanCallGetter();
+            var canCallSetter = property.CanCallSetter();
+
             return
-                (property.CanCallGetter() && !property.CanCallSetter())
-                && typeof(IDictionary).IsAssignableFrom(property.PropertyType);
+                (canCallGetter && !canCallSetter)
+                && (property.PropertyType.IsAssignableToNonGenericIDictionary()
+                    || property.PropertyType.IsAssignableToGenericIDictionary()); // TODO: add additional serializable types?
+        }
+
+        public static bool IsAssignableToNonGenericIDictionary(this Type type)
+        {
+            var isAssignableFromIDictionary = typeof(IDictionary).IsAssignableFrom(type);
+            return isAssignableFromIDictionary;
+        }
+
+        public static bool IsAssignableToGenericIDictionary(this Type type)
+        {
+            var isAssignableFromGenericIDictionary =
+                (type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+                || type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+            return isAssignableFromGenericIDictionary;
+        }
+
+        public static Type GetGenericIDictionaryType(this Type type)
+        {
+            if (type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+            {
+                return type;
+            }
+
+            return type.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
         }
 
         public static bool CanCallGetter(this PropertyInfo property)
         {
-            return property.CanRead && property.GetGetMethod() != null;
+            var canCallGetter = property.CanRead && property.GetGetMethod() != null;
+            return canCallGetter;
         }
 
         public static bool CanCallSetter(this PropertyInfo property)
         {
-            return property.CanWrite && property.GetSetMethod() != null;
+            var canCallSetter = property.CanWrite && property.GetSetMethod() != null;
+            return canCallSetter;
         }
 
         private class StringWriterWithEncoding : StringWriter

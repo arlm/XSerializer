@@ -4,56 +4,15 @@
     using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Reflection;
     using System.Runtime.Serialization;
     using System.Xml;
     using System.Xml.Serialization;
 
-    public class DictionarySerializer
+    public abstract class DictionarySerializer : IXmlSerializer
     {
         private static readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
         private static readonly Dictionary<Type, object> _valueTypeDefaultValueMap = new Dictionary<Type, object>();
 
-        public static IXmlSerializer GetSerializer(Type type, string defaultNamespace, Type[] extraTypes, string rootElementName)
-        {
-            IXmlSerializer serializer;
-            var key = XmlSerializerFactory.Instance.CreateKey(type, defaultNamespace, extraTypes, rootElementName);
-
-            if (!_serializerCache.TryGetValue(key, out serializer))
-            {
-                serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), defaultNamespace, extraTypes, rootElementName);
-                _serializerCache[key] = serializer;
-            }
-
-            return serializer;
-        }
-
-        protected static object GetValueTypeDefault(Type valueType)
-        {
-            object defaultValue;
-            if (!_valueTypeDefaultValueMap.TryGetValue(valueType, out defaultValue))
-            {
-                var getValueTypeDefaultMethod =
-                    typeof(DictionarySerializer).GetMethod(
-                        "GetValueTypeDefault", BindingFlags.Static | BindingFlags.NonPublic, null, new Type[0], null)
-                            .MakeGenericMethod(valueType);
-                defaultValue = getValueTypeDefaultMethod.Invoke(null, null);
-                _valueTypeDefaultValueMap[valueType] = defaultValue;
-            }
-
-            return defaultValue;
-        }
-
-        private static object GetValueTypeDefault<TValueType>()
-            where TValueType : struct
-        {
-            return default(TValueType);
-        }
-    }
-
-    public class DictionarySerializer<T> : DictionarySerializer, IXmlSerializer<T>
-        where T : IDictionary, new()
-    {
         private readonly string _defaultNamespace;
         private readonly Type[] _extraTypes;
         private readonly string _rootElementName;
@@ -61,34 +20,52 @@
         private readonly IXmlSerializer _keySerializer;
         private readonly IXmlSerializer _valueSerializer;
 
-        private readonly Type _keyType;
-        private readonly Type _valueType;
+        private readonly Func<object> _createDictionary;
 
         public DictionarySerializer(string defaultNamespace, Type[] extraTypes, string rootElementName)
         {
             _defaultNamespace = defaultNamespace;
             _extraTypes = extraTypes;
             _rootElementName = rootElementName;
+            _keySerializer = XmlSerializerFactory.Instance.GetSerializer(this.KeyType, _defaultNamespace, _extraTypes, "Key");
+            _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(this.ValueType, _defaultNamespace, _extraTypes, "Value");
 
-            Type iDictionaryType = typeof(T).GetInterfaces().FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
-
-            if (iDictionaryType != null)
+            if (DictionaryType.IsInterface || DictionaryType.IsAbstract)
             {
-                var genericArguments = iDictionaryType.GetGenericArguments();
-                this._keyType = genericArguments[0];
-                this._valueType = genericArguments[1];
+                if (DictionaryType.IsAssignableFrom(DefaultDictionaryType))
+                {
+                    _createDictionary = DefaultDictionaryType.CreateDefaultConstructorFunc<object>();
+                }
+                else
+                {
+                    var dictionaryInheritorType =
+                        extraTypes.FirstOrDefault(t =>
+                            !t.IsInterface
+                            && !t.IsAbstract
+                            && DictionaryType.IsAssignableFrom(t)
+                            && t.HasDefaultConstructor());
+                    _createDictionary = dictionaryInheritorType.CreateDefaultConstructorFunc<object>();
+                }
             }
-            else // TODO: check for the specialized dictionary types where the key and/or value type is known
+            else if (DictionaryType.HasDefaultConstructor())
             {
-                this._keyType = typeof(object);
-                this._valueType = typeof(object);
+                _createDictionary = DictionaryType.CreateDefaultConstructorFunc<object>();
             }
-
-            _keySerializer = XmlSerializerFactory.Instance.GetSerializer(this._keyType, _defaultNamespace, _extraTypes, "Key");
-            _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(this._valueType, _defaultNamespace, _extraTypes, "Value");
+            else
+            {
+                throw new ArgumentException("Unable to find suitable dictionary to create.");
+            }
         }
 
-        public void Serialize(T instance, SerializationXmlTextWriter writer, XmlSerializerNamespaces namespaces)
+        protected abstract Type DictionaryType { get; }
+        protected abstract Type DefaultDictionaryType { get; }
+        protected abstract Type KeyType { get; }
+        protected abstract Type ValueType { get; }
+
+        protected abstract IEnumerable<DictionaryEntry> GetDictionaryEntries(object dictionary);
+        protected abstract void AddItemToDictionary(object dictionary, object key, object value);
+
+        public void SerializeObject(object instance, SerializationXmlTextWriter writer, XmlSerializerNamespaces namespaces)
         {
             writer.WriteStartDocument();
             writer.WriteStartElement(_rootElementName);
@@ -99,24 +76,18 @@
                 writer.WriteAttributeString("xmlns", null, null, _defaultNamespace);
             }
 
-            if (typeof(T).IsInterface || typeof(T).IsAbstract)
-            {
-                writer.WriteAttributeString("xsi", "type", null, instance.GetType().Name);
-            }
-
-            var enumerator = instance.GetEnumerator();
-            while (enumerator.MoveNext())
+            foreach (var item in GetDictionaryEntries(instance))
             {
                 writer.WriteStartElement("Item");
 
-                if (enumerator.Key != null)
+                if (item.Key != null)
                 {
-                    _keySerializer.SerializeObject(enumerator.Key, writer, namespaces);
+                    _keySerializer.SerializeObject(item.Key, writer, namespaces);
                 }
 
-                if (enumerator.Value != null)
+                if (item.Value != null)
                 {
-                    _valueSerializer.SerializeObject(enumerator.Value, writer, namespaces);
+                    _valueSerializer.SerializeObject(item.Value, writer, namespaces);
                 }
 
                 writer.WriteEndElement();
@@ -125,14 +96,9 @@
             writer.WriteEndElement();
         }
 
-        public void SerializeObject(object instance, SerializationXmlTextWriter writer, XmlSerializerNamespaces namespaces)
+        public object DeserializeObject(XmlReader reader)
         {
-            Serialize((T)instance, writer, namespaces);
-        }
-
-        public T Deserialize(XmlReader reader)
-        {
-            T dictionary = default(T);
+            object dictionary = null;
 
             var hasInstanceBeenCreated = false;
             var isInsideItemElement = false;
@@ -147,7 +113,7 @@
                     case XmlNodeType.Element:
                         if (reader.Name == _rootElementName)
                         {
-                            dictionary = new T();
+                            dictionary = _createDictionary();
                             hasInstanceBeenCreated = true;
                         }
                         else if (reader.Name == "Item")
@@ -156,18 +122,18 @@
                         }
                         else if (reader.Name == "Key")
                         {
-                            currentKey = DeserializeKeyOrValue(reader, this._keySerializer, hasInstanceBeenCreated, isInsideItemElement);
+                            currentKey = DeserializeKeyOrValue(reader, _keySerializer, hasInstanceBeenCreated, isInsideItemElement);
                         }
                         else if (reader.Name == "Value")
                         {
-                            currentValue = DeserializeKeyOrValue(reader, this._valueSerializer, hasInstanceBeenCreated, isInsideItemElement);
+                            currentValue = DeserializeKeyOrValue(reader, _valueSerializer, hasInstanceBeenCreated, isInsideItemElement);
                         }
 
                         break;
                     case XmlNodeType.EndElement:
                         if (reader.Name == "Item")
                         {
-                            AddItem(dictionary, currentKey, currentValue);
+                            AddItemToDictionary(dictionary, currentKey, currentValue);
                             currentKey = null;
                             currentValue = null;
                             isInsideItemElement = false;
@@ -182,11 +148,6 @@
             } while (reader.Read());
 
             throw new SerializationException("Poop in a hoop.");
-        }
-
-        public object DeserializeObject(XmlReader reader)
-        {
-            return Deserialize(reader);
         }
 
         private static object DeserializeKeyOrValue(XmlReader reader, IXmlSerializer serializer, bool hasInstanceBeenCreated, bool isInsideElement)
@@ -204,22 +165,7 @@
             return serializer.DeserializeObject(reader);
         }
 
-        private void AddItem(T dictionary, object key, object value)
-        {
-            if (key == null)
-            {
-                throw new SerializationException("No key - how am I supposed to get in???");
-            }
-            
-            if (value == null && _valueType.IsValueType)
-            {
-                value = GetValueTypeDefault(_valueType);
-            }
-
-            dictionary.Add(key, value);
-        }
-
-        private static T CheckAndReturn(bool hasInstanceBeenCreated, T instance)
+        private static object CheckAndReturn(bool hasInstanceBeenCreated, object instance)
         {
             if (!hasInstanceBeenCreated)
             {
@@ -227,6 +173,163 @@
             }
 
             return instance;
+        }
+
+        public static IXmlSerializer GetSerializer(Type type, string defaultNamespace, Type[] extraTypes, string rootElementName)
+        {
+            IXmlSerializer serializer;
+            var key = XmlSerializerFactory.Instance.CreateKey(type, defaultNamespace, extraTypes, rootElementName);
+
+            if (!_serializerCache.TryGetValue(key, out serializer))
+            {
+                if (type.IsAssignableToGenericIDictionary())
+                {
+                    var genericArguments = type.GetGenericIDictionaryType().GetGenericArguments();
+                    var keyType = genericArguments[0];
+                    var valueType = genericArguments[1];
+                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), defaultNamespace, extraTypes, rootElementName);
+                }
+                else if (type.IsAssignableToNonGenericIDictionary())
+                {
+                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), defaultNamespace, extraTypes, rootElementName);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Can't you do anything right?!");
+                }
+                
+                _serializerCache[key] = serializer;
+            }
+
+            return serializer;
+        }
+    }
+
+    public class DictionarySerializer<TDictionary> : DictionarySerializer, IXmlSerializer<TDictionary>
+        where TDictionary : IDictionary
+    {
+        public DictionarySerializer(string defaultNamespace, Type[] extraTypes, string rootElementName)
+            : base(defaultNamespace, extraTypes, rootElementName)
+        {
+        }
+
+        public void Serialize(TDictionary instance, SerializationXmlTextWriter writer, XmlSerializerNamespaces namespaces)
+        {
+            SerializeObject(instance, writer, namespaces);
+        }
+
+        public TDictionary Deserialize(XmlReader reader)
+        {
+            return (TDictionary)DeserializeObject(reader);
+        }
+
+        protected override Type DictionaryType
+        {
+            get
+            {
+                return typeof(TDictionary);
+            }
+        }
+
+        protected override Type DefaultDictionaryType
+        {
+            get
+            {
+                return typeof(Hashtable);
+            }
+        }
+
+        protected override Type KeyType
+        {
+            get
+            {
+                return typeof(object);
+            }
+        }
+
+        protected override Type ValueType
+        {
+            get
+            {
+                return typeof(object);
+            }
+        }
+
+        protected override IEnumerable<DictionaryEntry> GetDictionaryEntries(object dictionary)
+        {
+            var enumerator = ((TDictionary)dictionary).GetEnumerator();
+            while (enumerator.MoveNext())
+            {
+                yield return enumerator.Entry;
+            }
+        }
+
+        protected override void AddItemToDictionary(object dictionary, object key, object value)
+        {
+            ((TDictionary)dictionary).Add(key, value);
+        }
+    }
+
+    public class DictionarySerializer<TDictionary, TKey, TValue> : DictionarySerializer, IXmlSerializer<TDictionary>
+        where TDictionary : IDictionary<TKey, TValue>
+    {
+        public DictionarySerializer(string defaultNamespace, Type[] extraTypes, string rootElementName)
+            : base(defaultNamespace, extraTypes, rootElementName)
+        {
+        }
+
+        public void Serialize(TDictionary instance, SerializationXmlTextWriter writer, XmlSerializerNamespaces namespaces)
+        {
+            SerializeObject(instance, writer, namespaces);
+        }
+
+        public TDictionary Deserialize(XmlReader reader)
+        {
+            return (TDictionary)DeserializeObject(reader);
+        }
+
+        protected override Type DictionaryType
+        {
+            get
+            {
+                return typeof(TDictionary);
+            }
+        }
+
+        protected override Type DefaultDictionaryType
+        {
+            get
+            {
+                return typeof(Dictionary<TKey, TValue>);
+            }
+        }
+
+        protected override Type KeyType
+        {
+            get
+            {
+                return typeof(TKey);
+            }
+        }
+
+        protected override Type ValueType
+        {
+            get
+            {
+                return typeof(TValue);
+            }
+        }
+
+        protected override IEnumerable<DictionaryEntry> GetDictionaryEntries(object dictionary)
+        {
+            return ((TDictionary)dictionary).Select(item => new DictionaryEntry(item.Key, item.Value));
+        }
+
+        protected override void AddItemToDictionary(object dictionary, object key, object value)
+        {
+            ((TDictionary)dictionary).Add(
+                typeof(TKey).IsValueType && key == null ? default(TKey) : (TKey)key,
+                typeof(TValue).IsValueType && value == null ? default(TValue) : (TValue)value);
         }
     }
 }

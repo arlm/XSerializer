@@ -6,6 +6,7 @@ using System.Xml.Serialization;
 namespace XSerializer
 {
     using System.Collections;
+    using System.Collections.Generic;
 
     public sealed class SerializableProperty
     {
@@ -15,15 +16,18 @@ namespace XSerializer
         private readonly Action<object, object> _setValueFunc;
         private readonly Func<object, bool> _shouldSerializeFunc;
 
+        private Func<object, IEnumerator> _getEnumeratorFunc;
+
         public SerializableProperty(PropertyInfo propertyInfo, string defaultNamespace, Type[] extraTypes)
         {
-            _getValueFunc = DynamicMethodFactory.CreateGetMethod<object>(propertyInfo.GetGetMethod());
+            _getValueFunc = DynamicMethodFactory.CreateFunc<object>(propertyInfo.GetGetMethod());
             _setValueFunc =
                 propertyInfo.IsSerializableReadOnlyProperty()
                     ? GetSerializableReadonlyPropertySetValueFunc(propertyInfo)
-                    : DynamicMethodFactory.CreateSetMethod(propertyInfo.GetSetMethod());
+                    : DynamicMethodFactory.CreateAction(propertyInfo.GetSetMethod());
             _shouldSerializeFunc = GetShouldSerializeFunc(propertyInfo);
             _serializer = new Lazy<IXmlSerializer>(GetCreateSerializerFunc(propertyInfo, defaultNamespace, extraTypes));
+            _getEnumeratorFunc = DynamicMethodFactory.CreateFunc<IEnumerator>(typeof(IEnumerable).GetMethod("GetEnumerator"));
         }
 
         public string Name { get; private set; }
@@ -85,20 +89,41 @@ namespace XSerializer
 
         private Action<object, object> GetSerializableReadonlyPropertySetValueFunc(PropertyInfo propertyInfo)
         {
-            if (typeof(IDictionary).IsAssignableFrom(propertyInfo.PropertyType))
+            if (propertyInfo.PropertyType.IsAssignableToNonGenericIDictionary())
             {
                 return (instance, value) =>
                     {
                         var instanceDictionary = (IDictionary)_getValueFunc(instance);
-                        var valueEnumerator = ((IDictionary)value).GetEnumerator();
-                        while (valueEnumerator.MoveNext())
+                        foreach (DictionaryEntry entry in (IDictionary)value)
                         {
-                            instanceDictionary.Add(valueEnumerator.Key, valueEnumerator.Value);
+                            instanceDictionary.Add(entry.Key, entry.Value);
                         }
                     };
             }
 
-            return (instance, value) => { };
+            if (propertyInfo.PropertyType.IsAssignableToGenericIDictionary())
+            {
+                var genericIDictionaryType = propertyInfo.PropertyType.GetGenericIDictionaryType();
+
+                var addMethod = genericIDictionaryType.GetMethod("Add", genericIDictionaryType.GetGenericArguments());
+                var addToDictionaryFunc = DynamicMethodFactory.CreateTwoArgAction(addMethod);
+
+                var keyValuePairType = typeof(KeyValuePair<,>).MakeGenericType(genericIDictionaryType.GetGenericArguments());
+                var getKeyFunc = DynamicMethodFactory.CreateGetPropertyValueFunc(keyValuePairType, "Key");
+                var getValueFunc = DynamicMethodFactory.CreateGetPropertyValueFunc(keyValuePairType, "Value");
+
+                return (copyToInstance, copyFromDictionary) =>
+                    {
+                        var copyToDictionary = _getValueFunc(copyToInstance);
+                        var valueEnumerator = _getEnumeratorFunc(copyFromDictionary);
+                        while (valueEnumerator.MoveNext())
+                        {
+                            addToDictionaryFunc(copyToDictionary, getKeyFunc(valueEnumerator.Current), getValueFunc(valueEnumerator.Current));
+                        }
+                    };
+            }
+
+            throw new InvalidOperationException("Unknown property type - cannot determine the 'SetValueFunc'.");
         }
 
         private Func<object, bool> GetShouldSerializeFunc(PropertyInfo propertyInfo)
@@ -113,14 +138,14 @@ namespace XSerializer
             var specifiedProperty = propertyInfo.DeclaringType.GetProperty(propertyInfo.Name + "Specified");
             if (specifiedProperty != null && specifiedProperty.CanRead)
             {
-                specifiedFunc = DynamicMethodFactory.CreateGetMethod<bool>(specifiedProperty.GetGetMethod());
+                specifiedFunc = DynamicMethodFactory.CreateFunc<bool>(specifiedProperty.GetGetMethod());
             }
 
             Func<object, bool> shouldSerializeFunc = null;
             var shouldSerializeMethod = propertyInfo.DeclaringType.GetMethod("ShouldSerialize" + propertyInfo.Name, Type.EmptyTypes);
             if (shouldSerializeMethod != null)
             {
-                shouldSerializeFunc = DynamicMethodFactory.CreateGetMethod<bool>(shouldSerializeMethod);
+                shouldSerializeFunc = DynamicMethodFactory.CreateFunc<bool>(shouldSerializeMethod);
             }
 
             if (specifiedFunc == null && shouldSerializeFunc == null)
