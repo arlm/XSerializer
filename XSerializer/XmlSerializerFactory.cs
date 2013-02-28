@@ -4,8 +4,6 @@ using System.Linq;
 
 namespace XSerializer
 {
-    using System.Collections;
-
     public class XmlSerializerFactory
     {
         private readonly Dictionary<Type, Func<string, Type[], string, IXmlSerializer>> _getSerializerMap = new Dictionary<Type, Func<string, Type[], string, IXmlSerializer>>();

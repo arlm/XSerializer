@@ -1,11 +1,10 @@
 ﻿using System;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Reflection.Emit;
 
 namespace XSerializer
 {
-    using System.Linq.Expressions;
-
     public static class DynamicMethodFactory
     {
         public static Func<T> CreateDefaultConstructorFunc<T>(this Type type)

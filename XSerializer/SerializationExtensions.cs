@@ -1,25 +1,23 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 
 namespace XSerializer
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Reflection;
-    using System.Reflection.Emit;
-
     public static class SerializationExtensions
     {
         public static string Serialize<T>(
             this IXmlSerializer<T> serializer,
             T instance,
+            XmlSerializerNamespaces namespaces,
             Encoding encoding,
-            Formatting formatting,
-            XmlSerializerNamespaces namespaces)
+            Formatting formatting)
         {
             var sb = new StringBuilder();
             using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
@@ -27,18 +25,19 @@ namespace XSerializer
                 using (var xmlWriter = new SerializationXmlTextWriter(stringWriter))
                 {
                     xmlWriter.Formatting = formatting;
-                    serializer.Serialize(instance, xmlWriter, namespaces);
+                    serializer.Serialize(xmlWriter, instance, namespaces);
                 }
             }
+
             return sb.ToString();
         }
 
         public static string SerializeObject(
             this IXmlSerializer serializer,
             object instance,
+            XmlSerializerNamespaces namespaces,
             Encoding encoding,
-            Formatting formatting,
-            XmlSerializerNamespaces namespaces)
+            Formatting formatting)
         {
             var sb = new StringBuilder();
             using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
@@ -46,68 +45,73 @@ namespace XSerializer
                 using (var xmlWriter = new SerializationXmlTextWriter(stringWriter))
                 {
                     xmlWriter.Formatting = formatting;
-                    serializer.SerializeObject(instance, xmlWriter, namespaces);
+                    serializer.SerializeObject(xmlWriter, instance, namespaces);
                 }
             }
+
             return sb.ToString();
         }
 
         public static void Serialize<T>(
             this IXmlSerializer<T> serializer,
-            T instance,
             Stream stream,
+            T instance,
+            XmlSerializerNamespaces namespaces,
             Encoding encoding,
-            Formatting formatting,
-            XmlSerializerNamespaces namespaces)
+            Formatting formatting)
         {
             var xmlWriter = new SerializationXmlTextWriter(stream, encoding ?? Encoding.UTF8)
             {
                 Formatting = formatting
             };
-            serializer.Serialize(instance, xmlWriter, namespaces);
+
+            serializer.Serialize(xmlWriter, instance, namespaces);
         }
 
         public static void SerializeObject(
             this IXmlSerializer serializer,
-            object instance,
             Stream stream,
+            object instance,
+            XmlSerializerNamespaces namespaces,
             Encoding encoding,
-            Formatting formatting,
-            XmlSerializerNamespaces namespaces)
+            Formatting formatting)
         {
             var xmlWriter = new SerializationXmlTextWriter(stream, encoding ?? Encoding.UTF8)
             {
                 Formatting = formatting
             };
-            serializer.SerializeObject(instance, xmlWriter, namespaces);
+
+            serializer.SerializeObject(xmlWriter, instance, namespaces);
         }
 
         public static void Serialize<T>(
             this IXmlSerializer<T> serializer,
-            T instance,
             TextWriter writer,
-            Formatting formatting,
-            XmlSerializerNamespaces namespaces)
+            T instance,
+            XmlSerializerNamespaces namespaces,
+            Formatting formatting)
         {
             var xmlWriter = new SerializationXmlTextWriter(writer)
             {
                 Formatting = formatting
             };
-            serializer.Serialize(instance, xmlWriter, namespaces);
+
+            serializer.Serialize(xmlWriter, instance, namespaces);
         }
 
         public static void SerializeObject(
             this IXmlSerializer serializer,
-            object instance,
             TextWriter writer,
-            Formatting formatting,
-            XmlSerializerNamespaces namespaces)
+            object instance,
+            XmlSerializerNamespaces namespaces,
+            Formatting formatting)
         {
             var xmlWriter = new SerializationXmlTextWriter(writer)
             {
                 Formatting = formatting
             };
-            serializer.SerializeObject(instance, xmlWriter, namespaces);
+
+            serializer.SerializeObject(xmlWriter, instance, namespaces);
         }
 
         public static T Deserialize<T>(this IXmlSerializer<T> serializer, string xml)
@@ -156,7 +160,7 @@ namespace XSerializer
             return serializer.DeserializeObject(xmlReader);
         }
 
-        public static bool HasDefaultConstructor(this Type type)
+        internal static bool HasDefaultConstructor(this Type type)
         {
             return type.GetConstructor(Type.EmptyTypes) != null;
         }
@@ -167,13 +171,13 @@ namespace XSerializer
             return isSerializable;
         }
 
-        public static bool IsReadWriteProperty(this PropertyInfo property)
+        internal static bool IsReadWriteProperty(this PropertyInfo property)
         {
             var isReadWriteProperty = property.CanCallGetter() && property.CanCallSetter();
             return isReadWriteProperty;
         }
 
-        public static bool IsSerializableReadOnlyProperty(this PropertyInfo property)
+        internal static bool IsSerializableReadOnlyProperty(this PropertyInfo property)
         {
             var canCallGetter = property.CanCallGetter();
             var canCallSetter = property.CanCallSetter();
@@ -184,13 +188,13 @@ namespace XSerializer
                     || property.PropertyType.IsAssignableToGenericIDictionary()); // TODO: add additional serializable types?
         }
 
-        public static bool IsAssignableToNonGenericIDictionary(this Type type)
+        internal static bool IsAssignableToNonGenericIDictionary(this Type type)
         {
             var isAssignableFromIDictionary = typeof(IDictionary).IsAssignableFrom(type);
             return isAssignableFromIDictionary;
         }
 
-        public static bool IsAssignableToGenericIDictionary(this Type type)
+        internal static bool IsAssignableToGenericIDictionary(this Type type)
         {
             var isAssignableFromGenericIDictionary =
                 (type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IDictionary<,>))
@@ -198,7 +202,7 @@ namespace XSerializer
             return isAssignableFromGenericIDictionary;
         }
 
-        public static Type GetGenericIDictionaryType(this Type type)
+        internal static Type GetGenericIDictionaryType(this Type type)
         {
             if (type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IDictionary<,>))
             {
@@ -208,13 +212,13 @@ namespace XSerializer
             return type.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
         }
 
-        public static bool CanCallGetter(this PropertyInfo property)
+        internal static bool CanCallGetter(this PropertyInfo property)
         {
             var canCallGetter = property.CanRead && property.GetGetMethod() != null;
             return canCallGetter;
         }
 
-        public static bool CanCallSetter(this PropertyInfo property)
+        internal static bool CanCallSetter(this PropertyInfo property)
         {
             var canCallSetter = property.CanWrite && property.GetSetMethod() != null;
             return canCallSetter;

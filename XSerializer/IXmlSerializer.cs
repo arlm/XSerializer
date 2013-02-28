@@ -5,13 +5,13 @@ namespace XSerializer
 {
     public interface IXmlSerializer
     {
-        void SerializeObject(object instance, SerializationXmlTextWriter writer, XmlSerializerNamespaces namespaces);
+        void SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces);
         object DeserializeObject(XmlReader reader);
     }
 
     public interface IXmlSerializer<T> : IXmlSerializer
     {
-        void Serialize(T instance, SerializationXmlTextWriter writer, XmlSerializerNamespaces namespaces);
+        void Serialize(SerializationXmlTextWriter writer, T instance, XmlSerializerNamespaces namespaces);
         T Deserialize(XmlReader reader);
     }
 }

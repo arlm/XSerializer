@@ -1,11 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
 using NUnit.Framework;
 
 namespace XSerializer.Tests
 {
-    using System.Dynamic;
-
     public class DictionaryTests
     {
         private const string _genericDictionaryXmlFormat = @"<?xml version=""1.0"" encoding=""utf-8""?>

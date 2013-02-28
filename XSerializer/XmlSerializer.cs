@@ -48,17 +48,17 @@ namespace XSerializer
 
         public string Serialize(T instance)
         {
-            return _serializer.Serialize(instance, _encoding, _formatting, _namespaces);
+            return _serializer.Serialize(instance, _namespaces, _encoding, _formatting);
         }
 
-        public void Serialize(T instance, Stream stream)
+        public void Serialize(Stream stream, T instance)
         {
-            _serializer.Serialize(instance, stream, _encoding, _formatting, _namespaces);
+            _serializer.Serialize(stream, instance, _namespaces, _encoding, _formatting);
         }
 
-        public void Serialize(T instance, TextWriter writer)
+        public void Serialize(TextWriter writer, T instance)
         {
-            _serializer.Serialize(instance, writer, _formatting, _namespaces);
+            _serializer.Serialize(writer, instance, _namespaces, _formatting);
         }
 
         public T Deserialize(string xml)

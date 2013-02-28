@@ -89,7 +89,7 @@ namespace XSerializer
                         .ToArray());
         }
 
-        public void Serialize(T instance, SerializationXmlTextWriter writer, XmlSerializerNamespaces namespaces)
+        public void Serialize(SerializationXmlTextWriter writer, T instance, XmlSerializerNamespaces namespaces)
         {
             writer.WriteStartDocument();
             writer.WriteStartElement(_rootElementName);
@@ -114,9 +114,9 @@ namespace XSerializer
             writer.WriteEndElement();
         }
 
-        void IXmlSerializer.SerializeObject(object instance, SerializationXmlTextWriter writer, XmlSerializerNamespaces namespaces)
+        void IXmlSerializer.SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces)
         {
-            Serialize((T)instance, writer, namespaces);
+            Serialize(writer, (T)instance, namespaces);
         }
 
         public T Deserialize(XmlReader reader)

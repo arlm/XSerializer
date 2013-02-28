@@ -1,14 +1,13 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
+using System.Reflection;
 using NUnit.Framework.Constraints;
 
 namespace XSerializer.Tests
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Dynamic;
-    using System.Reflection;
-
     internal static class Has
     {
         public static IResolveConstraint PropertiesEqualTo(object expected)
@@ -142,7 +141,7 @@ namespace XSerializer.Tests
                     properties = actualValue.GetType().GetProperties().Where(p => p.IsSerializable()).Select(p => new Property(p, actualValue, expectedValue));
                 }
 
-                return properties.All(property => this.DoPropertyValuesMatch(property.ActualValue, property.ExpectedValue, property.Type, property.Name, path));
+                return properties.All(property => DoPropertyValuesMatch(property.ActualValue, property.ExpectedValue, property.Type, property.Name, path));
             }
 
             private class Property
@@ -219,13 +218,13 @@ namespace XSerializer.Tests
                     {
                         if (propertyType == typeof(string))
                         {
-                            this._failedExpectedValue = string.Format("{0}.{1} to be \"{2}\"", path, propertyName, expectedPropertyValue);
-                            this._failedActualValue = string.Format("\"{0}\"", actualPropertyValue);
+                            _failedExpectedValue = string.Format("{0}.{1} to be \"{2}\"", path, propertyName, expectedPropertyValue);
+                            _failedActualValue = string.Format("\"{0}\"", actualPropertyValue);
                         }
                         else
                         {
-                            this._failedExpectedValue = string.Format("{0}.{1} to be {2}", path, propertyName, expectedPropertyValue);
-                            this._failedActualValue = actualPropertyValue.ToString();
+                            _failedExpectedValue = string.Format("{0}.{1} to be {2}", path, propertyName, expectedPropertyValue);
+                            _failedActualValue = actualPropertyValue.ToString();
                         }
 
                         return false;
@@ -266,7 +265,7 @@ namespace XSerializer.Tests
                 }
                 else
                 {
-                    if (!this.Matches(actualPropertyValue, expectedPropertyValue, string.Concat(path, ".", propertyName)))
+                    if (!Matches(actualPropertyValue, expectedPropertyValue, string.Concat(path, ".", propertyName)))
                     {
                         return false;
                     }

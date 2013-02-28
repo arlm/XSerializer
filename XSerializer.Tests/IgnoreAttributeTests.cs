@@ -1,11 +1,9 @@
-﻿using System.Xml.Serialization;
+﻿using System.Collections.Generic;
+using System.Xml.Serialization;
+using NUnit.Framework;
 
 namespace XSerializer.Tests
 {
-    using System.Collections.Generic;
-
-    using NUnit.Framework;
-
     public class IgnoreAttributeTests : ObjectToXmlWithDefaultComparison
     {
         protected override IEnumerable<TestCaseData> GetTestCaseData()

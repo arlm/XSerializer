@@ -1,17 +1,16 @@
-﻿namespace XSerializer
-{
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Runtime.Serialization;
-    using System.Xml;
-    using System.Xml.Serialization;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.Serialization;
+using System.Xml;
+using System.Xml.Serialization;
 
+namespace XSerializer
+{
     public abstract class DictionarySerializer : IXmlSerializer
     {
         private static readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
-        private static readonly Dictionary<Type, object> _valueTypeDefaultValueMap = new Dictionary<Type, object>();
 
         private readonly string _defaultNamespace;
         private readonly Type[] _extraTypes;
@@ -27,8 +26,8 @@
             _defaultNamespace = defaultNamespace;
             _extraTypes = extraTypes;
             _rootElementName = rootElementName;
-            _keySerializer = XmlSerializerFactory.Instance.GetSerializer(this.KeyType, _defaultNamespace, _extraTypes, "Key");
-            _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(this.ValueType, _defaultNamespace, _extraTypes, "Value");
+            _keySerializer = XmlSerializerFactory.Instance.GetSerializer(KeyType, _defaultNamespace, _extraTypes, "Key");
+            _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(ValueType, _defaultNamespace, _extraTypes, "Value");
 
             if (DictionaryType.IsInterface || DictionaryType.IsAbstract)
             {
@@ -65,7 +64,7 @@
         protected abstract IEnumerable<DictionaryEntry> GetDictionaryEntries(object dictionary);
         protected abstract void AddItemToDictionary(object dictionary, object key, object value);
 
-        public void SerializeObject(object instance, SerializationXmlTextWriter writer, XmlSerializerNamespaces namespaces)
+        public void SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces)
         {
             writer.WriteStartDocument();
             writer.WriteStartElement(_rootElementName);
@@ -82,12 +81,12 @@
 
                 if (item.Key != null)
                 {
-                    _keySerializer.SerializeObject(item.Key, writer, namespaces);
+                    _keySerializer.SerializeObject(writer, item.Key, namespaces);
                 }
 
                 if (item.Value != null)
                 {
-                    _valueSerializer.SerializeObject(item.Value, writer, namespaces);
+                    _valueSerializer.SerializeObject(writer, item.Value, namespaces);
                 }
 
                 writer.WriteEndElement();
@@ -213,9 +212,9 @@
         {
         }
 
-        public void Serialize(TDictionary instance, SerializationXmlTextWriter writer, XmlSerializerNamespaces namespaces)
+        public void Serialize(SerializationXmlTextWriter writer, TDictionary instance, XmlSerializerNamespaces namespaces)
         {
-            SerializeObject(instance, writer, namespaces);
+            SerializeObject(writer, instance, namespaces);
         }
 
         public TDictionary Deserialize(XmlReader reader)
@@ -278,9 +277,9 @@
         {
         }
 
-        public void Serialize(TDictionary instance, SerializationXmlTextWriter writer, XmlSerializerNamespaces namespaces)
+        public void Serialize(SerializationXmlTextWriter writer, TDictionary instance, XmlSerializerNamespaces namespaces)
         {
-            SerializeObject(instance, writer, namespaces);
+            SerializeObject(writer, instance, namespaces);
         }
 
         public TDictionary Deserialize(XmlReader reader)

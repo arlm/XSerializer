@@ -46,14 +46,14 @@ namespace XSerializer
                 defaultNamespace);
         }
 
-        public void Serialize(T instance, SerializationXmlTextWriter writer, XmlSerializerNamespaces namespaces)
+        public void Serialize(SerializationXmlTextWriter writer, T instance, XmlSerializerNamespaces namespaces)
         {
             _serializer.Serialize(writer, instance, namespaces);
         }
 
-        void IXmlSerializer.SerializeObject(object instance, SerializationXmlTextWriter writer, XmlSerializerNamespaces namespaces)
+        void IXmlSerializer.SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces)
         {
-            Serialize((T)instance, writer, namespaces);
+            Serialize(writer, (T)instance, namespaces);
         }
 
         public T Deserialize(XmlReader reader)

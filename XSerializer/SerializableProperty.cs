@@ -1,13 +1,12 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Xml;
 using System.Xml.Serialization;
 
 namespace XSerializer
 {
-    using System.Collections;
-    using System.Collections.Generic;
-
     public sealed class SerializableProperty
     {
         private readonly Lazy<IXmlSerializer> _serializer;
@@ -46,7 +45,7 @@ namespace XSerializer
                 var value = _getValueFunc(instance);
                 if (value != null)
                 {
-                    _serializer.Value.SerializeObject(value, writer, namespaces);
+                    _serializer.Value.SerializeObject(writer, value, namespaces);
                 }
             }
         }

@@ -13,7 +13,7 @@ namespace XSerializer.Tests
         {
             var serializer = XmlSerializerFactory.Instance.GetSerializer(type, null, null, null);
             var instance = serializer.DeserializeObject(xml);
-            var roundTripXml = serializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, null);
+            var roundTripXml = serializer.SerializeObject(instance, null, Encoding.UTF8, Formatting.Indented);
             var roundTripInstance = serializer.DeserializeObject(roundTripXml);
             AssertAreEqual(instance, roundTripInstance);
         }
