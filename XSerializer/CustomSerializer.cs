@@ -240,7 +240,7 @@ namespace XSerializer
                 var key = CreateTypeCacheKey<T>(typeName);
                 if (!_typeCache.TryGetValue(key, out type))
                 {
-                    // try REAL hard to get the type. (holy crap, this is UUUUUGLY!!!!)
+                    //// try REAL hard to get the type. (holy crap, this is UUUUUGLY!!!!)
 
                     var typeNameWithPossibleNamespace = typeName;
 
@@ -252,33 +252,70 @@ namespace XSerializer
                     var checkPossibleNamespace = typeName != typeNameWithPossibleNamespace;
 
                     type = Type.GetType(typeName);
+                    type = typeof(T).IsAssignableFrom(type) ? type : null;
+
                     if (type == null)
                     {
                         type = checkPossibleNamespace ? Type.GetType(typeNameWithPossibleNamespace) : null;
+                        type = typeof(T).IsAssignableFrom(type) ? type : null;
+
                         if (type == null)
                         {
                             type = typeof(T).Assembly.GetType(typeName);
+                            type = typeof(T).IsAssignableFrom(type) ? type : null;
+
                             if (type == null)
                             {
                                 type = checkPossibleNamespace ? typeof(T).Assembly.GetType(typeNameWithPossibleNamespace) : null;
+                                type = typeof(T).IsAssignableFrom(type) ? type : null;
+
                                 if (type == null)
                                 {
+                                    var matches = typeof(T).Assembly.GetTypes().Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
+                                    if (matches.Count == 1)
+                                    {
+                                        type = matches.Single();
+                                    }
+
                                     var entryAssembly = Assembly.GetEntryAssembly();
                                     if (entryAssembly != null)
                                     {
                                         type = entryAssembly.GetType(typeName);
+                                        type = typeof(T).IsAssignableFrom(type) ? type : null;
+
                                         if (type == null)
                                         {
                                             type = checkPossibleNamespace ? entryAssembly.GetType(typeNameWithPossibleNamespace) : null;
+                                            type = typeof(T).IsAssignableFrom(type) ? type : null;
+                                        }
+
+                                        if (type == null)
+                                        {
+                                            matches = entryAssembly.GetTypes().Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
+                                            if (matches.Count == 1)
+                                            {
+                                                type = matches.Single();
+                                            }
                                         }
                                     }
 
                                     if (type == null)
                                     {
-                                        type = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).FirstOrDefault(t => t.Name == typeName);
-                                        if (type == null)
+                                        matches = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a =>
                                         {
-                                            type = checkPossibleNamespace ? AppDomain.CurrentDomain.GetAssemblies().SelectMany(a => a.GetTypes()).FirstOrDefault(t => t.Name == typeNameWithPossibleNamespace) : null;
+                                            try
+                                            {
+                                                return a.GetTypes();
+                                            }
+                                            catch
+                                            {
+                                                return Enumerable.Empty<Type>();
+                                            }
+                                        }).Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
+
+                                        if (matches.Count == 1)
+                                        {
+                                            type = matches.Single();
                                         }
                                     }
                                 }
