@@ -9,7 +9,7 @@ namespace XSerializer.Tests
     public class AttributedPropertyTests
     {
         [TestCaseSource("TestCaseData")]
-        public void CustomSerializerThrowsExceptionWhenBclXmlSerializerDoes(Type type)
+        public void CustomSerializerThrowsExceptionIfAndOnlyIfBclXmlSerializerDoes(Type type)
         {
             Exception thrownException;
             try
@@ -24,11 +24,11 @@ namespace XSerializer.Tests
 
             if (thrownException == null)
             {
-                Assert.That(() => CustomSerializer.GetSerializer(type, null, null, null), Throws.Nothing);
+                Assert.That(() => CustomSerializer.GetSerializer(type, null, null, null), Throws.Nothing, "Type: " + type.Name + Environment.NewLine);
             }
             else
             {
-                Assert.That(() => CustomSerializer.GetSerializer(type, null, null, null), Throws.InstanceOf(thrownException.GetType()));
+                Assert.That(() => CustomSerializer.GetSerializer(type, null, null, null), Throws.InstanceOf(thrownException.GetType()), "Type: " + type.Name + Environment.NewLine);
             }
         }
 
