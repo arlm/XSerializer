@@ -224,6 +224,16 @@ namespace XSerializer
             return canCallSetter;
         }
 
+        internal static bool ReadIfNeeded(this XmlReader reader, bool shouldRead)
+        {
+            if (shouldRead)
+            {
+                return reader.Read();
+            }
+
+            return true;
+        }
+
         private class StringWriterWithEncoding : StringWriter
         {
             private readonly Encoding _encoding;

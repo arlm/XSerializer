@@ -33,6 +33,11 @@ namespace XSerializer
 
         public NodeType NodeType { get; private set; }
 
+        public bool UsesDefaultSerializer
+        {
+            get { return _serializer.Value is DefaultSerializer; }
+        }
+
         public void ReadValue(XmlReader reader, object instance)
         {
             _setValueFunc(instance, _serializer.Value.DeserializeObject(reader));

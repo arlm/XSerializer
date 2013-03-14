@@ -105,9 +105,11 @@ namespace XSerializer
             object currentKey = null;
             object currentValue = null;
             bool shouldIssueRead;
+
             do
             {
                 shouldIssueRead = true;
+
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
@@ -145,20 +147,13 @@ namespace XSerializer
 
                         break;
                 }
-            } while (ReadNextElementIfNeeded(reader,shouldIssueRead));
+            } while (reader.ReadIfNeeded(shouldIssueRead));
 
             throw new SerializationException("Poop in a hoop.");
         }
 
-        private static bool ReadNextElementIfNeeded(XmlReader reader, bool shouldRead)
-        {
-            return (shouldRead) ? reader.Read() : true;
-        }
-
-        
         private static object DeserializeKeyOrValue(XmlReader reader, IXmlSerializer serializer, bool hasInstanceBeenCreated, bool isInsideElement, out bool shouldIssueRead)
         {
-            var initialElementName = reader.Name;
             if (!hasInstanceBeenCreated)
             {
                 throw new SerializationException("le sigh.");
@@ -170,9 +165,8 @@ namespace XSerializer
             }
 
             var deserialized = serializer.DeserializeObject(reader);
-            var finalElementName = reader.Name;
 
-            shouldIssueRead = (initialElementName == finalElementName);
+            shouldIssueRead = !(serializer is DefaultSerializer);
 
             return deserialized;
         }

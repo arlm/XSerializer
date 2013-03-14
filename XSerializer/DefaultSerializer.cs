@@ -32,7 +32,7 @@ namespace XSerializer
         }
     }
 
-    public class DefaultSerializer<T> : IXmlSerializer<T>
+    public class DefaultSerializer<T> : DefaultSerializer, IXmlSerializer<T>
     {
         private readonly XmlSerializer _serializer;
 

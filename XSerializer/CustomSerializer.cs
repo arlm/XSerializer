@@ -126,8 +126,12 @@ namespace XSerializer
 
             var attributes = new Dictionary<string, string>();
 
+            bool shouldIssueRead;
+
             do
             {
+                shouldIssueRead = true;
+
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
@@ -138,7 +142,7 @@ namespace XSerializer
                         }
                         else
                         {
-                            SetElementPropertyValue(reader, hasInstanceBeenCreated, instance);
+                            SetElementPropertyValue(reader, hasInstanceBeenCreated, instance, out shouldIssueRead);
                         }
                         break;
                     case XmlNodeType.Text:
@@ -153,7 +157,7 @@ namespace XSerializer
                     case XmlNodeType.CDATA:
                         break;
                 }
-            } while (reader.Read());
+            } while (reader.ReadIfNeeded(shouldIssueRead));
 
             throw new SerializationException("Couldn't serialize... for some reason. (You know, I should put a better exception message here...)");
         }
@@ -164,7 +168,7 @@ namespace XSerializer
         }
 
         // ReSharper disable UnusedParameter.Local
-        private void SetElementPropertyValue(XmlReader reader, bool hasInstanceBeenCreated, T instance)
+        private void SetElementPropertyValue(XmlReader reader, bool hasInstanceBeenCreated, T instance, out bool shouldIssueRead)
         {
             if (!hasInstanceBeenCreated)
             {
@@ -175,6 +179,11 @@ namespace XSerializer
             if (property != null)
             {
                 property.ReadValue(reader, instance);
+                shouldIssueRead = !property.UsesDefaultSerializer;
+            }
+            else
+            {
+                shouldIssueRead = true;
             }
         }
 
@@ -331,11 +340,11 @@ namespace XSerializer
                     _typeCache[key] = type;
                 }
 
-                instance = (T)Activator.CreateInstance(type);
+                instance = (T)Activator.CreateInstance(type); // TODO: cache into constructor func
             }
             else
             {
-                instance = Activator.CreateInstance<T>();
+                instance = Activator.CreateInstance<T>(); // TODO: cache into constructor func
             }
             
             return instance;
