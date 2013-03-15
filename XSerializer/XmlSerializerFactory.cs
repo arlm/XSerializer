@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace XSerializer
 {
@@ -10,6 +12,20 @@ namespace XSerializer
         private readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
 
         public static readonly XmlSerializerFactory Instance = new XmlSerializerFactory();
+
+        private XmlSerializerFactory()
+        {
+        }
+
+        public IXmlSerializer GetSerializer(PropertyInfo property, string defaultNamespace, Type[] extraTypes, string rootElementName)
+        {
+            if (Attribute.GetCustomAttribute(property, typeof(DynamicAttribute)) != null)
+            {
+                return DynamicSerializer.Instance;
+            }
+
+            return GetSerializer(property.PropertyType, defaultNamespace, extraTypes, rootElementName);
+        }
 
         public IXmlSerializer GetSerializer(Type type, string defaultNamespace, Type[] extraTypes, string rootElementName)
         {

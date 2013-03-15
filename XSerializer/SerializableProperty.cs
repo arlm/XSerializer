@@ -88,7 +88,7 @@ namespace XSerializer
 
             NodeType = NodeType.Element;
             Name = rootElementName;
-            return () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo.PropertyType, defaultNamespace, extraTypes, rootElementName);
+            return () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo, defaultNamespace, extraTypes, rootElementName);
         }
 
         private Action<object, object> GetSerializableReadonlyPropertySetValueFunc(PropertyInfo propertyInfo)

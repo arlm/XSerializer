@@ -45,6 +45,7 @@
     <Compile Include="DefaultSerializer.cs" />
     <Compile Include="DictionarySerializer.cs" />
     <Compile Include="DynamicMethodFactory.cs" />
+    <Compile Include="DynamicSerializer.cs" />
     <Compile Include="NodeType.cs" />
     <Compile Include="SerializationExtensions.cs" />
     <Compile Include="IXmlSerializer.cs" />

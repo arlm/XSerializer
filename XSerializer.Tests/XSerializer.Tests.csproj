@@ -47,6 +47,7 @@
     <Compile Include="ConditionalSerializationTests.cs" />
     <Compile Include="AttributedPropertyTests.cs" />
     <Compile Include="DictionaryTests.cs" />
+    <Compile Include="DynamicSerializationTests.cs" />
     <Compile Include="IgnoreAttributeTests.cs" />
     <Compile Include="NonAbstractClassesWithOnlySimpleElements.cs" />
     <Compile Include="ObjectToXml.cs" />
