@@ -23,11 +23,11 @@ namespace XSerializer
             {
                 try
                 {
-                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof (CustomSerializer<>).MakeGenericType(type), defaultNamespace, extraTypes, rootElementName);
+                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(CustomSerializer<>).MakeGenericType(type), defaultNamespace, extraTypes, rootElementName);
                 }
                 catch (TargetInvocationException ex) // True exception gets masked due to reflection. Preserve stacktrace and rethrow
                 {
-                    PreserveStackTrace(ex);
+                    PreserveStackTrace(ex.InnerException);
                     throw ex.InnerException;
                 }
 

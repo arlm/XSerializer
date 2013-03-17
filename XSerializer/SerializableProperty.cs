@@ -20,10 +20,13 @@ namespace XSerializer
         public SerializableProperty(PropertyInfo propertyInfo, string defaultNamespace, Type[] extraTypes)
         {
             _getValueFunc = DynamicMethodFactory.CreateFunc<object>(propertyInfo.GetGetMethod());
-            _setValueFunc =
-                propertyInfo.IsSerializableReadOnlyProperty()
-                    ? GetSerializableReadonlyPropertySetValueFunc(propertyInfo)
-                    : DynamicMethodFactory.CreateAction(propertyInfo.GetSetMethod());
+            if (!propertyInfo.DeclaringType.IsAnonymous())
+            {
+                _setValueFunc =
+                    propertyInfo.IsSerializableReadOnlyProperty()
+                        ? GetSerializableReadonlyPropertySetValueFunc(propertyInfo)
+                        : DynamicMethodFactory.CreateAction(propertyInfo.GetSetMethod());
+            }
             _shouldSerializeFunc = GetShouldSerializeFunc(propertyInfo);
             _serializer = new Lazy<IXmlSerializer>(GetCreateSerializerFunc(propertyInfo, defaultNamespace, extraTypes));
             _getEnumeratorFunc = DynamicMethodFactory.CreateFunc<IEnumerator>(typeof(IEnumerable).GetMethod("GetEnumerator"));

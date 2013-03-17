@@ -257,6 +257,11 @@ namespace XSerializer
 
         public static bool IsSerializable(this PropertyInfo property)
         {
+            if (property.DeclaringType.IsAnonymous())
+            {
+                return true;
+            }
+
             var isSerializable = property.GetIndexParameters().Length == 0 && (property.IsReadWriteProperty() || property.IsSerializableReadOnlyProperty());
             return isSerializable;
         }
@@ -325,15 +330,18 @@ namespace XSerializer
             return true;
         }
 
-        internal static bool IsAnonymous(this object instance)
+        public static bool IsAnonymous(this object instance)
         {
             if (instance == null)
             {
                 return false;
             }
 
-            var type = instance.GetType();
+            return instance.GetType().IsAnonymous();
+        }
 
+        public static bool IsAnonymous(this Type type)
+        {
             return
                 type.Namespace == null
                 && type.IsClass

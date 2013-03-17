@@ -75,6 +75,20 @@ namespace XSerializer.Tests
     <Qux>abc</Qux>
   "))
                         .SetName("Custom Class");
+
+                yield return new TestCaseData(
+                    new ClassWithDynamicProperty { DynamicProperty = GetAnonymousObject() },
+                    typeof(ClassWithDynamicProperty),
+                    string.Format(ExpectedXmlFormat, GetXsiTypeString(GetAnonymousObject().GetType()), @"
+    <Foo>Bar</Foo>
+    <Baz>123</Baz>
+  "))
+                        .SetName("Anonymous Type");
+            }
+
+            private object GetAnonymousObject()
+            {
+                return new { Foo = "Bar", Baz = 123 };
             }
 
             protected virtual string GetXsiTypeString(Type type)
@@ -92,6 +106,11 @@ namespace XSerializer.Tests
 
             protected override string GetXsiTypeString(Type type)
             {
+                if (type.IsAnonymous())
+                {
+                    return "";
+                }
+
                 return string.Format(" xsi:type=\"{0}\"", type.GetXsdType());
             }
         }

@@ -30,25 +30,28 @@ namespace XSerializer
 
         public static Func<object, T> CreateFunc<T>(MethodInfo method)
         {
-            var dynamicMethod = new DynamicMethod(
-                method.Name + "_Invoker",
-                typeof(T),
-                new[] { typeof(object) },
-                typeof(DynamicMethodFactory));
+            var parameter = Expression.Parameter(typeof(object));
 
-            var il = dynamicMethod.GetILGenerator();
+            UnaryExpression instanceCast =
+                method.DeclaringType.IsValueType
+                ? Expression.Convert(parameter, method.DeclaringType)
+                : Expression.TypeAs(parameter, method.DeclaringType);
 
-            il.Emit(OpCodes.Ldarg, 0);
-            il.EmitCall(OpCodes.Callvirt, method, null);
+            var call = 
+                Expression.Call(
+                    instanceCast,
+                    method);
 
-            if (method.ReturnType.IsValueType && typeof(T) == typeof(object))
-            {
-                il.Emit(OpCodes.Box, method.ReturnType);
-            }
+            Expression body =
+                typeof(T).IsValueType
+                ? (Expression)call
+                : Expression.TypeAs(call, typeof(T));
 
-            il.Emit(OpCodes.Ret);
+            var expression = Expression.Lambda<Func<object, T>>(
+                body,
+                parameter);
 
-            return (Func<object, T>)dynamicMethod.CreateDelegate(typeof(Func<object, T>));
+            return expression.Compile();
         }
 
         public static Func<object, object> CreateGetPropertyValueFunc(Type containerType, string propName)
