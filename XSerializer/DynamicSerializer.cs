@@ -55,7 +55,7 @@ namespace XSerializer
             var expando = instance as ExpandoObject;
             if (expando != null)
             {
-                SerializeExpandoObject(writer, expando, namespaces);
+                SerializeExpandoObject(writer, expando, namespaces, alwaysEmitTypes);
                 return;
             }
 
@@ -71,11 +71,6 @@ namespace XSerializer
             serializer.SerializeObject(writer, instance, namespaces, alwaysEmitTypes);
         }
 
-        private void SerializeExpandoObject(SerializationXmlTextWriter writer, ExpandoObject instance, XmlSerializerNamespaces namespaces)
-        {
-
-        }
-
         public object DeserializeObject(XmlReader reader)
         {
             return Deserialize(reader);
@@ -84,6 +79,41 @@ namespace XSerializer
         public object Deserialize(XmlReader reader)
         {
             return DeserializeExpandoObject(reader);
+        }
+
+        private void SerializeExpandoObject(SerializationXmlTextWriter writer, IDictionary<string, object> expando, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        {
+            writer.WriteStartDocument();
+            writer.WriteStartElement(_rootElementName);
+            writer.WriteDefaultNamespaces();
+
+            if (!string.IsNullOrWhiteSpace(_defaultNamespace))
+            {
+                writer.WriteAttributeString("xmlns", null, null, _defaultNamespace);
+            }
+
+            foreach (var property in expando)
+            {
+                if (property.Value == null)
+                {
+                    continue;
+                }
+
+                IXmlSerializer serializer;
+
+                if (property.Value is ExpandoObject)
+                {
+                    serializer = DynamicSerializer.GetSerializer<ExpandoObject>(_defaultNamespace, _extraTypes, property.Key);
+                }
+                else
+                {
+                    serializer = CustomSerializer.GetSerializer(property.Value.GetType(), _defaultNamespace, _extraTypes, property.Key);
+                }
+
+                serializer.SerializeObject(writer, property.Value, namespaces, alwaysEmitTypes);
+            }
+
+            writer.WriteEndElement();
         }
 
         private ExpandoObject DeserializeExpandoObject(XmlReader reader)
@@ -95,9 +125,6 @@ namespace XSerializer
         private class DynamicSerializerExpandoObjectProxy : IXmlSerializer<ExpandoObject>
         {
             private readonly DynamicSerializer _serializer;
-            private readonly string _defaultNamespace;
-            private readonly Type[] _extraTypes;
-            private readonly string _rootElementName;
 
             public DynamicSerializerExpandoObjectProxy(DynamicSerializer serializer)
             {
@@ -106,7 +133,12 @@ namespace XSerializer
 
             public void Serialize(SerializationXmlTextWriter writer, ExpandoObject instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
             {
-                _serializer.Serialize(writer, instance, namespaces, alwaysEmitTypes);
+                if (instance == null)
+                {
+                    return;
+                }
+
+                _serializer.SerializeExpandoObject(writer, instance, namespaces, alwaysEmitTypes);
             }
 
             public void SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)

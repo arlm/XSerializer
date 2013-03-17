@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
@@ -81,14 +82,37 @@ namespace XSerializer.Tests
                     typeof(ClassWithDynamicProperty),
                     string.Format(ExpectedXmlFormat, GetXsiTypeString(GetAnonymousObject().GetType()), @"
     <Foo>Bar</Foo>
-    <Baz>123</Baz>
+    <Baz>
+      <Qux>123</Qux>
+    </Baz>
   "))
                         .SetName("Anonymous Type");
+
+                yield return new TestCaseData(
+                    new ClassWithDynamicProperty { DynamicProperty = GetExpandoObject() },
+                    typeof(ClassWithDynamicProperty),
+                    string.Format(ExpectedXmlFormat, GetXsiTypeString(GetAnonymousObject().GetType()), @"
+    <Foo>Bar</Foo>
+    <Baz>
+      <Qux>123</Qux>
+    </Baz>
+  "))
+                        .SetName("ExpandoObject");
             }
 
             private object GetAnonymousObject()
             {
-                return new { Foo = "Bar", Baz = 123 };
+                return new { Foo = "Bar", Baz = new { Qux = 123 } };
+            }
+
+            private object GetExpandoObject()
+            {
+                dynamic obj = new ExpandoObject();
+                obj.Foo = "Bar";
+                dynamic baz = new ExpandoObject();
+                baz.Qux = 123;
+                obj.Baz = baz;
+                return obj;
             }
 
             protected virtual string GetXsiTypeString(Type type)
