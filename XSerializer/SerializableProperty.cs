@@ -43,14 +43,14 @@ namespace XSerializer
             _setValueFunc(instance, _serializer.Value.DeserializeObject(reader));
         }
 
-        public void WriteValue(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces)
+        public void WriteValue(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
         {
             if (_shouldSerializeFunc(instance))
             {
                 var value = _getValueFunc(instance);
                 if (value != null)
                 {
-                    _serializer.Value.SerializeObject(writer, value, namespaces);
+                    _serializer.Value.SerializeObject(writer, value, namespaces, alwaysEmitTypes);
                 }
             }
         }
@@ -71,7 +71,7 @@ namespace XSerializer
             {
                 NodeType = NodeType.Text;
                 Name = propertyInfo.Name;
-                return () => new XmlTextSerializer(propertyInfo.PropertyType);
+                return () => XmlTextSerializer.GetSerializer(propertyInfo.PropertyType);
             }
 
             var elementAttribute = (XmlElementAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlElementAttribute), false);
@@ -88,7 +88,7 @@ namespace XSerializer
 
             NodeType = NodeType.Element;
             Name = rootElementName;
-            return () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo, defaultNamespace, extraTypes, rootElementName);
+            return () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo.PropertyType, defaultNamespace, extraTypes, rootElementName);
         }
 
         private Action<object, object> GetSerializableReadonlyPropertySetValueFunc(PropertyInfo propertyInfo)

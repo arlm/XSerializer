@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace XSerializer
 {
@@ -15,16 +14,6 @@ namespace XSerializer
 
         private XmlSerializerFactory()
         {
-        }
-
-        public IXmlSerializer GetSerializer(PropertyInfo property, string defaultNamespace, Type[] extraTypes, string rootElementName)
-        {
-            if (Attribute.GetCustomAttribute(property, typeof(DynamicAttribute)) != null)
-            {
-                return DynamicSerializer.Instance;
-            }
-
-            return GetSerializer(property.PropertyType, defaultNamespace, extraTypes, rootElementName);
         }
 
         public IXmlSerializer GetSerializer(Type type, string defaultNamespace, Type[] extraTypes, string rootElementName)
@@ -52,15 +41,21 @@ namespace XSerializer
 
             if (!TryGetCachedSerializer(defaultNamespace, extraTypes, rootElementName, out serializer))
             {
-                if (!TryGetDefaultSerializer(defaultNamespace, extraTypes, rootElementName, out serializer))
+                var type = typeof(T);
+
+                if (type == typeof(object) || type == typeof(ExpandoObject))
                 {
-                    if (typeof(T).IsAssignableToNonGenericIDictionary() || typeof(T).IsAssignableToGenericIDictionary())
+                    serializer = (IXmlSerializer<T>)DynamicSerializer.GetSerializer<T>(defaultNamespace, extraTypes, rootElementName);
+                }
+                else if (!TryGetDefaultSerializer(defaultNamespace, extraTypes, rootElementName, out serializer))
+                {
+                    if (type.IsAssignableToNonGenericIDictionary() || type.IsAssignableToGenericIDictionary())
                     {
-                        serializer = (IXmlSerializer<T>)DictionarySerializer.GetSerializer(typeof(T), defaultNamespace, extraTypes, rootElementName);
+                        serializer = (IXmlSerializer<T>)DictionarySerializer.GetSerializer(type, defaultNamespace, extraTypes, rootElementName);
                     }
                     else
                     {
-                        serializer = (IXmlSerializer<T>)CustomSerializer.GetSerializer(typeof(T), defaultNamespace, extraTypes, rootElementName);
+                        serializer = (IXmlSerializer<T>)CustomSerializer.GetSerializer(type, defaultNamespace, extraTypes, rootElementName);
                     }
                 }
 
@@ -85,6 +80,8 @@ namespace XSerializer
 
         protected virtual bool TryGetDefaultSerializer<T>(string defaultNamespace, Type[] extraTypes, string rootElementName, out IXmlSerializer<T> serializer)
         {
+            // TODO: check T's object hierarchy - if any properties have a type of object (or the property's properties), return false.
+
             serializer = (IXmlSerializer<T>)DefaultSerializer.GetSerializer(typeof(T), defaultNamespace, extraTypes, rootElementName);
             return serializer != null;
         }

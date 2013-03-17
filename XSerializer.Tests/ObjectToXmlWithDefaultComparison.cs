@@ -15,8 +15,8 @@ namespace XSerializer.Tests
             var customSerializer = CustomSerializer.GetSerializer(type, null, null, null);
             var defaultSerializer = DefaultSerializer.GetSerializer(type, null, null, null);
 
-            var customXml = customSerializer.SerializeObject(instance, null, Encoding.UTF8, Formatting.Indented);
-            var defaultXml = defaultSerializer.SerializeObject(instance, null, Encoding.UTF8, Formatting.Indented);
+            var customXml = customSerializer.SerializeObject(instance, null, Encoding.UTF8, Formatting.Indented, AlwaysEmitTypes);
+            var defaultXml = defaultSerializer.SerializeObject(instance, null, Encoding.UTF8, Formatting.Indented, AlwaysEmitTypes);
 
             Console.WriteLine("Default XML:");
             Console.WriteLine(defaultXml);
@@ -27,6 +27,11 @@ namespace XSerializer.Tests
             Assert.That(customXml, Is.EqualTo(defaultXml));
 
             AdditionalAssertions(instance, type, customXml, defaultXml);
+        }
+
+        protected virtual bool AlwaysEmitTypes
+        {
+            get { return false; }
         }
 
         protected virtual void AdditionalAssertions(object instance, Type type, string customXml, string defaultXml)

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
@@ -12,12 +14,33 @@ namespace XSerializer
 {
     public static class SerializationExtensions
     {
+        private static readonly Dictionary<Type, string> XsdTypeMap = new Dictionary<Type, string>();
+
+        static SerializationExtensions()
+        {
+            XsdTypeMap.Add(typeof(bool), "xsd:boolean");
+            XsdTypeMap.Add(typeof(byte), "xsd:unsignedByte");
+            XsdTypeMap.Add(typeof(sbyte), "xsd:byte");
+            XsdTypeMap.Add(typeof(short), "xsd:short");
+            XsdTypeMap.Add(typeof(ushort), "xsd:unsignedShort");
+            XsdTypeMap.Add(typeof(int), "xsd:int");
+            XsdTypeMap.Add(typeof(uint), "xsd:unsignedInt");
+            XsdTypeMap.Add(typeof(long), "xsd:long");
+            XsdTypeMap.Add(typeof(ulong), "xsd:unsignedLong");
+            XsdTypeMap.Add(typeof(float), "xsd:float");
+            XsdTypeMap.Add(typeof(double), "xsd:double");
+            XsdTypeMap.Add(typeof(decimal), "xsd:decimal");
+            XsdTypeMap.Add(typeof(DateTime), "xsd:dateTime");
+            XsdTypeMap.Add(typeof(string), "xsd:string");
+        }
+
         public static string Serialize<T>(
             this IXmlSerializer<T> serializer,
             T instance,
             XmlSerializerNamespaces namespaces,
             Encoding encoding,
-            Formatting formatting)
+            Formatting formatting,
+            bool alwaysEmitTypes)
         {
             var sb = new StringBuilder();
             using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
@@ -25,7 +48,38 @@ namespace XSerializer
                 using (var xmlWriter = new SerializationXmlTextWriter(stringWriter))
                 {
                     xmlWriter.Formatting = formatting;
-                    serializer.Serialize(xmlWriter, instance, namespaces);
+                    serializer.Serialize(xmlWriter, instance, namespaces, alwaysEmitTypes);
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        public static string Serialize<T>(
+            this IXmlSerializer<T> serializer,
+            T instance,
+            XmlSerializerNamespaces namespaces,
+            Encoding encoding,
+            Formatting formatting)
+        {
+            return serializer.Serialize(instance, namespaces, encoding, formatting, false);
+        }
+
+        public static string SerializeObject(
+            this IXmlSerializer serializer,
+            object instance,
+            XmlSerializerNamespaces namespaces,
+            Encoding encoding,
+            Formatting formatting,
+            bool alwaysEmitTypes)
+        {
+            var sb = new StringBuilder();
+            using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
+            {
+                using (var xmlWriter = new SerializationXmlTextWriter(stringWriter))
+                {
+                    xmlWriter.Formatting = formatting;
+                    serializer.SerializeObject(xmlWriter, instance, namespaces, alwaysEmitTypes);
                 }
             }
 
@@ -39,17 +93,24 @@ namespace XSerializer
             Encoding encoding,
             Formatting formatting)
         {
-            var sb = new StringBuilder();
-            using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
-            {
-                using (var xmlWriter = new SerializationXmlTextWriter(stringWriter))
-                {
-                    xmlWriter.Formatting = formatting;
-                    serializer.SerializeObject(xmlWriter, instance, namespaces);
-                }
-            }
+            return serializer.SerializeObject(instance, namespaces, encoding, formatting, false);
+        }
 
-            return sb.ToString();
+        public static void Serialize<T>(
+            this IXmlSerializer<T> serializer,
+            Stream stream,
+            T instance,
+            XmlSerializerNamespaces namespaces,
+            Encoding encoding,
+            Formatting formatting,
+            bool alwaysEmitTypes)
+        {
+            var xmlWriter = new SerializationXmlTextWriter(stream, encoding ?? Encoding.UTF8)
+            {
+                Formatting = formatting
+            };
+
+            serializer.Serialize(xmlWriter, instance, namespaces, alwaysEmitTypes);
         }
 
         public static void Serialize<T>(
@@ -60,12 +121,24 @@ namespace XSerializer
             Encoding encoding,
             Formatting formatting)
         {
+            serializer.Serialize(stream, instance, namespaces, encoding, formatting, false);
+        }
+
+        public static void SerializeObject(
+            this IXmlSerializer serializer,
+            Stream stream,
+            object instance,
+            XmlSerializerNamespaces namespaces,
+            Encoding encoding,
+            Formatting formatting,
+            bool alwaysEmitTypes)
+        {
             var xmlWriter = new SerializationXmlTextWriter(stream, encoding ?? Encoding.UTF8)
             {
                 Formatting = formatting
             };
 
-            serializer.Serialize(xmlWriter, instance, namespaces);
+            serializer.SerializeObject(xmlWriter, instance, namespaces, alwaysEmitTypes);
         }
 
         public static void SerializeObject(
@@ -76,12 +149,23 @@ namespace XSerializer
             Encoding encoding,
             Formatting formatting)
         {
-            var xmlWriter = new SerializationXmlTextWriter(stream, encoding ?? Encoding.UTF8)
+            serializer.SerializeObject(stream, instance, namespaces, encoding, formatting, false);
+        }
+
+        public static void Serialize<T>(
+            this IXmlSerializer<T> serializer,
+            TextWriter writer,
+            T instance,
+            XmlSerializerNamespaces namespaces,
+            Formatting formatting,
+            bool alwaysEmitTypes)
+        {
+            var xmlWriter = new SerializationXmlTextWriter(writer)
             {
                 Formatting = formatting
             };
 
-            serializer.SerializeObject(xmlWriter, instance, namespaces);
+            serializer.Serialize(xmlWriter, instance, namespaces, alwaysEmitTypes);
         }
 
         public static void Serialize<T>(
@@ -91,12 +175,23 @@ namespace XSerializer
             XmlSerializerNamespaces namespaces,
             Formatting formatting)
         {
+            serializer.Serialize(writer, instance, namespaces, formatting, false);
+        }
+
+        public static void SerializeObject(
+            this IXmlSerializer serializer,
+            TextWriter writer,
+            object instance,
+            XmlSerializerNamespaces namespaces,
+            Formatting formatting,
+            bool alwaysEmitTypes)
+        {
             var xmlWriter = new SerializationXmlTextWriter(writer)
             {
                 Formatting = formatting
             };
 
-            serializer.Serialize(xmlWriter, instance, namespaces);
+            serializer.SerializeObject(xmlWriter, instance, namespaces, alwaysEmitTypes);
         }
 
         public static void SerializeObject(
@@ -106,12 +201,7 @@ namespace XSerializer
             XmlSerializerNamespaces namespaces,
             Formatting formatting)
         {
-            var xmlWriter = new SerializationXmlTextWriter(writer)
-            {
-                Formatting = formatting
-            };
-
-            serializer.SerializeObject(xmlWriter, instance, namespaces);
+            serializer.SerializeObject(writer, instance, namespaces, formatting, false);
         }
 
         public static T Deserialize<T>(this IXmlSerializer<T> serializer, string xml)
@@ -185,7 +275,8 @@ namespace XSerializer
             return
                 (canCallGetter && !canCallSetter)
                 && (property.PropertyType.IsAssignableToNonGenericIDictionary()
-                    || property.PropertyType.IsAssignableToGenericIDictionary()); // TODO: add additional serializable types?
+                    || property.PropertyType.IsAssignableToGenericIDictionary()) // TODO: add additional serializable types?
+                && property.PropertyType != typeof(ExpandoObject);
         }
 
         internal static bool IsAssignableToNonGenericIDictionary(this Type type)
@@ -232,6 +323,38 @@ namespace XSerializer
             }
 
             return true;
+        }
+
+        internal static bool IsAnonymous(this object instance)
+        {
+            if (instance == null)
+            {
+                return false;
+            }
+
+            var type = instance.GetType();
+
+            return
+                type.Namespace == null
+                && type.IsClass
+                && type.IsNotPublic
+                && type.IsSealed
+                && type.DeclaringType == null
+                && type.BaseType == typeof(object)
+                && (type.Name.StartsWith("<>", StringComparison.OrdinalIgnoreCase) || type.Name.StartsWith("VB$", StringComparison.OrdinalIgnoreCase))
+                && type.Name.Contains("AnonymousType")
+                && Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute));
+        }
+
+        public static string GetXsdType(this Type type)
+        {
+            string xsdType;
+            if (XsdTypeMap.TryGetValue(type, out xsdType))
+            {
+                return xsdType;
+            }
+
+            return type.Name;
         }
 
         private class StringWriterWithEncoding : StringWriter

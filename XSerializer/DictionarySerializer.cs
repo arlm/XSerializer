@@ -64,7 +64,7 @@ namespace XSerializer
         protected abstract IEnumerable<DictionaryEntry> GetDictionaryEntries(object dictionary);
         protected abstract void AddItemToDictionary(object dictionary, object key, object value);
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces)
+        public void SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
         {
             writer.WriteStartDocument();
             writer.WriteStartElement(_rootElementName);
@@ -81,12 +81,12 @@ namespace XSerializer
 
                 if (item.Key != null)
                 {
-                    _keySerializer.SerializeObject(writer, item.Key, namespaces);
+                    _keySerializer.SerializeObject(writer, item.Key, namespaces, alwaysEmitTypes);
                 }
 
                 if (item.Value != null)
                 {
-                    _valueSerializer.SerializeObject(writer, item.Value, namespaces);
+                    _valueSerializer.SerializeObject(writer, item.Value, namespaces, alwaysEmitTypes);
                 }
 
                 writer.WriteEndElement();
@@ -219,9 +219,9 @@ namespace XSerializer
         {
         }
 
-        public void Serialize(SerializationXmlTextWriter writer, TDictionary instance, XmlSerializerNamespaces namespaces)
+        public void Serialize(SerializationXmlTextWriter writer, TDictionary instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
         {
-            SerializeObject(writer, instance, namespaces);
+            SerializeObject(writer, instance, namespaces, alwaysEmitTypes);
         }
 
         public TDictionary Deserialize(XmlReader reader)
@@ -284,9 +284,9 @@ namespace XSerializer
         {
         }
 
-        public void Serialize(SerializationXmlTextWriter writer, TDictionary instance, XmlSerializerNamespaces namespaces)
+        public void Serialize(SerializationXmlTextWriter writer, TDictionary instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
         {
-            SerializeObject(writer, instance, namespaces);
+            SerializeObject(writer, instance, namespaces, alwaysEmitTypes);
         }
 
         public TDictionary Deserialize(XmlReader reader)

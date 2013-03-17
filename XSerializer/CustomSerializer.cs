@@ -23,18 +23,14 @@ namespace XSerializer
             {
                 try
                 {
-                    serializer =
-                        (IXmlSerializer)
-                        Activator.CreateInstance(typeof (CustomSerializer<>).MakeGenericType(type), defaultNamespace,
-                                                 extraTypes, rootElementName);
+                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof (CustomSerializer<>).MakeGenericType(type), defaultNamespace, extraTypes, rootElementName);
                 }
-                // True exception gets masked due to reflection. Preserve stacktrace and rethrow
-                catch (TargetInvocationException ex)
+                catch (TargetInvocationException ex) // True exception gets masked due to reflection. Preserve stacktrace and rethrow
                 {
                     PreserveStackTrace(ex);
-
                     throw ex.InnerException;
                 }
+
                 _serializerCache[key] = serializer;
             }
 
@@ -192,8 +188,6 @@ namespace XSerializer
                     throw new InvalidOperationException("Virtual property must have non-empty XmlAttribute.");
                 }
             }
-            
-            
 
             if (baseXmlElement != null)
             {
@@ -278,8 +272,13 @@ namespace XSerializer
             return type.Name;
         }
 
-        public void Serialize(SerializationXmlTextWriter writer, T instance, XmlSerializerNamespaces namespaces)
+        public void Serialize(SerializationXmlTextWriter writer, T instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
         {
+            if (instance == null)
+            {
+                return;
+            }
+
             writer.WriteStartDocument();
             writer.WriteStartElement(_rootElementName);
             writer.WriteDefaultNamespaces();
@@ -289,23 +288,37 @@ namespace XSerializer
                 writer.WriteAttributeString("xmlns", null, null, _defaultNamespace);
             }
 
-            if (typeof(T).IsInterface || typeof(T).IsAbstract)
+            var instanceType = instance.GetType();
+
+            if (typeof(T).IsInterface || typeof(T).IsAbstract || typeof(T) != instanceType)
             {
-                writer.WriteAttributeString("xsi", "type", null, instance.GetType().Name);
+                writer.WriteAttributeString("xsi", "type", null, instance.GetType().GetXsdType());
             }
 
-            var type = instance.GetType();
-            foreach (var property in _serializablePropertiesMap[type])
+            if (IsPrimitiveLike(instanceType)
+                || (instanceType.IsGenericType && instanceType.GetGenericTypeDefinition() == typeof(Nullable<>) && IsPrimitiveLike(instanceType.GetGenericArguments()[0])))
             {
-                property.WriteValue(writer, instance, namespaces);
+                XmlTextSerializer.GetSerializer(instanceType).SerializeObject(writer, instance, namespaces, alwaysEmitTypes);
+            }
+            else
+            {
+                foreach (var property in _serializablePropertiesMap[instanceType])
+                {
+                    property.WriteValue(writer, instance, namespaces, alwaysEmitTypes);
+                }
             }
 
             writer.WriteEndElement();
         }
 
-        void IXmlSerializer.SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces)
+        private bool IsPrimitiveLike(Type type)
         {
-            Serialize(writer, (T)instance, namespaces);
+            return type.IsPrimitive || type == typeof(string) || type == typeof(decimal) || type == typeof(DateTime);
+        }
+
+        void IXmlSerializer.SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        {
+            Serialize(writer, (T)instance, namespaces, alwaysEmitTypes);
         }
 
         public T Deserialize(XmlReader reader)

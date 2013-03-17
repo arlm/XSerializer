@@ -16,6 +16,7 @@ namespace XSerializer
         internal XmlSerializerNamespaces Namespaces { get; set; }
         internal bool ShouldIndent { get; set; }
         internal string RootElementName { get; set; }
+        internal bool ShouldAlwaysEmitTypes { get; set; }
 
         public XmlSerializationOptions WithEncoding(Encoding encoding)
         {
@@ -44,6 +45,12 @@ namespace XSerializer
         public XmlSerializationOptions SetRootElementName(string rootElementName)
         {
             RootElementName = rootElementName;
+            return this;
+        }
+
+        public XmlSerializationOptions AlwaysEmitTypes()
+        {
+            ShouldAlwaysEmitTypes = true;
             return this;
         }
     }

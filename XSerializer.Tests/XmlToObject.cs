@@ -9,7 +9,7 @@ namespace XSerializer.Tests
     public abstract class XmlToObject
     {
         [TestCaseSource("TestCaseData")]
-        public void SerializesCorrectly(string xml, Type type, object expectedObject)
+        public void DeserializesCorrectly(string xml, Type type, object expectedObject)
         {
             Console.WriteLine("Input XML:");
             Console.WriteLine(xml);

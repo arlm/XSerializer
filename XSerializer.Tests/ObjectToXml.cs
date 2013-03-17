@@ -14,7 +14,7 @@ namespace XSerializer.Tests
         {
             var customSerializer = CustomSerializer.GetSerializer(type, null, null, null);
 
-            var customXml = customSerializer.SerializeObject(instance, null, Encoding.UTF8, Formatting.Indented);
+            var customXml = customSerializer.SerializeObject(instance, null, Encoding.UTF8, Formatting.Indented, AlwaysEmitTypes);
 
             Console.WriteLine("Expected XML:");
             Console.WriteLine(expectedXml);
@@ -23,6 +23,11 @@ namespace XSerializer.Tests
             Console.WriteLine(customXml);
 
             Assert.That(customXml, Is.EqualTo(expectedXml));
+        }
+
+        protected virtual bool AlwaysEmitTypes
+        {
+            get { return false; }
         }
 
         protected IEnumerable<TestCaseData> TestCaseData

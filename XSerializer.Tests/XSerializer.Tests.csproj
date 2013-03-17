@@ -47,7 +47,7 @@
     <Compile Include="ConditionalSerializationTests.cs" />
     <Compile Include="AttributedPropertyTests.cs" />
     <Compile Include="DictionaryTests.cs" />
-    <Compile Include="DynamicSerializationTests.cs" />
+    <Compile Include="DynamicTests.cs" />
     <Compile Include="IgnoreAttributeTests.cs" />
     <Compile Include="NonAbstractClassesWithOnlySimpleElements.cs" />
     <Compile Include="ObjectToXml.cs" />
@@ -59,6 +59,7 @@
     <Compile Include="TestClasses.cs" />
     <Compile Include="NUnit\Has.cs" />
     <Compile Include="XmlToObject.cs" />
+    <Compile Include="XsdTypeTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -75,18 +75,14 @@ namespace XSerializer.Tests
                     typeof(ReadOnlyNonGenericIDictionaryClass),
                     string.Format(_genericDictionaryXmlFormat, typeof(ReadOnlyNonGenericIDictionaryClass).Name, " xsi:type=\"xsd:string\"", " xsi:type=\"xsd:string\""))
                         .SetName("Non-Generic Read-Only IDictionary");
+            }
 
-                yield return new TestCaseData(
-                    new ReadWriteExpandoObjectClass { Map = GetExpandoObject(), A = "Start", Z = "End" },
-                    typeof(ReadWriteExpandoObjectClass),
-                    string.Format(_genericDictionaryXmlFormat, typeof(ReadWriteExpandoObjectClass).Name, "", " xsi:type=\"xsd:string\""))
-                        .SetName("Read-Write ExpandoObject");
-
-                yield return new TestCaseData(
-                    new ReadOnlyExpandoObjectClass(new Dictionary<string, object> { { "foo", "bar" }, { "baz", "qux" } }) { A = "Start", Z = "End" },
-                    typeof(ReadOnlyExpandoObjectClass),
-                    string.Format(_genericDictionaryXmlFormat, typeof(ReadOnlyExpandoObjectClass).Name, "", " xsi:type=\"xsd:string\""))
-                        .SetName("Read-Only ExpandoObject");
+            protected override bool AlwaysEmitTypes
+            {
+                get
+                {
+                    return true;
+                }
             }
         }
 
@@ -141,41 +137,7 @@ namespace XSerializer.Tests
                     typeof(ReadOnlyNonGenericIDictionaryClass),
                     new ReadOnlyNonGenericIDictionaryClass(new Hashtable { { "foo", "bar" }, { "baz", "qux" } }) { A = "Start", Z = "End" })
                         .SetName("Non-Generic Read-Only IDictionary");
-
-                yield return new TestCaseData(
-                    string.Format(_genericDictionaryXmlFormat, typeof(ReadWriteExpandoObjectClass).Name, "", " xsi:type=\"xsd:string\""),
-                    typeof(ReadWriteExpandoObjectClass),
-                    new ReadWriteExpandoObjectClass { Map = GetExpandoObject(), A = "Start", Z = "End" })
-                        .SetName("Read-Write ExpandoObject");
-
-                yield return new TestCaseData(
-                    string.Format(_genericDictionaryXmlFormat, typeof(ReadOnlyExpandoObjectClass).Name, "", " xsi:type=\"xsd:string\""),
-                    typeof(ReadOnlyExpandoObjectClass),
-                    new ReadOnlyExpandoObjectClass(new Dictionary<string, object> { { "foo", "bar" }, { "baz", "qux" } }) { A = "Start", Z = "End" })
-                        .SetName("Read-Only ExpandoObject");
-
-                Func<Entity> getExpectedEntity = () =>
-                {
-                    var entity = new Entity { Email = "HJDHSJ@HJDHJHSJ.com", Name = "Anson Smith" };
-
-                    ((dynamic)entity.Extension).EmailFormat = "Html";
-                    return entity;
-                };
-
-                yield return new TestCaseData(
-                    @"<?xml version=""1.0"" encoding=""utf-8""?><Entity xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance""><Email>HJDHSJ@HJDHJHSJ.com</Email><Name>Anson Smith</Name><Extension><Item><Key>EmailFormat</Key><Value xsi:type=""xsd:string"">Html</Value></Item></Extension></Entity>",
-                    typeof(Entity),
-                    getExpectedEntity())
-                        .SetName("Protect against reading past expando's items");
             }
-        }
-
-        private static ExpandoObject GetExpandoObject()
-        {
-            dynamic expando = new ExpandoObject();
-            expando.foo = "bar";
-            expando.baz = "qux";
-            return expando;
         }
 
         public class ReadWriteGenericDictionaryClass
@@ -272,48 +234,6 @@ namespace XSerializer.Tests
             public string A { get; set; }
             public IDictionary Map { get; private set; }
             public string Z { get; set; }
-        }
-
-        public class ReadWriteExpandoObjectClass
-        {
-            public string A { get; set; }
-            public ExpandoObject Map { get; set; }
-            public string Z { get; set; }
-        }
-
-        public class ReadOnlyExpandoObjectClass
-        {
-            public ReadOnlyExpandoObjectClass()
-            {
-                Map = new ExpandoObject();
-            }
-
-            public ReadOnlyExpandoObjectClass(IDictionary<string, object> map)
-            {
-                Map = new ExpandoObject();
-
-                var iMap = (IDictionary<string, object>)Map;
-                foreach (var item in map)
-                {
-                    iMap.Add(item);
-                }
-            }
-
-            public string A { get; set; }
-            public ExpandoObject Map { get; private set; }
-            public string Z { get; set; }
-        }
-
-        public class Entity
-        {
-            public Entity()
-            {
-                Extension = new ExpandoObject();
-            }
-
-            public string Email { get; set; }
-            public string Name { get; set; }
-            public ExpandoObject Extension { get; set; }
         }
     }
 }

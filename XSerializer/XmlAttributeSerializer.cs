@@ -15,7 +15,7 @@ namespace XSerializer
             _type = type;
         }
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object value, XmlSerializerNamespaces namespaces)
+        public void SerializeObject(SerializationXmlTextWriter writer, object value, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
         {
             if (value != null)
             {
