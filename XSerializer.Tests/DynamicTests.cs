@@ -139,6 +139,70 @@ namespace XSerializer.Tests
             }
         }
 
+        public class DynamicDeserializationTestsWithWithXsdTypes : XmlToObject
+        {
+            protected override IEnumerable<TestCaseData> GetTestCaseData()
+            {
+                yield return new TestCaseData(
+                    ExpectedXmlNullValue,
+                    typeof(ClassWithDynamicProperty),
+                    new ClassWithDynamicProperty { DynamicProperty = null })
+                        .SetName("null");
+
+                yield return new TestCaseData(
+                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(bool)), "true"),
+                    typeof(ClassWithDynamicProperty),
+                    new ClassWithDynamicProperty { DynamicProperty = true })
+                        .SetName("bool");
+
+                yield return new TestCaseData(
+                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(int)), "123"),
+                    typeof(ClassWithDynamicProperty),
+                    new ClassWithDynamicProperty { DynamicProperty = 123 })
+                        .SetName("int");
+
+                yield return new TestCaseData(
+                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(double)), "123.45"),
+                    typeof(ClassWithDynamicProperty),
+                    new ClassWithDynamicProperty { DynamicProperty = 123.45 })
+                        .SetName("double");
+
+                yield return new TestCaseData(
+                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(decimal)), "123.45"),
+                    typeof(ClassWithDynamicProperty),
+                    new ClassWithDynamicProperty { DynamicProperty = 123.45M })
+                        .SetName("decimal");
+
+                yield return new TestCaseData(
+                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(string)), "abc"),
+                    typeof(ClassWithDynamicProperty),
+                    new ClassWithDynamicProperty { DynamicProperty = "abc" })
+                        .SetName("string");
+
+                yield return new TestCaseData(
+                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(DateTime)), "2013-03-17T06:56:10.295Z"),
+                    typeof(ClassWithDynamicProperty),
+                    new ClassWithDynamicProperty { DynamicProperty = new DateTime(2013, 3, 17, 6, 56, 10, 295, DateTimeKind.Utc) })
+                        .SetName("DateTime");
+
+                yield return new TestCaseData(
+                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(Foo)), @"
+    <Bar>
+      <Baz>true</Baz>
+    </Bar>
+    <Qux>abc</Qux>
+  "),
+                    typeof(ClassWithDynamicProperty),
+                    new ClassWithDynamicProperty { DynamicProperty = new Foo { Bar = new Bar { Baz = true }, Qux = "abc" } })
+                        .SetName("Custom Class");
+            }
+
+            protected virtual string GetXsiTypeString(Type type)
+            {
+                return string.Format(" xsi:type=\"{0}\"", type.GetXsdType());
+            }
+        }
+
         public class DynamicDeserializationTests
         {
             private IXmlSerializer _sut;
@@ -154,7 +218,7 @@ namespace XSerializer.Tests
             [Test]
             public void SmokeTest()
             {
-                var xml = string.Format(ExpectedXmlFormat, "abc");
+                var xml = string.Format(ExpectedXmlFormat, " xsi:type=\"xsd:string\"", "abc");
                 _expectedDeserializedObject.DynamicProperty = "abc";
 
                 var deserializedObject = _sut.DeserializeObject(xml);
@@ -163,6 +227,7 @@ namespace XSerializer.Tests
             }
         }
 
+        [XmlInclude(typeof(Foo))]
         public class ClassWithDynamicProperty
         {
             public int IntProperty { get; set; }

@@ -50,14 +50,14 @@ namespace XSerializer
                 return;
             }
 
-            IXmlSerializer serializer;
-
             var expando = instance as ExpandoObject;
             if (expando != null)
             {
                 SerializeExpandoObject(writer, expando, namespaces, alwaysEmitTypes);
                 return;
             }
+
+            IXmlSerializer serializer;
 
             if (!alwaysEmitTypes || instance.IsAnonymous())
             {
@@ -78,6 +78,13 @@ namespace XSerializer
 
         public object Deserialize(XmlReader reader)
         {
+            var type = reader.GetXsdType<object>(_extraTypes);
+            if (type != null)
+            {
+                var serializer = XmlSerializerFactory.Instance.GetSerializer(type, _defaultNamespace, _extraTypes, reader.Name);
+                return serializer.DeserializeObject(reader);
+            }
+
             return DeserializeExpandoObject(reader);
         }
 

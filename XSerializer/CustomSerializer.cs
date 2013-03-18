@@ -65,6 +65,7 @@ namespace XSerializer
     public class CustomSerializer<T> : CustomSerializer, IXmlSerializer<T>
     {
         private readonly string _defaultNamespace;
+        private readonly Type[] _extraTypes;
         private readonly string _rootElementName;
         private readonly Dictionary<Type, SerializableProperty[]> _serializablePropertiesMap = new Dictionary<Type, SerializableProperty[]>();
 
@@ -85,6 +86,7 @@ namespace XSerializer
             }
 
             types.AddRange(type.GetCustomAttributes(typeof(XmlIncludeAttribute), true).Cast<XmlIncludeAttribute>().Select(a => a.Type));
+            _extraTypes = types.ToArray();
 
             if (!type.IsInterface && !type.IsAbstract)
             {
@@ -97,7 +99,7 @@ namespace XSerializer
                     t =>
                         t.GetProperties()
                         .Where(p => p.IsSerializable())
-                        .Select(p => new SerializableProperty(p, defaultNamespace, extraTypes))
+                        .Select(p => new SerializableProperty(p, defaultNamespace, _extraTypes))
                         .OrderBy(p => p.NodeType)
                         .ToArray());
         }
@@ -339,8 +341,11 @@ namespace XSerializer
                     case XmlNodeType.Element:
                         if (reader.Name == _rootElementName)
                         {
-                            instance = CreateInstanceAndSetAttributePropertyValues(reader, attributes);
-                            hasInstanceBeenCreated = true;
+                            if (!IsPrimitiveLike(typeof(T)))
+                            {
+                                instance = CreateInstanceAndSetAttributePropertyValues(reader, attributes);
+                                hasInstanceBeenCreated = true;
+                            }
                         }
                         else
                         {
@@ -348,15 +353,21 @@ namespace XSerializer
                         }
                         break;
                     case XmlNodeType.Text:
-                        SetTextNodePropertyValue(reader, hasInstanceBeenCreated, instance);
+                        if (IsPrimitiveLike(typeof(T)))
+                        {
+                            instance = (T)XmlTextSerializer.GetSerializer(typeof(T)).DeserializeObject(reader);
+                            hasInstanceBeenCreated = true;
+                        }
+                        else
+                        {
+                            SetTextNodePropertyValue(reader, hasInstanceBeenCreated, instance);
+                        }
                         break;
                     case XmlNodeType.EndElement:
                         if (reader.Name == _rootElementName)
                         {
                             return CheckAndReturn(hasInstanceBeenCreated, instance);
                         }
-                        break;
-                    case XmlNodeType.CDATA:
                         break;
                 }
             } while (reader.ReadIfNeeded(shouldIssueRead));
@@ -416,15 +427,7 @@ namespace XSerializer
 
         private T CreateInstanceAndSetAttributePropertyValues(XmlReader reader, Dictionary<string, string> attributes)
         {
-            if (reader.MoveToFirstAttribute())
-            {
-                do
-                {
-                    attributes.Add(reader.Name, reader.Value);
-                } while (reader.MoveToNextAttribute());
-            }
-
-            var instance = CreateInstance(attributes);
+            var instance = CreateInstance(reader);
 
             foreach (var attribute in attributes)
             {
@@ -440,108 +443,13 @@ namespace XSerializer
             return instance;
         }
 
-        private static T CreateInstance(IDictionary<string, string> attributes)
+        private T CreateInstance(XmlReader reader)
         {
             T instance;
+            var type = reader.GetXsdType<T>(_extraTypes);
 
-            string typeName;
-            if (attributes.TryGetValue("xsi:type", out typeName))
+            if (type != null)
             {
-                Type type;
-                var key = CreateTypeCacheKey<T>(typeName);
-                if (!_typeCache.TryGetValue(key, out type))
-                {
-                    //// try REAL hard to get the type. (holy crap, this is UUUUUGLY!!!!)
-
-                    var typeNameWithPossibleNamespace = typeName;
-
-                    if (!typeName.Contains('.'))
-                    {
-                        typeNameWithPossibleNamespace = typeof(T).Namespace + "." + typeName;
-                    }
-
-                    var checkPossibleNamespace = typeName != typeNameWithPossibleNamespace;
-
-                    type = Type.GetType(typeName);
-                    type = typeof(T).IsAssignableFrom(type) ? type : null;
-
-                    if (type == null)
-                    {
-                        type = checkPossibleNamespace ? Type.GetType(typeNameWithPossibleNamespace) : null;
-                        type = typeof(T).IsAssignableFrom(type) ? type : null;
-
-                        if (type == null)
-                        {
-                            type = typeof(T).Assembly.GetType(typeName);
-                            type = typeof(T).IsAssignableFrom(type) ? type : null;
-
-                            if (type == null)
-                            {
-                                type = checkPossibleNamespace ? typeof(T).Assembly.GetType(typeNameWithPossibleNamespace) : null;
-                                type = typeof(T).IsAssignableFrom(type) ? type : null;
-
-                                if (type == null)
-                                {
-                                    var matches = typeof(T).Assembly.GetTypes().Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
-                                    if (matches.Count == 1)
-                                    {
-                                        type = matches.Single();
-                                    }
-
-                                    var entryAssembly = Assembly.GetEntryAssembly();
-                                    if (entryAssembly != null)
-                                    {
-                                        type = entryAssembly.GetType(typeName);
-                                        type = typeof(T).IsAssignableFrom(type) ? type : null;
-
-                                        if (type == null)
-                                        {
-                                            type = checkPossibleNamespace ? entryAssembly.GetType(typeNameWithPossibleNamespace) : null;
-                                            type = typeof(T).IsAssignableFrom(type) ? type : null;
-                                        }
-
-                                        if (type == null)
-                                        {
-                                            matches = entryAssembly.GetTypes().Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
-                                            if (matches.Count == 1)
-                                            {
-                                                type = matches.Single();
-                                            }
-                                        }
-                                    }
-
-                                    if (type == null)
-                                    {
-                                        matches = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a =>
-                                        {
-                                            try
-                                            {
-                                                return a.GetTypes();
-                                            }
-                                            catch
-                                            {
-                                                return Enumerable.Empty<Type>();
-                                            }
-                                        }).Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
-
-                                        if (matches.Count == 1)
-                                        {
-                                            type = matches.Single();
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if (type == null)
-                    {
-                        throw new SerializationException("WAAAAAAA!");
-                    }
-
-                    _typeCache[key] = type;
-                }
-
                 instance = (T)Activator.CreateInstance(type); // TODO: cache into constructor func
             }
             else
