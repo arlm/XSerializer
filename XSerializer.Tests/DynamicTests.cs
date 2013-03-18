@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
@@ -161,11 +162,15 @@ namespace XSerializer.Tests
                     new ClassWithDynamicProperty { DynamicProperty = 123 })
                         .SetName("int");
 
-                yield return new TestCaseData(
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(double)), "123.45"),
-                    typeof(ClassWithDynamicProperty),
-                    new ClassWithDynamicProperty { DynamicProperty = 123.45 })
-                        .SetName("double");
+                if (!ShouldSkipUseCase)
+                {
+                    // There's no way to know whether we should deserialize into a decimal, double, or float.
+                    yield return new TestCaseData(
+                        string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(double)), "123.45"),
+                        typeof(ClassWithDynamicProperty),
+                        new ClassWithDynamicProperty { DynamicProperty = 123.45 })
+                            .SetName("double");
+                }
 
                 yield return new TestCaseData(
                     string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(decimal)), "123.45"),
@@ -193,37 +198,52 @@ namespace XSerializer.Tests
     <Qux>abc</Qux>
   "),
                     typeof(ClassWithDynamicProperty),
-                    new ClassWithDynamicProperty { DynamicProperty = new Foo { Bar = new Bar { Baz = true }, Qux = "abc" } })
+                    GetExpected(new ClassWithDynamicProperty { DynamicProperty = new Foo { Bar = new Bar { Baz = true }, Qux = "abc" } }))
                         .SetName("Custom Class");
+            }
+
+            protected virtual ClassWithDynamicProperty GetExpected(ClassWithDynamicProperty expected)
+            {
+                return expected;
             }
 
             protected virtual string GetXsiTypeString(Type type)
             {
                 return string.Format(" xsi:type=\"{0}\"", type.GetXsdType());
             }
+
+            protected virtual bool ShouldSkipUseCase
+            {
+                get { return false; }
+            }
         }
 
-        public class DynamicDeserializationTests
+        public class DynamicDeserializationTestsWithWithoutXsdTypes : DynamicDeserializationTestsWithWithXsdTypes
         {
-            private IXmlSerializer _sut;
-            private ClassWithDynamicProperty _expectedDeserializedObject;
-
-            [SetUp]
-            public void Setup()
+            protected override ClassWithDynamicProperty GetExpected(ClassWithDynamicProperty expected)
             {
-                _sut = CustomSerializer.GetSerializer(typeof(ClassWithDynamicProperty), null, null, null);
-                _expectedDeserializedObject = new ClassWithDynamicProperty();
+                if (expected == null)
+                {
+                    return null;
+                }
+
+                dynamic foo = new ExpandoObject();
+                foo.Bar = new ExpandoObject();
+                foo.Bar.Baz = expected.DynamicProperty.Bar.Baz;
+                foo.Qux = expected.DynamicProperty.Qux;
+                expected.DynamicProperty = foo;
+
+                return expected;
             }
 
-            [Test]
-            public void SmokeTest()
+            protected override string GetXsiTypeString(Type type)
             {
-                var xml = string.Format(ExpectedXmlFormat, " xsi:type=\"xsd:string\"", "abc");
-                _expectedDeserializedObject.DynamicProperty = "abc";
+                return "";
+            }
 
-                var deserializedObject = _sut.DeserializeObject(xml);
-
-                Assert.That(deserializedObject, Has.PropertiesEqualTo(_expectedDeserializedObject));
+            protected override bool ShouldSkipUseCase
+            {
+                get { return true; }
             }
         }
 

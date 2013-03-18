@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Serialization;
 
@@ -85,7 +86,7 @@ namespace XSerializer
                 return serializer.DeserializeObject(reader);
             }
 
-            return DeserializeExpandoObject(reader);
+            return DeserializeToDynamic(reader);
         }
 
         private void SerializeExpandoObject(SerializationXmlTextWriter writer, IDictionary<string, object> expando, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
@@ -123,10 +124,92 @@ namespace XSerializer
             writer.WriteEndElement();
         }
 
-        private ExpandoObject DeserializeExpandoObject(XmlReader reader)
+        private dynamic DeserializeToDynamic(XmlReader reader)
         {
-            // TODO: implement
-            return null;
+            object instance = null;
+            var hasInstanceBeenCreated = false;
+
+            var attributes = new Dictionary<string, string>();
+
+            do
+            {
+                switch (reader.NodeType)
+                {
+                    case XmlNodeType.Element:
+                        if (reader.Name == _rootElementName)
+                        {
+                            instance = new ExpandoObject();
+                            hasInstanceBeenCreated = true;
+                        }
+                        else
+                        {
+                            SetElementPropertyValue(reader, hasInstanceBeenCreated, (ExpandoObject)instance);
+                        }
+                        break;
+                    case XmlNodeType.Text:
+                        var stringValue = (string)XmlTextSerializer.GetSerializer(typeof(string)).DeserializeObject(reader);
+                        hasInstanceBeenCreated = true;
+
+                        bool boolValue;
+                        if (bool.TryParse(stringValue, out boolValue))
+                        {
+                            instance = boolValue;
+                            break;
+                        }
+
+                        int intValue;
+                        if (int.TryParse(stringValue, out intValue))
+                        {
+                            instance = intValue;
+                            break;
+                        }
+
+                        decimal decimalValue;
+                        if (decimal.TryParse(stringValue, out decimalValue))
+                        {
+                            instance = decimalValue;
+                            break;
+                        }
+
+                        DateTime dateTimeValue;
+                        if (DateTime.TryParse(stringValue, out dateTimeValue))
+                        {
+                            instance = dateTimeValue.ToUniversalTime();
+                            break;
+                        }
+
+                        // TODO: add more types to check?
+
+                        instance = stringValue;
+                        break;
+                    case XmlNodeType.EndElement:
+                        if (reader.Name == _rootElementName)
+                        {
+                            return CheckAndReturn(hasInstanceBeenCreated, instance);
+                        }
+                        break;
+                }
+            } while (reader.Read());
+
+            throw new SerializationException("Couldn't serialize... for some reason. (You know, I should put a better exception message here...)");
+        }
+
+        private void SetElementPropertyValue(XmlReader reader, bool hasInstanceBeenCreated, IDictionary<string, object> expando)
+        {
+            var propertyName = reader.Name;
+            var serializer = DynamicSerializer.GetSerializer<object>(_defaultNamespace, _extraTypes, reader.Name);
+            var value = serializer.Deserialize(reader);
+            expando[propertyName] = value;
+        }
+
+        private static object CheckAndReturn(bool hasInstanceBeenCreated, object instance)
+        {
+            if (!hasInstanceBeenCreated)
+            {
+                throw new SerializationException("Awwww, crap.");
+            }
+
+            return instance;
         }
 
         private class DynamicSerializerExpandoObjectProxy : IXmlSerializer<ExpandoObject>
@@ -155,7 +238,7 @@ namespace XSerializer
 
             public ExpandoObject Deserialize(XmlReader reader)
             {
-                return _serializer.DeserializeExpandoObject(reader);
+                return _serializer.DeserializeToDynamic(reader);
             }
 
             public object DeserializeObject(XmlReader reader)
