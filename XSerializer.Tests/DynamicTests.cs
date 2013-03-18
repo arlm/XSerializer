@@ -10,16 +10,27 @@ namespace XSerializer.Tests
 {
     public class DynamicTests
     {
-        private const string ExpectedXmlNullValue = @"<?xml version=""1.0"" encoding=""utf-8""?>
+        private const string ExpectedXmlDynamicNullValue = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <ClassWithDynamicProperty xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
   <IntProperty>0</IntProperty>
 </ClassWithDynamicProperty>";
         
-        private const string ExpectedXmlFormat = @"<?xml version=""1.0"" encoding=""utf-8""?>
+        private const string ExpectedDynamicXmlFormat = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <ClassWithDynamicProperty xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
   <IntProperty>0</IntProperty>
   <DynamicProperty{0}>{1}</DynamicProperty>
 </ClassWithDynamicProperty>";
+
+        private const string ExpectedXmlExpandoNullValue = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<ClassWithExpandoProperty xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <IntProperty>0</IntProperty>
+</ClassWithExpandoProperty>";
+
+        private const string ExpectedExpandoXmlFormat = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<ClassWithExpandoProperty xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <IntProperty>0</IntProperty>
+  <ExpandoProperty>{0}</ExpandoProperty>
+</ClassWithExpandoProperty>";
 
         public class DynamicSerializationTestsWithAlwaysEmitTypesSetToFalse : ObjectToXml
         {
@@ -28,92 +39,99 @@ namespace XSerializer.Tests
                 yield return new TestCaseData(
                     new ClassWithDynamicProperty { DynamicProperty = null },
                     typeof(ClassWithDynamicProperty),
-                    ExpectedXmlNullValue)
-                        .SetName("null");
+                    ExpectedXmlDynamicNullValue)
+                        .SetName("dynamic property - null");
 
                 yield return new TestCaseData(
                     new ClassWithDynamicProperty { DynamicProperty = true },
                     typeof(ClassWithDynamicProperty),
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(bool)), "true"))
-                        .SetName("bool");
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(bool)), "true"))
+                        .SetName("dynamic property - bool");
 
                 yield return new TestCaseData(
                     new ClassWithDynamicProperty { DynamicProperty = 123 },
                     typeof(ClassWithDynamicProperty),
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(int)), "123"))
-                        .SetName("int");
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(int)), "123"))
+                        .SetName("dynamic property - int");
 
                 yield return new TestCaseData(
                     new ClassWithDynamicProperty { DynamicProperty = 123.45 },
                     typeof(ClassWithDynamicProperty),
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(double)), "123.45"))
-                        .SetName("double");
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(double)), "123.45"))
+                        .SetName("dynamic property - double");
 
                 yield return new TestCaseData(
                     new ClassWithDynamicProperty { DynamicProperty = 123.45M },
                     typeof(ClassWithDynamicProperty),
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(decimal)), "123.45"))
-                        .SetName("decimal");
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(decimal)), "123.45"))
+                        .SetName("dynamic property - decimal");
 
                 yield return new TestCaseData(
                     new ClassWithDynamicProperty { DynamicProperty = "abc" },
                     typeof(ClassWithDynamicProperty),
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(string)), "abc"))
-                        .SetName("string");
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(string)), "abc"))
+                        .SetName("dynamic property - string");
 
                 yield return new TestCaseData(
                     new ClassWithDynamicProperty { DynamicProperty = new DateTime(2013, 3, 17, 6, 56, 10, 295, DateTimeKind.Utc) },
                     typeof(ClassWithDynamicProperty),
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(DateTime)), "2013-03-17T06:56:10.295Z"))
-                        .SetName("DateTime");
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(DateTime)), "2013-03-17T06:56:10.295Z"))
+                        .SetName("dynamic property - DateTime");
 
                 yield return new TestCaseData(
                     new ClassWithDynamicProperty { DynamicProperty = new Foo { Bar = new Bar { Baz = true }, Qux = "abc" } },
                     typeof(ClassWithDynamicProperty),
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(Foo)), @"
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(Foo)), @"
     <Bar>
       <Baz>true</Baz>
     </Bar>
     <Qux>abc</Qux>
   "))
-                        .SetName("Custom Class");
+                        .SetName("dynamic property - Custom Class");
 
                 yield return new TestCaseData(
                     new ClassWithDynamicProperty { DynamicProperty = GetAnonymousObject() },
                     typeof(ClassWithDynamicProperty),
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(GetAnonymousObject().GetType()), @"
-    <Foo>Bar</Foo>
-    <Baz>
-      <Qux>123</Qux>
-    </Baz>
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(GetAnonymousObject().GetType()), @"
+    <Bar>
+      <Baz>true</Baz>
+    </Bar>
+    <Qux>abc</Qux>
   "))
-                        .SetName("Anonymous Type");
+                        .SetName("dynamic property - Anonymous Type");
 
                 yield return new TestCaseData(
                     new ClassWithDynamicProperty { DynamicProperty = GetExpandoObject() },
                     typeof(ClassWithDynamicProperty),
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(GetAnonymousObject().GetType()), @"
-    <Foo>Bar</Foo>
-    <Baz>
-      <Qux>123</Qux>
-    </Baz>
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(ExpandoObject)), @"
+    <Bar>
+      <Baz>true</Baz>
+    </Bar>
+    <Qux>abc</Qux>
   "))
-                        .SetName("ExpandoObject");
+                        .SetName("dynamic property - ExpandoObject");
+
+                yield return new TestCaseData(
+                    new ClassWithExpandoProperty { ExpandoProperty = null },
+                    typeof(ClassWithExpandoProperty),
+                    ExpectedXmlExpandoNullValue)
+                        .SetName("ExpandoObject property - null");
+
+                yield return new TestCaseData(
+                    new ClassWithExpandoProperty { ExpandoProperty = GetExpandoObject() },
+                    typeof(ClassWithExpandoProperty),
+                    string.Format(ExpectedExpandoXmlFormat, @"
+    <Bar>
+      <Baz>true</Baz>
+    </Bar>
+    <Qux>abc</Qux>
+  "))
+                        .SetName("ExpandoObject property - ExpandoObject");
             }
 
             private object GetAnonymousObject()
             {
-                return new { Foo = "Bar", Baz = new { Qux = 123 } };
-            }
-
-            private object GetExpandoObject()
-            {
-                dynamic obj = new ExpandoObject();
-                obj.Foo = "Bar";
-                dynamic baz = new ExpandoObject();
-                baz.Qux = 123;
-                obj.Baz = baz;
-                return obj;
+                return new { Bar = new { Baz = true }, Qux = "abc" };
             }
 
             protected virtual string GetXsiTypeString(Type type)
@@ -131,7 +149,7 @@ namespace XSerializer.Tests
 
             protected override string GetXsiTypeString(Type type)
             {
-                if (type.IsAnonymous())
+                if (type == typeof(ExpandoObject) || type.IsAnonymous())
                 {
                     return "";
                 }
@@ -145,53 +163,53 @@ namespace XSerializer.Tests
             protected override IEnumerable<TestCaseData> GetTestCaseData()
             {
                 yield return new TestCaseData(
-                    ExpectedXmlNullValue,
+                    ExpectedXmlDynamicNullValue,
                     typeof(ClassWithDynamicProperty),
                     new ClassWithDynamicProperty { DynamicProperty = null })
-                        .SetName("null");
+                        .SetName("dynamic property - null");
 
                 yield return new TestCaseData(
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(bool)), "true"),
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(bool)), "true"),
                     typeof(ClassWithDynamicProperty),
                     new ClassWithDynamicProperty { DynamicProperty = true })
-                        .SetName("bool");
+                        .SetName("dynamic property - bool");
 
                 yield return new TestCaseData(
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(int)), "123"),
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(int)), "123"),
                     typeof(ClassWithDynamicProperty),
                     new ClassWithDynamicProperty { DynamicProperty = 123 })
-                        .SetName("int");
+                        .SetName("dynamic property - int");
 
                 if (!ShouldSkipUseCase)
                 {
                     // There's no way to know whether we should deserialize into a decimal, double, or float.
                     yield return new TestCaseData(
-                        string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(double)), "123.45"),
+                        string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(double)), "123.45"),
                         typeof(ClassWithDynamicProperty),
                         new ClassWithDynamicProperty { DynamicProperty = 123.45 })
-                            .SetName("double");
+                            .SetName("dynamic property - double");
                 }
 
                 yield return new TestCaseData(
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(decimal)), "123.45"),
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(decimal)), "123.45"),
                     typeof(ClassWithDynamicProperty),
                     new ClassWithDynamicProperty { DynamicProperty = 123.45M })
-                        .SetName("decimal");
+                        .SetName("dynamic property - decimal");
 
                 yield return new TestCaseData(
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(string)), "abc"),
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(string)), "abc"),
                     typeof(ClassWithDynamicProperty),
                     new ClassWithDynamicProperty { DynamicProperty = "abc" })
-                        .SetName("string");
+                        .SetName("dynamic property - string");
 
                 yield return new TestCaseData(
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(DateTime)), "2013-03-17T06:56:10.295Z"),
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(DateTime)), "2013-03-17T06:56:10.295Z"),
                     typeof(ClassWithDynamicProperty),
                     new ClassWithDynamicProperty { DynamicProperty = new DateTime(2013, 3, 17, 6, 56, 10, 295, DateTimeKind.Utc) })
-                        .SetName("DateTime");
+                        .SetName("dynamic property - DateTime");
 
                 yield return new TestCaseData(
-                    string.Format(ExpectedXmlFormat, GetXsiTypeString(typeof(Foo)), @"
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(Foo)), @"
     <Bar>
       <Baz>true</Baz>
     </Bar>
@@ -199,7 +217,35 @@ namespace XSerializer.Tests
   "),
                     typeof(ClassWithDynamicProperty),
                     GetExpected(new ClassWithDynamicProperty { DynamicProperty = new Foo { Bar = new Bar { Baz = true }, Qux = "abc" } }))
-                        .SetName("Custom Class");
+                        .SetName("dynamic property - Custom Class");
+
+                yield return new TestCaseData(
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(ExpandoObject)), @"
+    <Bar>
+      <Baz>true</Baz>
+    </Bar>
+    <Qux>abc</Qux>
+  "),
+                    typeof(ClassWithDynamicProperty),
+                    GetExpected(new ClassWithDynamicProperty { DynamicProperty = GetExpandoObject() }))
+                        .SetName("dynamic property - ExpandoObject");
+
+                yield return new TestCaseData(
+                    ExpectedXmlExpandoNullValue,
+                    typeof(ClassWithExpandoProperty),
+                    new ClassWithExpandoProperty { ExpandoProperty = null })
+                        .SetName("ExpandoObject property - null");
+
+                yield return new TestCaseData(
+                    string.Format(ExpectedExpandoXmlFormat, @"
+    <Bar>
+      <Baz>true</Baz>
+    </Bar>
+    <Qux>abc</Qux>
+  "),
+                    typeof(ClassWithExpandoProperty),
+                    new ClassWithExpandoProperty { ExpandoProperty = GetExpandoObject() })
+                        .SetName("ExpandoObject property - ExpandoObject");
             }
 
             protected virtual ClassWithDynamicProperty GetExpected(ClassWithDynamicProperty expected)
@@ -209,6 +255,11 @@ namespace XSerializer.Tests
 
             protected virtual string GetXsiTypeString(Type type)
             {
+                if (type == typeof(ExpandoObject))
+                {
+                    return "";
+                }
+
                 return string.Format(" xsi:type=\"{0}\"", type.GetXsdType());
             }
 
@@ -247,11 +298,26 @@ namespace XSerializer.Tests
             }
         }
 
+        private static ExpandoObject GetExpandoObject()
+        {
+            dynamic foo = new ExpandoObject();
+            foo.Bar = new ExpandoObject();
+            foo.Bar.Baz = true;
+            foo.Qux = "abc";
+            return foo;
+        }
+
         [XmlInclude(typeof(Foo))]
         public class ClassWithDynamicProperty
         {
             public int IntProperty { get; set; }
             public dynamic DynamicProperty { get; set; }
+        }
+
+        public class ClassWithExpandoProperty
+        {
+            public int IntProperty { get; set; }
+            public ExpandoObject ExpandoProperty { get; set; }
         }
 
         public class Foo
