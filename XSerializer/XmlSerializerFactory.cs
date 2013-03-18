@@ -80,10 +80,36 @@ namespace XSerializer
 
         protected virtual bool TryGetDefaultSerializer<T>(string defaultNamespace, Type[] extraTypes, string rootElementName, out IXmlSerializer<T> serializer)
         {
+            if (ContainsObjectProperty(typeof(T), extraTypes))
+            {
+                serializer = null;
+                return false;
+            }
+
             // TODO: check T's object hierarchy - if any properties have a type of object (or the property's properties), return false.
 
             serializer = (IXmlSerializer<T>)DefaultSerializer.GetSerializer(typeof(T), defaultNamespace, extraTypes, rootElementName);
             return serializer != null;
+        }
+
+        private bool ContainsObjectProperty(Type type, IEnumerable<Type> extraTypes)
+        {
+            foreach (var property in new[] { type }.Concat((extraTypes ?? new Type[0]).Where(t => type.IsAssignableFrom(t))).SelectMany(t => t.GetProperties()).Where(p => p.IsSerializable()))
+            {
+                if (property.PropertyType == typeof(object))
+                {
+                    return true;
+                }
+
+                if (property.PropertyType.IsPrimitiveLike())
+                {
+                    continue;
+                }
+
+                return ContainsObjectProperty(property.PropertyType, extraTypes);
+            }
+
+            return false;
         }
 
         protected virtual void CacheSerializer<T>(string defaultNamespace, Type[] extraTypes, string rootElementName, IXmlSerializer<T> serializer)

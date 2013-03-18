@@ -32,6 +32,81 @@ namespace XSerializer.Tests
   <ExpandoProperty>{0}</ExpandoProperty>
 </ClassWithExpandoProperty>";
 
+        [Test]
+        public void AClassWithADynamicPropertyUsesCustomSerializer()
+        {
+            var xmlSerializer = new XmlSerializer<FooWithDeeplyNestedDynamicProperty>(options => options.Indent());
+            Assert.That(xmlSerializer.Serializer, Is.InstanceOf<CustomSerializer<FooWithDeeplyNestedDynamicProperty>>());
+        }
+
+        [Test]
+        public void AClassWithAnObjectPropertyUsesCustomSerializer()
+        {
+            var xmlSerializer = new XmlSerializer<FooWithDeeplyNestedObjectProperty>(options => options.Indent());
+            Assert.That(xmlSerializer.Serializer, Is.InstanceOf<CustomSerializer<FooWithDeeplyNestedObjectProperty>>());
+        }
+
+        [Test]
+        public void AClassWithoutADynamicOrObjectPropertyUsesDefaultSerializerIfLegal()
+        {
+            var xmlSerializer = new XmlSerializer<FooWithoutDynamicOrObjectProperty>(options => options.Indent());
+            Assert.That(xmlSerializer.Serializer, Is.InstanceOf<DefaultSerializer<FooWithoutDynamicOrObjectProperty>>());
+        }
+
+        public class FooWithDeeplyNestedDynamicProperty
+        {
+            public int Bar { get; set; }
+            public BazWithDeeplyNestedDynamicProperty Baz { get; set; }
+        }
+
+        public class BazWithDeeplyNestedDynamicProperty
+        {
+            public string Qux { get; set; }
+            public QuirbleWithDeeplyNestedDynamicProperty Quirble { get; set; }
+        }
+
+        public class QuirbleWithDeeplyNestedDynamicProperty
+        {
+            public bool Zaggle { get; set; }
+            public dynamic Zirble { get; set; }
+        }
+
+        public class FooWithDeeplyNestedObjectProperty
+        {
+            public int Bar { get; set; }
+            public BazWithDeeplyNestedObjectProperty Baz { get; set; }
+        }
+
+        public class BazWithDeeplyNestedObjectProperty
+        {
+            public string Qux { get; set; }
+            public QuirbleWithDeeplyNestedObjectProperty Quirble { get; set; }
+        }
+
+        public class QuirbleWithDeeplyNestedObjectProperty
+        {
+            public bool Zaggle { get; set; }
+            public object Zirble { get; set; }
+        }
+
+        public class FooWithoutDynamicOrObjectProperty
+        {
+            public int Bar { get; set; }
+            public BazWithoutDynamicOrObjectProperty Baz { get; set; }
+        }
+
+        public class BazWithoutDynamicOrObjectProperty
+        {
+            public string Qux { get; set; }
+            public QuirbleWithoutDynamicOrObjectProperty Quirble { get; set; }
+        }
+
+        public class QuirbleWithoutDynamicOrObjectProperty
+        {
+            public bool Zaggle { get; set; }
+            public string Zirble { get; set; }
+        }
+
         public class DynamicSerializationTestsWithAlwaysEmitTypesSetToFalse : ObjectToXml
         {
             protected override IEnumerable<TestCaseData> GetTestCaseData()

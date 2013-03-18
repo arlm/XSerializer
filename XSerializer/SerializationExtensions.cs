@@ -338,6 +338,11 @@ namespace XSerializer
             return true;
         }
 
+        internal static bool IsPrimitiveLike(this Type type)
+        {
+            return type.IsPrimitive || type == typeof(string) || type == typeof(decimal) || type == typeof(DateTime);
+        }
+
         public static bool IsAnonymous(this object instance)
         {
             if (instance == null)

@@ -49,6 +49,11 @@ namespace XSerializer
             _alwaysEmitTypes = alwaysEmitTypes;
         }
 
+        public IXmlSerializer<T> Serializer
+        {
+            get { return _serializer; }
+        }
+
         public string Serialize(T instance)
         {
             return _serializer.Serialize(instance, _namespaces, _encoding, _formatting, _alwaysEmitTypes);

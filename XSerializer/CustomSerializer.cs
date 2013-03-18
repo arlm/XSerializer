@@ -297,8 +297,8 @@ namespace XSerializer
                 writer.WriteAttributeString("xsi", "type", null, instance.GetType().GetXsdType());
             }
 
-            if (IsPrimitiveLike(instanceType)
-                || (instanceType.IsGenericType && instanceType.GetGenericTypeDefinition() == typeof(Nullable<>) && IsPrimitiveLike(instanceType.GetGenericArguments()[0])))
+            if (instanceType.IsPrimitiveLike()
+                || (instanceType.IsGenericType && instanceType.GetGenericTypeDefinition() == typeof(Nullable<>) && instanceType.GetGenericArguments()[0].IsPrimitiveLike()))
             {
                 XmlTextSerializer.GetSerializer(instanceType).SerializeObject(writer, instance, namespaces, alwaysEmitTypes);
             }
@@ -311,11 +311,6 @@ namespace XSerializer
             }
 
             writer.WriteEndElement();
-        }
-
-        private bool IsPrimitiveLike(Type type)
-        {
-            return type.IsPrimitive || type == typeof(string) || type == typeof(decimal) || type == typeof(DateTime);
         }
 
         void IXmlSerializer.SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
@@ -341,7 +336,7 @@ namespace XSerializer
                     case XmlNodeType.Element:
                         if (reader.Name == _rootElementName)
                         {
-                            if (!IsPrimitiveLike(typeof(T)))
+                            if (!typeof(T).IsPrimitiveLike())
                             {
                                 instance = CreateInstanceAndSetAttributePropertyValues(reader, attributes);
                                 hasInstanceBeenCreated = true;
@@ -353,7 +348,7 @@ namespace XSerializer
                         }
                         break;
                     case XmlNodeType.Text:
-                        if (IsPrimitiveLike(typeof(T)))
+                        if (typeof(T).IsPrimitiveLike())
                         {
                             instance = (T)XmlTextSerializer.GetSerializer(typeof(T)).DeserializeObject(reader);
                             hasInstanceBeenCreated = true;
