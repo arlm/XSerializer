@@ -2,13 +2,16 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>XSerializer</id>
-        <version>0.0.2</version>
-        <title>XSerizlier - an XML serializer that works with interfaces (!)</title>
+        <version>0.0.3</version>
+        <title>XSerializer - Serialize *anything*</title>
         <authors>Brian Friesen</authors>
-        <owners />
+        <owners>Brian Friesen</owners>
+        <licenseUrl>https://github.com/QuickenLoans/XSerializer/blob/master/LICENSE.md</licenseUrl>
+        <projectUrl>https://github.com/QuickenLoans/XSerializer</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <description>An XML serializer that successfully serializes and deserializes interfaces, dictionaries, and collections.</description>
-        <summary>An XML serializer that successfully serializes and deserializes interfaces, dictionaries, and collections.</summary>
+        <description>A .NET XML serializer that serializes and deserializes interfaces, dictionaries, dynamic, and collections.</description>
+        <summary>A .NET XML serializer that serializes and deserializes interfaces, dictionaries, dynamic, and collections.</summary>
+        <tags>xmlserializer xmlserialization xmlserialize serializer serialization serialize xml interface dynamic dictionary</tags>
     </metadata>
     <files>
         <file src="XSerializer\bin\Release\XSerializer.dll" target="lib\net40\XSerializer.dll" />
