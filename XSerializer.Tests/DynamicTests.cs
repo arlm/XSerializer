@@ -2,10 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
-using System.Linq;
-using System.Text;
-using System.Xml;
 using System.Xml.Serialization;
+using System.Collections;
 namespace XSerializer.Tests
 {
     public class DynamicTests
@@ -35,22 +33,42 @@ namespace XSerializer.Tests
         [Test]
         public void AClassWithADynamicPropertyUsesCustomSerializer()
         {
-            var xmlSerializer = new XmlSerializer<FooWithDeeplyNestedDynamicProperty>(options => options.Indent());
+            var xmlSerializer = new XmlSerializer<FooWithDeeplyNestedDynamicProperty>();
             Assert.That(xmlSerializer.Serializer, Is.InstanceOf<CustomSerializer<FooWithDeeplyNestedDynamicProperty>>());
         }
 
         [Test]
         public void AClassWithAnObjectPropertyUsesCustomSerializer()
         {
-            var xmlSerializer = new XmlSerializer<FooWithDeeplyNestedObjectProperty>(options => options.Indent());
+            var xmlSerializer = new XmlSerializer<FooWithDeeplyNestedObjectProperty>();
             Assert.That(xmlSerializer.Serializer, Is.InstanceOf<CustomSerializer<FooWithDeeplyNestedObjectProperty>>());
         }
 
         [Test]
         public void AClassWithoutADynamicOrObjectPropertyUsesDefaultSerializerIfLegal()
         {
-            var xmlSerializer = new XmlSerializer<FooWithoutDynamicOrObjectProperty>(options => options.Indent());
+            var xmlSerializer = new XmlSerializer<FooWithoutDynamicOrObjectProperty>();
             Assert.That(xmlSerializer.Serializer, Is.InstanceOf<DefaultSerializer<FooWithoutDynamicOrObjectProperty>>());
+        }
+
+        [TestCase(typeof(ContainerClass<ClassWithNonGenericIEnumerable>))]
+        [TestCase(typeof(ContainerClass<ClassWithIEnumerableOfTypeObject>))]
+        [TestCase(typeof(ContainerClass<ClassWithNonGenericIDictionary>))]
+        [TestCase(typeof(ContainerClass<ClassWithIDictionaryWithObjectKey>))]
+        [TestCase(typeof(ContainerClass<ClassWithIDictionaryWithObjectValue>))]
+        [TestCase(typeof(ContainerClass<ClassWithIEnumerableOfTypeWithObjectProperty>))]
+        [TestCase(typeof(ContainerClass<ClassWithIDictionaryWithKeyOfTypeWithObjectProperty>))]
+        [TestCase(typeof(ContainerClass<ClassWithIDictionaryWithValueOfTypeWithObjectProperty>))]
+        public void AClassWithAPropertyThatHasAnyRelationWithTypeOfObjectUsesCustomSerializer(Type type)
+        {
+            var serializerType = typeof(XmlSerializer<>).MakeGenericType(type);
+            var ctor = serializerType.GetConstructor(new[] { typeof(Type[]) });
+            var serializerProperty = serializerType.GetProperty("Serializer");
+
+            var serializer = ctor.Invoke(new object[] { new Type[0] });
+            var serializerImplementation = serializerProperty.GetValue(serializer);
+
+            Assert.That(serializerImplementation, Is.InstanceOf(typeof(CustomSerializer<>).MakeGenericType(type)));
         }
 
         public class FooWithDeeplyNestedDynamicProperty
@@ -404,6 +422,51 @@ namespace XSerializer.Tests
         public class Bar
         {
             public bool Baz { get; set; }
+        }
+
+        public class ContainerClass<T>
+        {
+            public T Item { get; set; }
+        }
+
+        public class ClassWithNonGenericIEnumerable
+        {
+            public ArrayList Items { get; set; }
+        }
+
+        public class ClassWithIEnumerableOfTypeObject
+        {
+            public List<object> Items { get; set; }
+        }
+
+        public class ClassWithNonGenericIDictionary
+        {
+            public Hashtable Map { get; set; }
+        }
+
+        public class ClassWithIDictionaryWithObjectKey
+        {
+            public Dictionary<object, int> Map { get; set; }
+        }
+
+        public class ClassWithIDictionaryWithObjectValue
+        {
+            public Dictionary<int, object> Map { get; set; }
+        }
+
+        public class ClassWithIEnumerableOfTypeWithObjectProperty
+        {
+            public List<ClassWithDynamicProperty> Items { get; set; }
+        }
+
+        public class ClassWithIDictionaryWithKeyOfTypeWithObjectProperty
+        {
+            public Dictionary<int, ClassWithDynamicProperty> Map { get; set; }
+        }
+
+        public class ClassWithIDictionaryWithValueOfTypeWithObjectProperty
+        {
+            public Dictionary<ClassWithDynamicProperty, int> Map { get; set; }
         }
     }
 }

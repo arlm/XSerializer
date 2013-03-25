@@ -294,16 +294,54 @@ namespace XSerializer
 
         internal static bool IsAssignableToNonGenericIDictionary(this Type type)
         {
-            var isAssignableFromIDictionary = typeof(IDictionary).IsAssignableFrom(type);
-            return isAssignableFromIDictionary;
+            var isAssignableToIDictionary = typeof(IDictionary).IsAssignableFrom(type);
+            return isAssignableToIDictionary;
         }
 
         internal static bool IsAssignableToGenericIDictionary(this Type type)
         {
-            var isAssignableFromGenericIDictionary =
+            var isAssignableToGenericIDictionary =
                 (type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IDictionary<,>))
                 || type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
-            return isAssignableFromGenericIDictionary;
+            return isAssignableToGenericIDictionary;
+        }
+
+        internal static bool IsAssignableToGenericIDictionaryWithKeyOrValueOfTypeObject(this Type type)
+        {
+            var isAssignableToGenericIDictionary = type.IsAssignableToGenericIDictionary();
+            if (!isAssignableToGenericIDictionary)
+            {
+                return false;
+            }
+
+            var iEnumerableType = type.GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+            return iEnumerableType.GetGenericArguments()[0] == typeof(object) || iEnumerableType.GetGenericArguments()[1] == typeof(object);
+        }
+
+        internal static bool IsAssignableToNonGenericIEnumerable(this Type type)
+        {
+            var isAssignableToIEnumerable = typeof(IEnumerable).IsAssignableFrom(type);
+            return isAssignableToIEnumerable;
+        }
+
+        internal static bool IsAssignableToGenericIEnumerable(this Type type)
+        {
+            var isAssignableToGenericIEnumerable =
+                (type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+                || type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+            return isAssignableToGenericIEnumerable;
+        }
+
+        internal static bool IsAssignableToGenericIEnumerableOfTypeObject(this Type type)
+        {
+            var isAssignableToGenericIEnumerable = type.IsAssignableToGenericIEnumerable();
+            if (!isAssignableToGenericIEnumerable)
+            {
+                return false;
+            }
+
+            var iEnumerableType = type.GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+            return iEnumerableType.GetGenericArguments()[0] == typeof(object);
         }
 
         internal static Type GetGenericIDictionaryType(this Type type)

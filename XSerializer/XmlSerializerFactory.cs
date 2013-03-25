@@ -92,13 +92,36 @@ namespace XSerializer
             return serializer != null;
         }
 
-        private bool ContainsObjectProperty(Type type, IEnumerable<Type> extraTypes)
+        private bool ContainsObjectProperty(Type type, ICollection<Type> extraTypes)
         {
             foreach (var property in new[] { type }.Concat((extraTypes ?? new Type[0]).Where(t => type.IsAssignableFrom(t))).SelectMany(t => t.GetProperties()).Where(p => p.IsSerializable()))
             {
-                if (property.PropertyType == typeof(object))
+                if (property.PropertyType == typeof(object)
+                    || property.PropertyType.IsAssignableToGenericIDictionaryWithKeyOrValueOfTypeObject()
+                    || property.PropertyType.IsAssignableToGenericIEnumerableOfTypeObject())
                 {
                     return true;
+                }
+
+                if (property.PropertyType.IsAssignableToNonGenericIDictionary() && !property.PropertyType.IsAssignableToGenericIDictionary())
+                {
+                    return true;
+                }
+
+                if (property.PropertyType.IsAssignableToNonGenericIEnumerable() && !property.PropertyType.IsAssignableToGenericIEnumerable())
+                {
+                    return true;
+                }
+
+                if (property.PropertyType.IsAssignableToGenericIDictionary()
+                    || property.PropertyType.IsAssignableToGenericIEnumerable())
+                {
+                    if (property.PropertyType.GetGenericArguments()
+                        .Where(genericArgumentType => !genericArgumentType.IsPrimitiveLike())
+                        .Any(genericArgumentType => ContainsObjectProperty(genericArgumentType, null)))
+                    {
+                        return true;
+                    }
                 }
 
                 if (property.PropertyType.IsPrimitiveLike())
@@ -106,7 +129,10 @@ namespace XSerializer
                     continue;
                 }
 
-                return ContainsObjectProperty(property.PropertyType, extraTypes);
+                if (ContainsObjectProperty(property.PropertyType, null))
+                {
+                    return true;
+                }
             }
 
             return false;
