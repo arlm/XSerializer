@@ -84,7 +84,7 @@ namespace XSerializer
 
         protected virtual bool TryGetDefaultSerializer<T>(string defaultNamespace, Type[] extraTypes, string rootElementName, out IXmlSerializer<T> serializer)
         {
-            if (ContainsObjectProperty(typeof(T), extraTypes))
+            if (ShouldNotAttemptToUseDefaultSerializer(typeof(T), extraTypes))
             {
                 serializer = null;
                 return false;
@@ -94,7 +94,7 @@ namespace XSerializer
             return serializer != null;
         }
 
-        private bool ContainsObjectProperty(Type type, ICollection<Type> extraTypes)
+        private bool ShouldNotAttemptToUseDefaultSerializer(Type type, ICollection<Type> extraTypes)
         {
             var allTypes = new[] { type }.Concat(extraTypes ?? new Type[0]).ToList();
 
@@ -111,11 +111,16 @@ namespace XSerializer
             return allTypes
                 .SelectMany(t => t.GetProperties())
                 .Where(p => p.IsSerializable())
-                .Any(p => ContainsObjectProperty(p.PropertyType, new Type[0]));
+                .Any(p => ShouldNotAttemptToUseDefaultSerializer(p.PropertyType, new Type[0]));
         }
 
         private bool IsObjectLike(Type type)
         {
+            if (type == typeof(string))
+            {
+                return false;
+            }
+
             if (type == typeof(object)
                     || type.IsAssignableToGenericIDictionaryWithKeyOrValueOfTypeObject()
                     || type.IsAssignableToGenericIEnumerableOfTypeObject())
@@ -133,12 +138,21 @@ namespace XSerializer
                 return true;
             }
 
-            if (type.IsAssignableToGenericIDictionary()
-                || type.IsAssignableToGenericIEnumerable())
+            if (type.IsAssignableToGenericIDictionary())
             {
-                if (type.GetGenericArguments()
+                if (type.GetGenericIDictionaryType().GetGenericArguments()
                     .Where(genericArgumentType => !genericArgumentType.IsPrimitiveLike())
-                    .Any(genericArgumentType => ContainsObjectProperty(genericArgumentType, null)))
+                    .Any(genericArgumentType => ShouldNotAttemptToUseDefaultSerializer(genericArgumentType, null)))
+                {
+                    return true;
+                }
+            }
+
+            if (type.IsAssignableToGenericIEnumerable())
+            {
+                if (type.GetGenericIEnumerableType().GetGenericArguments()
+                    .Where(genericArgumentType => !genericArgumentType.IsPrimitiveLike())
+                    .Any(genericArgumentType => ShouldNotAttemptToUseDefaultSerializer(genericArgumentType, null)))
                 {
                     return true;
                 }

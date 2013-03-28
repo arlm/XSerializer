@@ -307,7 +307,7 @@ namespace XSerializer.Tests
                     return ListSerializer.GetSerializer(type, null, null, "MyCollection", "MyItem");
                 }
 
-                return CustomSerializer.GetSerializer(type, null, null, "MyContainer");
+                return XmlSerializerFactory.Instance.GetSerializer(type, null, null, "MyContainer");
             }
 
             protected override bool AlwaysEmitTypes
@@ -490,7 +490,7 @@ namespace XSerializer.Tests
                     return ListSerializer.GetSerializer(type, null, null, "MyCollection", "MyItem");
                 }
 
-                return CustomSerializer.GetSerializer(type, null, null, "MyContainer");
+                return XmlSerializerFactory.Instance.GetSerializer(type, null, null, "MyContainer");
             }
         }
 
