@@ -387,7 +387,7 @@ namespace XSerializer
             if (property != null)
             {
                 property.ReadValue(reader, instance);
-                shouldIssueRead = !property.UsesDefaultSerializer;
+                shouldIssueRead = !property.ReadsPastLastElement;
             }
             else
             {

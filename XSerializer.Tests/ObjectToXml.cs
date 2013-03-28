@@ -12,7 +12,7 @@ namespace XSerializer.Tests
         [TestCaseSource("TestCaseData")]
         public void SerializesCorrectly(object instance, Type type, string expectedXml)
         {
-            var customSerializer = CustomSerializer.GetSerializer(type, null, null, null);
+            var customSerializer = GetSerializer(type);
 
             var customXml = customSerializer.SerializeObject(instance, null, Encoding.UTF8, Formatting.Indented, AlwaysEmitTypes);
 
@@ -23,6 +23,11 @@ namespace XSerializer.Tests
             Console.WriteLine(customXml);
 
             Assert.That(customXml, Is.EqualTo(expectedXml));
+        }
+
+        protected virtual IXmlSerializer GetSerializer(Type type)
+        {
+            return CustomSerializer.GetSerializer(type, null, null, null);
         }
 
         protected virtual bool AlwaysEmitTypes

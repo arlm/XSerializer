@@ -45,13 +45,17 @@ namespace XSerializer
 
                 if (type == typeof(object) || type == typeof(ExpandoObject))
                 {
-                    serializer = (IXmlSerializer<T>)DynamicSerializer.GetSerializer<T>(defaultNamespace, extraTypes, rootElementName);
+                    serializer = DynamicSerializer.GetSerializer<T>(defaultNamespace, extraTypes, rootElementName);
                 }
                 else if (!TryGetDefaultSerializer(defaultNamespace, extraTypes, rootElementName, out serializer))
                 {
                     if (type.IsAssignableToNonGenericIDictionary() || type.IsAssignableToGenericIDictionary())
                     {
                         serializer = (IXmlSerializer<T>)DictionarySerializer.GetSerializer(type, defaultNamespace, extraTypes, rootElementName);
+                    }
+                    else if (type != typeof(string) && (type.IsAssignableToNonGenericIEnumerable() || type.IsAssignableToGenericIEnumerable()))
+                    {
+                        serializer = (IXmlSerializer<T>)ListSerializer.GetSerializer(type, defaultNamespace, extraTypes, rootElementName, null);
                     }
                     else
                     {
@@ -86,50 +90,55 @@ namespace XSerializer
                 return false;
             }
 
-            // TODO: check T's object hierarchy - if any properties have a type of object (or the property's properties), return false.
-
             serializer = (IXmlSerializer<T>)DefaultSerializer.GetSerializer(typeof(T), defaultNamespace, extraTypes, rootElementName);
             return serializer != null;
         }
 
         private bool ContainsObjectProperty(Type type, ICollection<Type> extraTypes)
         {
-            foreach (var property in new[] { type }.Concat((extraTypes ?? new Type[0]).Where(t => type.IsAssignableFrom(t))).SelectMany(t => t.GetProperties()).Where(p => p.IsSerializable()))
+            var allTypes = new[] { type }.Concat(extraTypes ?? new Type[0]).ToList();
+
+            if (allTypes.Any(t => IsObjectLike(t)))
             {
-                if (property.PropertyType == typeof(object)
-                    || property.PropertyType.IsAssignableToGenericIDictionaryWithKeyOrValueOfTypeObject()
-                    || property.PropertyType.IsAssignableToGenericIEnumerableOfTypeObject())
-                {
-                    return true;
-                }
+                return true;
+            }
 
-                if (property.PropertyType.IsAssignableToNonGenericIDictionary() && !property.PropertyType.IsAssignableToGenericIDictionary())
-                {
-                    return true;
-                }
+            if (allTypes.All(t => t.IsPrimitiveLike()))
+            {
+                return false;
+            }
 
-                if (property.PropertyType.IsAssignableToNonGenericIEnumerable() && !property.PropertyType.IsAssignableToGenericIEnumerable())
-                {
-                    return true;
-                }
+            return allTypes
+                .SelectMany(t => t.GetProperties())
+                .Where(p => p.IsSerializable())
+                .Any(p => ContainsObjectProperty(p.PropertyType, new Type[0]));
+        }
 
-                if (property.PropertyType.IsAssignableToGenericIDictionary()
-                    || property.PropertyType.IsAssignableToGenericIEnumerable())
-                {
-                    if (property.PropertyType.GetGenericArguments()
-                        .Where(genericArgumentType => !genericArgumentType.IsPrimitiveLike())
-                        .Any(genericArgumentType => ContainsObjectProperty(genericArgumentType, null)))
-                    {
-                        return true;
-                    }
-                }
+        private bool IsObjectLike(Type type)
+        {
+            if (type == typeof(object)
+                    || type.IsAssignableToGenericIDictionaryWithKeyOrValueOfTypeObject()
+                    || type.IsAssignableToGenericIEnumerableOfTypeObject())
+            {
+                return true;
+            }
 
-                if (property.PropertyType.IsPrimitiveLike())
-                {
-                    continue;
-                }
+            if (type.IsAssignableToNonGenericIDictionary() && !type.IsAssignableToGenericIDictionary())
+            {
+                return true;
+            }
 
-                if (ContainsObjectProperty(property.PropertyType, null))
+            if (type.IsAssignableToNonGenericIEnumerable() && !type.IsAssignableToGenericIEnumerable())
+            {
+                return true;
+            }
+
+            if (type.IsAssignableToGenericIDictionary()
+                || type.IsAssignableToGenericIEnumerable())
+            {
+                if (type.GetGenericArguments()
+                    .Where(genericArgumentType => !genericArgumentType.IsPrimitiveLike())
+                    .Any(genericArgumentType => ContainsObjectProperty(genericArgumentType, null)))
                 {
                     return true;
                 }

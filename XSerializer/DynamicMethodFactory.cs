@@ -15,16 +15,8 @@ namespace XSerializer
                 throw new ArgumentException("Type argument must have a default constructor in order to create a constructor func.");
             }
 
-            var dm = new DynamicMethod(string.Empty, typeof(T), Type.EmptyTypes, type);
-            var il = dm.GetILGenerator();
-
-            il.DeclareLocal(type);
-            il.Emit(OpCodes.Newobj, ctor);
-            il.Emit(OpCodes.Stloc_0);
-            il.Emit(OpCodes.Ldloc_0);
-            il.Emit(OpCodes.Ret);
-
-            var func = (Func<T>)dm.CreateDelegate(typeof(Func<T>));
+            var expression = Expression.Lambda<Func<T>>(Expression.New(ctor));
+            var func = expression.Compile();
             return func;
         }
 

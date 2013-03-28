@@ -282,14 +282,39 @@ namespace XSerializer
 
         internal static bool IsSerializableReadOnlyProperty(this PropertyInfo property)
         {
+            return
+                property.IsReadOnlyProperty()
+                &&
+                (
+                    (property.PropertyType.IsAnyKindOfDictionary() && property.PropertyType != typeof(ExpandoObject))
+                    ||
+                    (property.PropertyType.IsAssignableToGenericIEnumerable() && property.PropertyType.HasAddMethodOfType(property.PropertyType.GetGenericIEnumerableType().GetGenericArguments()[0]))
+                    ||
+                    (property.PropertyType.IsAssignableToNonGenericIEnumerable() && property.PropertyType.HasAddMethod())
+                ); // TODO: add additional serializable types?
+        }
+
+        internal static bool HasAddMethodOfType(this Type type, Type addMethodType)
+        {
+            return type.GetMethod("Add", new[] { addMethodType }) != null;
+        }
+
+        internal static bool HasAddMethod(this Type type)
+        {
+            return type.GetMethods().Any(m => m.Name == "Add" && m.GetParameters().Length == 1);
+        }
+
+        internal static bool IsAnyKindOfDictionary(this Type type)
+        {
+            return type.IsAssignableToNonGenericIDictionary() || type.IsAssignableToGenericIDictionary();
+        }
+
+        internal static bool IsReadOnlyProperty(this PropertyInfo property)
+        {
             var canCallGetter = property.CanCallGetter();
             var canCallSetter = property.CanCallSetter();
 
-            return
-                (canCallGetter && !canCallSetter)
-                && (property.PropertyType.IsAssignableToNonGenericIDictionary()
-                    || property.PropertyType.IsAssignableToGenericIDictionary()) // TODO: add additional serializable types?
-                && property.PropertyType != typeof(ExpandoObject);
+            return canCallGetter && !canCallSetter;
         }
 
         internal static bool IsAssignableToNonGenericIDictionary(this Type type)
@@ -314,8 +339,17 @@ namespace XSerializer
                 return false;
             }
 
-            var iEnumerableType = type.GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
-            return iEnumerableType.GetGenericArguments()[0] == typeof(object) || iEnumerableType.GetGenericArguments()[1] == typeof(object);
+            Type iDictionaryType;
+            if (type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IDictionary<,>))
+            {
+                iDictionaryType = type;
+            }
+            else
+            {
+                iDictionaryType = type.GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+            }
+                
+            return iDictionaryType.GetGenericArguments()[0] == typeof(object) || iDictionaryType.GetGenericArguments()[1] == typeof(object);
         }
 
         internal static bool IsAssignableToNonGenericIEnumerable(this Type type)
@@ -340,7 +374,16 @@ namespace XSerializer
                 return false;
             }
 
-            var iEnumerableType = type.GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+            Type iEnumerableType;
+            if (type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+            {
+                iEnumerableType = type;
+            }
+            else
+            {
+                iEnumerableType = type.GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+            }
+
             return iEnumerableType.GetGenericArguments()[0] == typeof(object);
         }
 
@@ -352,6 +395,16 @@ namespace XSerializer
             }
 
             return type.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+        }
+
+        internal static Type GetGenericIEnumerableType(this Type type)
+        {
+            if (type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+            {
+                return type;
+            }
+
+            return type.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
         }
 
         internal static bool CanCallGetter(this PropertyInfo property)
@@ -378,7 +431,7 @@ namespace XSerializer
 
         internal static bool IsPrimitiveLike(this Type type)
         {
-            return type.IsPrimitive || type == typeof(string) || type == typeof(decimal) || type == typeof(DateTime);
+            return type.IsPrimitive || type == typeof(string) || type == typeof(decimal) || type == typeof(DateTime) || type == typeof(Guid);
         }
 
         public static bool IsAnonymous(this object instance)
@@ -448,10 +501,13 @@ namespace XSerializer
             {
                 //// try REAL hard to get the type. (holy crap, this is UUUUUGLY!!!!)
 
-                var matchingExtraTypes = extraTypes.Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
-                if (matchingExtraTypes.Count == 1)
+                if (extraTypes != null)
                 {
-                    type = matchingExtraTypes[0];
+                    var matchingExtraTypes = extraTypes.Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
+                    if (matchingExtraTypes.Count == 1)
+                    {
+                        type = matchingExtraTypes[0];
+                    }
                 }
 
                 if (type == null)

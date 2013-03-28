@@ -263,6 +263,35 @@ namespace XSerializer.Tests
                         }
                     }
                 }
+                else if (typeof(IEnumerable).IsAssignableFrom(propertyType) && propertyType != typeof(ExpandoObject))
+                {
+                    var actualCollection = (IEnumerable)actualPropertyValue;
+                    var expectedCollection = (IEnumerable)expectedPropertyValue;
+
+                    var actualEnumerator = actualCollection.GetEnumerator();
+                    var expectedEnumerator = expectedCollection.GetEnumerator();
+
+                    while (true)
+                    {
+                        var actualMoveNext = actualEnumerator.MoveNext();
+                        var expectedMoveNext = expectedEnumerator.MoveNext();
+
+                        if (actualMoveNext != expectedMoveNext)
+                        {
+                            return false;
+                        }
+
+                        if (!actualMoveNext)
+                        {
+                            break;
+                        }
+
+                        if (!Matches(actualEnumerator.Current, expectedEnumerator.Current, string.Format("{0}.{1}[]", path, propertyName)))
+                        {
+                            return false;
+                        }
+                    }
+                }
                 else
                 {
                     if (!Matches(actualPropertyValue, expectedPropertyValue, string.Concat(path, ".", propertyName)))

@@ -14,11 +14,16 @@ namespace XSerializer.Tests
             Console.WriteLine("Input XML:");
             Console.WriteLine(xml);
 
-            var customSerializer = CustomSerializer.GetSerializer(type, null, null, null);
+            var customSerializer = GetSerializer(type);
 
             var customObject = customSerializer.DeserializeObject(xml);
 
             Assert.That(customObject, Has.PropertiesEqualTo(expectedObject));
+        }
+
+        protected virtual IXmlSerializer GetSerializer(Type type)
+        {
+            return CustomSerializer.GetSerializer(type, null, null, null);
         }
 
         protected IEnumerable<TestCaseData> TestCaseData

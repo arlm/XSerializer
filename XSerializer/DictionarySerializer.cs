@@ -21,8 +21,10 @@ namespace XSerializer
 
         private readonly Func<object> _createDictionary;
 
-        public DictionarySerializer(string defaultNamespace, Type[] extraTypes, string rootElementName)
+        protected DictionarySerializer(string defaultNamespace, Type[] extraTypes, string rootElementName)
         {
+            // ReSharper disable DoNotCallOverridableMethodsInConstructor
+
             _defaultNamespace = defaultNamespace;
             _extraTypes = extraTypes;
             _rootElementName = rootElementName;
@@ -54,6 +56,8 @@ namespace XSerializer
             {
                 throw new ArgumentException("Unable to find suitable dictionary to create.");
             }
+
+            // ReSharper restore DoNotCallOverridableMethodsInConstructor
         }
 
         protected abstract Type DictionaryType { get; }
