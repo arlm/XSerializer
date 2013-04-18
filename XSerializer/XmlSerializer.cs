@@ -30,7 +30,7 @@ namespace XSerializer
 
             if (options.RootElementName == null)
             {
-                options.RootElementName = typeof(T).Name;
+                options.RootElementName = typeof(T).GetElementName();
             }
 
             _serializer = XmlSerializerFactory.Instance.GetSerializer<T>(options.DefaultNamespace, extraTypes, options.RootElementName);

@@ -138,6 +138,42 @@ namespace XSerializer.Tests
             }
         }
 
+        [Test]
+        public void CanSerializeDictionaryAsRoot()
+        {
+            var data = new Dictionary<string, string>
+                {
+                    { "abc", "123" },
+                };
+
+            var serializer = new XmlSerializer<Dictionary<string, string>>(options => options.Indent());
+
+            var xml = serializer.Serialize(data);
+
+            Assert.That(xml, Contains.Substring("</DictionaryOfString_String>"));
+            Assert.That(xml, Contains.Substring("abc"));
+            Assert.That(xml, Contains.Substring("123"));
+        }
+
+        [Test]
+        public void CanDeserializeDictionaryAsRoot()
+        {
+            var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<DictionaryOfString_String xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <Item>
+    <Key>abc</Key>
+    <Value>123</Value>
+  </Item>
+</DictionaryOfString_String>";
+
+            var serializer = new XmlSerializer<Dictionary<string, string>>(options => options.Indent(), typeof(ArrayTests.Preference));
+
+            var data = serializer.Deserialize(xml);
+
+            Assert.That(data.Count, Is.EqualTo(1));
+            Assert.That(data, Contains.Item(new KeyValuePair<string, string>("abc", "123")));
+        }
+
         public class ReadWriteGenericDictionaryClass
         {
             public string A { get; set; }

@@ -29,8 +29,8 @@ namespace XSerializer
             _defaultNamespace = defaultNamespace;
             _extraTypes = extraTypes;
             _rootElementName = rootElementName;
-            _itemElementName = itemElementName;
-            _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, _defaultNamespace, _extraTypes, string.IsNullOrEmpty(itemElementName) ? DefaultItemElementName : itemElementName);
+             _itemElementName = string.IsNullOrEmpty(itemElementName) ? DefaultItemElementName : itemElementName;
+             _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, _defaultNamespace, _extraTypes, _itemElementName);
 
             if (CollectionType.IsArray)
             {

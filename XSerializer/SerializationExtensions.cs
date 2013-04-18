@@ -458,6 +458,21 @@ namespace XSerializer
                 && Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute));
         }
 
+        public static string GetElementName(this Type type)
+        {
+            if (type.IsGenericType)
+            {
+                return type.Name.Substring(0, type.Name.IndexOf("`")) + "Of" + string.Join("_", type.GetGenericArguments().Select(x => x.Name));
+            }
+
+            if (type.IsArray)
+            {
+                return "ArrayOf" + type.GetElementType().Name;
+            }
+            
+            return type.Name;
+        }
+
         public static string GetXsdType(this Type type)
         {
             string xsdType;

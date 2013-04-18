@@ -494,6 +494,50 @@ namespace XSerializer.Tests
             }
         }
 
+        [Test]
+        public void CanSerializeListAsRoot()
+        {
+            var data = new List<ArrayTests.DataPoint>
+                {
+                    new ArrayTests.DataPoint
+                    {
+                        Name = "FooBar",
+                        Preference = new ArrayTests.Preference
+                        {
+                            Id = 123
+                        }
+                    }
+                };
+
+            var serializer = new XmlSerializer<List<ArrayTests.DataPoint>>(options => options.Indent(), typeof(ArrayTests.Preference));
+
+            var xml = serializer.Serialize(data);
+
+            Assert.That(xml, Contains.Substring("</ListOfDataPoint>"));
+            Assert.That(xml, Contains.Substring(@"xsi:type=""Preference"""));
+            Assert.IsTrue(xml.IndexOf(@"xsi:type=""Preference""") == xml.LastIndexOf(@"xsi:type=""Preference"""));
+        }
+
+        [Test]
+        public void CanDeserializeListAsRoot()
+        {
+            var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<ListOfDataPoint xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <DataPoint>
+    <Name>FooBar</Name>
+    <Preference xsi:type=""Preference"">
+      <Id>123</Id>
+    </Preference>
+  </DataPoint>
+</ListOfDataPoint>";
+
+            var serializer = new XmlSerializer<List<ArrayTests.DataPoint>>(options => options.Indent(), typeof(ArrayTests.Preference));
+
+            var data = serializer.Deserialize(xml);
+
+            Assert.That(data.Count, Is.EqualTo(1));
+        }
+
         #region read-write with no attributes
 
         public class ContainerWithReadWriteGenericList
