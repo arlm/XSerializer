@@ -338,8 +338,25 @@ namespace XSerializer
                         {
                             if (!typeof(T).IsPrimitiveLike())
                             {
-                                instance = CreateInstanceAndSetAttributePropertyValues(reader, attributes);
+                                instance = CreateInstance(reader);
                                 hasInstanceBeenCreated = true;
+
+                                var setPropertyActions = new List<Action>();
+
+                                while (reader.MoveToNextAttribute())
+                                {
+                                    var property =
+                                        _serializablePropertiesMap[instance.GetType()]
+                                            .SingleOrDefault(p => p.NodeType == NodeType.Attribute && p.Name == reader.Name);
+                                    if (property != null)
+                                    {
+                                        setPropertyActions.Add(() => property.ReadValue(reader, instance));
+                                    }
+                                }
+
+                                setPropertyActions.ForEach(action => action());
+
+                                reader.MoveToElement();
                             }
                         }
                         else
@@ -419,24 +436,6 @@ namespace XSerializer
             return instance;
         }
         // ReSharper restore UnusedParameter.Local
-
-        private T CreateInstanceAndSetAttributePropertyValues(XmlReader reader, Dictionary<string, string> attributes)
-        {
-            var instance = CreateInstance(reader);
-
-            foreach (var attribute in attributes)
-            {
-                var property =
-                    _serializablePropertiesMap[instance.GetType()]
-                        .SingleOrDefault(p => p.NodeType == NodeType.Attribute && p.Name == attribute.Key);
-                if (property != null)
-                {
-                    property.ReadValue(reader, instance);
-                }
-            }
-
-            return instance;
-        }
 
         private T CreateInstance(XmlReader reader)
         {
