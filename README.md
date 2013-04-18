@@ -1,4 +1,4 @@
-#XSerizlier - an XML serializer that works with interfaces (!)#
+#XSerializer - serialize *anything*#
 
 ##Typical Usage##
 
