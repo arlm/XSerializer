@@ -20,6 +20,7 @@ namespace XSerializer
         private readonly IXmlSerializer _itemSerializer;
 
         private readonly Func<object> _createCollection;
+        private readonly Func<object, object> _finalizeCollection = x => x;
 
         protected ListSerializer(string defaultNamespace, Type[] extraTypes, string rootElementName, string itemElementName)
         {
@@ -31,7 +32,12 @@ namespace XSerializer
             _itemElementName = itemElementName;
             _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, _defaultNamespace, _extraTypes, string.IsNullOrEmpty(itemElementName) ? DefaultItemElementName : itemElementName);
 
-            if (CollectionType.IsInterface || CollectionType.IsAbstract)
+            if (CollectionType.IsArray)
+            {
+                _createCollection = DefaultCollectionType.CreateDefaultConstructorFunc<object>();
+                _finalizeCollection = FinalizeCollectionIntoArray;
+            }
+            else if (CollectionType.IsInterface || CollectionType.IsAbstract)
             {
                 if (CollectionType.IsAssignableFrom(DefaultCollectionType))
                 {
@@ -60,12 +66,14 @@ namespace XSerializer
             // ReSharper restore DoNotCallOverridableMethodsInConstructor
         }
 
+
         protected abstract Type CollectionType { get; }
         protected abstract Type DefaultCollectionType { get; }
         protected abstract Type ItemType { get; }
         protected abstract string DefaultItemElementName { get; }
 
         protected abstract void AddItemToCollection(object collection, object item);
+        protected abstract object FinalizeCollectionIntoArray(object collection);
 
         public static IXmlSerializer GetSerializer(Type type, string defaultNamespace, Type[] extraTypes, string rootElementName, string itemElementName)
         {
@@ -154,7 +162,7 @@ namespace XSerializer
                             // If there's no root element, and we encounter another element, we're done - get out!
                             if (reader.Name != _itemElementName)
                             {
-                                return CheckAndReturn(hasInstanceBeenCreated, collection);
+                                return _finalizeCollection(CheckAndReturn(hasInstanceBeenCreated, collection));
                             }
                         }
 
@@ -169,14 +177,14 @@ namespace XSerializer
                         {
                             if (reader.Name == _rootElementName)
                             {
-                                return CheckAndReturn(hasInstanceBeenCreated, collection);
+                                return _finalizeCollection(CheckAndReturn(hasInstanceBeenCreated, collection));
                             }
                         }
                         else
                         {
                             if (reader.Name != _itemElementName)
                             {
-                                return CheckAndReturn(hasInstanceBeenCreated, collection);
+                                return _finalizeCollection(CheckAndReturn(hasInstanceBeenCreated, collection));
                             }
                         }
                         break;
@@ -292,6 +300,11 @@ namespace XSerializer
         {
             _addItemToCollection(collection, item);
         }
+
+        protected override object FinalizeCollectionIntoArray(object collection)
+        {
+            throw new NotSupportedException();
+        }
     }
 
     public sealed class ListSerializer<TEnumerable, TItem> : ListSerializer, IXmlSerializer<TEnumerable>
@@ -380,6 +393,11 @@ namespace XSerializer
         protected override void AddItemToCollection(object collection, object item)
         {
             _addItemToCollection(collection, item);
+        }
+
+        protected override object FinalizeCollectionIntoArray(object collection)
+        {
+            return ((List<TItem>)collection).ToArray();
         }
     }
 }
