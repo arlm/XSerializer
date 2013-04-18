@@ -54,6 +54,21 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void CanDeserializeEmptyArrayElementAsProperty()
+        {
+            var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<ContainerWithArrayProperty xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <Information />
+</ContainerWithArrayProperty>";
+
+            var serializer = new XmlSerializer<ContainerWithArrayProperty>(options => options.Indent(), typeof(Preference));
+
+            var container = serializer.Deserialize(xml);
+
+            Assert.That(container.Information.Length, Is.EqualTo(0));
+        }
+
+        [Test]
         public void CanSerializeArrayAsRoot()
         {
             var data = new[]

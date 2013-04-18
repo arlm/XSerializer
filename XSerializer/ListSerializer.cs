@@ -154,6 +154,12 @@ namespace XSerializer
                             {
                                 collection = _createCollection();
                                 hasInstanceBeenCreated = true;
+
+                                if (reader.IsEmptyElement)
+                                {
+                                    return _finalizeCollection(collection);
+                                }
+
                                 break;
                             }
                         }
