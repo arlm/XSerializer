@@ -323,8 +323,6 @@ namespace XSerializer
             T instance = default(T);
             var hasInstanceBeenCreated = false;
 
-            var attributes = new Dictionary<string, string>();
-
             bool shouldIssueRead;
 
             do
@@ -357,6 +355,15 @@ namespace XSerializer
                                 setPropertyActions.ForEach(action => action());
 
                                 reader.MoveToElement();
+
+                                if (reader.IsEmptyElement)
+                                {
+                                    return instance;
+                                }
+                            }
+                            else if (reader.IsEmptyElement)
+                            {
+                                return default(T);
                             }
                         }
                         else

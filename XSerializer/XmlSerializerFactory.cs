@@ -49,7 +49,11 @@ namespace XSerializer
                 }
                 else if (!TryGetDefaultSerializer(defaultNamespace, extraTypes, rootElementName, out serializer))
                 {
-                    if (type.IsAssignableToNonGenericIDictionary() || type.IsAssignableToGenericIDictionary())
+                    if (type.IsEnum)
+                    {
+                        serializer = new EnumSerializer<T>(rootElementName);
+                    }
+                    else if (type.IsAssignableToNonGenericIDictionary() || type.IsAssignableToGenericIDictionary())
                     {
                         serializer = (IXmlSerializer<T>)DictionarySerializer.GetSerializer(type, defaultNamespace, extraTypes, rootElementName);
                     }

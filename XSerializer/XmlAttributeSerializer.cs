@@ -8,11 +8,21 @@ namespace XSerializer
     {
         private readonly string _attributeName;
         private readonly Type _type;
+        private readonly Func<string, object> _parseValue;
 
         public XmlAttributeSerializer(string attributeName, Type type)
         {
             _attributeName = attributeName;
             _type = type;
+
+            if (_type.IsEnum)
+            {
+                _parseValue = value => Enum.Parse(_type, value);
+            }
+            else
+            {
+                _parseValue = value => Convert.ChangeType(value, _type);
+            }
         }
 
         public void SerializeObject(SerializationXmlTextWriter writer, object value, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
@@ -34,7 +44,7 @@ namespace XSerializer
         {
             if (reader.MoveToAttribute(_attributeName))
             {
-                var value = Convert.ChangeType(reader.Value, _type);
+                var value = _parseValue(reader.Value);
                 reader.MoveToElement();
                 return value;
             }
