@@ -9,6 +9,7 @@ namespace XSerializer
     {
         private static readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
 
+        [Obsolete("Use generic GetSerializer<T> method instead.")]
         public static IXmlSerializer GetSerializer(Type type, string defaultNamespace, Type[] extraTypes, string rootElementName)
         {
             IXmlSerializer serializer;
@@ -29,6 +30,28 @@ namespace XSerializer
             }
 
             return serializer;
+        }
+
+        public static IXmlSerializer<T> GetSerializer<T>(string defaultNamespace, Type[] extraTypes, string rootElementName)
+        {
+            IXmlSerializer serializer;
+            var key = XmlSerializerFactory.Instance.CreateKey(typeof(T), defaultNamespace, extraTypes, rootElementName);
+
+            if (!_serializerCache.TryGetValue(key, out serializer))
+            {
+                try
+                {
+                    serializer = new DefaultSerializer<T>(defaultNamespace, extraTypes, rootElementName);
+                }
+                catch
+                {
+                    serializer = null;
+                }
+
+                _serializerCache[key] = serializer;
+            }
+
+            return (IXmlSerializer<T>)serializer;
         }
     }
 

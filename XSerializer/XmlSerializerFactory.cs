@@ -94,7 +94,7 @@ namespace XSerializer
                 return false;
             }
 
-            serializer = (IXmlSerializer<T>)DefaultSerializer.GetSerializer(typeof(T), defaultNamespace, extraTypes, rootElementName);
+            serializer = DefaultSerializer.GetSerializer<T>(defaultNamespace, extraTypes, rootElementName);
             return serializer != null;
         }
 
