@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
@@ -125,14 +126,22 @@ namespace XSerializer
                 return false;
             }
 
-            if (type == typeof(object)
-                    || type.IsAssignableToGenericIDictionaryWithKeyOrValueOfTypeObject()
-                    || type.IsAssignableToGenericIEnumerableOfTypeObject())
+            if (type.IsInterface)
             {
                 return true;
             }
 
-            if (type.IsAssignableToNonGenericIDictionary() && !type.IsAssignableToGenericIDictionary())
+            if (type == typeof(object))
+            {
+                return true;
+            }
+
+            if (type.IsAssignableToNonGenericIDictionary() || type.IsAssignableToGenericIDictionary())
+            {
+                return true;
+            }
+
+            if (type.IsAssignableToGenericIEnumerableOfTypeObject())
             {
                 return true;
             }
@@ -140,16 +149,6 @@ namespace XSerializer
             if (type.IsAssignableToNonGenericIEnumerable() && !type.IsAssignableToGenericIEnumerable())
             {
                 return true;
-            }
-
-            if (type.IsAssignableToGenericIDictionary())
-            {
-                if (type.GetGenericIDictionaryType().GetGenericArguments()
-                    .Where(genericArgumentType => !genericArgumentType.IsPrimitiveLike())
-                    .Any(genericArgumentType => ShouldNotAttemptToUseDefaultSerializer(genericArgumentType, null)))
-                {
-                    return true;
-                }
             }
 
             if (type.IsAssignableToGenericIEnumerable())
