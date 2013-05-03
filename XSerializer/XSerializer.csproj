@@ -55,6 +55,7 @@
     <Compile Include="EnumSerializer.cs" />
     <Compile Include="ListSerializer.cs" />
     <Compile Include="NodeType.cs" />
+    <Compile Include="RedactAttribute.cs" />
     <Compile Include="SerializationExtensions.cs" />
     <Compile Include="IXmlSerializer.cs" />
     <Compile Include="SerializableProperty.cs" />
