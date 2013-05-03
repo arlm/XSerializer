@@ -36,16 +36,5 @@ namespace XSerializer.Tests
 
             Assert.That(redacted, Is.EqualTo(input));
         }
-
-        [Test]
-        public void OnlyPartsMatchingRedactPatternAreRedacted()
-        {
-            var input = "123-45-6789";
-            var attribute = new RedactAttribute(@"\d{3}-\d{2}-");
-
-            var redacted = attribute.Redact(input);
-
-            Assert.That(redacted, Is.EqualTo("###-##-6789"));
-        }
     }
 }
