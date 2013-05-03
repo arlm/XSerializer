@@ -1,9 +1,10 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using System.Xml.Serialization;
 
 namespace XSerializer
 {
-    public class XmlSerializationOptions
+    public class XmlSerializationOptions : IOptions
     {
         internal XmlSerializationOptions()
         {
@@ -11,12 +12,13 @@ namespace XSerializer
             Namespaces = new XmlSerializerNamespaces();
         }
 
-        internal Encoding Encoding { get; set; }
-        internal string DefaultNamespace { get; set; }
-        internal XmlSerializerNamespaces Namespaces { get; set; }
-        internal bool ShouldIndent { get; set; }
-        internal string RootElementName { get; set; }
-        internal bool ShouldAlwaysEmitTypes { get; set; }
+        public Encoding Encoding { get; private set; }
+        public string DefaultNamespace { get; private set; }
+        public XmlSerializerNamespaces Namespaces { get; private set; }
+        public bool ShouldIndent { get; private set; }
+        public string RootElementName { get; private set; }
+        public bool ShouldAlwaysEmitTypes { get; private set; }
+        public Type[] ExtraTypes { get; internal set; }
 
         public XmlSerializationOptions WithEncoding(Encoding encoding)
         {

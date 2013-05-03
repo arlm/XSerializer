@@ -14,16 +14,16 @@ namespace XSerializer
         private static readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
         protected static readonly Dictionary<int, Type> _typeCache = new Dictionary<int, Type>();
 
-        public static IXmlSerializer GetSerializer(Type type, string defaultNamespace, Type[] extraTypes, string rootElementName)
+        public static IXmlSerializer GetSerializer(Type type, IOptions options)
         {
             IXmlSerializer serializer;
-            var key = XmlSerializerFactory.Instance.CreateKey(type, defaultNamespace, extraTypes, rootElementName);
+            var key = XmlSerializerFactory.Instance.CreateKey(type, options);
 
             if (!_serializerCache.TryGetValue(key, out serializer))
             {
                 try
                 {
-                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(CustomSerializer<>).MakeGenericType(type), defaultNamespace, extraTypes, rootElementName);
+                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(CustomSerializer<>).MakeGenericType(type), options);
                 }
                 catch (TargetInvocationException ex) // True exception gets masked due to reflection. Preserve stacktrace and rethrow
                 {
@@ -64,30 +64,25 @@ namespace XSerializer
 
     public class CustomSerializer<T> : CustomSerializer, IXmlSerializer<T>
     {
-        private readonly string _defaultNamespace;
-        private readonly Type[] _extraTypes;
-        private readonly string _rootElementName;
+        private readonly IOptions _options;
         private readonly Dictionary<Type, SerializableProperty[]> _serializablePropertiesMap = new Dictionary<Type, SerializableProperty[]>();
 
-        public CustomSerializer(string defaultNamespace, Type[] extraTypes, string rootElementName)
+        public CustomSerializer(IOptions options)
         {
-            _defaultNamespace = defaultNamespace;
-            var type = typeof (T);
-
-            _rootElementName = !string.IsNullOrWhiteSpace(rootElementName) ? rootElementName : GetRootElement(type);
-
+            var type = typeof(T);
             AssertValidHeirarchy(type);
 
-            var types = new List<Type>();
+            _options = options.WithAdditionalExtraTypes(
+                type.GetCustomAttributes(typeof(XmlIncludeAttribute), true)
+                    .Cast<XmlIncludeAttribute>()
+                    .Select(a => a.Type));
 
-            if (extraTypes != null)
+            if (string.IsNullOrWhiteSpace(_options.RootElementName))
             {
-                types.AddRange(extraTypes);
+                _options = _options.WithRootElementName(GetRootElement(type));
             }
 
-            types.AddRange(type.GetCustomAttributes(typeof(XmlIncludeAttribute), true).Cast<XmlIncludeAttribute>().Select(a => a.Type));
-            _extraTypes = types.ToArray();
-
+            var types = _options.ExtraTypes.ToList();
             if (!type.IsInterface && !type.IsAbstract)
             {
                 types.Insert(0, type);
@@ -99,7 +94,7 @@ namespace XSerializer
                     t =>
                         t.GetProperties()
                         .Where(p => p.IsSerializable())
-                        .Select(p => new SerializableProperty(p, defaultNamespace, _extraTypes))
+                        .Select(p => new SerializableProperty(p, _options))
                         .OrderBy(p => p.NodeType)
                         .ToArray());
         }
@@ -282,12 +277,12 @@ namespace XSerializer
             }
 
             writer.WriteStartDocument();
-            writer.WriteStartElement(_rootElementName);
+            writer.WriteStartElement(_options.RootElementName);
             writer.WriteDefaultNamespaces();
 
-            if (!string.IsNullOrWhiteSpace(_defaultNamespace))
+            if (!string.IsNullOrWhiteSpace(_options.DefaultNamespace))
             {
-                writer.WriteAttributeString("xmlns", null, null, _defaultNamespace);
+                writer.WriteAttributeString("xmlns", null, null, _options.DefaultNamespace);
             }
 
             var instanceType = instance.GetType();
@@ -332,7 +327,7 @@ namespace XSerializer
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                        if (reader.Name == _rootElementName)
+                        if (reader.Name == _options.RootElementName)
                         {
                             if (!typeof(T).IsPrimitiveLike())
                             {
@@ -383,7 +378,7 @@ namespace XSerializer
                         }
                         break;
                     case XmlNodeType.EndElement:
-                        if (reader.Name == _rootElementName)
+                        if (reader.Name == _options.RootElementName)
                         {
                             return CheckAndReturn(hasInstanceBeenCreated, instance);
                         }
@@ -447,7 +442,7 @@ namespace XSerializer
         private T CreateInstance(XmlReader reader)
         {
             T instance;
-            var type = reader.GetXsdType<T>(_extraTypes);
+            var type = reader.GetXsdType<T>(_options.ExtraTypes);
 
             if (type != null)
             {

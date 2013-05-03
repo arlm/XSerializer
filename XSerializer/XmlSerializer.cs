@@ -30,10 +30,12 @@ namespace XSerializer
 
             if (options.RootElementName == null)
             {
-                options.RootElementName = typeof(T).GetElementName();
+                options.SetRootElementName(typeof(T).GetElementName());
             }
 
-            _serializer = XmlSerializerFactory.Instance.GetSerializer<T>(options.DefaultNamespace, extraTypes, options.RootElementName);
+            options.ExtraTypes = extraTypes;
+
+            _serializer = XmlSerializerFactory.Instance.GetSerializer<T>(options);
             _encoding = options.Encoding ?? Encoding.UTF8;
             _namespaces = options.Namespaces;
             _formatting = options.ShouldIndent ? Formatting.Indented : Formatting.None;

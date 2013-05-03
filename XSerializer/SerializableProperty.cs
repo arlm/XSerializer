@@ -20,7 +20,7 @@ namespace XSerializer
 
         private Func<bool> _readsPastLastElement;
 
-        public SerializableProperty(PropertyInfo propertyInfo, string defaultNamespace, Type[] extraTypes)
+        public SerializableProperty(PropertyInfo propertyInfo, IOptions options)
         {
             _getValueFunc = DynamicMethodFactory.CreateFunc<object>(propertyInfo.GetGetMethod());
             if (!propertyInfo.DeclaringType.IsAnonymous())
@@ -55,7 +55,7 @@ namespace XSerializer
             }
             _shouldSerializeFunc = GetShouldSerializeFunc(propertyInfo);
             _readsPastLastElement = () => _serializer.Value is DefaultSerializer;
-            _serializer = new Lazy<IXmlSerializer>(GetCreateSerializerFunc(propertyInfo, defaultNamespace, extraTypes));
+            _serializer = new Lazy<IXmlSerializer>(GetCreateSerializerFunc(propertyInfo, options));
         }
 
         public string Name { get; private set; }
@@ -81,7 +81,7 @@ namespace XSerializer
             }
         }
 
-        private Func<IXmlSerializer> GetCreateSerializerFunc(PropertyInfo propertyInfo, string defaultNamespace, Type[] extraTypes)
+        private Func<IXmlSerializer> GetCreateSerializerFunc(PropertyInfo propertyInfo, IOptions options)
         {
             var attributeAttribute = (XmlAttributeAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlAttributeAttribute));
             if (attributeAttribute != null)
@@ -139,14 +139,14 @@ namespace XSerializer
                 }
 
                 NodeType = NodeType.Element;
-                return () => ListSerializer.GetSerializer(propertyInfo.PropertyType, defaultNamespace, extraTypes, rootElementName, itemElementName);
+                return () => ListSerializer.GetSerializer(propertyInfo.PropertyType, options.WithRootElementName(rootElementName), itemElementName);
             }
 
             rootElementName = GetElementName(elementAttribute, x => x.ElementName, propertyInfo.Name);
 
             NodeType = NodeType.Element;
             Name = rootElementName;
-            return () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo.PropertyType, defaultNamespace, extraTypes, rootElementName);
+            return () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo.PropertyType, options.WithRootElementName(rootElementName));
         }
 
         private static bool IsListProperty(PropertyInfo propertyInfo)

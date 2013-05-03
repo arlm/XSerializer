@@ -12,24 +12,20 @@ namespace XSerializer
     {
         private static readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
 
-        private readonly string _defaultNamespace;
-        private readonly Type[] _extraTypes;
-        private readonly string _rootElementName;
+        private readonly IOptions _options;
 
         private readonly IXmlSerializer _keySerializer;
         private readonly IXmlSerializer _valueSerializer;
 
         private readonly Func<object> _createDictionary;
 
-        protected DictionarySerializer(string defaultNamespace, Type[] extraTypes, string rootElementName)
+        protected DictionarySerializer(IOptions options)
         {
             // ReSharper disable DoNotCallOverridableMethodsInConstructor
 
-            _defaultNamespace = defaultNamespace;
-            _extraTypes = extraTypes;
-            _rootElementName = rootElementName;
-            _keySerializer = XmlSerializerFactory.Instance.GetSerializer(KeyType, _defaultNamespace, _extraTypes, "Key");
-            _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(ValueType, _defaultNamespace, _extraTypes, "Value");
+            _options = options;
+            _keySerializer = XmlSerializerFactory.Instance.GetSerializer(KeyType, _options.WithRootElementName("Key"));
+            _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(ValueType, _options.WithRootElementName("Value"));
 
             if (DictionaryType.IsInterface || DictionaryType.IsAbstract)
             {
@@ -40,7 +36,7 @@ namespace XSerializer
                 else
                 {
                     var dictionaryInheritorType =
-                        extraTypes.FirstOrDefault(t =>
+                        _options.ExtraTypes.FirstOrDefault(t =>
                             !t.IsInterface
                             && !t.IsAbstract
                             && DictionaryType.IsAssignableFrom(t)
@@ -71,12 +67,12 @@ namespace XSerializer
         public void SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
         {
             writer.WriteStartDocument();
-            writer.WriteStartElement(_rootElementName);
+            writer.WriteStartElement(_options.RootElementName);
             writer.WriteDefaultNamespaces();
 
-            if (!string.IsNullOrWhiteSpace(_defaultNamespace))
+            if (!string.IsNullOrWhiteSpace(_options.DefaultNamespace))
             {
-                writer.WriteAttributeString("xmlns", null, null, _defaultNamespace);
+                writer.WriteAttributeString("xmlns", null, null, _options.DefaultNamespace);
             }
 
             foreach (var item in GetDictionaryEntries(instance))
@@ -117,7 +113,7 @@ namespace XSerializer
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                        if (reader.Name == _rootElementName)
+                        if (reader.Name == _options.RootElementName)
                         {
                             dictionary = _createDictionary();
                             hasInstanceBeenCreated = true;
@@ -144,7 +140,7 @@ namespace XSerializer
                             currentValue = null;
                             isInsideItemElement = false;
                         }
-                        else if (reader.Name == _rootElementName)
+                        else if (reader.Name == _options.RootElementName)
                         {
                             return CheckAndReturn(hasInstanceBeenCreated, dictionary);
                         }
@@ -185,10 +181,10 @@ namespace XSerializer
             return instance;
         }
 
-        public static IXmlSerializer GetSerializer(Type type, string defaultNamespace, Type[] extraTypes, string rootElementName)
+        public static IXmlSerializer GetSerializer(Type type, IOptions options)
         {
             IXmlSerializer serializer;
-            var key = XmlSerializerFactory.Instance.CreateKey(type, defaultNamespace, extraTypes, rootElementName);
+            var key = XmlSerializerFactory.Instance.CreateKey(type, options);
 
             if (!_serializerCache.TryGetValue(key, out serializer))
             {
@@ -197,11 +193,11 @@ namespace XSerializer
                     var genericArguments = type.GetGenericIDictionaryType().GetGenericArguments();
                     var keyType = genericArguments[0];
                     var valueType = genericArguments[1];
-                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), defaultNamespace, extraTypes, rootElementName);
+                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), options);
                 }
                 else if (type.IsAssignableToNonGenericIDictionary())
                 {
-                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), defaultNamespace, extraTypes, rootElementName);
+                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), options);
                 }
                 else
                 {
@@ -218,8 +214,8 @@ namespace XSerializer
     public class DictionarySerializer<TDictionary> : DictionarySerializer, IXmlSerializer<TDictionary>
         where TDictionary : IDictionary
     {
-        public DictionarySerializer(string defaultNamespace, Type[] extraTypes, string rootElementName)
-            : base(defaultNamespace, extraTypes, rootElementName)
+        public DictionarySerializer(IOptions options)
+            : base(options)
         {
         }
 
@@ -283,8 +279,8 @@ namespace XSerializer
     public class DictionarySerializer<TDictionary, TKey, TValue> : DictionarySerializer, IXmlSerializer<TDictionary>
         where TDictionary : IDictionary<TKey, TValue>
     {
-        public DictionarySerializer(string defaultNamespace, Type[] extraTypes, string rootElementName)
-            : base(defaultNamespace, extraTypes, rootElementName)
+        public DictionarySerializer(IOptions options)
+            : base(options)
         {
         }
 

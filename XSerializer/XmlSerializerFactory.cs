@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
@@ -8,7 +7,7 @@ namespace XSerializer
 {
     public class XmlSerializerFactory
     {
-        private readonly Dictionary<Type, Func<string, Type[], string, IXmlSerializer>> _getSerializerMap = new Dictionary<Type, Func<string, Type[], string, IXmlSerializer>>();
+        private readonly Dictionary<Type, Func<IOptions, IXmlSerializer>> _getSerializerMap = new Dictionary<Type, Func<IOptions, IXmlSerializer>>();
         private readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
 
         public static readonly XmlSerializerFactory Instance = new XmlSerializerFactory();
@@ -17,67 +16,67 @@ namespace XSerializer
         {
         }
 
-        public IXmlSerializer GetSerializer(Type type, string defaultNamespace, Type[] extraTypes, string rootElementName)
+        public IXmlSerializer GetSerializer(Type type, IOptions options)
         {
-            Func<string, Type[], string, IXmlSerializer> getSerializer;
+            Func<IOptions, IXmlSerializer> getSerializer;
             if (!_getSerializerMap.TryGetValue(type, out getSerializer))
             {
                 var getSerializerMethod =
                     typeof(XmlSerializerFactory)
-                        .GetMethod("GetSerializer", new[] { typeof(string), typeof(Type[]), typeof(string) })
+                        .GetMethod("GetSerializer", new[] { typeof(IOptions) })
                         .MakeGenericMethod(type);
 
                 getSerializer =
-                    (Func<string, Type[], string, IXmlSerializer>)Delegate.CreateDelegate(
-                        typeof(Func<string, Type[], string, IXmlSerializer>), this, getSerializerMethod);
+                    (Func<IOptions, IXmlSerializer>)Delegate.CreateDelegate(
+                        typeof(Func<IOptions, IXmlSerializer>), this, getSerializerMethod);
                 _getSerializerMap[type] = getSerializer;
             }
 
-            return getSerializer(defaultNamespace, extraTypes, rootElementName);
+            return getSerializer(options);
         }
 
-        public IXmlSerializer<T> GetSerializer<T>(string defaultNamespace, Type[] extraTypes, string rootElementName)
+        public IXmlSerializer<T> GetSerializer<T>(IOptions options)
         {
             IXmlSerializer<T> serializer;
 
-            if (!TryGetCachedSerializer(defaultNamespace, extraTypes, rootElementName, out serializer))
+            if (!TryGetCachedSerializer(options, out serializer))
             {
                 var type = typeof(T);
 
                 if (type == typeof(object) || type == typeof(ExpandoObject))
                 {
-                    serializer = DynamicSerializer.GetSerializer<T>(defaultNamespace, extraTypes, rootElementName);
+                    serializer = DynamicSerializer.GetSerializer<T>(options);
                 }
-                else if (!TryGetDefaultSerializer(defaultNamespace, extraTypes, rootElementName, out serializer))
+                else if (!TryGetDefaultSerializer(options, out serializer))
                 {
                     if (type.IsEnum)
                     {
-                        serializer = new EnumSerializer<T>(rootElementName);
+                        serializer = new EnumSerializer<T>(options);
                     }
                     else if (type.IsAssignableToNonGenericIDictionary() || type.IsAssignableToGenericIDictionary())
                     {
-                        serializer = (IXmlSerializer<T>)DictionarySerializer.GetSerializer(type, defaultNamespace, extraTypes, rootElementName);
+                        serializer = (IXmlSerializer<T>)DictionarySerializer.GetSerializer(type, options);
                     }
                     else if (type != typeof(string) && (type.IsAssignableToNonGenericIEnumerable() || type.IsAssignableToGenericIEnumerable()))
                     {
-                        serializer = (IXmlSerializer<T>)ListSerializer.GetSerializer(type, defaultNamespace, extraTypes, rootElementName, null);
+                        serializer = (IXmlSerializer<T>)ListSerializer.GetSerializer(type, options, null);
                     }
                     else
                     {
-                        serializer = (IXmlSerializer<T>)CustomSerializer.GetSerializer(type, defaultNamespace, extraTypes, rootElementName);
+                        serializer = (IXmlSerializer<T>)CustomSerializer.GetSerializer(type, options);
                     }
                 }
 
-                CacheSerializer(defaultNamespace, extraTypes, rootElementName, serializer);
+                CacheSerializer(options, serializer);
             }
 
             return serializer;
         }
 
-        protected virtual bool TryGetCachedSerializer<T>(string defaultNamespace, Type[] extraTypes, string rootElementName, out IXmlSerializer<T> serializer)
+        protected virtual bool TryGetCachedSerializer<T>(IOptions options, out IXmlSerializer<T> serializer)
         {
             IXmlSerializer serializerObject;
-            if (_serializerCache.TryGetValue(CreateKey(typeof(T), defaultNamespace, extraTypes, rootElementName), out serializerObject))
+            if (_serializerCache.TryGetValue(CreateKey(typeof(T), options), out serializerObject))
             {
                 serializer = (IXmlSerializer<T>)serializerObject;
                 return true;
@@ -87,15 +86,15 @@ namespace XSerializer
             return false;
         }
 
-        protected virtual bool TryGetDefaultSerializer<T>(string defaultNamespace, Type[] extraTypes, string rootElementName, out IXmlSerializer<T> serializer)
+        protected virtual bool TryGetDefaultSerializer<T>(IOptions options, out IXmlSerializer<T> serializer)
         {
-            if (ShouldNotAttemptToUseDefaultSerializer(typeof(T), extraTypes))
+            if (ShouldNotAttemptToUseDefaultSerializer(typeof(T), options.ExtraTypes))
             {
                 serializer = null;
                 return false;
             }
 
-            serializer = DefaultSerializer.GetSerializer<T>(defaultNamespace, extraTypes, rootElementName);
+            serializer = DefaultSerializer.GetSerializer<T>(options);
             return serializer != null;
         }
 
@@ -164,29 +163,29 @@ namespace XSerializer
             return false;
         }
 
-        protected virtual void CacheSerializer<T>(string defaultNamespace, Type[] extraTypes, string rootElementName, IXmlSerializer<T> serializer)
+        protected virtual void CacheSerializer<T>(IOptions options, IXmlSerializer<T> serializer)
         {
-            _serializerCache[CreateKey(typeof(T), defaultNamespace, extraTypes, rootElementName)] = serializer;
+            _serializerCache[CreateKey(typeof(T), options)] = serializer;
         }
 
-        internal int CreateKey(Type type, string defaultNamespace, Type[] extraTypes, string rootElementName)
+        internal int CreateKey(Type type, IOptions options)
         {
             unchecked
             {
                 var key = type.GetHashCode();
 
-                key = (key * 397) ^ (string.IsNullOrWhiteSpace(defaultNamespace) ? "" : defaultNamespace).GetHashCode();
+                key = (key * 397) ^ (string.IsNullOrWhiteSpace(options.DefaultNamespace) ? "" : options.DefaultNamespace).GetHashCode();
 
-                if (extraTypes != null)
+                if (options.ExtraTypes != null)
                 {
-                    key = extraTypes
+                    key = options.ExtraTypes
                         .Where(extraType => extraType != null)
                         .Distinct(EqualityComparer<Type>.Default)
                         .OrderBy(extraType => extraType.FullName)
                         .Aggregate(key, (current, extraType) => (current * 397) ^ extraType.GetHashCode());
                 }
 
-                key = (key * 397) ^ (string.IsNullOrWhiteSpace(rootElementName) ? type.Name : rootElementName).GetHashCode();
+                key = (key * 397) ^ (string.IsNullOrWhiteSpace(options.RootElementName) ? type.Name : options.RootElementName).GetHashCode();
 
                 return key;
             }

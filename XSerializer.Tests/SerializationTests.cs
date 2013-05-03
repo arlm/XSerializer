@@ -23,15 +23,21 @@ namespace XSerializer.Tests
             var defaultSerializer = 
                 (IXmlSerializer)Activator.CreateInstance(
                     typeof(DefaultSerializer<>).MakeGenericType(instance.GetType()),
-                    defaultNamespace,
-                    extraTypes,
-                    rootElementName);
+                    new TestOptions
+                    {
+                        DefaultNamespace = defaultNamespace,
+                        ExtraTypes = extraTypes,
+                        RootElementName = rootElementName
+                    });
             var customSerializer = 
                 (IXmlSerializer)Activator.CreateInstance(
                     typeof(CustomSerializer<>).MakeGenericType(instance.GetType()),
-                    defaultNamespace,
-                    extraTypes,
-                    rootElementName);
+                    new TestOptions
+                    {
+                        DefaultNamespace = defaultNamespace,
+                        ExtraTypes = extraTypes,
+                        RootElementName = rootElementName
+                    });
 
             var defaultXml = defaultSerializer.SerializeObject(instance, namespaces, encoding, formatting);
             var customXml = customSerializer.SerializeObject(instance, namespaces, encoding, formatting);
@@ -72,15 +78,21 @@ namespace XSerializer.Tests
             var defaultSerializer =
                 (IXmlSerializer)Activator.CreateInstance(
                     typeof(DefaultSerializer<>).MakeGenericType(instanceWithAbstract.GetType()),
-                    defaultNamespace,
-                    extraTypes,
-                    rootElementName);
+                    new TestOptions
+                    {
+                        DefaultNamespace = defaultNamespace,
+                        ExtraTypes = extraTypes,
+                        RootElementName = rootElementName
+                    });
             var customSerializer =
                 (IXmlSerializer)Activator.CreateInstance(
                     typeof(CustomSerializer<>).MakeGenericType(instanceWithInterface.GetType()),
-                    defaultNamespace,
-                    extraTypes,
-                    rootElementName);
+                    new TestOptions
+                    {
+                        DefaultNamespace = defaultNamespace,
+                        ExtraTypes = extraTypes,
+                        RootElementName = rootElementName
+                    });
 
             var defaultXml = defaultSerializer.SerializeObject(instanceWithAbstract, namespaces, encoding, formatting);
             var customXml = customSerializer.SerializeObject(instanceWithInterface, namespaces, encoding, formatting);

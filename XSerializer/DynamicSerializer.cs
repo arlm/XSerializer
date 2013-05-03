@@ -10,13 +10,11 @@ namespace XSerializer
 {
     public class DynamicSerializer : IXmlSerializer<object>
     {
-        private readonly string _defaultNamespace;
-        private readonly Type[] _extraTypes;
-        private readonly string _rootElementName;
+        private readonly IOptions _options;
 
-        public static IXmlSerializer<T> GetSerializer<T>(string defaultNamespace, Type[] extraTypes, string rootElementName)
+        public static IXmlSerializer<T> GetSerializer<T>(IOptions options)
         {
-            var serializer = new DynamicSerializer(defaultNamespace, extraTypes, rootElementName);
+            var serializer = new DynamicSerializer(options);
 
             if (typeof(T) == typeof(object))
             {
@@ -32,11 +30,9 @@ namespace XSerializer
             }
         }
 
-        public DynamicSerializer(string defaultNamespace, Type[] extraTypes, string rootElementName)
+        public DynamicSerializer(IOptions options)
         {
-            _defaultNamespace = defaultNamespace;
-            _extraTypes = extraTypes;
-            _rootElementName = rootElementName;
+            _options = options;
         }
 
         public void SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
@@ -62,11 +58,11 @@ namespace XSerializer
 
             if (!alwaysEmitTypes || instance.IsAnonymous())
             {
-                serializer = CustomSerializer.GetSerializer(instance.GetType(), _defaultNamespace, _extraTypes, _rootElementName);
+                serializer = CustomSerializer.GetSerializer(instance.GetType(), _options);
             }
             else
             {
-                serializer = CustomSerializer.GetSerializer(typeof(object), _defaultNamespace, (_extraTypes ?? new Type[0]).Concat(new[] { instance.GetType() }).Distinct().ToArray(), _rootElementName);
+                serializer = CustomSerializer.GetSerializer(typeof(object), _options.WithAdditionalExtraTypes(instance.GetType()));
             }
 
             serializer.SerializeObject(writer, instance, namespaces, alwaysEmitTypes);
@@ -79,10 +75,10 @@ namespace XSerializer
 
         public object Deserialize(XmlReader reader)
         {
-            var type = reader.GetXsdType<object>(_extraTypes);
+            var type = reader.GetXsdType<object>(_options.ExtraTypes);
             if (type != null)
             {
-                var serializer = XmlSerializerFactory.Instance.GetSerializer(type, _defaultNamespace, _extraTypes, reader.Name);
+                var serializer = XmlSerializerFactory.Instance.GetSerializer(type, _options.WithRootElementName(reader.Name));
                 return serializer.DeserializeObject(reader);
             }
 
@@ -92,12 +88,12 @@ namespace XSerializer
         private void SerializeExpandoObject(SerializationXmlTextWriter writer, IDictionary<string, object> expando, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
         {
             writer.WriteStartDocument();
-            writer.WriteStartElement(_rootElementName);
+            writer.WriteStartElement(_options.RootElementName);
             writer.WriteDefaultNamespaces();
 
-            if (!string.IsNullOrWhiteSpace(_defaultNamespace))
+            if (!string.IsNullOrWhiteSpace(_options.DefaultNamespace))
             {
-                writer.WriteAttributeString("xmlns", null, null, _defaultNamespace);
+                writer.WriteAttributeString("xmlns", null, null, _options.DefaultNamespace);
             }
 
             foreach (var property in expando)
@@ -111,11 +107,11 @@ namespace XSerializer
 
                 if (property.Value is ExpandoObject)
                 {
-                    serializer = DynamicSerializer.GetSerializer<ExpandoObject>(_defaultNamespace, _extraTypes, property.Key);
+                    serializer = DynamicSerializer.GetSerializer<ExpandoObject>(_options.WithRootElementName(property.Key));
                 }
                 else
                 {
-                    serializer = CustomSerializer.GetSerializer(property.Value.GetType(), _defaultNamespace, _extraTypes, property.Key);
+                    serializer = CustomSerializer.GetSerializer(property.Value.GetType(), _options.WithRootElementName(property.Key));
                 }
 
                 serializer.SerializeObject(writer, property.Value, namespaces, alwaysEmitTypes);
@@ -136,7 +132,7 @@ namespace XSerializer
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                        if (reader.Name == _rootElementName)
+                        if (reader.Name == _options.RootElementName)
                         {
                             instance = new ExpandoObject();
                             hasInstanceBeenCreated = true;
@@ -183,7 +179,7 @@ namespace XSerializer
                         instance = stringValue;
                         break;
                     case XmlNodeType.EndElement:
-                        if (reader.Name == _rootElementName)
+                        if (reader.Name == _options.RootElementName)
                         {
                             return CheckAndReturn(hasInstanceBeenCreated, instance);
                         }
@@ -197,7 +193,7 @@ namespace XSerializer
         private void SetElementPropertyValue(XmlReader reader, bool hasInstanceBeenCreated, IDictionary<string, object> expando)
         {
             var propertyName = reader.Name;
-            var serializer = DynamicSerializer.GetSerializer<object>(_defaultNamespace, _extraTypes, reader.Name);
+            var serializer = GetSerializer<object>(_options.WithRootElementName(reader.Name));
             var value = serializer.Deserialize(reader);
             expando[propertyName] = value;
         }

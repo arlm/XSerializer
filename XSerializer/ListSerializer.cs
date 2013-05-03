@@ -12,9 +12,7 @@ namespace XSerializer
     {
         private static readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
 
-        private readonly string _defaultNamespace;
-        private readonly Type[] _extraTypes;
-        private readonly string _rootElementName;
+        private readonly IOptions _options;
         private readonly string _itemElementName;
 
         private readonly IXmlSerializer _itemSerializer;
@@ -22,15 +20,13 @@ namespace XSerializer
         private readonly Func<object> _createCollection;
         private readonly Func<object, object> _finalizeCollection = x => x;
 
-        protected ListSerializer(string defaultNamespace, Type[] extraTypes, string rootElementName, string itemElementName)
+        protected ListSerializer(IOptions options, string itemElementName)
         {
             // ReSharper disable DoNotCallOverridableMethodsInConstructor
 
-            _defaultNamespace = defaultNamespace;
-            _extraTypes = extraTypes;
-            _rootElementName = rootElementName;
-             _itemElementName = string.IsNullOrEmpty(itemElementName) ? DefaultItemElementName : itemElementName;
-             _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, _defaultNamespace, _extraTypes, _itemElementName);
+            _options = options;
+            _itemElementName = string.IsNullOrEmpty(itemElementName) ? DefaultItemElementName : itemElementName;
+            _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, _options.WithRootElementName(_itemElementName));
 
             if (CollectionType.IsArray)
             {
@@ -46,7 +42,7 @@ namespace XSerializer
                 else
                 {
                     var collectionInheritorType =
-                        extraTypes.FirstOrDefault(t =>
+                        _options.ExtraTypes.FirstOrDefault(t =>
                             !t.IsInterface
                             && !t.IsAbstract
                             && CollectionType.IsAssignableFrom(t)
@@ -62,7 +58,7 @@ namespace XSerializer
             {
                 throw new ArgumentException("Unable to find suitable collection to create.");
             }
-            
+
             // ReSharper restore DoNotCallOverridableMethodsInConstructor
         }
 
@@ -75,21 +71,21 @@ namespace XSerializer
         protected abstract void AddItemToCollection(object collection, object item);
         protected abstract object FinalizeCollectionIntoArray(object collection);
 
-        public static IXmlSerializer GetSerializer(Type type, string defaultNamespace, Type[] extraTypes, string rootElementName, string itemElementName)
+        public static IXmlSerializer GetSerializer(Type type, IOptions options, string itemElementName)
         {
             IXmlSerializer serializer;
-            var key = XmlSerializerFactory.Instance.CreateKey(type, defaultNamespace, extraTypes, rootElementName + "<>" + itemElementName);
+            var key = XmlSerializerFactory.Instance.CreateKey(type, options.WithRootElementName(options.RootElementName + "<>" + itemElementName));
 
             if (!_serializerCache.TryGetValue(key, out serializer))
             {
                 if (type.IsAssignableToGenericIEnumerable())
                 {
                     var itemType = type.GetGenericIEnumerableType().GetGenericArguments()[0];
-                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(ListSerializer<,>).MakeGenericType(type, itemType), defaultNamespace, extraTypes, rootElementName, itemElementName);
+                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(ListSerializer<,>).MakeGenericType(type, itemType), options, itemElementName);
                 }
                 else if (type.IsAssignableToNonGenericIEnumerable())
                 {
-                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(ListSerializer<>).MakeGenericType(type), defaultNamespace, extraTypes, rootElementName, itemElementName);
+                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(ListSerializer<>).MakeGenericType(type), options, itemElementName);
                 }
                 else
                 {
@@ -104,24 +100,24 @@ namespace XSerializer
 
         public void SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
         {
-            if (_rootElementName != null)
+            if (_options.RootElementName != null)
             {
                 writer.WriteStartDocument();
-                writer.WriteStartElement(_rootElementName);
+                writer.WriteStartElement(_options.RootElementName);
                 writer.WriteDefaultNamespaces();
 
-                if (!string.IsNullOrWhiteSpace(_defaultNamespace))
+                if (!string.IsNullOrWhiteSpace(_options.DefaultNamespace))
                 {
-                    writer.WriteAttributeString("xmlns", null, null, _defaultNamespace);
+                    writer.WriteAttributeString("xmlns", null, null, _options.DefaultNamespace);
                 }
             }
-            
+
             foreach (var item in (IEnumerable)instance)
             {
                 _itemSerializer.SerializeObject(writer, item, namespaces, alwaysEmitTypes);
             }
 
-            if (_rootElementName != null)
+            if (_options.RootElementName != null)
             {
                 writer.WriteEndElement();
             }
@@ -132,10 +128,10 @@ namespace XSerializer
             object collection = null;
 
             var hasInstanceBeenCreated = false;
-            
+
             bool shouldIssueRead;
 
-            if (_rootElementName == null)
+            if (_options.RootElementName == null)
             {
                 collection = _createCollection();
                 hasInstanceBeenCreated = true;
@@ -148,9 +144,9 @@ namespace XSerializer
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                        if (_rootElementName != null)
+                        if (_options.RootElementName != null)
                         {
-                            if (reader.Name == _rootElementName)
+                            if (reader.Name == _options.RootElementName)
                             {
                                 collection = _createCollection();
                                 hasInstanceBeenCreated = true;
@@ -179,9 +175,9 @@ namespace XSerializer
                         }
                         break;
                     case XmlNodeType.EndElement:
-                        if (_rootElementName != null)
+                        if (_options.RootElementName != null)
                         {
-                            if (reader.Name == _rootElementName)
+                            if (reader.Name == _options.RootElementName)
                             {
                                 return _finalizeCollection(CheckAndReturn(hasInstanceBeenCreated, collection));
                             }
@@ -230,8 +226,8 @@ namespace XSerializer
     {
         private readonly Action<object, object> _addItemToCollection;
 
-        public ListSerializer(string defaultNamespace, Type[] extraTypes, string rootElementName, string itemElementName)
-            : base(defaultNamespace, extraTypes, rootElementName, itemElementName)
+        public ListSerializer(IOptions options, string itemElementName)
+            : base(options, itemElementName)
         {
             if (typeof(IList).IsAssignableFrom(typeof(TEnumerable)))
             {
@@ -318,8 +314,8 @@ namespace XSerializer
     {
         private readonly Action<object, object> _addItemToCollection;
 
-        public ListSerializer(string defaultNamespace, Type[] extraTypes, string rootElementName, string itemElementName)
-            : base(defaultNamespace, extraTypes, rootElementName, itemElementName)
+        public ListSerializer(IOptions options, string itemElementName)
+            : base(options, itemElementName)
         {
             if (typeof(IList).IsAssignableFrom(typeof(TEnumerable)))
             {

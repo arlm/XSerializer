@@ -8,14 +8,14 @@ namespace XSerializer
     {
         private readonly string _elementName;
 
-        public EnumSerializer(string elementName)
+        public EnumSerializer(IOptions options)
         {
             if (!typeof(T).IsEnum)
             {
                 throw new InvalidOperationException("Generic argument of EnumSerializer<T> must be an Enum");
             }
 
-            _elementName = elementName;
+            _elementName = options.RootElementName;
         }
 
         public void Serialize(SerializationXmlTextWriter writer, T value, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
