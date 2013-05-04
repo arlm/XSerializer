@@ -10,7 +10,7 @@ namespace XSerializer
         private static readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
 
         [Obsolete("Use generic GetSerializer<T> method instead.")]
-        public static IXmlSerializer GetSerializer(Type type, IOptions options)
+        public static IXmlSerializer GetSerializer(Type type, IXmlSerializerOptions options)
         {
             IXmlSerializer serializer;
             var key = XmlSerializerFactory.Instance.CreateKey(type, options);
@@ -32,7 +32,7 @@ namespace XSerializer
             return serializer;
         }
 
-        public static IXmlSerializer<T> GetSerializer<T>(IOptions options)
+        public static IXmlSerializer<T> GetSerializer<T>(IXmlSerializerOptions options)
         {
             IXmlSerializer serializer;
             var key = XmlSerializerFactory.Instance.CreateKey(typeof(T), options);
@@ -59,7 +59,7 @@ namespace XSerializer
     {
         private readonly XmlSerializer _serializer;
 
-        public DefaultSerializer(IOptions options)
+        public DefaultSerializer(IXmlSerializerOptions options)
         {
             _serializer = new XmlSerializer(
                 typeof(T),

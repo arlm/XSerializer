@@ -304,10 +304,10 @@ namespace XSerializer.Tests
             {
                 if (typeof(IEnumerable).IsAssignableFrom(type))
                 {
-                    return ListSerializer.GetSerializer(type, new TestOptions { RootElementName = "MyCollection" }, "MyItem");
+                    return ListSerializer.GetSerializer(type, new TestXmlSerializerOptions { RootElementName = "MyCollection" }, "MyItem");
                 }
 
-                return XmlSerializerFactory.Instance.GetSerializer(type, new TestOptions { RootElementName = "MyContainer" });
+                return XmlSerializerFactory.Instance.GetSerializer(type, new TestXmlSerializerOptions { RootElementName = "MyContainer" });
             }
 
             protected override bool AlwaysEmitTypes
@@ -487,10 +487,10 @@ namespace XSerializer.Tests
             {
                 if (typeof(IEnumerable).IsAssignableFrom(type))
                 {
-                    return ListSerializer.GetSerializer(type, new TestOptions { RootElementName = "MyCollection" }, "MyItem");
+                    return ListSerializer.GetSerializer(type, new TestXmlSerializerOptions { RootElementName = "MyCollection" }, "MyItem");
                 }
 
-                return XmlSerializerFactory.Instance.GetSerializer(type, new TestOptions { RootElementName = "MyContainer" });
+                return XmlSerializerFactory.Instance.GetSerializer(type, new TestXmlSerializerOptions { RootElementName = "MyContainer" });
             }
         }
 

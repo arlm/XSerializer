@@ -23,7 +23,7 @@ namespace XSerializer.Tests
             var defaultSerializer = 
                 (IXmlSerializer)Activator.CreateInstance(
                     typeof(DefaultSerializer<>).MakeGenericType(instance.GetType()),
-                    new TestOptions
+                    new TestXmlSerializerOptions
                     {
                         DefaultNamespace = defaultNamespace,
                         ExtraTypes = extraTypes,
@@ -32,7 +32,7 @@ namespace XSerializer.Tests
             var customSerializer = 
                 (IXmlSerializer)Activator.CreateInstance(
                     typeof(CustomSerializer<>).MakeGenericType(instance.GetType()),
-                    new TestOptions
+                    new TestXmlSerializerOptions
                     {
                         DefaultNamespace = defaultNamespace,
                         ExtraTypes = extraTypes,
@@ -78,7 +78,7 @@ namespace XSerializer.Tests
             var defaultSerializer =
                 (IXmlSerializer)Activator.CreateInstance(
                     typeof(DefaultSerializer<>).MakeGenericType(instanceWithAbstract.GetType()),
-                    new TestOptions
+                    new TestXmlSerializerOptions
                     {
                         DefaultNamespace = defaultNamespace,
                         ExtraTypes = extraTypes,
@@ -87,7 +87,7 @@ namespace XSerializer.Tests
             var customSerializer =
                 (IXmlSerializer)Activator.CreateInstance(
                     typeof(CustomSerializer<>).MakeGenericType(instanceWithInterface.GetType()),
-                    new TestOptions
+                    new TestXmlSerializerOptions
                     {
                         DefaultNamespace = defaultNamespace,
                         ExtraTypes = extraTypes,

@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace XSerializer
 {
-    public interface IOptions
+    public interface IXmlSerializerOptions
     {
         string DefaultNamespace { get; }
         Type[] ExtraTypes { get; }
@@ -13,7 +13,7 @@ namespace XSerializer
 
     public static class OptionsExtensions
     {
-        public static IOptions WithRootElementName(this IOptions options, string rootElementName)
+        public static IXmlSerializerOptions WithRootElementName(this IXmlSerializerOptions options, string rootElementName)
         {
             return new Options
             {
@@ -23,12 +23,12 @@ namespace XSerializer
             };
         }
 
-        public static IOptions WithAdditionalExtraTypes(this IOptions options, params Type[] additionalExtraTypes)
+        public static IXmlSerializerOptions WithAdditionalExtraTypes(this IXmlSerializerOptions options, params Type[] additionalExtraTypes)
         {
             return options.WithAdditionalExtraTypes((IEnumerable<Type>)additionalExtraTypes);
         }
 
-        public static IOptions WithAdditionalExtraTypes(this IOptions options, IEnumerable<Type> additionalExtraTypes)
+        public static IXmlSerializerOptions WithAdditionalExtraTypes(this IXmlSerializerOptions options, IEnumerable<Type> additionalExtraTypes)
         {
             return new Options
             {
@@ -38,7 +38,7 @@ namespace XSerializer
             };
         }
 
-        private class Options : IOptions
+        private class Options : IXmlSerializerOptions
         {
             public string DefaultNamespace { get; set; }
             public Type[] ExtraTypes { get; set; }

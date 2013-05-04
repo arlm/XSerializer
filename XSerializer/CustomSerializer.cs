@@ -14,7 +14,7 @@ namespace XSerializer
         private static readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
         protected static readonly Dictionary<int, Type> _typeCache = new Dictionary<int, Type>();
 
-        public static IXmlSerializer GetSerializer(Type type, IOptions options)
+        public static IXmlSerializer GetSerializer(Type type, IXmlSerializerOptions options)
         {
             IXmlSerializer serializer;
             var key = XmlSerializerFactory.Instance.CreateKey(type, options);
@@ -64,10 +64,10 @@ namespace XSerializer
 
     public class CustomSerializer<T> : CustomSerializer, IXmlSerializer<T>
     {
-        private readonly IOptions _options;
+        private readonly IXmlSerializerOptions _options;
         private readonly Dictionary<Type, SerializableProperty[]> _serializablePropertiesMap = new Dictionary<Type, SerializableProperty[]>();
 
-        public CustomSerializer(IOptions options)
+        public CustomSerializer(IXmlSerializerOptions options)
         {
             var type = typeof(T);
             AssertValidHeirarchy(type);

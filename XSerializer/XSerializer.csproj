@@ -53,7 +53,7 @@
     <Compile Include="DynamicMethodFactory.cs" />
     <Compile Include="DynamicSerializer.cs" />
     <Compile Include="EnumSerializer.cs" />
-    <Compile Include="IOptions.cs" />
+    <Compile Include="IXmlSerializerOptions.cs" />
     <Compile Include="ListSerializer.cs" />
     <Compile Include="NodeType.cs" />
     <Compile Include="RedactAttribute.cs" />

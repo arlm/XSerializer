@@ -1,0 +1,18 @@
+﻿using System;
+
+namespace XSerializer.Tests
+{
+    public class TestXmlSerializerOptions : IXmlSerializerOptions
+    {
+        public static TestXmlSerializerOptions Empty = new TestXmlSerializerOptions();
+
+        public static TestXmlSerializerOptions WithExtraTypes(params Type[] extraTypes)
+        {
+            return new TestXmlSerializerOptions { ExtraTypes = extraTypes };
+        }
+
+        public string DefaultNamespace { get; set; }
+        public Type[] ExtraTypes { get; set; }
+        public string RootElementName { get; set; }
+    }
+}

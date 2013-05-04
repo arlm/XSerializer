@@ -10,9 +10,9 @@ namespace XSerializer
 {
     public class DynamicSerializer : IXmlSerializer<object>
     {
-        private readonly IOptions _options;
+        private readonly IXmlSerializerOptions _options;
 
-        public static IXmlSerializer<T> GetSerializer<T>(IOptions options)
+        public static IXmlSerializer<T> GetSerializer<T>(IXmlSerializerOptions options)
         {
             var serializer = new DynamicSerializer(options);
 
@@ -30,7 +30,7 @@ namespace XSerializer
             }
         }
 
-        public DynamicSerializer(IOptions options)
+        public DynamicSerializer(IXmlSerializerOptions options)
         {
             _options = options;
         }

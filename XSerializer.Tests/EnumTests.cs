@@ -15,7 +15,7 @@ namespace XSerializer.Tests
                 MyEnum = MyEnum.Value2
             };
 
-            var serializer = new CustomSerializer<EnumElementContainer>(TestOptions.WithExtraTypes(typeof(IFoo)));
+            var serializer = new CustomSerializer<EnumElementContainer>(TestXmlSerializerOptions.WithExtraTypes(typeof(IFoo)));
 
             var xml = serializer.Serialize(container, new XmlSerializerNamespaces(), Encoding.UTF8, Formatting.Indented);
 
@@ -30,7 +30,7 @@ namespace XSerializer.Tests
                 MyEnum = MyEnum.Value2
             };
 
-            var serializer = new CustomSerializer<EnumAttributeContainer>(TestOptions.WithExtraTypes(typeof(IFoo)));
+            var serializer = new CustomSerializer<EnumAttributeContainer>(TestXmlSerializerOptions.WithExtraTypes(typeof(IFoo)));
 
             var xml = serializer.Serialize(container, new XmlSerializerNamespaces(), Encoding.UTF8, Formatting.Indented);
 
@@ -45,7 +45,7 @@ namespace XSerializer.Tests
   <MyEnum>Value2</MyEnum>
 </EnumElementContainer>";
 
-            var serializer = new CustomSerializer<EnumElementContainer>(TestOptions.WithExtraTypes(typeof(IFoo)));
+            var serializer = new CustomSerializer<EnumElementContainer>(TestXmlSerializerOptions.WithExtraTypes(typeof(IFoo)));
 
             var container = serializer.Deserialize(xml);
 
@@ -58,7 +58,7 @@ namespace XSerializer.Tests
             var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <EnumAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" MyEnum=""Value2"" />";
 
-            var serializer = new CustomSerializer<EnumAttributeContainer>(TestOptions.WithExtraTypes(typeof(IFoo)));
+            var serializer = new CustomSerializer<EnumAttributeContainer>(TestXmlSerializerOptions.WithExtraTypes(typeof(IFoo)));
 
             var container = serializer.Deserialize(xml);
 

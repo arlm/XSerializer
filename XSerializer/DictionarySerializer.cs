@@ -12,14 +12,14 @@ namespace XSerializer
     {
         private static readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
 
-        private readonly IOptions _options;
+        private readonly IXmlSerializerOptions _options;
 
         private readonly IXmlSerializer _keySerializer;
         private readonly IXmlSerializer _valueSerializer;
 
         private readonly Func<object> _createDictionary;
 
-        protected DictionarySerializer(IOptions options)
+        protected DictionarySerializer(IXmlSerializerOptions options)
         {
             // ReSharper disable DoNotCallOverridableMethodsInConstructor
 
@@ -181,7 +181,7 @@ namespace XSerializer
             return instance;
         }
 
-        public static IXmlSerializer GetSerializer(Type type, IOptions options)
+        public static IXmlSerializer GetSerializer(Type type, IXmlSerializerOptions options)
         {
             IXmlSerializer serializer;
             var key = XmlSerializerFactory.Instance.CreateKey(type, options);
@@ -214,7 +214,7 @@ namespace XSerializer
     public class DictionarySerializer<TDictionary> : DictionarySerializer, IXmlSerializer<TDictionary>
         where TDictionary : IDictionary
     {
-        public DictionarySerializer(IOptions options)
+        public DictionarySerializer(IXmlSerializerOptions options)
             : base(options)
         {
         }
@@ -279,7 +279,7 @@ namespace XSerializer
     public class DictionarySerializer<TDictionary, TKey, TValue> : DictionarySerializer, IXmlSerializer<TDictionary>
         where TDictionary : IDictionary<TKey, TValue>
     {
-        public DictionarySerializer(IOptions options)
+        public DictionarySerializer(IXmlSerializerOptions options)
             : base(options)
         {
         }

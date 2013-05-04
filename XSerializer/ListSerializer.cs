@@ -12,7 +12,7 @@ namespace XSerializer
     {
         private static readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
 
-        private readonly IOptions _options;
+        private readonly IXmlSerializerOptions _options;
         private readonly string _itemElementName;
 
         private readonly IXmlSerializer _itemSerializer;
@@ -20,7 +20,7 @@ namespace XSerializer
         private readonly Func<object> _createCollection;
         private readonly Func<object, object> _finalizeCollection = x => x;
 
-        protected ListSerializer(IOptions options, string itemElementName)
+        protected ListSerializer(IXmlSerializerOptions options, string itemElementName)
         {
             // ReSharper disable DoNotCallOverridableMethodsInConstructor
 
@@ -71,7 +71,7 @@ namespace XSerializer
         protected abstract void AddItemToCollection(object collection, object item);
         protected abstract object FinalizeCollectionIntoArray(object collection);
 
-        public static IXmlSerializer GetSerializer(Type type, IOptions options, string itemElementName)
+        public static IXmlSerializer GetSerializer(Type type, IXmlSerializerOptions options, string itemElementName)
         {
             IXmlSerializer serializer;
             var key = XmlSerializerFactory.Instance.CreateKey(type, options.WithRootElementName(options.RootElementName + "<>" + itemElementName));
@@ -226,7 +226,7 @@ namespace XSerializer
     {
         private readonly Action<object, object> _addItemToCollection;
 
-        public ListSerializer(IOptions options, string itemElementName)
+        public ListSerializer(IXmlSerializerOptions options, string itemElementName)
             : base(options, itemElementName)
         {
             if (typeof(IList).IsAssignableFrom(typeof(TEnumerable)))
@@ -314,7 +314,7 @@ namespace XSerializer
     {
         private readonly Action<object, object> _addItemToCollection;
 
-        public ListSerializer(IOptions options, string itemElementName)
+        public ListSerializer(IXmlSerializerOptions options, string itemElementName)
             : base(options, itemElementName)
         {
             if (typeof(IList).IsAssignableFrom(typeof(TEnumerable)))

@@ -20,7 +20,7 @@ namespace XSerializer
 
         private Func<bool> _readsPastLastElement;
 
-        public SerializableProperty(PropertyInfo propertyInfo, IOptions options)
+        public SerializableProperty(PropertyInfo propertyInfo, IXmlSerializerOptions options)
         {
             _getValueFunc = DynamicMethodFactory.CreateFunc<object>(propertyInfo.GetGetMethod());
             if (!propertyInfo.DeclaringType.IsAnonymous())
@@ -81,7 +81,7 @@ namespace XSerializer
             }
         }
 
-        private Func<IXmlSerializer> GetCreateSerializerFunc(PropertyInfo propertyInfo, IOptions options)
+        private Func<IXmlSerializer> GetCreateSerializerFunc(PropertyInfo propertyInfo, IXmlSerializerOptions options)
         {
             var attributeAttribute = (XmlAttributeAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlAttributeAttribute));
             if (attributeAttribute != null)

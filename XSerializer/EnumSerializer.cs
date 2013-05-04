@@ -8,7 +8,7 @@ namespace XSerializer
     {
         private readonly string _elementName;
 
-        public EnumSerializer(IOptions options)
+        public EnumSerializer(IXmlSerializerOptions options)
         {
             if (!typeof(T).IsEnum)
             {

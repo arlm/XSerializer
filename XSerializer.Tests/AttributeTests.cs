@@ -10,7 +10,7 @@ namespace XSerializer.Tests
         {
             var xml = @"<AttributeContainer SomeValue=""abc""></AttributeContainer>";
 
-            var serializer = new CustomSerializer<AttributeContainer>(TestOptions.Empty);
+            var serializer = new CustomSerializer<AttributeContainer>(TestXmlSerializerOptions.Empty);
 
             var container = serializer.Deserialize(xml);
 
