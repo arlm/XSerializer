@@ -23,6 +23,7 @@ namespace XSerializer
         public SerializableProperty(PropertyInfo propertyInfo, IXmlSerializerOptions options)
         {
             _getValueFunc = DynamicMethodFactory.CreateFunc<object>(propertyInfo.GetGetMethod());
+
             if (!propertyInfo.DeclaringType.IsAnonymous())
             {
                 if (propertyInfo.IsSerializableReadOnlyProperty())
@@ -53,6 +54,7 @@ namespace XSerializer
                     }
                 }
             }
+
             _shouldSerializeFunc = GetShouldSerializeFunc(propertyInfo);
             _readsPastLastElement = () => _serializer.Value is DefaultSerializer;
             _serializer = new Lazy<IXmlSerializer>(GetCreateSerializerFunc(propertyInfo, options));
@@ -89,7 +91,7 @@ namespace XSerializer
                 var attributeName = !string.IsNullOrWhiteSpace(attributeAttribute.AttributeName) ? attributeAttribute.AttributeName : propertyInfo.Name;
                 NodeType = NodeType.Attribute;
                 Name = attributeName;
-                return () => new XmlAttributeSerializer(attributeName, propertyInfo.PropertyType);
+                return () => new XmlAttributeSerializer(propertyInfo.PropertyType, attributeName);
             }
 
             var textAttribute = (XmlTextAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlTextAttribute));

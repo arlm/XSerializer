@@ -5,11 +5,11 @@ namespace XSerializer
 {
     public class XmlAttributeSerializer : IXmlSerializer
     {
-        private readonly string _attributeName;
         private readonly Type _type;
+        private readonly string _attributeName;
         private readonly Func<string, object> _parseValue;
 
-        public XmlAttributeSerializer(string attributeName, Type type)
+        public XmlAttributeSerializer(Type type, string attributeName)
         {
             _attributeName = attributeName;
             _type = type;
