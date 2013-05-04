@@ -10,7 +10,7 @@ namespace XSerializer.Tests
             var input = "abcXYZ";
             var attribute = new RedactAttribute();
 
-            var redacted = attribute.Redact(input);
+            var redacted = attribute.Redact(input, true);
 
             Assert.That(redacted, Is.EqualTo("XXXXXX"));
         }
@@ -21,7 +21,7 @@ namespace XSerializer.Tests
             var input = "123789";
             var attribute = new RedactAttribute();
 
-            var redacted = attribute.Redact(input);
+            var redacted = attribute.Redact(input, true);
 
             Assert.That(redacted, Is.EqualTo("######"));
         }
@@ -32,7 +32,7 @@ namespace XSerializer.Tests
             var input = @"!%&( +~?<|{]\";
             var attribute = new RedactAttribute();
 
-            var redacted = attribute.Redact(input);
+            var redacted = attribute.Redact(input, true);
 
             Assert.That(redacted, Is.EqualTo(input));
         }
