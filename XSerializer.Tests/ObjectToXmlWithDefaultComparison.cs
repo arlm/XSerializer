@@ -15,8 +15,8 @@ namespace XSerializer.Tests
             var customSerializer = CustomSerializer.GetSerializer(type, TestXmlSerializerOptions.Empty);
             var defaultSerializer = DefaultSerializer.GetSerializer(type, TestXmlSerializerOptions.Empty);
 
-            var customXml = customSerializer.SerializeObject(instance, null, Encoding.UTF8, Formatting.Indented, AlwaysEmitTypes);
-            var defaultXml = defaultSerializer.SerializeObject(instance, null, Encoding.UTF8, Formatting.Indented, AlwaysEmitTypes);
+            var customXml = customSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, new TestSerializeOptions(shouldAlwaysEmitTypes:AlwaysEmitTypes));
+            var defaultXml = defaultSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, new TestSerializeOptions(shouldAlwaysEmitTypes:AlwaysEmitTypes));
 
             Console.WriteLine("Default XML:");
             Console.WriteLine(defaultXml);

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Xml;
-using System.Xml.Serialization;
 
 namespace XSerializer
 {
@@ -18,12 +17,12 @@ namespace XSerializer
             _elementName = options.RootElementName;
         }
 
-        public void Serialize(SerializationXmlTextWriter writer, T value, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        public void Serialize(SerializationXmlTextWriter writer, T value, ISerializeOptions options)
         {
-            SerializeObject(writer, value, namespaces, alwaysEmitTypes);
+            SerializeObject(writer, value, options);
         }
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object value, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        public void SerializeObject(SerializationXmlTextWriter writer, object value, ISerializeOptions options)
         {
             if (value != null)
             {

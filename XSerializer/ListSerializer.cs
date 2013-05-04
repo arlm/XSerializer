@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Xml;
-using System.Xml.Serialization;
 
 namespace XSerializer
 {
@@ -98,7 +97,7 @@ namespace XSerializer
             return serializer;
         }
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             if (_options.RootElementName != null)
             {
@@ -114,7 +113,7 @@ namespace XSerializer
 
             foreach (var item in (IEnumerable)instance)
             {
-                _itemSerializer.SerializeObject(writer, item, namespaces, alwaysEmitTypes);
+                _itemSerializer.SerializeObject(writer, item, options);
             }
 
             if (_options.RootElementName != null)
@@ -268,9 +267,9 @@ namespace XSerializer
             }
         }
 
-        public void Serialize(SerializationXmlTextWriter writer, TEnumerable instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        public void Serialize(SerializationXmlTextWriter writer, TEnumerable instance, ISerializeOptions options)
         {
-            SerializeObject(writer, instance, namespaces, alwaysEmitTypes);
+            SerializeObject(writer, instance, options);
         }
 
         public TEnumerable Deserialize(XmlReader reader)
@@ -362,9 +361,9 @@ namespace XSerializer
             }
         }
 
-        public void Serialize(SerializationXmlTextWriter writer, TEnumerable instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        public void Serialize(SerializationXmlTextWriter writer, TEnumerable instance, ISerializeOptions options)
         {
-            SerializeObject(writer, instance, namespaces, alwaysEmitTypes);
+            SerializeObject(writer, instance, options);
         }
 
         public TEnumerable Deserialize(XmlReader reader)

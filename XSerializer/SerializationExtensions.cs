@@ -45,10 +45,9 @@ namespace XSerializer
         public static string Serialize<T>(
             this IXmlSerializer<T> serializer,
             T instance,
-            XmlSerializerNamespaces namespaces,
             Encoding encoding,
             Formatting formatting,
-            bool alwaysEmitTypes)
+            ISerializeOptions options)
         {
             var sb = new StringBuilder();
             using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
@@ -56,38 +55,7 @@ namespace XSerializer
                 using (var xmlWriter = new SerializationXmlTextWriter(stringWriter))
                 {
                     xmlWriter.Formatting = formatting;
-                    serializer.Serialize(xmlWriter, instance, namespaces, alwaysEmitTypes);
-                }
-            }
-
-            return sb.ToString();
-        }
-
-        public static string Serialize<T>(
-            this IXmlSerializer<T> serializer,
-            T instance,
-            XmlSerializerNamespaces namespaces,
-            Encoding encoding,
-            Formatting formatting)
-        {
-            return serializer.Serialize(instance, namespaces, encoding, formatting, false);
-        }
-
-        public static string SerializeObject(
-            this IXmlSerializer serializer,
-            object instance,
-            XmlSerializerNamespaces namespaces,
-            Encoding encoding,
-            Formatting formatting,
-            bool alwaysEmitTypes)
-        {
-            var sb = new StringBuilder();
-            using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
-            {
-                using (var xmlWriter = new SerializationXmlTextWriter(stringWriter))
-                {
-                    xmlWriter.Formatting = formatting;
-                    serializer.SerializeObject(xmlWriter, instance, namespaces, alwaysEmitTypes);
+                    serializer.Serialize(xmlWriter, instance, options);
                 }
             }
 
@@ -97,119 +65,83 @@ namespace XSerializer
         public static string SerializeObject(
             this IXmlSerializer serializer,
             object instance,
-            XmlSerializerNamespaces namespaces,
             Encoding encoding,
-            Formatting formatting)
+            Formatting formatting,
+            ISerializeOptions options)
         {
-            return serializer.SerializeObject(instance, namespaces, encoding, formatting, false);
+            var sb = new StringBuilder();
+            using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
+            {
+                using (var xmlWriter = new SerializationXmlTextWriter(stringWriter))
+                {
+                    xmlWriter.Formatting = formatting;
+                    serializer.SerializeObject(xmlWriter, instance, options);
+                }
+            }
+
+            return sb.ToString();
         }
 
         public static void Serialize<T>(
             this IXmlSerializer<T> serializer,
             Stream stream,
             T instance,
-            XmlSerializerNamespaces namespaces,
             Encoding encoding,
             Formatting formatting,
-            bool alwaysEmitTypes)
+            ISerializeOptions options)
         {
             var xmlWriter = new SerializationXmlTextWriter(stream, encoding ?? Encoding.UTF8)
             {
                 Formatting = formatting
             };
 
-            serializer.Serialize(xmlWriter, instance, namespaces, alwaysEmitTypes);
-        }
-
-        public static void Serialize<T>(
-            this IXmlSerializer<T> serializer,
-            Stream stream,
-            T instance,
-            XmlSerializerNamespaces namespaces,
-            Encoding encoding,
-            Formatting formatting)
-        {
-            serializer.Serialize(stream, instance, namespaces, encoding, formatting, false);
+            serializer.Serialize(xmlWriter, instance, options);
         }
 
         public static void SerializeObject(
             this IXmlSerializer serializer,
             Stream stream,
             object instance,
-            XmlSerializerNamespaces namespaces,
             Encoding encoding,
             Formatting formatting,
-            bool alwaysEmitTypes)
+            ISerializeOptions options)
         {
             var xmlWriter = new SerializationXmlTextWriter(stream, encoding ?? Encoding.UTF8)
             {
                 Formatting = formatting
             };
 
-            serializer.SerializeObject(xmlWriter, instance, namespaces, alwaysEmitTypes);
-        }
-
-        public static void SerializeObject(
-            this IXmlSerializer serializer,
-            Stream stream,
-            object instance,
-            XmlSerializerNamespaces namespaces,
-            Encoding encoding,
-            Formatting formatting)
-        {
-            serializer.SerializeObject(stream, instance, namespaces, encoding, formatting, false);
+            serializer.SerializeObject(xmlWriter, instance, options);
         }
 
         public static void Serialize<T>(
             this IXmlSerializer<T> serializer,
             TextWriter writer,
             T instance,
-            XmlSerializerNamespaces namespaces,
             Formatting formatting,
-            bool alwaysEmitTypes)
+            ISerializeOptions options)
         {
             var xmlWriter = new SerializationXmlTextWriter(writer)
             {
                 Formatting = formatting
             };
 
-            serializer.Serialize(xmlWriter, instance, namespaces, alwaysEmitTypes);
-        }
-
-        public static void Serialize<T>(
-            this IXmlSerializer<T> serializer,
-            TextWriter writer,
-            T instance,
-            XmlSerializerNamespaces namespaces,
-            Formatting formatting)
-        {
-            serializer.Serialize(writer, instance, namespaces, formatting, false);
+            serializer.Serialize(xmlWriter, instance, options);
         }
 
         public static void SerializeObject(
             this IXmlSerializer serializer,
             TextWriter writer,
             object instance,
-            XmlSerializerNamespaces namespaces,
             Formatting formatting,
-            bool alwaysEmitTypes)
+            ISerializeOptions options)
         {
             var xmlWriter = new SerializationXmlTextWriter(writer)
             {
                 Formatting = formatting
             };
 
-            serializer.SerializeObject(xmlWriter, instance, namespaces, alwaysEmitTypes);
-        }
-
-        public static void SerializeObject(
-            this IXmlSerializer serializer,
-            TextWriter writer,
-            object instance,
-            XmlSerializerNamespaces namespaces,
-            Formatting formatting)
-        {
-            serializer.SerializeObject(writer, instance, namespaces, formatting, false);
+            serializer.SerializeObject(xmlWriter, instance, options);
         }
 
         public static T Deserialize<T>(this IXmlSerializer<T> serializer, string xml)

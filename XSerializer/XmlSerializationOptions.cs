@@ -4,7 +4,7 @@ using System.Xml.Serialization;
 
 namespace XSerializer
 {
-    public class XmlSerializationOptions : IXmlSerializerOptions
+    public class XmlSerializationOptions : IXmlSerializerOptions, ISerializeOptions
     {
         internal XmlSerializationOptions()
         {

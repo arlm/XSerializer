@@ -17,7 +17,7 @@ namespace XSerializer.Tests
 
             var serializer = new CustomSerializer<EnumElementContainer>(TestXmlSerializerOptions.WithExtraTypes(typeof(IFoo)));
 
-            var xml = serializer.Serialize(container, new XmlSerializerNamespaces(), Encoding.UTF8, Formatting.Indented);
+            var xml = serializer.Serialize(container, Encoding.UTF8, Formatting.Indented, new TestSerializeOptions());
 
             Assert.That(xml, Contains.Substring("Value2"));
         }
@@ -32,7 +32,7 @@ namespace XSerializer.Tests
 
             var serializer = new CustomSerializer<EnumAttributeContainer>(TestXmlSerializerOptions.WithExtraTypes(typeof(IFoo)));
 
-            var xml = serializer.Serialize(container, new XmlSerializerNamespaces(), Encoding.UTF8, Formatting.Indented);
+            var xml = serializer.Serialize(container, Encoding.UTF8, Formatting.Indented, new TestSerializeOptions());
 
             Assert.That(xml, Contains.Substring("Value2"));
         }

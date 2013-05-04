@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Xml;
-using System.Xml.Serialization;
 
 namespace XSerializer
 {
@@ -64,7 +63,7 @@ namespace XSerializer
         protected abstract IEnumerable<DictionaryEntry> GetDictionaryEntries(object dictionary);
         protected abstract void AddItemToDictionary(object dictionary, object key, object value);
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             writer.WriteStartDocument();
             writer.WriteStartElement(_options.RootElementName);
@@ -81,12 +80,12 @@ namespace XSerializer
 
                 if (item.Key != null)
                 {
-                    _keySerializer.SerializeObject(writer, item.Key, namespaces, alwaysEmitTypes);
+                    _keySerializer.SerializeObject(writer, item.Key, options);
                 }
 
                 if (item.Value != null)
                 {
-                    _valueSerializer.SerializeObject(writer, item.Value, namespaces, alwaysEmitTypes);
+                    _valueSerializer.SerializeObject(writer, item.Value, options);
                 }
 
                 writer.WriteEndElement();
@@ -219,9 +218,9 @@ namespace XSerializer
         {
         }
 
-        public void Serialize(SerializationXmlTextWriter writer, TDictionary instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        public void Serialize(SerializationXmlTextWriter writer, TDictionary instance, ISerializeOptions options)
         {
-            SerializeObject(writer, instance, namespaces, alwaysEmitTypes);
+            SerializeObject(writer, instance, options);
         }
 
         public TDictionary Deserialize(XmlReader reader)
@@ -284,9 +283,9 @@ namespace XSerializer
         {
         }
 
-        public void Serialize(SerializationXmlTextWriter writer, TDictionary instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        public void Serialize(SerializationXmlTextWriter writer, TDictionary instance, ISerializeOptions options)
         {
-            SerializeObject(writer, instance, namespaces, alwaysEmitTypes);
+            SerializeObject(writer, instance, options);
         }
 
         public TDictionary Deserialize(XmlReader reader)

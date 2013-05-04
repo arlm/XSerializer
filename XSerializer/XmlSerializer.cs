@@ -10,9 +10,8 @@ namespace XSerializer
     {
         private readonly IXmlSerializer<T> _serializer;
         private readonly Encoding _encoding;
-        private readonly XmlSerializerNamespaces _namespaces;
         private readonly Formatting _formatting;
-        private readonly bool _alwaysEmitTypes;
+        private readonly ISerializeOptions _serializeOptions;
 
         public XmlSerializer(params Type[] extraTypes)
             : this(options => {}, extraTypes)
@@ -37,18 +36,30 @@ namespace XSerializer
 
             _serializer = XmlSerializerFactory.Instance.GetSerializer<T>(options);
             _encoding = options.Encoding ?? Encoding.UTF8;
-            _namespaces = options.Namespaces;
             _formatting = options.ShouldIndent ? Formatting.Indented : Formatting.None;
-            _alwaysEmitTypes = options.ShouldAlwaysEmitTypes;
+            _serializeOptions = options;
         }
 
         public XmlSerializer(IXmlSerializer<T> serializer, Encoding encoding, XmlSerializerNamespaces namespaces, bool indent, bool alwaysEmitTypes)
         {
             _serializer = serializer;
             _encoding = encoding ?? Encoding.UTF8;
-            _namespaces = namespaces;
             _formatting = indent ? Formatting.Indented : Formatting.None;
-            _alwaysEmitTypes = alwaysEmitTypes;
+            
+            _serializeOptions = new XmlSerializationOptions();
+            
+            if (alwaysEmitTypes)
+            {
+                ((XmlSerializationOptions)_serializeOptions).AlwaysEmitTypes();
+            }
+
+            if (namespaces != null)
+            {
+                foreach (var @namespace in namespaces.ToArray())
+                {
+                    ((XmlSerializationOptions)_serializeOptions).AddNamespace(@namespace.Name, @namespace.Namespace);
+                }
+            }
         }
 
         public IXmlSerializer<T> Serializer
@@ -58,17 +69,17 @@ namespace XSerializer
 
         public string Serialize(T instance)
         {
-            return _serializer.Serialize(instance, _namespaces, _encoding, _formatting, _alwaysEmitTypes);
+            return _serializer.Serialize(instance, _encoding, _formatting, _serializeOptions);
         }
 
         public void Serialize(Stream stream, T instance)
         {
-            _serializer.Serialize(stream, instance, _namespaces, _encoding, _formatting, _alwaysEmitTypes);
+            _serializer.Serialize(stream, instance, _encoding, _formatting, _serializeOptions);
         }
 
         public void Serialize(TextWriter writer, T instance)
         {
-            _serializer.Serialize(writer, instance, _namespaces, _formatting, _alwaysEmitTypes);
+            _serializer.Serialize(writer, instance, _formatting, _serializeOptions);
         }
 
         public T Deserialize(string xml)

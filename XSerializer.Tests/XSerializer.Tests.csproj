@@ -63,6 +63,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TestClasses.cs" />
     <Compile Include="NUnit\Has.cs" />
+    <Compile Include="TestSerializeOptions.cs" />
     <Compile Include="TestXmlSerializerOptions.cs" />
     <Compile Include="XmlToObject.cs" />
     <Compile Include="XsdTypeTests.cs" />

@@ -14,7 +14,7 @@ namespace XSerializer.Tests
         {
             var customSerializer = GetSerializer(type);
 
-            var customXml = customSerializer.SerializeObject(instance, null, Encoding.UTF8, Formatting.Indented, AlwaysEmitTypes);
+            var customXml = customSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, new TestSerializeOptions(shouldAlwaysEmitTypes:AlwaysEmitTypes));
 
             Console.WriteLine("Expected XML:");
             Console.WriteLine(expectedXml);

@@ -69,14 +69,14 @@ namespace XSerializer
                 options.DefaultNamespace);
         }
 
-        public void Serialize(SerializationXmlTextWriter writer, T instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        public void Serialize(SerializationXmlTextWriter writer, T instance, ISerializeOptions options)
         {
-            _serializer.Serialize(writer, instance, namespaces);
+            _serializer.Serialize(writer, instance, options.Namespaces);
         }
 
-        void IXmlSerializer.SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        void IXmlSerializer.SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
         {
-            Serialize(writer, (T)instance, namespaces, alwaysEmitTypes);
+            Serialize(writer, (T)instance, options);
         }
 
         public T Deserialize(XmlReader reader)

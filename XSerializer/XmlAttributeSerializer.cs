@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Xml;
-using System.Xml.Serialization;
 
 namespace XSerializer
 {
@@ -25,7 +24,7 @@ namespace XSerializer
             }
         }
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object value, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        public void SerializeObject(SerializationXmlTextWriter writer, object value, ISerializeOptions options)
         {
             if (value != null)
             {

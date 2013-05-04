@@ -69,14 +69,14 @@ namespace XSerializer
             _setValueFunc(instance, _serializer.Value.DeserializeObject(reader));
         }
 
-        public void WriteValue(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        public void WriteValue(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             if (_shouldSerializeFunc(instance))
             {
                 var value = _getValueFunc(instance);
                 if (value != null)
                 {
-                    _serializer.Value.SerializeObject(writer, value, namespaces, alwaysEmitTypes);
+                    _serializer.Value.SerializeObject(writer, value, options);
                 }
             }
         }

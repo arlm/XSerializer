@@ -1,17 +1,16 @@
-﻿using System.Xml;
-using System.Xml.Serialization;
-
-namespace XSerializer
+﻿namespace XSerializer
 {
+    using System.Xml;
+
     public interface IXmlSerializer
     {
-        void SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes);
+        void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options);
         object DeserializeObject(XmlReader reader);
     }
 
     public interface IXmlSerializer<T> : IXmlSerializer
     {
-        void Serialize(SerializationXmlTextWriter writer, T instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes);
+        void Serialize(SerializationXmlTextWriter writer, T instance, ISerializeOptions options);
         T Deserialize(XmlReader reader);
     }
 }

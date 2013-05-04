@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
-using System.Linq;
 using System.Runtime.Serialization;
 using System.Xml;
-using System.Xml.Serialization;
 
 namespace XSerializer
 {
@@ -35,12 +33,12 @@ namespace XSerializer
             _options = options;
         }
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
         {
-            Serialize(writer, instance, namespaces, alwaysEmitTypes);
+            Serialize(writer, instance, options);
         }
 
-        public void Serialize(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        public void Serialize(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             if (instance == null)
             {
@@ -50,13 +48,13 @@ namespace XSerializer
             var expando = instance as ExpandoObject;
             if (expando != null)
             {
-                SerializeExpandoObject(writer, expando, namespaces, alwaysEmitTypes);
+                SerializeExpandoObject(writer, expando, options);
                 return;
             }
 
             IXmlSerializer serializer;
 
-            if (!alwaysEmitTypes || instance.IsAnonymous())
+            if (!options.ShouldAlwaysEmitTypes || instance.IsAnonymous())
             {
                 serializer = CustomSerializer.GetSerializer(instance.GetType(), _options);
             }
@@ -65,7 +63,7 @@ namespace XSerializer
                 serializer = CustomSerializer.GetSerializer(typeof(object), _options.WithAdditionalExtraTypes(instance.GetType()));
             }
 
-            serializer.SerializeObject(writer, instance, namespaces, alwaysEmitTypes);
+            serializer.SerializeObject(writer, instance, options);
         }
 
         public object DeserializeObject(XmlReader reader)
@@ -85,7 +83,7 @@ namespace XSerializer
             return DeserializeToDynamic(reader);
         }
 
-        private void SerializeExpandoObject(SerializationXmlTextWriter writer, IDictionary<string, object> expando, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        private void SerializeExpandoObject(SerializationXmlTextWriter writer, IDictionary<string, object> expando, ISerializeOptions options)
         {
             writer.WriteStartDocument();
             writer.WriteStartElement(_options.RootElementName);
@@ -114,7 +112,7 @@ namespace XSerializer
                     serializer = CustomSerializer.GetSerializer(property.Value.GetType(), _options.WithRootElementName(property.Key));
                 }
 
-                serializer.SerializeObject(writer, property.Value, namespaces, alwaysEmitTypes);
+                serializer.SerializeObject(writer, property.Value, options);
             }
 
             writer.WriteEndElement();
@@ -217,19 +215,19 @@ namespace XSerializer
                 _serializer = serializer;
             }
 
-            public void Serialize(SerializationXmlTextWriter writer, ExpandoObject instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+            public void Serialize(SerializationXmlTextWriter writer, ExpandoObject instance, ISerializeOptions options)
             {
                 if (instance == null)
                 {
                     return;
                 }
 
-                _serializer.SerializeExpandoObject(writer, instance, namespaces, alwaysEmitTypes);
+                _serializer.SerializeExpandoObject(writer, instance, options);
             }
 
-            public void SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+            public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
             {
-                Serialize(writer, (ExpandoObject)instance, namespaces, alwaysEmitTypes);
+                Serialize(writer, (ExpandoObject)instance, options);
             }
 
             public ExpandoObject Deserialize(XmlReader reader)

@@ -37,16 +37,6 @@ namespace XSerializer
             return serializer;
         }
 
-        protected static int CreateTypeCacheKey<T>(string typeName)
-        {
-            unchecked
-            {
-                var key = typeof(T).GetHashCode();
-                key = (key * 397) ^ typeName.GetHashCode();
-                return key;
-            }
-        }
-
         //Stackoverflow is awesome
         private static void PreserveStackTrace(Exception e)
         {
@@ -269,7 +259,7 @@ namespace XSerializer
             return type.Name;
         }
 
-        public void Serialize(SerializationXmlTextWriter writer, T instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        public void Serialize(SerializationXmlTextWriter writer, T instance, ISerializeOptions options)
         {
             if (instance == null)
             {
@@ -295,22 +285,22 @@ namespace XSerializer
             if (instanceType.IsPrimitiveLike()
                 || (instanceType.IsGenericType && instanceType.GetGenericTypeDefinition() == typeof(Nullable<>) && instanceType.GetGenericArguments()[0].IsPrimitiveLike()))
             {
-                XmlTextSerializer.GetSerializer(instanceType).SerializeObject(writer, instance, namespaces, alwaysEmitTypes);
+                XmlTextSerializer.GetSerializer(instanceType).SerializeObject(writer, instance, options);
             }
             else
             {
                 foreach (var property in _serializablePropertiesMap[instanceType])
                 {
-                    property.WriteValue(writer, instance, namespaces, alwaysEmitTypes);
+                    property.WriteValue(writer, instance, options);
                 }
             }
 
             writer.WriteEndElement();
         }
 
-        void IXmlSerializer.SerializeObject(SerializationXmlTextWriter writer, object instance, XmlSerializerNamespaces namespaces, bool alwaysEmitTypes)
+        void IXmlSerializer.SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
         {
-            Serialize(writer, (T)instance, namespaces, alwaysEmitTypes);
+            Serialize(writer, (T)instance, options);
         }
 
         public T Deserialize(XmlReader reader)

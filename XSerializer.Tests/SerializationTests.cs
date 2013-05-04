@@ -39,8 +39,8 @@ namespace XSerializer.Tests
                         RootElementName = rootElementName
                     });
 
-            var defaultXml = defaultSerializer.SerializeObject(instance, namespaces, encoding, formatting);
-            var customXml = customSerializer.SerializeObject(instance, namespaces, encoding, formatting);
+            var defaultXml = defaultSerializer.SerializeObject(instance, encoding, formatting, new TestSerializeOptions(namespaces));
+            var customXml = customSerializer.SerializeObject(instance, encoding, formatting, new TestSerializeOptions(namespaces));
 
             Console.WriteLine("Default XML:");
             Console.WriteLine(defaultXml);
@@ -94,8 +94,8 @@ namespace XSerializer.Tests
                         RootElementName = rootElementName
                     });
 
-            var defaultXml = defaultSerializer.SerializeObject(instanceWithAbstract, namespaces, encoding, formatting);
-            var customXml = customSerializer.SerializeObject(instanceWithInterface, namespaces, encoding, formatting);
+            var defaultXml = defaultSerializer.SerializeObject(instanceWithAbstract, encoding, formatting, new TestSerializeOptions(namespaces));
+            var customXml = customSerializer.SerializeObject(instanceWithInterface, encoding, formatting, new TestSerializeOptions(namespaces));
 
             Console.WriteLine("Default XML:");
             Console.WriteLine(defaultXml);
