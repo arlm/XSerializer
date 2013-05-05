@@ -10,6 +10,7 @@ namespace XSerializer
         {
             Encoding = Encoding.UTF8;
             Namespaces = new XmlSerializerNamespaces();
+            ShouldRedact = true;
         }
 
         public Encoding Encoding { get; private set; }
@@ -18,6 +19,8 @@ namespace XSerializer
         public bool ShouldIndent { get; private set; }
         public string RootElementName { get; private set; }
         public bool ShouldAlwaysEmitTypes { get; private set; }
+        public bool ShouldRedact { get; private set; }
+
         public Type[] ExtraTypes { get; internal set; }
 
         public XmlSerializationOptions WithEncoding(Encoding encoding)
@@ -53,6 +56,12 @@ namespace XSerializer
         public XmlSerializationOptions AlwaysEmitTypes()
         {
             ShouldAlwaysEmitTypes = true;
+            return this;
+        }
+
+        public XmlSerializationOptions DisableRedact()
+        {
+            ShouldRedact = false;
             return this;
         }
     }

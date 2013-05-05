@@ -85,13 +85,15 @@ namespace XSerializer
 
         private Func<IXmlSerializer> GetCreateSerializerFunc(PropertyInfo propertyInfo, IXmlSerializerOptions options)
         {
+            var redactAttribute = (RedactAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(RedactAttribute));
+
             var attributeAttribute = (XmlAttributeAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlAttributeAttribute));
             if (attributeAttribute != null)
             {
                 var attributeName = !string.IsNullOrWhiteSpace(attributeAttribute.AttributeName) ? attributeAttribute.AttributeName : propertyInfo.Name;
                 NodeType = NodeType.Attribute;
                 Name = attributeName;
-                return () => new XmlAttributeSerializer(propertyInfo.PropertyType, attributeName);
+                return () => new XmlAttributeSerializer(propertyInfo.PropertyType, attributeName, redactAttribute);
             }
 
             var textAttribute = (XmlTextAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlTextAttribute));

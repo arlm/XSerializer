@@ -102,7 +102,7 @@ namespace XSerializer
         {
             var allTypes = new[] { type }.Concat(extraTypes ?? new Type[0]).ToList();
 
-            if (allTypes.Any(t => IsObjectLike(t)))
+            if (allTypes.Any(IsObjectLike))
             {
                 return true;
             }
@@ -115,7 +115,9 @@ namespace XSerializer
             return allTypes
                 .SelectMany(t => t.GetProperties())
                 .Where(p => p.IsSerializable())
-                .Any(p => ShouldNotAttemptToUseDefaultSerializer(p.PropertyType, new Type[0]));
+                .Any(p => 
+                    Attribute.IsDefined(p, typeof(RedactAttribute))
+                    || ShouldNotAttemptToUseDefaultSerializer(p.PropertyType, new Type[0]));
         }
 
         private bool IsObjectLike(Type type)

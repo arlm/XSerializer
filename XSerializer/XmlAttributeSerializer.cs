@@ -7,20 +7,100 @@ namespace XSerializer
     {
         private readonly Type _type;
         private readonly string _attributeName;
-        private readonly Func<string, object> _parseValue;
+        private readonly RedactAttribute _redactAttribute;
+        private readonly Func<string, object> _parseString;
+        private readonly Func<object, ISerializeOptions, string> _getString; 
 
-        public XmlAttributeSerializer(Type type, string attributeName)
+        public XmlAttributeSerializer(Type type, string attributeName, RedactAttribute redactAttribute)
         {
             _attributeName = attributeName;
+            _redactAttribute = redactAttribute;
             _type = type;
 
-            if (_type.IsEnum)
+            if (redactAttribute == null)
             {
-                _parseValue = value => Enum.Parse(_type, value);
+                if (_type.IsEnum)
+                {
+                    _parseString = value => Enum.Parse(_type, value);
+                }
+                else
+                {
+                    _parseString = value => Convert.ChangeType(value, _type);
+                }
+
+                if (_type == typeof(bool))
+                {
+                    _getString = (value, options) => value.ToString().ToLower();
+                }
+                else
+                {
+                    _getString = (value, options) => value.ToString();
+                }
             }
             else
             {
-                _parseValue = value => Convert.ChangeType(value, _type);
+                object defaultValue;
+                if (_type.IsValueType)
+                {
+                    defaultValue = Activator.CreateInstance(_type);
+                }
+                else
+                {
+                    defaultValue = null;
+                }
+
+                if (_type.IsEnum)
+                {
+                    _parseString = value =>
+                    {
+                        if (value == "XXXXXX")
+                        {
+                            return defaultValue;
+                        }
+
+                        return Enum.Parse(_type, value);
+                    };
+                }
+                else if (_type == typeof(bool))
+                {
+                    _parseString = value =>
+                        {
+                            if (value == "XXXXXX")
+                            {
+                                return defaultValue;
+                            }
+
+                            return Convert.ChangeType(value, _type);
+                        };
+                }
+                else
+                {
+                    _parseString = value => Convert.ChangeType(value, _type);
+                }
+
+                if (_type == typeof(string))
+                {
+                    _getString = (value, options) => _redactAttribute.Redact((string)value, options.ShouldRedact);
+                }
+                else if (_type == typeof(bool) || type == typeof(bool?))
+                {
+                    _getString = (value, options) => _redactAttribute.Redact((bool?)value, options.ShouldRedact);
+                }
+                else if (_type.IsEnum ||
+                    (_type.IsGenericType
+                        && _type.GetGenericTypeDefinition() == typeof(Nullable<>)
+                        && _type.GetGenericArguments()[0].IsEnum))
+                {
+                    _getString = (value, options) => _redactAttribute.Redact((Enum)value, options.ShouldRedact);
+                }
+                else if (_type == typeof(DateTime) || type == typeof(DateTime?))
+                {
+                    _getString = (value, options) => _redactAttribute.Redact((DateTime?)value, options.ShouldRedact);
+                }
+                else
+                {
+                    _getString = (value, options) => _redactAttribute.Redact(value, options.ShouldRedact);
+                }
             }
         }
 
@@ -28,14 +108,7 @@ namespace XSerializer
         {
             if (value != null)
             {
-                if (_type == typeof(bool))
-                {
-                    writer.WriteAttributeString(_attributeName, value.ToString().ToLower());
-                }
-                else
-                {
-                    writer.WriteAttributeString(_attributeName, value.ToString());
-                }
+                writer.WriteAttributeString(_attributeName, _getString(value, options));
             }
         }
 
@@ -43,7 +116,7 @@ namespace XSerializer
         {
             if (reader.MoveToAttribute(_attributeName))
             {
-                var value = _parseValue(reader.Value);
+                var value = _parseString(reader.Value);
                 reader.MoveToElement();
                 return value;
             }

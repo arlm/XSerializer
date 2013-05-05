@@ -58,6 +58,7 @@
     <Compile Include="ObjectToXmlToObjectWithDefaultComparison.cs" />
     <Compile Include="ObjectToXmlWithDefaultComparison.cs" />
     <Compile Include="RedactAttributeTests.cs" />
+    <Compile Include="RedactTests.cs" />
     <Compile Include="RoundTripTests.cs" />
     <Compile Include="SerializationTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
