@@ -75,19 +75,6 @@ namespace XSerializer.Tests
         [TestCase(MyEnum.Ab)]
         [TestCase(MyEnum.Abc)]
         [TestCase(MyEnum.Abcd)]
-        public void TrueAndFalseRedactTheSame(MyEnum myEnum)
-        {
-            var attribute = new RedactAttribute();
-
-            var redacted = attribute.Redact(myEnum, true);
-
-            Assert.That(redacted, Is.EqualTo("XXXXXX"));
-        }
-
-        [TestCase(MyEnum.A)]
-        [TestCase(MyEnum.Ab)]
-        [TestCase(MyEnum.Abc)]
-        [TestCase(MyEnum.Abcd)]
         [TestCase(MyOtherEnum.X)]
         [TestCase(MyOtherEnum.Xy)]
         [TestCase(MyOtherEnum.Xyz)]

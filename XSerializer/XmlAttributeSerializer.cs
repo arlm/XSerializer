@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Xml;
 
 namespace XSerializer
@@ -7,100 +8,23 @@ namespace XSerializer
     {
         private readonly Type _type;
         private readonly string _attributeName;
-        private readonly RedactAttribute _redactAttribute;
         private readonly Func<string, object> _parseString;
         private readonly Func<object, ISerializeOptions, string> _getString; 
 
         public XmlAttributeSerializer(Type type, string attributeName, RedactAttribute redactAttribute)
         {
             _attributeName = attributeName;
-            _redactAttribute = redactAttribute;
             _type = type;
 
-            if (redactAttribute == null)
+            if (redactAttribute != null)
             {
-                if (_type.IsEnum)
-                {
-                    _parseString = value => Enum.Parse(_type, value);
-                }
-                else
-                {
-                    _parseString = value => Convert.ChangeType(value, _type);
-                }
-
-                if (_type == typeof(bool))
-                {
-                    _getString = (value, options) => value.ToString().ToLower();
-                }
-                else
-                {
-                    _getString = (value, options) => value.ToString();
-                }
+                _parseString = GetRedactedGetParseStringFunc(_type);
+                _getString = GetRedactedGetStringFunc(_type, redactAttribute);
             }
             else
             {
-                object defaultValue;
-                if (_type.IsValueType)
-                {
-                    defaultValue = Activator.CreateInstance(_type);
-                }
-                else
-                {
-                    defaultValue = null;
-                }
-
-                if (_type.IsEnum)
-                {
-                    _parseString = value =>
-                    {
-                        if (value == "XXXXXX")
-                        {
-                            return defaultValue;
-                        }
-
-                        return Enum.Parse(_type, value);
-                    };
-                }
-                else if (_type == typeof(bool))
-                {
-                    _parseString = value =>
-                        {
-                            if (value == "XXXXXX")
-                            {
-                                return defaultValue;
-                            }
-
-                            return Convert.ChangeType(value, _type);
-                        };
-                }
-                else
-                {
-                    _parseString = value => Convert.ChangeType(value, _type);
-                }
-
-                if (_type == typeof(string))
-                {
-                    _getString = (value, options) => _redactAttribute.Redact((string)value, options.ShouldRedact);
-                }
-                else if (_type == typeof(bool) || type == typeof(bool?))
-                {
-                    _getString = (value, options) => _redactAttribute.Redact((bool?)value, options.ShouldRedact);
-                }
-                else if (_type.IsEnum ||
-                    (_type.IsGenericType
-                        && _type.GetGenericTypeDefinition() == typeof(Nullable<>)
-                        && _type.GetGenericArguments()[0].IsEnum))
-                {
-                    _getString = (value, options) => _redactAttribute.Redact((Enum)value, options.ShouldRedact);
-                }
-                else if (_type == typeof(DateTime) || type == typeof(DateTime?))
-                {
-                    _getString = (value, options) => _redactAttribute.Redact((DateTime?)value, options.ShouldRedact);
-                }
-                else
-                {
-                    _getString = (value, options) => _redactAttribute.Redact(value, options.ShouldRedact);
-                }
+                _parseString = GetNonRedactedGetParseStringFunc(_type);
+                _getString = GetNonRedactedGetStringFunc(_type);
             }
         }
 
@@ -122,6 +46,108 @@ namespace XSerializer
             }
 
             return null;
+        }
+
+        private static Func<string, object> GetRedactedGetParseStringFunc(Type type)
+        {
+            var defaultValue =
+                type.IsValueType
+                ? Activator.CreateInstance(type)
+                : null;
+
+            if (type.IsEnum ||
+                (type.IsGenericType
+                    && type.GetGenericTypeDefinition() == typeof(Nullable<>)
+                    && type.GetGenericArguments()[0].IsEnum))
+            {
+                return value =>
+                {
+                    if (value == "XXXXXX")
+                    {
+                        return defaultValue;
+                    }
+
+                    return Enum.Parse(type, value);
+                };
+            }
+            
+            if (type == typeof(bool) || type == typeof(bool?))
+            {
+                return value =>
+                {
+                    if (value == "XXXXXX")
+                    {
+                        return defaultValue;
+                    }
+
+                    return Convert.ChangeType(value, type);
+                };
+            }
+            
+            if (type == typeof(DateTime) || type == typeof(DateTime?))
+            {
+                return value =>
+                    DateTime.ParseExact(
+                        value,
+                        "O",
+                        CultureInfo.InvariantCulture,
+                        DateTimeStyles.RoundtripKind);
+            }
+            
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                return value => Convert.ChangeType(value, type.GetGenericArguments()[0]);
+            }
+            
+            return value => Convert.ChangeType(value, type);
+        }
+
+        private static Func<object, ISerializeOptions, string> GetRedactedGetStringFunc(Type type, RedactAttribute redactAttribute)
+        {
+            if (type == typeof(string))
+            {
+                return (value, options) => redactAttribute.Redact((string)value, options.ShouldRedact);
+            }
+            
+            if (type == typeof(bool) || type == typeof(bool?))
+            {
+                return (value, options) => redactAttribute.Redact((bool?)value, options.ShouldRedact);
+            }
+            
+            if (type.IsEnum ||
+                (type.IsGenericType
+                    && type.GetGenericTypeDefinition() == typeof(Nullable<>)
+                    && type.GetGenericArguments()[0].IsEnum))
+            {
+                return (value, options) => redactAttribute.Redact((Enum)value, options.ShouldRedact);
+            }
+            
+            if (type == typeof(DateTime) || type == typeof(DateTime?))
+            {
+                return (value, options) => redactAttribute.Redact((DateTime?)value, options.ShouldRedact);
+            }
+            
+            return (value, options) => redactAttribute.Redact(value, options.ShouldRedact);
+        }
+
+        private static Func<string, object> GetNonRedactedGetParseStringFunc(Type type)
+        {
+            if (type.IsEnum)
+            {
+                return value => Enum.Parse(type, value);
+            }
+
+            return value => Convert.ChangeType(value, type);
+        }
+
+        private static Func<object, ISerializeOptions, string> GetNonRedactedGetStringFunc(Type type)
+        {
+            if (type == typeof(bool))
+            {
+                return (value, options) => value.ToString().ToLower();
+            }
+
+            return (value, options) => value.ToString();
         }
     }
 }

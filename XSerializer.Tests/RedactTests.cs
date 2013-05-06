@@ -1,59 +1,34 @@
-﻿using System.Xml.Serialization;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
 namespace XSerializer.Tests
 {
     public class RedactTests
     {
-        private XmlSerializer<RedactTestClassContainer> _serializer;
-        private RedactTestClassContainer _container;
-        private RedactTestClass _testClass;
-
-        [SetUp]
-        public void Setup()
-        {
-            _serializer = new XmlSerializer<RedactTestClassContainer>();
-            _container = new RedactTestClassContainer();
-            _testClass = new RedactTestClass();
-            _container.Data = _testClass;
-        }
-
         [Test]
         public void CustomSerializerIsUsedIfRedactAttributeExists()
         {
-            Assert.That(_serializer.Serializer, Is.InstanceOf<CustomSerializer<RedactTestClassContainer>>());
-        }
+            var serializer = new XmlSerializer<ShouldRedactThis>();
 
-        [TestCase("abc123", "XXX111")]
-        [TestCase("123-45-6789", "111-11-1111")]
-        [TestCase("123 Main Street", "111 XXXX XXXXXX")]
-        [TestCase("", "")]
-        public void StringAtrributesRedactCorrectly(string value, string expectedAttributeValue)
+            Assert.That(serializer.Serializer, Is.InstanceOf<CustomSerializer<ShouldRedactThis>>());
+        }
+        
+        [Test]
+        public void DefaultSerializerIsUsedIfRedactAttributeDoesNotExist()
         {
-            _testClass.StringAttributeProperty = value;
+            var serializer = new XmlSerializer<ShouldNotRedactThis>();
 
-            var xml = Serialize();
-
-            Assert.That(xml, Contains.Substring(string.Format("StringAttributeProperty=\"{0}\"", expectedAttributeValue)));
+            Assert.That(serializer.Serializer, Is.InstanceOf<DefaultSerializer<ShouldNotRedactThis>>());
         }
-
-        // TODO: test bool, bool? enum, enum?, datetime, datetime?, and "other"
-
-        private string Serialize()
-        {
-            return _serializer.Serialize(_container);
-        }
-
-        public class RedactTestClassContainer
-        {
-            public RedactTestClass Data { get; set; }
-        }
-
-        public class RedactTestClass
+        
+        public class ShouldRedactThis
         {
             [Redact]
-            [XmlAttribute]
-            public string StringAttributeProperty { get; set; }
+            public string SomeString { get; set; }
+        }
+
+        public class ShouldNotRedactThis
+        {
+            public string SomeString { get; set; }
         }
     }
 }
