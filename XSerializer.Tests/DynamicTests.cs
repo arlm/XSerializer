@@ -168,7 +168,7 @@ namespace XSerializer.Tests
                 yield return new TestCaseData(
                     new ClassWithDynamicProperty { DynamicProperty = new DateTime(2013, 3, 17, 6, 56, 10, 295, DateTimeKind.Utc) },
                     typeof(ClassWithDynamicProperty),
-                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(DateTime)), "2013-03-17T06:56:10.295Z"))
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(DateTime)), "2013-03-17T06:56:10.2950000Z"))
                         .SetName("dynamic property - DateTime");
 
                 yield return new TestCaseData(
@@ -296,7 +296,7 @@ namespace XSerializer.Tests
                         .SetName("dynamic property - string");
 
                 yield return new TestCaseData(
-                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(DateTime)), "2013-03-17T06:56:10.295Z"),
+                    string.Format(ExpectedDynamicXmlFormat, GetXsiTypeString(typeof(DateTime)), "2013-03-17T06:56:10.2950000Z"),
                     typeof(ClassWithDynamicProperty),
                     new ClassWithDynamicProperty { DynamicProperty = new DateTime(2013, 3, 17, 6, 56, 10, 295, DateTimeKind.Utc) })
                         .SetName("dynamic property - DateTime");

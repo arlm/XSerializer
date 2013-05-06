@@ -63,6 +63,7 @@
     <Compile Include="IXmlSerializer.cs" />
     <Compile Include="SerializableProperty.cs" />
     <Compile Include="SerializationXmlTextWriter.cs" />
+    <Compile Include="SimpleTypeValueConverter.cs" />
     <Compile Include="XmlAttributeSerializer.cs" />
     <Compile Include="XmlSerializationOptions.cs" />
     <Compile Include="XmlSerializer.cs" />

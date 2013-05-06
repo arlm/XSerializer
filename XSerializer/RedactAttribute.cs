@@ -1,13 +1,19 @@
-﻿namespace XSerializer
-{
-    using System;
-    using System.Text.RegularExpressions;
+﻿using System;
+using System.Text.RegularExpressions;
 
+namespace XSerializer
+{
     public class RedactAttribute : Attribute
     {
         private static readonly Regex Numbers = new Regex(@"\d", RegexOptions.Compiled);
         private static readonly Regex AllNumbers = new Regex(@"[-.0-9]", RegexOptions.Compiled);
         private static readonly Regex Letters = new Regex(@"[a-zA-Z]", RegexOptions.Compiled);
+
+        private static readonly Lazy<SimpleTypeValueConverter> _booleanConverter =
+            new Lazy<SimpleTypeValueConverter>(() => SimpleTypeValueConverter.Create(typeof(bool), null));
+
+        private static readonly Lazy<SimpleTypeValueConverter> _dateTimeConverter =
+            new Lazy<SimpleTypeValueConverter>(() => SimpleTypeValueConverter.Create(typeof(DateTime), null));
 
         /// <summary>
         /// Redacts the clear-text.
@@ -42,7 +48,7 @@
 
             return redactEnabled
                 ? "XXXXXX"
-                : booleanValue.Value.ToString().ToLower();
+                : _booleanConverter.Value.GetString(booleanValue, null);
         }
 
         /// <summary>
@@ -77,8 +83,8 @@
             }
 
             return redactEnabled
-                ? Numbers.Replace(dateTimeValue.Value.ToString("O"), "1")
-                : dateTimeValue.Value.ToString("O");
+                ? Numbers.Replace(_dateTimeConverter.Value.GetString(dateTimeValue, null), "1")
+                : _dateTimeConverter.Value.GetString(dateTimeValue, null);
         }
 
         /// <summary>

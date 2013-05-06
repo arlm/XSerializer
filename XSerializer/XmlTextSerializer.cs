@@ -6,23 +6,27 @@ namespace XSerializer
 {
     public class XmlTextSerializer : IXmlSerializer
     {
-        private static readonly Dictionary<Type, XmlTextSerializer> Map = new Dictionary<Type, XmlTextSerializer>();
+        private static readonly Dictionary<int, XmlTextSerializer> Map = new Dictionary<int, XmlTextSerializer>();
 
-        private readonly Type _type;
+        private readonly SimpleTypeValueConverter _valueConverter;
 
-        private XmlTextSerializer(Type type)
+        private XmlTextSerializer(Type type, RedactAttribute redactAttribute)
         {
-            _type = type;
+            _valueConverter = SimpleTypeValueConverter.Create(type, redactAttribute);
         }
 
-        public static XmlTextSerializer GetSerializer(Type type)
+        public static XmlTextSerializer GetSerializer(Type type, RedactAttribute redactAttribute = null /*TODO: get rid of default null value*/)
         {
             XmlTextSerializer serializer;
-            if (!Map.TryGetValue(type, out serializer))
+
+            var key = CreateKey(type, redactAttribute);
+
+            if (!Map.TryGetValue(key, out serializer))
             {
-                serializer = new XmlTextSerializer(type);
-                Map[type] = serializer;
+                serializer = new XmlTextSerializer(type, redactAttribute);
+                Map[key] = serializer;
             }
+
             return serializer;
         }
 
@@ -30,13 +34,28 @@ namespace XSerializer
         {
             if (value != null)
             {
-                writer.WriteValue(value);
+                writer.WriteValue(_valueConverter.GetString(value, options));
             }
         }
 
         public object DeserializeObject(XmlReader reader)
         {
-            return Convert.ChangeType(reader.Value, _type);
+            return _valueConverter.ParseString(reader.Value);
+        }
+
+        private static int CreateKey(Type type, RedactAttribute redactAttribute)
+        {
+            unchecked
+            {
+                var key = type.GetHashCode();
+
+                if (redactAttribute != null)
+                {
+                    key = (key * 397) ^ redactAttribute.GetHashCode();
+                }
+
+                return key;
+            }
         }
     }
 }

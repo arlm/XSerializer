@@ -101,7 +101,7 @@ namespace XSerializer
             {
                 NodeType = NodeType.Text;
                 Name = propertyInfo.Name;
-                return () => XmlTextSerializer.GetSerializer(propertyInfo.PropertyType);
+                return () => XmlTextSerializer.GetSerializer(propertyInfo.PropertyType, redactAttribute);
             }
             
             var elementAttribute = (XmlElementAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlElementAttribute), false);

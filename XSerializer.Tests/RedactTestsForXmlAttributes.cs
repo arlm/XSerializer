@@ -7,16 +7,16 @@ namespace XSerializer.Tests
 {
     public class RedactTestsForXmlAttributes
     {
-        private XmlSerializer<RedactTestClassContainer> _serializer;
-        private RedactTestClassContainer _container;
-        private RedactTestClass _testClass;
+        private XmlSerializer<RedactTestClassForXmlAttributeContainer> _serializer;
+        private RedactTestClassForXmlAttributeContainer _container;
+        private RedactTestClassForXmlAttribute _testClass;
 
         [SetUp]
         public void Setup()
         {
-            _serializer = new XmlSerializer<RedactTestClassContainer>();
-            _container = new RedactTestClassContainer();
-            _testClass = new RedactTestClass();
+            _serializer = new XmlSerializer<RedactTestClassForXmlAttributeContainer>();
+            _container = new RedactTestClassForXmlAttributeContainer();
+            _testClass = new RedactTestClassForXmlAttribute();
             _container.Data = _testClass;
         }
 
@@ -47,9 +47,9 @@ namespace XSerializer.Tests
         public void RedactedStringAttributeDeserializesCorrectly()
         {
             var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<RedactTestClassContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+<RedactTestClassForXmlAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
     <Data StringAttributeProperty=""XXX111"" />
-</RedactTestClassContainer>";
+</RedactTestClassForXmlAttributeContainer>";
 
             var instance = _serializer.Deserialize(xml);
 
@@ -81,7 +81,7 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void NullableBoolAttributeWithNullValueDoesNotSerialzie()
+        public void NullableBoolAttributeWithNullValueDoesNotSerialize()
         {
             var xml = Serialize();
             Console.WriteLine(xml);
@@ -93,9 +93,9 @@ namespace XSerializer.Tests
         public void RedactedNullableBoolAttributeDeserializesCorrectly()
         {
             var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<RedactTestClassContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+<RedactTestClassForXmlAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
     <Data NullableBoolAttributeProperty=""XXXXXX""/>
-</RedactTestClassContainer>";
+</RedactTestClassForXmlAttributeContainer>";
 
             var instance = _serializer.Deserialize(xml);
 
@@ -106,19 +106,19 @@ namespace XSerializer.Tests
         public void RedactedBoolAttributeDeserializesCorrectly()
         {
             var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<RedactTestClassContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+<RedactTestClassForXmlAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
     <Data BoolAttributeProperty=""XXXXXX""/>
-</RedactTestClassContainer>";
+</RedactTestClassForXmlAttributeContainer>";
 
             var instance = _serializer.Deserialize(xml);
 
             Assert.That(instance.Data.BoolAttributeProperty, Is.False);
         }
 
-        [TestCase(RedactEnum.First, "XXXXXX")]
-        [TestCase(RedactEnum.Second, "XXXXXX")]
-        [TestCase(RedactEnum.Third, "XXXXXX")]
-        public void NullableEnumAtrributesRedactCorrectly(RedactEnum value, string expectedAttributeValue)
+        [TestCase(RedactEnumForXmlAttribute.First, "XXXXXX")]
+        [TestCase(RedactEnumForXmlAttribute.Second, "XXXXXX")]
+        [TestCase(RedactEnumForXmlAttribute.Third, "XXXXXX")]
+        public void NullableEnumAtrributesRedactCorrectly(RedactEnumForXmlAttribute value, string expectedAttributeValue)
         {
             _testClass.NullableEnumAttributeProperty = value;
 
@@ -128,10 +128,10 @@ namespace XSerializer.Tests
             Assert.That(xml, Contains.Substring(string.Format("NullableEnumAttributeProperty=\"{0}\"", expectedAttributeValue)));
         }
 
-        [TestCase(RedactEnum.First, "XXXXXX")]
-        [TestCase(RedactEnum.Second, "XXXXXX")]
-        [TestCase(RedactEnum.Third, "XXXXXX")]
-        public void EnumAtrributesRedactCorrectly(RedactEnum value, string expectedAttributeValue)
+        [TestCase(RedactEnumForXmlAttribute.First, "XXXXXX")]
+        [TestCase(RedactEnumForXmlAttribute.Second, "XXXXXX")]
+        [TestCase(RedactEnumForXmlAttribute.Third, "XXXXXX")]
+        public void EnumAtrributesRedactCorrectly(RedactEnumForXmlAttribute value, string expectedAttributeValue)
         {
             _testClass.EnumAttributeProperty = value;
 
@@ -142,7 +142,7 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void NullableEnumAttributeWithNullValueDoesNotSerialzie()
+        public void NullableEnumAttributeWithNullValueDoesNotSerialize()
         {
             var xml = Serialize();
             Console.WriteLine(xml);
@@ -154,9 +154,9 @@ namespace XSerializer.Tests
         public void RedactedNullableEnumAttributeDeserializesCorrectly()
         {
             var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<RedactTestClassContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+<RedactTestClassForXmlAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
     <Data NullableEnumAttributeProperty=""XXXXXX""/>
-</RedactTestClassContainer>";
+</RedactTestClassForXmlAttributeContainer>";
 
             var instance = _serializer.Deserialize(xml);
 
@@ -167,13 +167,13 @@ namespace XSerializer.Tests
         public void RedactedEnumAttributeDeserializesCorrectly()
         {
             var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<RedactTestClassContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+<RedactTestClassForXmlAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
     <Data EnumAttributeProperty=""XXXXXX""/>
-</RedactTestClassContainer>";
+</RedactTestClassForXmlAttributeContainer>";
 
             var instance = _serializer.Deserialize(xml);
 
-            Assert.That(instance.Data.EnumAttributeProperty, Is.EqualTo(default(RedactEnum)));
+            Assert.That(instance.Data.EnumAttributeProperty, Is.EqualTo(default(RedactEnumForXmlAttribute)));
         }
 
         [Test]
@@ -239,7 +239,7 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void NullableDateTimeAttributeWithNullValueDoesNotSerialzie()
+        public void NullableDateTimeAttributeWithNullValueDoesNotSerialize()
         {
             var xml = Serialize();
             Console.WriteLine(xml);
@@ -258,9 +258,9 @@ namespace XSerializer.Tests
                     DateTimeStyles.RoundtripKind);
 
             var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<RedactTestClassContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+<RedactTestClassForXmlAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
     <Data DateTimeAttributeProperty=""1111-11-11T11:11:11.1111111-04:00""/>
-</RedactTestClassContainer>";
+</RedactTestClassForXmlAttributeContainer>";
 
             var instance = _serializer.Deserialize(xml);
 
@@ -278,9 +278,9 @@ namespace XSerializer.Tests
                     DateTimeStyles.RoundtripKind);
 
             var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<RedactTestClassContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+<RedactTestClassForXmlAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
     <Data NullableDateTimeAttributeProperty=""1111-11-11T11:11:11.1111111-04:00""/>
-</RedactTestClassContainer>";
+</RedactTestClassForXmlAttributeContainer>";
 
             var instance = _serializer.Deserialize(xml);
 
@@ -298,9 +298,9 @@ namespace XSerializer.Tests
                     DateTimeStyles.RoundtripKind);
 
             var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<RedactTestClassContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+<RedactTestClassForXmlAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
     <Data DateTimeAttributeProperty=""1111-11-11T11:11:11.1111111Z""/>
-</RedactTestClassContainer>";
+</RedactTestClassForXmlAttributeContainer>";
 
             var instance = _serializer.Deserialize(xml);
 
@@ -318,9 +318,9 @@ namespace XSerializer.Tests
                     DateTimeStyles.RoundtripKind);
 
             var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<RedactTestClassContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+<RedactTestClassForXmlAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
     <Data NullableDateTimeAttributeProperty=""1111-11-11T11:11:11.1111111Z""/>
-</RedactTestClassContainer>";
+</RedactTestClassForXmlAttributeContainer>";
 
             var instance = _serializer.Deserialize(xml);
 
@@ -352,7 +352,7 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void NullableIntAttributeWithNullValueDoesNotSerialzie()
+        public void NullableIntAttributeWithNullValueDoesNotSerialize()
         {
             var xml = Serialize();
             Console.WriteLine(xml);
@@ -364,9 +364,9 @@ namespace XSerializer.Tests
         public void RedactedNullableIntAttributeDeserializesCorrectly()
         {
             var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<RedactTestClassContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+<RedactTestClassForXmlAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
     <Data NullableIntAttributeProperty=""11111""/>
-</RedactTestClassContainer>";
+</RedactTestClassForXmlAttributeContainer>";
 
             var instance = _serializer.Deserialize(xml);
 
@@ -377,9 +377,9 @@ namespace XSerializer.Tests
         public void RedactedIntAttributeDeserializesCorrectly()
         {
             var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<RedactTestClassContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+<RedactTestClassForXmlAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
     <Data IntAttributeProperty=""11111""/>
-</RedactTestClassContainer>";
+</RedactTestClassForXmlAttributeContainer>";
 
             var instance = _serializer.Deserialize(xml);
 
@@ -415,7 +415,7 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void NullableDoubleAttributeWithNullValueDoesNotSerialzie()
+        public void NullableDoubleAttributeWithNullValueDoesNotSerialize()
         {
             var xml = Serialize();
             Console.WriteLine(xml);
@@ -427,9 +427,9 @@ namespace XSerializer.Tests
         public void RedactedNullableDoubleAttributeDeserializesCorrectly()
         {
             var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<RedactTestClassContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+<RedactTestClassForXmlAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
     <Data NullableDoubleAttributeProperty=""11111""/>
-</RedactTestClassContainer>";
+</RedactTestClassForXmlAttributeContainer>";
 
             var instance = _serializer.Deserialize(xml);
 
@@ -440,13 +440,51 @@ namespace XSerializer.Tests
         public void RedactedDoubleAttributeDeserializesCorrectly()
         {
             var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
-<RedactTestClassContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+<RedactTestClassForXmlAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
     <Data DoubleAttributeProperty=""11111""/>
-</RedactTestClassContainer>";
+</RedactTestClassForXmlAttributeContainer>";
 
             var instance = _serializer.Deserialize(xml);
 
             Assert.That(instance.Data.DoubleAttributeProperty, Is.EqualTo(11111));
+        }
+
+        [Test]
+        public void RedactingDoesNotHappenWhenDisabled()
+        {
+            var container = new RedactTestClassForXmlAttributeContainer
+            {
+                Data = new RedactTestClassForXmlAttribute
+                {
+                    BoolAttributeProperty = true,
+                    DateTimeAttributeProperty = new DateTime(2222, 2, 22, 22, 22, 22, 222, DateTimeKind.Utc),
+                    DoubleAttributeProperty = 123.45,
+                    EnumAttributeProperty = RedactEnumForXmlAttribute.Second,
+                    IntAttributeProperty = 12345,
+                    NullableBoolAttributeProperty = false,
+                    NullableDateTimeAttributeProperty = new DateTime(3333, 3, 30, 3, 33, 33, 333, DateTimeKind.Utc),
+                    NullableDoubleAttributeProperty = 987.65,
+                    NullableEnumAttributeProperty = RedactEnumForXmlAttribute.Third,
+                    NullableIntAttributeProperty = 98765,
+                    StringAttributeProperty = "abc123"
+                }
+            };
+
+            var serializer = new XmlSerializer<RedactTestClassForXmlAttributeContainer>(options => options.DisableRedact());
+
+            var xml = serializer.Serialize(container);
+
+            Assert.That(xml, Contains.Substring("true"));
+            Assert.That(xml, Contains.Substring("2222-02-22T22:22:22.2220000Z"));
+            Assert.That(xml, Contains.Substring("123.45"));
+            Assert.That(xml, Contains.Substring("Second"));
+            Assert.That(xml, Contains.Substring("12345"));
+            Assert.That(xml, Contains.Substring("false"));
+            Assert.That(xml, Contains.Substring("3333-03-30T03:33:33.3330000Z"));
+            Assert.That(xml, Contains.Substring("987.65"));
+            Assert.That(xml, Contains.Substring("Third"));
+            Assert.That(xml, Contains.Substring("98765"));
+            Assert.That(xml, Contains.Substring("abc123"));
         }
 
         private string Serialize()
@@ -454,12 +492,12 @@ namespace XSerializer.Tests
             return _serializer.Serialize(_container);
         }
 
-        public class RedactTestClassContainer
+        public class RedactTestClassForXmlAttributeContainer
         {
-            public RedactTestClass Data { get; set; }
+            public RedactTestClassForXmlAttribute Data { get; set; }
         }
 
-        public class RedactTestClass
+        public class RedactTestClassForXmlAttribute
         {
             [Redact]
             [XmlAttribute]
@@ -471,7 +509,7 @@ namespace XSerializer.Tests
 
             [Redact]
             [XmlAttribute]
-            public RedactEnum? NullableEnumAttributeProperty { get; set; }
+            public RedactEnumForXmlAttribute? NullableEnumAttributeProperty { get; set; }
 
             [Redact]
             [XmlAttribute]
@@ -491,7 +529,7 @@ namespace XSerializer.Tests
 
             [Redact]
             [XmlAttribute]
-            public RedactEnum EnumAttributeProperty { get; set; }
+            public RedactEnumForXmlAttribute EnumAttributeProperty { get; set; }
 
             [Redact]
             [XmlAttribute]
@@ -506,7 +544,7 @@ namespace XSerializer.Tests
             public double DoubleAttributeProperty { get; set; }
         }
 
-        public enum RedactEnum
+        public enum RedactEnumForXmlAttribute
         {
             First,
             Second,
