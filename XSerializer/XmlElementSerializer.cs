@@ -3,18 +3,20 @@ using System.Xml;
 
 namespace XSerializer
 {
-    public class EnumSerializer<T> : IXmlSerializer<T>
+    public class XmlElementSerializer<T> : IXmlSerializer<T>
     {
         private readonly string _elementName;
+        private readonly SimpleTypeValueConverter _valueConverter;
 
-        public EnumSerializer(IXmlSerializerOptions options)
+        public XmlElementSerializer(IXmlSerializerOptions options)
         {
-            if (!typeof(T).IsEnum)
+            if (!typeof(T).IsPrimitiveLike() && !typeof(T).IsNullablePrimitiveLike())
             {
-                throw new InvalidOperationException("Generic argument of EnumSerializer<T> must be an Enum");
+                throw new InvalidOperationException("Generic argument of XmlElementSerializer<T> must be an primitive, like a primitive (e.g. Guid, DateTime), or a nullable of either.");
             }
 
             _elementName = options.RootElementName;
+            _valueConverter = SimpleTypeValueConverter.Create(typeof(T), options.RedactAttribute);
         }
 
         public void Serialize(SerializationXmlTextWriter writer, T value, ISerializeOptions options)
@@ -26,13 +28,13 @@ namespace XSerializer
         {
             if (value != null)
             {
-                writer.WriteElementString(_elementName, value.ToString());
+                writer.WriteElementString(_elementName, _valueConverter.GetString(value, options));
             }
         }
 
         public T Deserialize(XmlReader reader)
         {
-            return (T)Enum.Parse(typeof(T), reader.ReadString());
+            return (T)_valueConverter.ParseString(reader.ReadString());
         }
 
         public object DeserializeObject(XmlReader reader)

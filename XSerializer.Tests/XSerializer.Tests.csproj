@@ -60,6 +60,7 @@
     <Compile Include="RedactAttributeTests.cs" />
     <Compile Include="RedactTests.cs" />
     <Compile Include="RedactTestsForXmlAttributes.cs" />
+    <Compile Include="RedactTestsForXmlElements.cs" />
     <Compile Include="RedactTestsForXmlText.cs" />
     <Compile Include="RoundTripTests.cs" />
     <Compile Include="SerializationTests.cs" />

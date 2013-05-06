@@ -49,15 +49,15 @@ namespace XSerializer
                 }
                 else if (!TryGetDefaultSerializer(options, out serializer))
                 {
-                    if (type.IsEnum)
+                    if (type.IsPrimitiveLike() || type.IsNullablePrimitiveLike())
                     {
-                        serializer = new EnumSerializer<T>(options);
+                        serializer = new XmlElementSerializer<T>(options);
                     }
                     else if (type.IsAssignableToNonGenericIDictionary() || type.IsAssignableToGenericIDictionary())
                     {
                         serializer = (IXmlSerializer<T>)DictionarySerializer.GetSerializer(type, options);
                     }
-                    else if (type != typeof(string) && (type.IsAssignableToNonGenericIEnumerable() || type.IsAssignableToGenericIEnumerable()))
+                    else if (type.IsAssignableToNonGenericIEnumerable() || type.IsAssignableToGenericIEnumerable())
                     {
                         serializer = (IXmlSerializer<T>)ListSerializer.GetSerializer(type, options, null);
                     }
@@ -88,7 +88,7 @@ namespace XSerializer
 
         protected virtual bool TryGetDefaultSerializer<T>(IXmlSerializerOptions options, out IXmlSerializer<T> serializer)
         {
-            if (ShouldNotAttemptToUseDefaultSerializer(typeof(T), options.ExtraTypes))
+            if (ShouldNotAttemptToUseDefaultSerializer(typeof(T), options))
             {
                 serializer = null;
                 return false;
@@ -98,9 +98,19 @@ namespace XSerializer
             return serializer != null;
         }
 
-        private bool ShouldNotAttemptToUseDefaultSerializer(Type type, ICollection<Type> extraTypes)
+        private bool ShouldNotAttemptToUseDefaultSerializer(Type type, IXmlSerializerOptions options)
         {
-            var allTypes = new[] { type }.Concat(extraTypes ?? new Type[0]).ToList();
+            if (options == null)
+            {
+                options = new XmlSerializationOptions();
+            }
+
+            if (options.RedactAttribute != null)
+            {
+                return true;
+            }
+
+            var allTypes = new[] { type }.Concat(options.ExtraTypes ?? new Type[0]).ToList();
 
             if (allTypes.Any(IsObjectLike))
             {
@@ -117,7 +127,7 @@ namespace XSerializer
                 .Where(p => p.IsSerializable())
                 .Any(p => 
                     Attribute.IsDefined(p, typeof(RedactAttribute))
-                    || ShouldNotAttemptToUseDefaultSerializer(p.PropertyType, new Type[0]));
+                    || ShouldNotAttemptToUseDefaultSerializer(p.PropertyType, null));
         }
 
         private bool IsObjectLike(Type type)
@@ -188,6 +198,11 @@ namespace XSerializer
                 }
 
                 key = (key * 397) ^ (string.IsNullOrWhiteSpace(options.RootElementName) ? type.Name : options.RootElementName).GetHashCode();
+
+                if (options.RedactAttribute != null)
+                {
+                    key = (key * 397) ^ options.RedactAttribute.GetHashCode();
+                }
 
                 return key;
             }

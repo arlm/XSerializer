@@ -15,7 +15,7 @@ namespace XSerializer
             _valueConverter = SimpleTypeValueConverter.Create(type, redactAttribute);
         }
 
-        public static XmlTextSerializer GetSerializer(Type type, RedactAttribute redactAttribute = null /*TODO: get rid of default null value*/)
+        public static XmlTextSerializer GetSerializer(Type type, RedactAttribute redactAttribute)
         {
             XmlTextSerializer serializer;
 

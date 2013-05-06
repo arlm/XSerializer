@@ -12,7 +12,8 @@ namespace XSerializer
             {
                 DefaultNamespace = options.DefaultNamespace,
                 ExtraTypes = options.ExtraTypes,
-                RootElementName = rootElementName
+                RootElementName = rootElementName,
+                RedactAttribute = options.RedactAttribute
             };
         }
 
@@ -27,7 +28,19 @@ namespace XSerializer
             {
                 DefaultNamespace = options.DefaultNamespace,
                 ExtraTypes = (options.ExtraTypes ?? new Type[0]).Concat(additionalExtraTypes).Distinct().ToArray(),
-                RootElementName = options.RootElementName
+                RootElementName = options.RootElementName,
+                RedactAttribute = options.RedactAttribute
+            };
+        }
+
+        public static IXmlSerializerOptions WithRedactAttribute(this IXmlSerializerOptions options, RedactAttribute redactAttribute)
+        {
+            return new XmlSerializerOptions
+            {
+                DefaultNamespace = options.DefaultNamespace,
+                ExtraTypes = options.ExtraTypes,
+                RootElementName = options.RootElementName,
+                RedactAttribute = redactAttribute
             };
         }
 
@@ -36,6 +49,7 @@ namespace XSerializer
             public string DefaultNamespace { get; set; }
             public Type[] ExtraTypes { get; set; }
             public string RootElementName { get; set; }
+            public RedactAttribute RedactAttribute { get; set; }
         }
     }
 }

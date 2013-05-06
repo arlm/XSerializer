@@ -23,7 +23,7 @@ namespace XSerializer
             // ReSharper disable DoNotCallOverridableMethodsInConstructor
 
             _options = options;
-            _keySerializer = XmlSerializerFactory.Instance.GetSerializer(KeyType, _options.WithRootElementName("Key"));
+            _keySerializer = XmlSerializerFactory.Instance.GetSerializer(KeyType, _options.WithRootElementName("Key").WithRedactAttribute(null));
             _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(ValueType, _options.WithRootElementName("Value"));
 
             if (DictionaryType.IsInterface || DictionaryType.IsAbstract)

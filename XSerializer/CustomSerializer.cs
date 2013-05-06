@@ -282,10 +282,9 @@ namespace XSerializer
                 writer.WriteAttributeString("xsi", "type", null, instance.GetType().GetXsdType());
             }
 
-            if (instanceType.IsPrimitiveLike()
-                || (instanceType.IsGenericType && instanceType.GetGenericTypeDefinition() == typeof(Nullable<>) && instanceType.GetGenericArguments()[0].IsPrimitiveLike()))
+            if (instanceType.IsPrimitiveLike() || instanceType.IsNullablePrimitiveLike())
             {
-                XmlTextSerializer.GetSerializer(instanceType).SerializeObject(writer, instance, options);
+                XmlTextSerializer.GetSerializer(instanceType, _options.RedactAttribute).SerializeObject(writer, instance, options);
             }
             else
             {
@@ -359,7 +358,7 @@ namespace XSerializer
                     case XmlNodeType.Text:
                         if (typeof(T).IsPrimitiveLike())
                         {
-                            instance = (T)XmlTextSerializer.GetSerializer(typeof(T)).DeserializeObject(reader);
+                            instance = (T)XmlTextSerializer.GetSerializer(typeof(T), _options.RedactAttribute).DeserializeObject(reader);
                             hasInstanceBeenCreated = true;
                         }
                         else

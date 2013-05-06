@@ -86,6 +86,10 @@ namespace XSerializer
         private Func<IXmlSerializer> GetCreateSerializerFunc(PropertyInfo propertyInfo, IXmlSerializerOptions options)
         {
             var redactAttribute = (RedactAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(RedactAttribute));
+            if (redactAttribute == null)
+            {
+                redactAttribute = options.RedactAttribute;
+            }
 
             var attributeAttribute = (XmlAttributeAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlAttributeAttribute));
             if (attributeAttribute != null)
@@ -102,6 +106,11 @@ namespace XSerializer
                 NodeType = NodeType.Text;
                 Name = propertyInfo.Name;
                 return () => XmlTextSerializer.GetSerializer(propertyInfo.PropertyType, redactAttribute);
+            }
+
+            if (redactAttribute != null)
+            {
+                options = options.WithRedactAttribute(redactAttribute);
             }
             
             var elementAttribute = (XmlElementAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlElementAttribute), false);

@@ -27,17 +27,17 @@ namespace XSerializer
 
         public static SimpleTypeValueConverter Create(Type type, RedactAttribute redactAttribute)
         {
-            SimpleTypeValueConverter serializer;
+            SimpleTypeValueConverter converter;
 
             var key = CreateKey(type, redactAttribute);
 
-            if (!Map.TryGetValue(key, out serializer))
+            if (!Map.TryGetValue(key, out converter))
             {
-                serializer = new SimpleTypeValueConverter(type, redactAttribute);
-                Map[key] = serializer;
+                converter = new SimpleTypeValueConverter(type, redactAttribute);
+                Map[key] = converter;
             }
 
-            return serializer;
+            return converter;
         }
 
         public object ParseString(string value)

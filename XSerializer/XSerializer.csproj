@@ -52,7 +52,7 @@
     <Compile Include="DictionarySerializer.cs" />
     <Compile Include="DynamicMethodFactory.cs" />
     <Compile Include="DynamicSerializer.cs" />
-    <Compile Include="EnumSerializer.cs" />
+    <Compile Include="XmlElementSerializer.cs" />
     <Compile Include="ISerializeOptions.cs" />
     <Compile Include="IXmlSerializerOptions.cs" />
     <Compile Include="ListSerializer.cs" />

@@ -362,7 +362,21 @@ namespace XSerializer
 
         internal static bool IsPrimitiveLike(this Type type)
         {
-            return type.IsPrimitive || type == typeof(string) || type == typeof(decimal) || type == typeof(DateTime) || type == typeof(Guid);
+            return
+                type.IsPrimitive
+                || type.IsEnum
+                || type == typeof(string)
+                || type == typeof(decimal)
+                || type == typeof(DateTime)
+                || type == typeof(Guid);
+        }
+
+        internal static bool IsNullablePrimitiveLike(this Type type)
+        {
+            return
+                type.IsGenericType
+                && type.GetGenericTypeDefinition() == typeof(Nullable<>)
+                && type.GetGenericArguments()[0].IsPrimitiveLike();
         }
 
         public static bool IsAnonymous(this object instance)

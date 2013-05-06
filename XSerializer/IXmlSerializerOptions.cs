@@ -7,5 +7,6 @@ namespace XSerializer
         string DefaultNamespace { get; }
         Type[] ExtraTypes { get; }
         string RootElementName { get; }
+        RedactAttribute RedactAttribute { get; }
     }
 }

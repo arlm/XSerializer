@@ -20,8 +20,8 @@ namespace XSerializer
         public string RootElementName { get; private set; }
         public bool ShouldAlwaysEmitTypes { get; private set; }
         public bool ShouldRedact { get; private set; }
-
         public Type[] ExtraTypes { get; internal set; }
+        public RedactAttribute RedactAttribute { get { return null; } }
 
         public XmlSerializationOptions WithEncoding(Encoding encoding)
         {

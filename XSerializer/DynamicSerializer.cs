@@ -18,14 +18,13 @@ namespace XSerializer
             {
                 return (IXmlSerializer<T>)serializer;
             }
-            else if (typeof(T) == typeof(ExpandoObject))
+            
+            if (typeof(T) == typeof(ExpandoObject))
             {
                 return (IXmlSerializer<T>)new DynamicSerializerExpandoObjectProxy(serializer);
             }
-            else
-            {
-                throw new InvalidOperationException("The only valid generic arguments for DynamicSerializer.GetSerializer<T> are object, dynamic, and ExpandoObject");
-            }
+            
+            throw new InvalidOperationException("The only valid generic arguments for DynamicSerializer.GetSerializer<T> are object, dynamic, and ExpandoObject");
         }
 
         public DynamicSerializer(IXmlSerializerOptions options)
@@ -123,8 +122,6 @@ namespace XSerializer
             object instance = null;
             var hasInstanceBeenCreated = false;
 
-            var attributes = new Dictionary<string, string>();
-
             do
             {
                 switch (reader.NodeType)
@@ -141,7 +138,7 @@ namespace XSerializer
                         }
                         break;
                     case XmlNodeType.Text:
-                        var stringValue = (string)XmlTextSerializer.GetSerializer(typeof(string)).DeserializeObject(reader);
+                        var stringValue = (string)XmlTextSerializer.GetSerializer(typeof(string), _options.RedactAttribute).DeserializeObject(reader);
                         hasInstanceBeenCreated = true;
 
                         bool boolValue;
