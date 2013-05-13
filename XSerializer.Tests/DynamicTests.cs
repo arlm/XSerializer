@@ -51,6 +51,48 @@ namespace XSerializer.Tests
             Assert.That(xmlSerializer.Serializer, Is.InstanceOf<DefaultSerializer<FooWithoutDynamicOrObjectProperty>>());
         }
 
+        [Test]
+        public void ADynamicPropertyWithAnEmptyValueRoundTripsFromXmlCorrectly()
+        {
+            dynamic dynamicProperty = new ExpandoObject();
+            dynamicProperty.Qwerty = new object();
+            dynamicProperty.Uiop = "";
+
+            var instance = new ClassWithDynamicProperty
+            {
+                IntProperty = 123,
+                DynamicProperty = dynamicProperty
+            };
+
+            var serializer = new XmlSerializer<ClassWithDynamicProperty>(options => options.Indent());
+
+            var xml = serializer.Serialize(instance);
+            var roundTripInstance = serializer.Deserialize(xml);
+            var roundTripXml = serializer.Serialize(roundTripInstance);
+
+            Assert.That(roundTripInstance, Has.PropertiesEqualTo(instance));
+            Assert.That(roundTripXml, Is.EqualTo(xml));
+        }
+
+        [Test]
+        public void AnObjectPropertyWithAnEmptyValueRoundTripsFromXmlCorrectly()
+        {
+            var instance = new ClassWithObjectProperty
+            {
+                IntProperty = 123,
+                ObjectProperty = ""
+            };
+
+            var serializer = new XmlSerializer<ClassWithObjectProperty>(options => options.Indent());
+
+            var xml = serializer.Serialize(instance);
+            var roundTripInstance = serializer.Deserialize(xml);
+            var roundTripXml = serializer.Serialize(roundTripInstance);
+
+            Assert.That(roundTripInstance, Has.PropertiesEqualTo(instance));
+            Assert.That(roundTripXml, Is.EqualTo(xml));
+        }
+
         [TestCase(typeof(ContainerClass<ClassWithNonGenericIEnumerable>))]
         [TestCase(typeof(ContainerClass<ClassWithIEnumerableOfTypeObject>))]
         [TestCase(typeof(ContainerClass<ClassWithNonGenericIDictionary>))]
@@ -405,6 +447,13 @@ namespace XSerializer.Tests
         {
             public int IntProperty { get; set; }
             public dynamic DynamicProperty { get; set; }
+        }
+
+        [XmlInclude(typeof(Foo))]
+        public class ClassWithObjectProperty
+        {
+            public int IntProperty { get; set; }
+            public object ObjectProperty { get; set; }
         }
 
         public class ClassWithExpandoProperty

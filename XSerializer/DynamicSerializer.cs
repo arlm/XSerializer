@@ -131,6 +131,11 @@ namespace XSerializer
                         {
                             instance = new ExpandoObject();
                             hasInstanceBeenCreated = true;
+
+                            if (reader.IsEmptyElement)
+                            {
+                                return CheckAndReturn(hasInstanceBeenCreated, instance);
+                            }
                         }
                         else
                         {

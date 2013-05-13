@@ -87,12 +87,51 @@ namespace XSerializer.Tests
 
                 if (actualValue.GetType() != expectedValue.GetType())
                 {
-                    _failedExpectedValue =
-                        path == null
-                        ? string.Format("instance to type of {0}", expectedValue.GetType())
-                        : string.Format("{0} to be type of {1}", path, expectedValue.GetType());
-                    _failedActualValue = string.Format("type of {0}", actualValue.GetType());
-                    return false;
+                    var expectedValueType = expectedValue.GetType();
+                    var actualValueType = actualValue.GetType();
+
+                    var expectedValueIsExpando = expectedValueType == typeof(ExpandoObject);
+                    var expectedValueIsEmpty = expectedValueType == typeof(object) || (expectedValue is string && (string)expectedValue == "");
+                    var actualValueIsExpando = actualValueType == typeof(ExpandoObject);
+                    var actualValueIsEmpty = actualValueType == typeof(object) || (actualValue is string && (string)actualValue == "");
+
+                    if (expectedValueIsExpando && actualValueIsEmpty)
+                    {
+                        var expectedExpandoMap = (IDictionary<string, object>)expectedValue;
+                        if (expectedExpandoMap.Count == 0)
+                        {
+                            return true;
+                        }
+
+                        _failedExpectedValue =
+                            path == null
+                                ? string.Format("instance to be an ExpandoObject with {0} properties", expectedExpandoMap.Count)
+                                : string.Format("{0} to be an ExpandoObject with {1} properties", path, expectedExpandoMap.Count);
+                        _failedActualValue = string.Format("<empty {0}>", actualValueType.Name);
+                    }
+                    else if (actualValueIsExpando && expectedValueIsEmpty)
+                    {
+                        var actualExpandoMap = (IDictionary<string, object>)actualValue;
+                        if (actualExpandoMap.Count == 0)
+                        {
+                            return true;
+                        }
+
+                        _failedExpectedValue =
+                            path == null
+                                ? "instance to be empty"
+                                : string.Format("{0} to be empty", path);
+                        _failedActualValue = string.Format("an ExpandoObject with {0} properties", actualExpandoMap.Count);
+                    }
+                    else
+                    {
+                        _failedExpectedValue =
+                            path == null
+                                ? string.Format("instance to type of {0}", expectedValueType)
+                                : string.Format("{0} to be type of {1}", path, expectedValueType);
+                        _failedActualValue = string.Format("type of {0}", actualValueType);
+                        return false;
+                    }
                 }
 
                 if (path == null)
