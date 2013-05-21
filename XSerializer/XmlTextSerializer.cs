@@ -1,12 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Xml;
 
 namespace XSerializer
 {
     public class XmlTextSerializer : IXmlSerializer
     {
-        private static readonly Dictionary<int, XmlTextSerializer> Map = new Dictionary<int, XmlTextSerializer>();
+        private static readonly ConcurrentDictionary<int, XmlTextSerializer> Map = new ConcurrentDictionary<int, XmlTextSerializer>();
+        private static readonly object MapLocker = new object();
 
         private readonly SimpleTypeValueConverter _valueConverter;
 
@@ -23,8 +24,14 @@ namespace XSerializer
 
             if (!Map.TryGetValue(key, out serializer))
             {
-                serializer = new XmlTextSerializer(type, redactAttribute);
-                Map[key] = serializer;
+                lock (MapLocker)
+                {
+                    if (!Map.TryGetValue(key, out serializer))
+                    {
+                        serializer = new XmlTextSerializer(type, redactAttribute);
+                        Map[key] = serializer;
+                    }
+                }
             }
 
             return serializer;

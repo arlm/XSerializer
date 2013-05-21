@@ -1,12 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Globalization;
 
 namespace XSerializer
 {
     public class SimpleTypeValueConverter
     {
-        private static readonly Dictionary<int, SimpleTypeValueConverter> Map = new Dictionary<int, SimpleTypeValueConverter>();
+        private static readonly ConcurrentDictionary<int, SimpleTypeValueConverter> Map = new ConcurrentDictionary<int, SimpleTypeValueConverter>();
+        private static readonly object MapLocker = new object();
 
         private readonly Func<string, object> _parseString;
         private readonly Func<object, ISerializeOptions, string> _getString; 
@@ -33,8 +34,14 @@ namespace XSerializer
 
             if (!Map.TryGetValue(key, out converter))
             {
-                converter = new SimpleTypeValueConverter(type, redactAttribute);
-                Map[key] = converter;
+                lock (MapLocker)
+                {
+                    if (!Map.TryGetValue(key, out converter))
+                    {
+                        converter = new SimpleTypeValueConverter(type, redactAttribute);
+                        Map[key] = converter;
+                    }
+                }
             }
 
             return converter;

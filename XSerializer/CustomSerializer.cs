@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -11,8 +12,8 @@ namespace XSerializer
 {
     public class CustomSerializer
     {
-        private static readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
-        protected static readonly Dictionary<int, Type> _typeCache = new Dictionary<int, Type>();
+        private static readonly ConcurrentDictionary<int, IXmlSerializer> _serializerCache = new ConcurrentDictionary<int, IXmlSerializer>();
+        private static readonly object _serializerCacheLocker = new object();
 
         public static IXmlSerializer GetSerializer(Type type, IXmlSerializerOptions options)
         {
@@ -21,17 +22,23 @@ namespace XSerializer
 
             if (!_serializerCache.TryGetValue(key, out serializer))
             {
-                try
+                lock (_serializerCacheLocker)
                 {
-                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(CustomSerializer<>).MakeGenericType(type), options);
-                }
-                catch (TargetInvocationException ex) // True exception gets masked due to reflection. Preserve stacktrace and rethrow
-                {
-                    PreserveStackTrace(ex.InnerException);
-                    throw ex.InnerException;
-                }
+                    if (!_serializerCache.TryGetValue(key, out serializer))
+                    {
+                        try
+                        {
+                            serializer = (IXmlSerializer)Activator.CreateInstance(typeof(CustomSerializer<>).MakeGenericType(type), options);
+                        }
+                        catch (TargetInvocationException ex) // True exception gets masked due to reflection. Preserve stacktrace and rethrow
+                        {
+                            PreserveStackTrace(ex.InnerException);
+                            throw ex.InnerException;
+                        }
 
-                _serializerCache[key] = serializer;
+                        _serializerCache[key] = serializer;
+                    }
+                }
             }
 
             return serializer;

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -9,7 +10,8 @@ namespace XSerializer
 {
     public abstract class DictionarySerializer : IXmlSerializer
     {
-        private static readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
+        private static readonly ConcurrentDictionary<int, IXmlSerializer> _serializerCache = new ConcurrentDictionary<int, IXmlSerializer>();
+        private static readonly object _serializerCacheLocker = new object();
 
         private readonly IXmlSerializerOptions _options;
 
@@ -187,23 +189,29 @@ namespace XSerializer
 
             if (!_serializerCache.TryGetValue(key, out serializer))
             {
-                if (type.IsAssignableToGenericIDictionary())
+                lock (_serializerCacheLocker)
                 {
-                    var genericArguments = type.GetGenericIDictionaryType().GetGenericArguments();
-                    var keyType = genericArguments[0];
-                    var valueType = genericArguments[1];
-                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), options);
-                }
-                else if (type.IsAssignableToNonGenericIDictionary())
-                {
-                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), options);
-                }
-                else
-                {
-                    throw new InvalidOperationException("Can't you do anything right?!");
-                }
+                    if (!_serializerCache.TryGetValue(key, out serializer))
+                    {
+                        if (type.IsAssignableToGenericIDictionary())
+                        {
+                            var genericArguments = type.GetGenericIDictionaryType().GetGenericArguments();
+                            var keyType = genericArguments[0];
+                            var valueType = genericArguments[1];
+                            serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), options);
+                        }
+                        else if (type.IsAssignableToNonGenericIDictionary())
+                        {
+                            serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), options);
+                        }
+                        else
+                        {
+                            throw new InvalidOperationException("Can't you do anything right?!");
+                        }
                 
-                _serializerCache[key] = serializer;
+                        _serializerCache[key] = serializer;
+                    }
+                }
             }
 
             return serializer;

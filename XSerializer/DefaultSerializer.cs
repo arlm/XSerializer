@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Serialization;
@@ -7,7 +8,8 @@ namespace XSerializer
 {
     public class DefaultSerializer
     {
-        private static readonly Dictionary<int, IXmlSerializer> _serializerCache = new Dictionary<int, IXmlSerializer>();
+        private static readonly ConcurrentDictionary<int, IXmlSerializer> _serializerCache = new ConcurrentDictionary<int, IXmlSerializer>();
+        private static readonly object _serializerCacheLocker = new object();
 
         [Obsolete("Use generic GetSerializer<T> method instead.")]
         public static IXmlSerializer GetSerializer(Type type, IXmlSerializerOptions options)
@@ -17,16 +19,22 @@ namespace XSerializer
 
             if (!_serializerCache.TryGetValue(key, out serializer))
             {
-                try
+                lock (_serializerCacheLocker)
                 {
-                    serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DefaultSerializer<>).MakeGenericType(type), options);
-                }
-                catch
-                {
-                    serializer = null;
-                }
+                    if (!_serializerCache.TryGetValue(key, out serializer))
+                    {
+                        try
+                        {
+                            serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DefaultSerializer<>).MakeGenericType(type), options);
+                        }
+                        catch
+                        {
+                            serializer = null;
+                        }
                 
-                _serializerCache[key] = serializer;
+                        _serializerCache[key] = serializer;
+                    }
+                }
             }
 
             return serializer;
