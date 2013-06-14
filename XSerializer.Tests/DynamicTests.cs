@@ -130,32 +130,34 @@ namespace XSerializer.Tests
 
         public class GivenADynamicPropertyWhenAnEmptyXmlElementIsDeserialized
         {
-            private const string xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+            private const string xmlFormat = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <ClassWithDynamicProperty xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
   <IntProperty>123</IntProperty>
   <DynamicProperty>
-    <Qwerty />
-    <Uiop />
+    {0}
+    {1}
   </DynamicProperty>
 </ClassWithDynamicProperty>";
 
-            [Test]
-            public void AndTreatEmptyElementAsStringIsTrueThenTheTypeOfThePropertyIsString()
+            [TestCase("<Qwerty />", "<Uiop />")]
+            [TestCase("<Qwerty></Qwerty>", "<Uiop></Uiop>")]
+            public void AndTreatEmptyElementAsStringIsTrueThenTheTypeOfThePropertyIsString(string emptyElement1, string emptyElement2)
             {
                 var serializer = new XmlSerializer<ClassWithDynamicProperty>(options => options.ShouldTreatEmptyElementAsString());
 
-                var instance = serializer.Deserialize(xml);
+                var instance = serializer.Deserialize(string.Format(xmlFormat, emptyElement1, emptyElement2));
 
                 Assert.That(instance.DynamicProperty.Qwerty, Is.TypeOf<string>());
                 Assert.That(instance.DynamicProperty.Uiop, Is.TypeOf<string>());
             }
 
-            [Test]
-            public void AndTreatEmptyElementAsStringIsFalseThenTheTypeOfThePropertyIsNotString()
+            [TestCase("<Qwerty />", "<Uiop />")]
+            [TestCase("<Qwerty></Qwerty>", "<Uiop></Uiop>")]
+            public void AndTreatEmptyElementAsStringIsFalseThenTheTypeOfThePropertyIsNotString(string emptyElement1, string emptyElement2)
             {
                 var serializer = new XmlSerializer<ClassWithDynamicProperty>();
 
-                var instance = serializer.Deserialize(xml);
+                var instance = serializer.Deserialize(string.Format(xmlFormat, emptyElement1, emptyElement2));
 
                 Assert.That(instance.DynamicProperty.Qwerty, Is.Not.TypeOf<string>());
                 Assert.That(instance.DynamicProperty.Uiop, Is.Not.TypeOf<string>());
@@ -164,28 +166,30 @@ namespace XSerializer.Tests
 
         public class GivenAObjectPropertyWhenAnEmptyXmlElementIsDeserialized
         {
-            private const string xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+            private const string xmlFormat = @"<?xml version=""1.0"" encoding=""utf-8""?>
 <ClassWithObjectProperty xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
   <IntProperty>123</IntProperty>
-  <ObjectProperty />
+  {0}
 </ClassWithObjectProperty>";
 
-            [Test]
-            public void AndTreatEmptyElementAsStringIsTrueThenTheTypeOfThePropertyIsString()
+            [TestCase("<ObjectProperty />")]
+            [TestCase("<ObjectProperty></ObjectProperty>")]
+            public void AndTreatEmptyElementAsStringIsTrueThenTheTypeOfThePropertyIsString(string emptyElement)
             {
                 var serializer = new XmlSerializer<ClassWithObjectProperty>(options => options.ShouldTreatEmptyElementAsString());
 
-                var instance = serializer.Deserialize(xml);
+                var instance = serializer.Deserialize(string.Format(xmlFormat, emptyElement));
 
                 Assert.That(instance.ObjectProperty, Is.TypeOf<string>());
             }
 
-            [Test]
-            public void AndTreatEmptyElementAsStringIsFalseThenTheTypeOfThePropertyIsNotString()
+            [TestCase("<ObjectProperty />")]
+            [TestCase("<ObjectProperty></ObjectProperty>")]
+            public void AndTreatEmptyElementAsStringIsFalseThenTheTypeOfThePropertyIsNotString(string emptyElement)
             {
                 var serializer = new XmlSerializer<ClassWithObjectProperty>();
 
-                var instance = serializer.Deserialize(xml);
+                var instance = serializer.Deserialize(string.Format(xmlFormat, emptyElement));
 
                 Assert.That(instance.ObjectProperty, Is.Not.TypeOf<string>());
             }

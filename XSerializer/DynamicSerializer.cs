@@ -186,6 +186,15 @@ namespace XSerializer
                     case XmlNodeType.EndElement:
                         if (reader.Name == _options.RootElementName)
                         {
+                            if (_options.TreatEmptyElementAsString)
+                            {
+                                var instanceAsExpando = instance as IDictionary<string, object>;
+                                if (instanceAsExpando != null && instanceAsExpando.Count == 0)
+                                {
+                                    instance = "";
+                                }
+                            }
+
                             return CheckAndReturn(hasInstanceBeenCreated, instance);
                         }
                         break;
