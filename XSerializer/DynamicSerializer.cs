@@ -134,7 +134,12 @@ namespace XSerializer
 
                             if (reader.IsEmptyElement)
                             {
-                                return CheckAndReturn(hasInstanceBeenCreated, instance);
+                                if (_options.TreatEmptyElementAsString)
+                                {
+                                    instance = "";
+                                }
+
+                                return instance;
                             }
                         }
                         else

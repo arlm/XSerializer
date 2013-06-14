@@ -215,6 +215,8 @@ namespace XSerializer
                     key = (key * 397) ^ options.RedactAttribute.GetHashCode();
                 }
 
+                key = (key * 397) ^ options.TreatEmptyElementAsString.GetHashCode();
+
                 return key;
             }
         }

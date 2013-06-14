@@ -8,5 +8,6 @@ namespace XSerializer
         Type[] ExtraTypes { get; }
         string RootElementName { get; }
         RedactAttribute RedactAttribute { get; }
+        bool TreatEmptyElementAsString { get; }
     }
 }

@@ -15,5 +15,6 @@ namespace XSerializer.Tests
         public Type[] ExtraTypes { get; set; }
         public string RootElementName { get; set; }
         public RedactAttribute RedactAttribute { get; set; }
+        public bool TreatEmptyElementAsString { get; set; }
     }
 }

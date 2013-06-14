@@ -13,7 +13,8 @@ namespace XSerializer
                 DefaultNamespace = options.DefaultNamespace,
                 ExtraTypes = options.ExtraTypes,
                 RootElementName = rootElementName,
-                RedactAttribute = options.RedactAttribute
+                RedactAttribute = options.RedactAttribute,
+                TreatEmptyElementAsString = options.TreatEmptyElementAsString
             };
         }
 
@@ -29,7 +30,8 @@ namespace XSerializer
                 DefaultNamespace = options.DefaultNamespace,
                 ExtraTypes = (options.ExtraTypes ?? new Type[0]).Concat(additionalExtraTypes).Distinct().ToArray(),
                 RootElementName = options.RootElementName,
-                RedactAttribute = options.RedactAttribute
+                RedactAttribute = options.RedactAttribute,
+                TreatEmptyElementAsString = options.TreatEmptyElementAsString
             };
         }
 
@@ -40,7 +42,8 @@ namespace XSerializer
                 DefaultNamespace = options.DefaultNamespace,
                 ExtraTypes = options.ExtraTypes,
                 RootElementName = options.RootElementName,
-                RedactAttribute = redactAttribute
+                RedactAttribute = redactAttribute,
+                TreatEmptyElementAsString = options.TreatEmptyElementAsString
             };
         }
 
@@ -50,6 +53,7 @@ namespace XSerializer
             public Type[] ExtraTypes { get; set; }
             public string RootElementName { get; set; }
             public RedactAttribute RedactAttribute { get; set; }
+            public bool TreatEmptyElementAsString { get; set; }
         }
     }
 }

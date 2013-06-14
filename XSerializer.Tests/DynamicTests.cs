@@ -51,8 +51,9 @@ namespace XSerializer.Tests
             Assert.That(xmlSerializer.Serializer, Is.InstanceOf<DefaultSerializer<FooWithoutDynamicOrObjectProperty>>());
         }
 
-        [Test]
-        public void ADynamicPropertyWithAnEmptyValueRoundTripsFromXmlCorrectly()
+        [TestCase(false)]
+        [TestCase(true)]
+        public void ADynamicPropertyWithAnEmptyValueRoundTripsFromXmlCorrectly(bool shouldTreatEmptyElementAsString)
         {
             dynamic dynamicProperty = new ExpandoObject();
             dynamicProperty.Qwerty = new object();
@@ -64,7 +65,60 @@ namespace XSerializer.Tests
                 DynamicProperty = dynamicProperty
             };
 
-            var serializer = new XmlSerializer<ClassWithDynamicProperty>(options => options.Indent());
+            var serializer = new XmlSerializer<ClassWithDynamicProperty>(options =>
+            {
+                if (shouldTreatEmptyElementAsString)
+                {
+                    options.Indent().ShouldTreatEmptyElementAsString();
+                }
+                else
+                {
+                    options.Indent();
+                }
+            });
+
+            var xml = serializer.Serialize(instance);
+            var roundTripInstance = serializer.Deserialize(xml);
+            var roundTripXml = serializer.Serialize(roundTripInstance);
+
+            if (shouldTreatEmptyElementAsString)
+            {
+                Assert.That(roundTripInstance.IntProperty, Is.EqualTo(instance.IntProperty));
+                Assert.That(roundTripInstance.DynamicProperty.Uiop, Is.EqualTo(instance.DynamicProperty.Uiop));
+
+                // When we treat empty elements as strings, we won't deserialize as the original type.
+                Assert.That(roundTripInstance.DynamicProperty.Qwerty, Is.Not.EqualTo(instance.DynamicProperty.Qwerty));
+                Assert.That(roundTripInstance.DynamicProperty.Qwerty, Is.EqualTo(""));
+            }
+            else
+            {
+                Assert.That(roundTripInstance, Has.PropertiesEqualTo(instance));
+            }
+
+            Assert.That(roundTripXml, Is.EqualTo(xml));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void AnObjectPropertyWithAnEmptyValueRoundTripsFromXmlCorrectly(bool shouldTreatEmptyElementAsString)
+        {
+            var instance = new ClassWithObjectProperty
+            {
+                IntProperty = 123,
+                ObjectProperty = ""
+            };
+
+            var serializer = new XmlSerializer<ClassWithObjectProperty>(options =>
+            {
+                if (shouldTreatEmptyElementAsString)
+                {
+                    options.Indent().ShouldTreatEmptyElementAsString();
+                }
+                else
+                {
+                    options.Indent();
+                }
+            });
 
             var xml = serializer.Serialize(instance);
             var roundTripInstance = serializer.Deserialize(xml);
@@ -74,23 +128,67 @@ namespace XSerializer.Tests
             Assert.That(roundTripXml, Is.EqualTo(xml));
         }
 
-        [Test]
-        public void AnObjectPropertyWithAnEmptyValueRoundTripsFromXmlCorrectly()
+        public class GivenADynamicPropertyWhenAnEmptyXmlElementIsDeserialized
         {
-            var instance = new ClassWithObjectProperty
+            private const string xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<ClassWithDynamicProperty xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <IntProperty>123</IntProperty>
+  <DynamicProperty>
+    <Qwerty />
+    <Uiop />
+  </DynamicProperty>
+</ClassWithDynamicProperty>";
+
+            [Test]
+            public void AndTreatEmptyElementAsStringIsTrueThenTheTypeOfThePropertyIsString()
             {
-                IntProperty = 123,
-                ObjectProperty = ""
-            };
+                var serializer = new XmlSerializer<ClassWithDynamicProperty>(options => options.ShouldTreatEmptyElementAsString());
 
-            var serializer = new XmlSerializer<ClassWithObjectProperty>(options => options.Indent());
+                var instance = serializer.Deserialize(xml);
 
-            var xml = serializer.Serialize(instance);
-            var roundTripInstance = serializer.Deserialize(xml);
-            var roundTripXml = serializer.Serialize(roundTripInstance);
+                Assert.That(instance.DynamicProperty.Qwerty, Is.TypeOf<string>());
+                Assert.That(instance.DynamicProperty.Uiop, Is.TypeOf<string>());
+            }
 
-            Assert.That(roundTripInstance, Has.PropertiesEqualTo(instance));
-            Assert.That(roundTripXml, Is.EqualTo(xml));
+            [Test]
+            public void AndTreatEmptyElementAsStringIsFalseThenTheTypeOfThePropertyIsNotString()
+            {
+                var serializer = new XmlSerializer<ClassWithDynamicProperty>();
+
+                var instance = serializer.Deserialize(xml);
+
+                Assert.That(instance.DynamicProperty.Qwerty, Is.Not.TypeOf<string>());
+                Assert.That(instance.DynamicProperty.Uiop, Is.Not.TypeOf<string>());
+            }
+        }
+
+        public class GivenAObjectPropertyWhenAnEmptyXmlElementIsDeserialized
+        {
+            private const string xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<ClassWithObjectProperty xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <IntProperty>123</IntProperty>
+  <ObjectProperty />
+</ClassWithObjectProperty>";
+
+            [Test]
+            public void AndTreatEmptyElementAsStringIsTrueThenTheTypeOfThePropertyIsString()
+            {
+                var serializer = new XmlSerializer<ClassWithObjectProperty>(options => options.ShouldTreatEmptyElementAsString());
+
+                var instance = serializer.Deserialize(xml);
+
+                Assert.That(instance.ObjectProperty, Is.TypeOf<string>());
+            }
+
+            [Test]
+            public void AndTreatEmptyElementAsStringIsFalseThenTheTypeOfThePropertyIsNotString()
+            {
+                var serializer = new XmlSerializer<ClassWithObjectProperty>();
+
+                var instance = serializer.Deserialize(xml);
+
+                Assert.That(instance.ObjectProperty, Is.Not.TypeOf<string>());
+            }
         }
 
         [TestCase(typeof(ContainerClass<ClassWithNonGenericIEnumerable>))]

@@ -22,6 +22,7 @@ namespace XSerializer
         public bool ShouldRedact { get; private set; }
         public Type[] ExtraTypes { get; internal set; }
         public RedactAttribute RedactAttribute { get { return null; } }
+        public bool TreatEmptyElementAsString { get; private set; }
 
         public XmlSerializationOptions WithEncoding(Encoding encoding)
         {
@@ -62,6 +63,12 @@ namespace XSerializer
         public XmlSerializationOptions DisableRedact()
         {
             ShouldRedact = false;
+            return this;
+        }
+
+        public XmlSerializationOptions ShouldTreatEmptyElementAsString()
+        {
+            TreatEmptyElementAsString = true;
             return this;
         }
     }
