@@ -94,7 +94,7 @@ namespace XSerializer
                         }
                         else
                         {
-                            throw new InvalidOperationException("You disappoint people a lot, don't you?");
+                            throw new InvalidOperationException(string.Format("Cannot create a ListSerializer of type '{0}'.", type.FullName));
                         }
 
                         _serializerCache[key] = serializer;
@@ -200,14 +200,14 @@ namespace XSerializer
                 }
             } while (reader.ReadIfNeeded(shouldIssueRead));
 
-            throw new SerializationException("What? I don't even...");
+            throw new InvalidOperationException("Deserialization error: attempted to return a deserialized instance before it was created.");
         }
 
         private static object DeserializeItem(XmlReader reader, IXmlSerializer serializer, bool hasInstanceBeenCreated, out bool shouldIssueRead)
         {
             if (!hasInstanceBeenCreated)
             {
-                throw new SerializationException("le sigh.");
+                throw new InvalidOperationException("Deserialization error: attempted to deserialize an item before creating its list.");
             }
 
             var deserialized = serializer.DeserializeObject(reader);
@@ -221,7 +221,7 @@ namespace XSerializer
         {
             if (!hasInstanceBeenCreated)
             {
-                throw new SerializationException("Awwww, crap.");
+                throw new InvalidOperationException("Deserialization error: attempted to return a deserialized instance before it was created.");
             }
 
             return instance;

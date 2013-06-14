@@ -201,7 +201,7 @@ namespace XSerializer
                 }
             } while (reader.Read());
 
-            throw new SerializationException("Couldn't serialize... for some reason. (You know, I should put a better exception message here...)");
+            throw new InvalidOperationException("Deserialization error: reached the end of the document without returning a value.");
         }
 
         private void SetElementPropertyValue(XmlReader reader, bool hasInstanceBeenCreated, IDictionary<string, object> expando)
@@ -216,7 +216,7 @@ namespace XSerializer
         {
             if (!hasInstanceBeenCreated)
             {
-                throw new SerializationException("Awwww, crap.");
+                throw new InvalidOperationException("Deserialization error: attempted to return a deserialized instance before it was created.");
             }
 
             return instance;

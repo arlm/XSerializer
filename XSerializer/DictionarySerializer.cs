@@ -119,17 +119,20 @@ namespace XSerializer
                             dictionary = _createDictionary();
                             hasInstanceBeenCreated = true;
                         }
-                        else if (reader.Name == "Item")
+                        else if (reader.Name == "Item" && hasInstanceBeenCreated)
                         {
                             isInsideItemElement = true;
                         }
-                        else if (reader.Name == "Key")
+                        else if (isInsideItemElement)
                         {
-                            currentKey = DeserializeKeyOrValue(reader, _keySerializer, hasInstanceBeenCreated, isInsideItemElement, out shouldIssueRead);
-                        }
-                        else if (reader.Name == "Value")
-                        {
-                            currentValue = DeserializeKeyOrValue(reader, _valueSerializer, hasInstanceBeenCreated, isInsideItemElement, out shouldIssueRead);
+                            if (reader.Name == "Key")
+                            {
+                                currentKey = DeserializeKeyOrValue(reader, _keySerializer, out shouldIssueRead);
+                            }
+                            else if (reader.Name == "Value")
+                            {
+                                currentValue = DeserializeKeyOrValue(reader, _valueSerializer, out shouldIssueRead);
+                            }
                         }
 
                         break;
@@ -150,21 +153,11 @@ namespace XSerializer
                 }
             } while (reader.ReadIfNeeded(shouldIssueRead));
 
-            throw new SerializationException("Poop in a hoop.");
+            throw new InvalidOperationException("Deserialization error: reached the end of the document without returning a value.");
         }
 
-        private static object DeserializeKeyOrValue(XmlReader reader, IXmlSerializer serializer, bool hasInstanceBeenCreated, bool isInsideElement, out bool shouldIssueRead)
+        private static object DeserializeKeyOrValue(XmlReader reader, IXmlSerializer serializer, out bool shouldIssueRead)
         {
-            if (!hasInstanceBeenCreated)
-            {
-                throw new SerializationException("le sigh.");
-            }
-
-            if (!isInsideElement)
-            {
-                throw new SerializationException("Really? REALLY?");
-            }
-
             var deserialized = serializer.DeserializeObject(reader);
 
             shouldIssueRead = !(serializer is DefaultSerializer);
@@ -176,7 +169,7 @@ namespace XSerializer
         {
             if (!hasInstanceBeenCreated)
             {
-                throw new SerializationException("Awwww, crap.");
+                throw new InvalidOperationException("Deserialization error: attempted to return a deserialized instance before it was created.");
             }
 
             return instance;
@@ -206,7 +199,7 @@ namespace XSerializer
                         }
                         else
                         {
-                            throw new InvalidOperationException("Can't you do anything right?!");
+                            throw new InvalidOperationException(string.Format("Cannot create a DictionarySerializer of type '{0}'.", type.FullName));
                         }
                 
                         _serializerCache[key] = serializer;

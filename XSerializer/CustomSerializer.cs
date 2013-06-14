@@ -116,14 +116,18 @@ namespace XSerializer
 
                 if (derivedXmlAttribute != null && !hasBaseProperty)
                 {
-                    if(string.IsNullOrWhiteSpace(derivedXmlAttribute.AttributeName))
+                    if (string.IsNullOrWhiteSpace(derivedXmlAttribute.AttributeName))
+                    {
                         throw new InvalidOperationException("XmlAttribute must have a value.");
+                    }
                 }
 
                 if (derivedXmlElement != null && !hasBaseProperty)
                 {
                     if (string.IsNullOrWhiteSpace(derivedXmlElement.ElementName))
+                    {
                         throw new InvalidOperationException("XmlElement must have a value.");
+                    }
                 }
             }
         }
@@ -382,7 +386,7 @@ namespace XSerializer
                 }
             } while (reader.ReadIfNeeded(shouldIssueRead));
 
-            throw new SerializationException("Couldn't serialize... for some reason. (You know, I should put a better exception message here...)");
+            throw new InvalidOperationException("Deserialization error: reached the end of the document without returning a value.");
         }
 
         object IXmlSerializer.DeserializeObject(XmlReader reader)
@@ -395,7 +399,7 @@ namespace XSerializer
         {
             if (!hasInstanceBeenCreated)
             {
-                throw new SerializationException("Boo hoo!");
+                throw new InvalidOperationException("Deserialization error: attempted to set a property value from an element before creating its object.");
             }
 
             var property = _serializablePropertiesMap[instance.GetType()].SingleOrDefault(p => reader.Name == p.Name);
@@ -414,7 +418,7 @@ namespace XSerializer
         {
             if (!hasInstanceBeenCreated)
             {
-                throw new SerializationException("I'm think I'm gonna cry!");
+                throw new InvalidOperationException("Deserialization error: attempted to set a property value from a text node before creating its object.");
             }
 
             var property = _serializablePropertiesMap[instance.GetType()].SingleOrDefault(p => p.NodeType == NodeType.Text);
@@ -428,7 +432,7 @@ namespace XSerializer
         {
             if (!hasInstanceBeenCreated)
             {
-                throw new SerializationException("Awwww, crap.");
+                throw new InvalidOperationException("Deserialization error: attempted to return a deserialized instance before it was created.");
             }
 
             return instance;
