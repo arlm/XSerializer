@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
+using System.Reflection;
 using System.Xml;
 
 namespace XSerializer
@@ -242,8 +242,17 @@ namespace XSerializer
             }
             else
             {
-                var addMethods = new[] { typeof(TEnumerable) }.Concat(typeof(TEnumerable).GetInterfaces()).SelectMany(t => t.GetMethods().Where(m => m.Name == "Add" && m.GetParameters().Length == 1));
+                var addMethods =
+                    typeof(TEnumerable).GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                    .Concat(typeof(TEnumerable).GetInterfaces().SelectMany(i => i.GetMethods()))
+                    .Where(m => m.Name == "Add" && m.GetParameters().Length == 1);
+
                 var addFuncs = addMethods.Select(m => DynamicMethodFactory.CreateAction(m)).ToList();
+
+                if (addFuncs.Count == 0)
+                {
+                    throw new InvalidOperationException(string.Format("No suitable 'Add' method found for type '{0}'.", typeof(TEnumerable).FullName));
+                }
 
                 _addItemToCollection = (collection, item) =>
                 {
@@ -266,7 +275,7 @@ namespace XSerializer
                     {
                         if (item != null)
                         {
-                            throw new InvalidOperationException(string.Format("No suitable 'Add' method found for instance of type {0}", item.GetType()));
+                            throw new InvalidOperationException(string.Format("No suitable 'Add' method found for instance of type {0}.", item.GetType()));
                         }
 
                         throw new InvalidOperationException("No suitable 'Add' method found for null instance.");
@@ -328,16 +337,21 @@ namespace XSerializer
             {
                 _addItemToCollection = (collection, item) => ((IList)collection).Add(item);
             }
-            else if (typeof(ICollection<>).MakeGenericType(typeof(TItem)).IsAssignableFrom(typeof(TEnumerable)))
-            {
-                var addMethod = typeof(ICollection<>).MakeGenericType(typeof(TItem)).GetMethod("Add", new[] { typeof(TItem) });
-                var add = DynamicMethodFactory.CreateAction(addMethod);
-                _addItemToCollection = (collection, item) => add(collection, item);
-            }
             else
             {
-                var addMethods = new[] { typeof(TEnumerable) }.Concat(typeof(TEnumerable).GetInterfaces()).SelectMany(t => t.GetMethods().Where(m => m.Name == "Add" && m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == typeof(TItem)));
+                var addMethods =
+                    typeof(TEnumerable).GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                    .Concat(typeof(TEnumerable).GetInterfaces().SelectMany(i => i.GetMethods()))
+                    .Where(m => m.Name == "Add"
+                        && m.GetParameters().Length == 1
+                        && m.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(TItem)));
+
                 var addFuncs = addMethods.Select(m => DynamicMethodFactory.CreateAction(m)).ToList();
+
+                if (addFuncs.Count == 0)
+                {
+                    throw new InvalidOperationException(string.Format("No suitable 'Add' method found for type '{0}'.", typeof(TEnumerable).FullName));
+                }
 
                 _addItemToCollection = (collection, item) =>
                 {
@@ -360,7 +374,7 @@ namespace XSerializer
                     {
                         if (item != null)
                         {
-                            throw new InvalidOperationException(string.Format("No suitable 'Add' method found for instance of type {0}", item.GetType()));
+                            throw new InvalidOperationException(string.Format("No suitable 'Add' method found for instance of type {0}.", item.GetType()));
                         }
 
                         throw new InvalidOperationException("No suitable 'Add' method found for null instance.");
