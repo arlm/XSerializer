@@ -161,7 +161,16 @@ namespace XSerializer
                         int intValue;
                         if (int.TryParse(stringValue, out intValue))
                         {
-                            instance = intValue;
+                            // If this is a number with leading zeros, treat it as a string so we don't lose those leading zeros.
+                            if (stringValue[0] == '0' && stringValue.Length > 1)
+                            {
+                                instance = stringValue;
+                            }
+                            else
+                            {
+                                instance = intValue;
+                            }
+
                             break;
                         }
 
