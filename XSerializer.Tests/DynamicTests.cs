@@ -51,6 +51,30 @@ namespace XSerializer.Tests
             Assert.That(xmlSerializer.Serializer, Is.InstanceOf<DefaultSerializer<FooWithoutDynamicOrObjectProperty>>());
         }
 
+        [Test]
+        public void ADynamicPropertyWithAZeroPaddedNumberValueRoundTripsFromXmlCorrectly()
+        {
+            dynamic dynamicProperty = new ExpandoObject();
+            dynamicProperty.Qwerty = "000123";
+
+            var instance = new ClassWithDynamicProperty
+            {
+                IntProperty = 789,
+                DynamicProperty = dynamicProperty
+            };
+
+            var serializer = new XmlSerializer<ClassWithDynamicProperty>(options => options.Indent());
+
+            var xml = serializer.Serialize(instance);
+            var roundTripInstance = serializer.Deserialize(xml);
+            var roundTripXml = serializer.Serialize(roundTripInstance);
+            
+            Assert.That(roundTripInstance.IntProperty, Is.EqualTo(instance.IntProperty));
+            Assert.That(roundTripInstance.DynamicProperty.Qwerty, Is.EqualTo(instance.DynamicProperty.Qwerty));
+
+            Assert.That(roundTripXml, Is.EqualTo(xml));
+        }
+
         [TestCase(false)]
         [TestCase(true)]
         public void ADynamicPropertyWithAnEmptyValueRoundTripsFromXmlCorrectly(bool shouldTreatEmptyElementAsString)
