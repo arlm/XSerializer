@@ -9,9 +9,7 @@ namespace XSerializer
     internal class XmlSerializerFactory
     {
         private readonly ConcurrentDictionary<Type, Func<IXmlSerializerOptions, IXmlSerializerInternal>> _getSerializerMap = new ConcurrentDictionary<Type, Func<IXmlSerializerOptions, IXmlSerializerInternal>>();
-        private readonly object _getSerializerMapLocker = new object();
         private readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
-        private readonly object _serializerCacheLocker = new object();
 
         public static readonly XmlSerializerFactory Instance = new XmlSerializerFactory();
 
@@ -21,85 +19,58 @@ namespace XSerializer
 
         public IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options)
         {
-            Func<IXmlSerializerOptions, IXmlSerializerInternal> getSerializer;
-            if (!_getSerializerMap.TryGetValue(type, out getSerializer))
-            {
-                lock (_getSerializerMapLocker)
-                {
-                    if (!_getSerializerMap.TryGetValue(type, out getSerializer))
+            var getSerializer = _getSerializerMap.GetOrAdd(
+                type,
+                t =>
                     {
                         var getSerializerMethod =
                             typeof(XmlSerializerFactory)
                                 .GetMethod("GetSerializer", new[] { typeof(IXmlSerializerOptions) })
                                 .MakeGenericMethod(type);
 
-                        getSerializer =
-                            (Func<IXmlSerializerOptions, IXmlSerializerInternal>)Delegate.CreateDelegate(
-                                typeof(Func<IXmlSerializerOptions, IXmlSerializerInternal>), this, getSerializerMethod);
-                        _getSerializerMap[type] = getSerializer;
-                    }
-                }
-            }
+                        return (Func<IXmlSerializerOptions, IXmlSerializerInternal>)Delegate.CreateDelegate(typeof(Func<IXmlSerializerOptions, IXmlSerializerInternal>), this, getSerializerMethod);
+                    });
 
             return getSerializer(options);
         }
 
         public IXmlSerializerInternal<T> GetSerializer<T>(IXmlSerializerOptions options)
         {
-            IXmlSerializerInternal<T> serializer;
-            var key = CreateKey(typeof(T), options);
-
-            if (!TryGetCachedSerializer(key, out serializer))
-            {
-                lock (_serializerCacheLocker)
+            return (IXmlSerializerInternal<T>)_serializerCache.GetOrAdd(
+                CreateKey(typeof(T), options),
+                _ =>
                 {
-                    if (!TryGetCachedSerializer(key, out serializer))
+                    var type = typeof(T);
+
+                    if (type == typeof(object) || type == typeof(ExpandoObject))
                     {
-                        var type = typeof(T);
-
-                        if (type == typeof(object) || type == typeof(ExpandoObject))
-                        {
-                            serializer = DynamicSerializer.GetSerializer<T>(options);
-                        }
-                        else if (!TryGetDefaultSerializer(options, out serializer))
-                        {
-                            if (type.IsPrimitiveLike() || type.IsNullablePrimitiveLike())
-                            {
-                                serializer = new XmlElementSerializer<T>(options);
-                            }
-                            else if (type.IsAssignableToNonGenericIDictionary() || type.IsAssignableToGenericIDictionary())
-                            {
-                                serializer = (IXmlSerializerInternal<T>)DictionarySerializer.GetSerializer(type, options);
-                            }
-                            else if (type.IsAssignableToNonGenericIEnumerable() || type.IsAssignableToGenericIEnumerable())
-                            {
-                                serializer = (IXmlSerializerInternal<T>)ListSerializer.GetSerializer(type, options, null);
-                            }
-                            else
-                            {
-                                serializer = (IXmlSerializerInternal<T>)CustomSerializer.GetSerializer(type, options);
-                            }
-                        }
-
-                        _serializerCache[key] = serializer;
+                        return DynamicSerializer.GetSerializer<T>(options);
                     }
-                }
-            }
 
-            return serializer;
-        }
+                    IXmlSerializerInternal<T> serializer;
 
-        private bool TryGetCachedSerializer<T>(int key, out IXmlSerializerInternal<T> serializer)
-        {
-            IXmlSerializerInternal serializerObject;
-            if (_serializerCache.TryGetValue(key, out serializerObject))
-            {
-                serializer = (IXmlSerializerInternal<T>)serializerObject;
-                return true;
-            }
+                    if (!TryGetDefaultSerializer(options, out serializer))
+                    {
+                        if (type.IsPrimitiveLike() || type.IsNullablePrimitiveLike())
+                        {
+                            serializer = new XmlElementSerializer<T>(options);
+                        }
+                        else if (type.IsAssignableToNonGenericIDictionary() || type.IsAssignableToGenericIDictionary())
+                        {
+                            serializer = (IXmlSerializerInternal<T>)DictionarySerializer.GetSerializer(type, options);
+                        }
+                        else if (type.IsAssignableToNonGenericIEnumerable() || type.IsAssignableToGenericIEnumerable())
+                        {
+                            serializer = (IXmlSerializerInternal<T>)ListSerializer.GetSerializer(type, options, null);
+                        }
+                        else
+                        {
+                            serializer = (IXmlSerializerInternal<T>)CustomSerializer.GetSerializer(type, options);
+                        }
+                    }
 
-            serializer = null;
-            return false;
+                    return serializer;
+                });
         }
 
         protected virtual bool TryGetDefaultSerializer<T>(IXmlSerializerOptions options, out IXmlSerializerInternal<T> serializer)

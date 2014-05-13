@@ -6,8 +6,7 @@ namespace XSerializer
 {
     internal class SimpleTypeValueConverter
     {
-        private static readonly ConcurrentDictionary<int, SimpleTypeValueConverter> Map = new ConcurrentDictionary<int, SimpleTypeValueConverter>();
-        private static readonly object MapLocker = new object();
+        private static readonly ConcurrentDictionary<int, SimpleTypeValueConverter> _map = new ConcurrentDictionary<int, SimpleTypeValueConverter>();
 
         private readonly Func<string, object> _parseString;
         private readonly Func<object, ISerializeOptions, string> _getString; 
@@ -28,23 +27,9 @@ namespace XSerializer
 
         public static SimpleTypeValueConverter Create(Type type, RedactAttribute redactAttribute)
         {
-            SimpleTypeValueConverter converter;
-
-            var key = CreateKey(type, redactAttribute);
-
-            if (!Map.TryGetValue(key, out converter))
-            {
-                lock (MapLocker)
-                {
-                    if (!Map.TryGetValue(key, out converter))
-                    {
-                        converter = new SimpleTypeValueConverter(type, redactAttribute);
-                        Map[key] = converter;
-                    }
-                }
-            }
-
-            return converter;
+            return _map.GetOrAdd(
+                CreateKey(type, redactAttribute),
+                _ => new SimpleTypeValueConverter(type, redactAttribute));
         }
 
         public object ParseString(string value)

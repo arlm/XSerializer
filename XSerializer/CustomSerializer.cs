@@ -13,35 +13,23 @@ namespace XSerializer
     internal class CustomSerializer
     {
         private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
-        private static readonly object _serializerCacheLocker = new object();
 
         public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options)
         {
-            IXmlSerializerInternal serializer;
-            var key = XmlSerializerFactory.Instance.CreateKey(type, options);
-
-            if (!_serializerCache.TryGetValue(key, out serializer))
-            {
-                lock (_serializerCacheLocker)
+            return _serializerCache.GetOrAdd(
+                XmlSerializerFactory.Instance.CreateKey(type, options),
+                _ =>
                 {
-                    if (!_serializerCache.TryGetValue(key, out serializer))
+                    try
                     {
-                        try
-                        {
-                            serializer = (IXmlSerializerInternal)Activator.CreateInstance(typeof(CustomSerializer<>).MakeGenericType(type), options);
-                        }
-                        catch (TargetInvocationException ex) // True exception gets masked due to reflection. Preserve stacktrace and rethrow
-                        {
-                            PreserveStackTrace(ex.InnerException);
-                            throw ex.InnerException;
-                        }
-
-                        _serializerCache[key] = serializer;
+                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(CustomSerializer<>).MakeGenericType(type), options);
                     }
-                }
-            }
-
-            return serializer;
+                    catch (TargetInvocationException ex) // True exception gets masked due to reflection. Preserve stacktrace and rethrow
+                    {
+                        PreserveStackTrace(ex.InnerException);
+                        throw ex.InnerException;
+                    }
+                });
         }
 
         //Stackoverflow is awesome

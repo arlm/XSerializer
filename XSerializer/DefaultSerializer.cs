@@ -8,35 +8,23 @@ namespace XSerializer
     internal class DefaultSerializer
     {
         private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
-        private static readonly object _serializerCacheLocker = new object();
 
         [Obsolete("Use generic GetSerializer<T> method instead.")]
         public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options)
         {
-            IXmlSerializerInternal serializer;
-            var key = XmlSerializerFactory.Instance.CreateKey(type, options);
-
-            if (!_serializerCache.TryGetValue(key, out serializer))
-            {
-                lock (_serializerCacheLocker)
+            return _serializerCache.GetOrAdd(
+                XmlSerializerFactory.Instance.CreateKey(type, options),
+                _ =>
                 {
-                    if (!_serializerCache.TryGetValue(key, out serializer))
+                    try
                     {
-                        try
-                        {
-                            serializer = (IXmlSerializerInternal)Activator.CreateInstance(typeof(DefaultSerializer<>).MakeGenericType(type), options);
-                        }
-                        catch
-                        {
-                            serializer = null;
-                        }
-                
-                        _serializerCache[key] = serializer;
+                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(DefaultSerializer<>).MakeGenericType(type), options);
                     }
-                }
-            }
-
-            return serializer;
+                    catch
+                    {
+                        return null;
+                    }
+                });
         }
 
         public static IXmlSerializerInternal<T> GetSerializer<T>(IXmlSerializerOptions options)

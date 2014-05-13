@@ -6,8 +6,7 @@ namespace XSerializer
 {
     internal class XmlTextSerializer : IXmlSerializerInternal
     {
-        private static readonly ConcurrentDictionary<int, XmlTextSerializer> Map = new ConcurrentDictionary<int, XmlTextSerializer>();
-        private static readonly object MapLocker = new object();
+        private static readonly ConcurrentDictionary<int, XmlTextSerializer> _map = new ConcurrentDictionary<int, XmlTextSerializer>();
 
         private readonly SimpleTypeValueConverter _valueConverter;
 
@@ -18,23 +17,9 @@ namespace XSerializer
 
         public static XmlTextSerializer GetSerializer(Type type, RedactAttribute redactAttribute)
         {
-            XmlTextSerializer serializer;
-
-            var key = CreateKey(type, redactAttribute);
-
-            if (!Map.TryGetValue(key, out serializer))
-            {
-                lock (MapLocker)
-                {
-                    if (!Map.TryGetValue(key, out serializer))
-                    {
-                        serializer = new XmlTextSerializer(type, redactAttribute);
-                        Map[key] = serializer;
-                    }
-                }
-            }
-
-            return serializer;
+            return _map.GetOrAdd(
+                CreateKey(type, redactAttribute),
+                _ => new XmlTextSerializer(type, redactAttribute));
         }
 
         public void SerializeObject(SerializationXmlTextWriter writer, object value, ISerializeOptions options)

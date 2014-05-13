@@ -11,7 +11,6 @@ namespace XSerializer
     internal abstract class ListSerializer : IXmlSerializerInternal
     {
         private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
-        private static readonly object _serializerCacheLocker = new object();
 
         private readonly IXmlSerializerOptions _options;
         private readonly string _itemElementName;
@@ -74,35 +73,23 @@ namespace XSerializer
 
         public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options, string itemElementName)
         {
-            IXmlSerializerInternal serializer;
-            var key = XmlSerializerFactory.Instance.CreateKey(type, options.WithRootElementName(options.RootElementName + "<>" + itemElementName));
-
-            if (!_serializerCache.TryGetValue(key, out serializer))
-            {
-                lock (_serializerCacheLocker)
+            return _serializerCache.GetOrAdd(
+                XmlSerializerFactory.Instance.CreateKey(type, options.WithRootElementName(options.RootElementName + "<>" + itemElementName)),
+                _ =>
                 {
-                    if (!_serializerCache.TryGetValue(key, out serializer))
+                    if (type.IsAssignableToGenericIEnumerable())
                     {
-                        if (type.IsAssignableToGenericIEnumerable())
-                        {
-                            var itemType = type.GetGenericIEnumerableType().GetGenericArguments()[0];
-                            serializer = (IXmlSerializerInternal)Activator.CreateInstance(typeof(ListSerializer<,>).MakeGenericType(type, itemType), options, itemElementName);
-                        }
-                        else if (type.IsAssignableToNonGenericIEnumerable())
-                        {
-                            serializer = (IXmlSerializerInternal)Activator.CreateInstance(typeof(ListSerializer<>).MakeGenericType(type), options, itemElementName);
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException(string.Format("Cannot create a ListSerializer of type '{0}'.", type.FullName));
-                        }
-
-                        _serializerCache[key] = serializer;
+                        var itemType = type.GetGenericIEnumerableType().GetGenericArguments()[0];
+                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(ListSerializer<,>).MakeGenericType(type, itemType), options, itemElementName);
                     }
-                }
-            }
+                        
+                    if (type.IsAssignableToNonGenericIEnumerable())
+                    {
+                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(ListSerializer<>).MakeGenericType(type), options, itemElementName);
+                    }
 
-            return serializer;
+                    throw new InvalidOperationException(string.Format("Cannot create a ListSerializer of type '{0}'.", type.FullName));
+                });
         }
 
         public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)

@@ -15,31 +15,30 @@ namespace XSerializer
 {
     internal static class SerializationExtensions
     {
-        private static readonly Dictionary<Type, string> TypeToXsdTypeMap = new Dictionary<Type, string>();
-        private static readonly Dictionary<string, Type> XsdTypeToTypeMap = new Dictionary<string, Type>();
-        private static readonly ConcurrentDictionary<int, Type> XsdTypeToTypeCache = new ConcurrentDictionary<int, Type>();
-        private static readonly object XsdTypeToTypeCacheLocker = new object();
+        private static readonly Dictionary<Type, string> _typeToXsdTypeMap = new Dictionary<Type, string>();
+        private static readonly Dictionary<string, Type> _xsdTypeToTypeMap = new Dictionary<string, Type>();
+        private static readonly ConcurrentDictionary<int, Type> _xsdTypeToTypeCache = new ConcurrentDictionary<int, Type>();
 
         static SerializationExtensions()
         {
-            TypeToXsdTypeMap.Add(typeof(bool), "xsd:boolean");
-            TypeToXsdTypeMap.Add(typeof(byte), "xsd:unsignedByte");
-            TypeToXsdTypeMap.Add(typeof(sbyte), "xsd:byte");
-            TypeToXsdTypeMap.Add(typeof(short), "xsd:short");
-            TypeToXsdTypeMap.Add(typeof(ushort), "xsd:unsignedShort");
-            TypeToXsdTypeMap.Add(typeof(int), "xsd:int");
-            TypeToXsdTypeMap.Add(typeof(uint), "xsd:unsignedInt");
-            TypeToXsdTypeMap.Add(typeof(long), "xsd:long");
-            TypeToXsdTypeMap.Add(typeof(ulong), "xsd:unsignedLong");
-            TypeToXsdTypeMap.Add(typeof(float), "xsd:float");
-            TypeToXsdTypeMap.Add(typeof(double), "xsd:double");
-            TypeToXsdTypeMap.Add(typeof(decimal), "xsd:decimal");
-            TypeToXsdTypeMap.Add(typeof(DateTime), "xsd:dateTime");
-            TypeToXsdTypeMap.Add(typeof(string), "xsd:string");
+            _typeToXsdTypeMap.Add(typeof(bool), "xsd:boolean");
+            _typeToXsdTypeMap.Add(typeof(byte), "xsd:unsignedByte");
+            _typeToXsdTypeMap.Add(typeof(sbyte), "xsd:byte");
+            _typeToXsdTypeMap.Add(typeof(short), "xsd:short");
+            _typeToXsdTypeMap.Add(typeof(ushort), "xsd:unsignedShort");
+            _typeToXsdTypeMap.Add(typeof(int), "xsd:int");
+            _typeToXsdTypeMap.Add(typeof(uint), "xsd:unsignedInt");
+            _typeToXsdTypeMap.Add(typeof(long), "xsd:long");
+            _typeToXsdTypeMap.Add(typeof(ulong), "xsd:unsignedLong");
+            _typeToXsdTypeMap.Add(typeof(float), "xsd:float");
+            _typeToXsdTypeMap.Add(typeof(double), "xsd:double");
+            _typeToXsdTypeMap.Add(typeof(decimal), "xsd:decimal");
+            _typeToXsdTypeMap.Add(typeof(DateTime), "xsd:dateTime");
+            _typeToXsdTypeMap.Add(typeof(string), "xsd:string");
 
-            foreach (var typeToXsdType in TypeToXsdTypeMap)
+            foreach (var typeToXsdType in _typeToXsdTypeMap)
             {
-                XsdTypeToTypeMap.Add(typeToXsdType.Value, typeToXsdType.Key);
+                _xsdTypeToTypeMap.Add(typeToXsdType.Value, typeToXsdType.Key);
             }
         }
 
@@ -423,7 +422,7 @@ namespace XSerializer
         public static string GetXsdType(this Type type)
         {
             string xsdType;
-            if (TypeToXsdTypeMap.TryGetValue(type, out xsdType))
+            if (_typeToXsdTypeMap.TryGetValue(type, out xsdType))
             {
                 return xsdType;
             }
@@ -451,130 +450,125 @@ namespace XSerializer
                 return null;
             }
 
-            Type type;
+            Type typeFromXsdType;
 
-            if (XsdTypeToTypeMap.TryGetValue(typeName, out type))
+            if (_xsdTypeToTypeMap.TryGetValue(typeName, out typeFromXsdType))
             {
-                return type;
+                return typeFromXsdType;
             }
 
-            var key = CreateTypeCacheKey<T>(typeName);
-            if (!XsdTypeToTypeCache.TryGetValue(key, out type))
-            {
-                lock (XsdTypeToTypeCacheLocker)
+            return _xsdTypeToTypeCache.GetOrAdd(
+                CreateTypeCacheKey<T>(typeName),
+                _ =>
                 {
-                    if (!XsdTypeToTypeCache.TryGetValue(key, out type))
-                    {
-                        //// try REAL hard to get the type. (holy crap, this is UUUUUGLY!!!!)
+                    Type type = null;
 
-                        if (extraTypes != null)
+                    //// try REAL hard to get the type. (holy crap, this is UUUUUGLY!!!!)
+
+                    if (extraTypes != null)
+                    {
+                        var matchingExtraTypes = extraTypes.Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
+                        if (matchingExtraTypes.Count == 1)
                         {
-                            var matchingExtraTypes = extraTypes.Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
-                            if (matchingExtraTypes.Count == 1)
-                            {
-                                type = matchingExtraTypes[0];
-                            }
+                            type = matchingExtraTypes[0];
                         }
+                    }
+
+                    if (type == null)
+                    {
+                        var typeNameWithPossibleNamespace = typeName;
+
+                        if (!typeName.Contains('.'))
+                        {
+                            typeNameWithPossibleNamespace = typeof(T).Namespace + "." + typeName;
+                        }
+
+                        var checkPossibleNamespace = typeName != typeNameWithPossibleNamespace;
+
+                        type = Type.GetType(typeName);
+                        type = typeof(T).IsAssignableFrom(type) ? type : null;
 
                         if (type == null)
                         {
-                            var typeNameWithPossibleNamespace = typeName;
-
-                            if (!typeName.Contains('.'))
-                            {
-                                typeNameWithPossibleNamespace = typeof(T).Namespace + "." + typeName;
-                            }
-
-                            var checkPossibleNamespace = typeName != typeNameWithPossibleNamespace;
-
-                            type = Type.GetType(typeName);
+                            type = checkPossibleNamespace ? Type.GetType(typeNameWithPossibleNamespace) : null;
                             type = typeof(T).IsAssignableFrom(type) ? type : null;
 
                             if (type == null)
                             {
-                                type = checkPossibleNamespace ? Type.GetType(typeNameWithPossibleNamespace) : null;
+                                type = typeof(T).Assembly.GetType(typeName);
                                 type = typeof(T).IsAssignableFrom(type) ? type : null;
 
                                 if (type == null)
                                 {
-                                    type = typeof(T).Assembly.GetType(typeName);
+                                    type = checkPossibleNamespace ? typeof(T).Assembly.GetType(typeNameWithPossibleNamespace) : null;
                                     type = typeof(T).IsAssignableFrom(type) ? type : null;
 
                                     if (type == null)
                                     {
-                                        type = checkPossibleNamespace ? typeof(T).Assembly.GetType(typeNameWithPossibleNamespace) : null;
-                                        type = typeof(T).IsAssignableFrom(type) ? type : null;
-
-                                        if (type == null)
+                                        var matches = typeof(T).Assembly.GetTypes().Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
+                                        if (matches.Count == 1)
                                         {
-                                            var matches = typeof(T).Assembly.GetTypes().Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
-                                            if (matches.Count == 1)
-                                            {
-                                                type = matches.Single();
-                                            }
+                                            type = matches.Single();
+                                        }
 
-                                            var entryAssembly = Assembly.GetEntryAssembly();
-                                            if (entryAssembly != null)
+                                        var entryAssembly = Assembly.GetEntryAssembly();
+                                        if (entryAssembly != null)
+                                        {
+                                            type = entryAssembly.GetType(typeName);
+                                            type = typeof(T).IsAssignableFrom(type) ? type : null;
+
+                                            if (type == null)
                                             {
-                                                type = entryAssembly.GetType(typeName);
+                                                type = checkPossibleNamespace ? entryAssembly.GetType(typeNameWithPossibleNamespace) : null;
                                                 type = typeof(T).IsAssignableFrom(type) ? type : null;
-
-                                                if (type == null)
-                                                {
-                                                    type = checkPossibleNamespace ? entryAssembly.GetType(typeNameWithPossibleNamespace) : null;
-                                                    type = typeof(T).IsAssignableFrom(type) ? type : null;
-                                                }
-
-                                                if (type == null)
-                                                {
-                                                    matches = entryAssembly.GetTypes().Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
-                                                    if (matches.Count == 1)
-                                                    {
-                                                        type = matches.Single();
-                                                    }
-                                                }
                                             }
 
                                             if (type == null)
                                             {
-                                                matches = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a =>
-                                                    {
-                                                        try
-                                                        {
-                                                            return a.GetTypes();
-                                                        }
-                                                        catch
-                                                        {
-                                                            return Enumerable.Empty<Type>();
-                                                        }
-                                                    }).Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
-
+                                                matches = entryAssembly.GetTypes().Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
                                                 if (matches.Count == 1)
                                                 {
                                                     type = matches.Single();
                                                 }
-                                                else if (matches.Count > 1)
+                                            }
+                                        }
+
+                                        if (type == null)
+                                        {
+                                            matches = AppDomain.CurrentDomain.GetAssemblies().SelectMany(a =>
                                                 {
-                                                    throw new SerializationException(string.Format("More than one type matches '{0}'. Consider decorating your type with the XmlIncludeAttribute, or pass in the type into the serializer as an extra type.", typeName));
-                                                }
+                                                    try
+                                                    {
+                                                        return a.GetTypes();
+                                                    }
+                                                    catch
+                                                    {
+                                                        return Enumerable.Empty<Type>();
+                                                    }
+                                                }).Where(t => t.Name == typeName && typeof(T).IsAssignableFrom(t)).ToList();
+
+                                            if (matches.Count == 1)
+                                            {
+                                                type = matches.Single();
+                                            }
+                                            else if (matches.Count > 1)
+                                            {
+                                                throw new SerializationException(string.Format("More than one type matches '{0}'. Consider decorating your type with the XmlIncludeAttribute, or pass in the type into the serializer as an extra type.", typeName));
                                             }
                                         }
                                     }
                                 }
                             }
                         }
-
-                        if (type == null)
-                        {
-                            throw new SerializationException(string.Format("No suitable type matches '{0}'. Consider decorating your type with the XmlIncludeAttribute, or pass in the type into the serializer as an extra type.", typeName));
-                        }
-
-                        XsdTypeToTypeCache[key] = type;
                     }
-                }
-            }
 
-            return type;
+                    if (type == null)
+                    {
+                        throw new SerializationException(string.Format("No suitable type matches '{0}'. Consider decorating your type with the XmlIncludeAttribute, or pass in the type into the serializer as an extra type.", typeName));
+                    }
+
+                    return type;
+                });
         }
 
         private static int CreateTypeCacheKey<T>(string typeName)

@@ -10,7 +10,6 @@ namespace XSerializer
     internal abstract class DictionarySerializer : IXmlSerializerInternal
     {
         private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
-        private static readonly object _serializerCacheLocker = new object();
 
         private readonly IXmlSerializerOptions _options;
 
@@ -176,37 +175,25 @@ namespace XSerializer
 
         public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options)
         {
-            IXmlSerializerInternal serializer;
-            var key = XmlSerializerFactory.Instance.CreateKey(type, options);
-
-            if (!_serializerCache.TryGetValue(key, out serializer))
-            {
-                lock (_serializerCacheLocker)
+            return _serializerCache.GetOrAdd(
+                XmlSerializerFactory.Instance.CreateKey(type, options),
+                _ =>
                 {
-                    if (!_serializerCache.TryGetValue(key, out serializer))
+                    if (type.IsAssignableToGenericIDictionary())
                     {
-                        if (type.IsAssignableToGenericIDictionary())
-                        {
-                            var genericArguments = type.GetGenericIDictionaryType().GetGenericArguments();
-                            var keyType = genericArguments[0];
-                            var valueType = genericArguments[1];
-                            serializer = (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), options);
-                        }
-                        else if (type.IsAssignableToNonGenericIDictionary())
-                        {
-                            serializer = (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), options);
-                        }
-                        else
-                        {
-                            throw new InvalidOperationException(string.Format("Cannot create a DictionarySerializer of type '{0}'.", type.FullName));
-                        }
-                
-                        _serializerCache[key] = serializer;
+                        var genericArguments = type.GetGenericIDictionaryType().GetGenericArguments();
+                        var keyType = genericArguments[0];
+                        var valueType = genericArguments[1];
+                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), options);
                     }
-                }
-            }
 
-            return serializer;
+                    if (type.IsAssignableToNonGenericIDictionary())
+                    {
+                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), options);
+                    }
+
+                    throw new InvalidOperationException(string.Format("Cannot create a DictionarySerializer of type '{0}'.", type.FullName));
+                });
         }
     }
 
