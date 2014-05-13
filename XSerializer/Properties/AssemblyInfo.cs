@@ -34,3 +34,5 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("0.1.0.0")]
 [assembly: AssemblyFileVersion("0.1.10.0")]
+
+[assembly: InternalsVisibleTo("XSerializer.Tests, PublicKey=76f9c368996fed90")]
