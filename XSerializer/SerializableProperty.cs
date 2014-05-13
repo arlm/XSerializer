@@ -8,11 +8,11 @@ using System.Xml.Serialization;
 
 namespace XSerializer
 {
-    public sealed class SerializableProperty
+    internal sealed class SerializableProperty
     {
         private static readonly Func<object, IEnumerator> _getEnumeratorFunc = DynamicMethodFactory.CreateFunc<IEnumerator>(typeof(IEnumerable).GetMethod("GetEnumerator"));
 
-        private readonly Lazy<IXmlSerializer> _serializer;
+        private readonly Lazy<IXmlSerializerInternal> _serializer;
 
         private readonly Func<object, object> _getValueFunc;
         private readonly Action<object, object> _setValueFunc;
@@ -57,7 +57,7 @@ namespace XSerializer
 
             _shouldSerializeFunc = GetShouldSerializeFunc(propertyInfo);
             _readsPastLastElement = () => _serializer.Value is DefaultSerializer;
-            _serializer = new Lazy<IXmlSerializer>(GetCreateSerializerFunc(propertyInfo, options));
+            _serializer = new Lazy<IXmlSerializerInternal>(GetCreateSerializerFunc(propertyInfo, options));
         }
 
         public string Name { get; private set; }
@@ -83,7 +83,7 @@ namespace XSerializer
             }
         }
 
-        private Func<IXmlSerializer> GetCreateSerializerFunc(PropertyInfo propertyInfo, IXmlSerializerOptions options)
+        private Func<IXmlSerializerInternal> GetCreateSerializerFunc(PropertyInfo propertyInfo, IXmlSerializerOptions options)
         {
             var redactAttribute = (RedactAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(RedactAttribute));
             if (redactAttribute == null)

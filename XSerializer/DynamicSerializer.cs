@@ -1,27 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
-using System.Runtime.Serialization;
 using System.Xml;
 
 namespace XSerializer
 {
-    public class DynamicSerializer : IXmlSerializer<object>
+    internal class DynamicSerializer : IXmlSerializerInternal<object>
     {
         private readonly IXmlSerializerOptions _options;
 
-        public static IXmlSerializer<T> GetSerializer<T>(IXmlSerializerOptions options)
+        public static IXmlSerializerInternal<T> GetSerializer<T>(IXmlSerializerOptions options)
         {
             var serializer = new DynamicSerializer(options);
 
             if (typeof(T) == typeof(object))
             {
-                return (IXmlSerializer<T>)serializer;
+                return (IXmlSerializerInternal<T>)serializer;
             }
             
             if (typeof(T) == typeof(ExpandoObject))
             {
-                return (IXmlSerializer<T>)new DynamicSerializerExpandoObjectProxy(serializer);
+                return (IXmlSerializerInternal<T>)new DynamicSerializerExpandoObjectProxy(serializer);
             }
             
             throw new InvalidOperationException("The only valid generic arguments for DynamicSerializer.GetSerializer<T> are object, dynamic, and ExpandoObject");
@@ -51,7 +50,7 @@ namespace XSerializer
                 return;
             }
 
-            IXmlSerializer serializer;
+            IXmlSerializerInternal serializer;
 
             if (!options.ShouldAlwaysEmitTypes || instance.IsAnonymous())
             {
@@ -100,7 +99,7 @@ namespace XSerializer
                     continue;
                 }
 
-                IXmlSerializer serializer;
+                IXmlSerializerInternal serializer;
 
                 if (property.Value is ExpandoObject)
                 {
@@ -231,7 +230,7 @@ namespace XSerializer
             return instance;
         }
 
-        private class DynamicSerializerExpandoObjectProxy : IXmlSerializer<ExpandoObject>
+        private class DynamicSerializerExpandoObjectProxy : IXmlSerializerInternal<ExpandoObject>
         {
             private readonly DynamicSerializer _serializer;
 

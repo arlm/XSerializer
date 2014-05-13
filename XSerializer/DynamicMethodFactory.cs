@@ -5,7 +5,7 @@ using System.Reflection.Emit;
 
 namespace XSerializer
 {
-    public static class DynamicMethodFactory
+    internal static class DynamicMethodFactory
     {
         public static Func<T> CreateDefaultConstructorFunc<T>(this Type type)
         {

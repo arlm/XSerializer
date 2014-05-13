@@ -1,20 +1,19 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Serialization;
 
 namespace XSerializer
 {
-    public class DefaultSerializer
+    internal class DefaultSerializer
     {
-        private static readonly ConcurrentDictionary<int, IXmlSerializer> _serializerCache = new ConcurrentDictionary<int, IXmlSerializer>();
+        private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
         private static readonly object _serializerCacheLocker = new object();
 
         [Obsolete("Use generic GetSerializer<T> method instead.")]
-        public static IXmlSerializer GetSerializer(Type type, IXmlSerializerOptions options)
+        public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options)
         {
-            IXmlSerializer serializer;
+            IXmlSerializerInternal serializer;
             var key = XmlSerializerFactory.Instance.CreateKey(type, options);
 
             if (!_serializerCache.TryGetValue(key, out serializer))
@@ -25,7 +24,7 @@ namespace XSerializer
                     {
                         try
                         {
-                            serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DefaultSerializer<>).MakeGenericType(type), options);
+                            serializer = (IXmlSerializerInternal)Activator.CreateInstance(typeof(DefaultSerializer<>).MakeGenericType(type), options);
                         }
                         catch
                         {
@@ -40,9 +39,9 @@ namespace XSerializer
             return serializer;
         }
 
-        public static IXmlSerializer<T> GetSerializer<T>(IXmlSerializerOptions options)
+        public static IXmlSerializerInternal<T> GetSerializer<T>(IXmlSerializerOptions options)
         {
-            IXmlSerializer serializer;
+            IXmlSerializerInternal serializer;
             var key = XmlSerializerFactory.Instance.CreateKey(typeof(T), options);
 
             if (!_serializerCache.TryGetValue(key, out serializer))
@@ -59,17 +58,17 @@ namespace XSerializer
                 _serializerCache[key] = serializer;
             }
 
-            return (IXmlSerializer<T>)serializer;
+            return (IXmlSerializerInternal<T>)serializer;
         }
     }
 
-    public class DefaultSerializer<T> : DefaultSerializer, IXmlSerializer<T>
+    internal class DefaultSerializer<T> : DefaultSerializer, IXmlSerializerInternal<T>
     {
-        private readonly XmlSerializer _serializer;
+        private readonly System.Xml.Serialization.XmlSerializer _serializer;
 
         public DefaultSerializer(IXmlSerializerOptions options)
         {
-            _serializer = new XmlSerializer(
+            _serializer = new System.Xml.Serialization.XmlSerializer(
                 typeof(T),
                 null,
                 options.ExtraTypes,
@@ -82,7 +81,7 @@ namespace XSerializer
             _serializer.Serialize(writer, instance, options.Namespaces);
         }
 
-        void IXmlSerializer.SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
+        void IXmlSerializerInternal.SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             Serialize(writer, (T)instance, options);
         }
@@ -92,7 +91,7 @@ namespace XSerializer
             return (T)_serializer.Deserialize(reader);
         }
 
-        object IXmlSerializer.DeserializeObject(XmlReader reader)
+        object IXmlSerializerInternal.DeserializeObject(XmlReader reader)
         {
             return Deserialize(reader);
         }

@@ -4,7 +4,7 @@ using System.Xml;
 
 namespace XSerializer
 {
-    public class XmlTextSerializer : IXmlSerializer
+    internal class XmlTextSerializer : IXmlSerializerInternal
     {
         private static readonly ConcurrentDictionary<int, XmlTextSerializer> Map = new ConcurrentDictionary<int, XmlTextSerializer>();
         private static readonly object MapLocker = new object();

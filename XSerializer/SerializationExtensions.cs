@@ -13,7 +13,7 @@ using System.Xml;
 
 namespace XSerializer
 {
-    public static class SerializationExtensions
+    internal static class SerializationExtensions
     {
         private static readonly Dictionary<Type, string> TypeToXsdTypeMap = new Dictionary<Type, string>();
         private static readonly Dictionary<string, Type> XsdTypeToTypeMap = new Dictionary<string, Type>();
@@ -44,7 +44,7 @@ namespace XSerializer
         }
 
         public static string Serialize<T>(
-            this IXmlSerializer<T> serializer,
+            this IXmlSerializerInternal<T> serializer,
             T instance,
             Encoding encoding,
             Formatting formatting,
@@ -64,7 +64,7 @@ namespace XSerializer
         }
 
         public static string SerializeObject(
-            this IXmlSerializer serializer,
+            this IXmlSerializerInternal serializer,
             object instance,
             Encoding encoding,
             Formatting formatting,
@@ -84,7 +84,7 @@ namespace XSerializer
         }
 
         public static void Serialize<T>(
-            this IXmlSerializer<T> serializer,
+            this IXmlSerializerInternal<T> serializer,
             Stream stream,
             T instance,
             Encoding encoding,
@@ -100,7 +100,7 @@ namespace XSerializer
         }
 
         public static void SerializeObject(
-            this IXmlSerializer serializer,
+            this IXmlSerializerInternal serializer,
             Stream stream,
             object instance,
             Encoding encoding,
@@ -116,7 +116,7 @@ namespace XSerializer
         }
 
         public static void Serialize<T>(
-            this IXmlSerializer<T> serializer,
+            this IXmlSerializerInternal<T> serializer,
             TextWriter writer,
             T instance,
             Formatting formatting,
@@ -131,7 +131,7 @@ namespace XSerializer
         }
 
         public static void SerializeObject(
-            this IXmlSerializer serializer,
+            this IXmlSerializerInternal serializer,
             TextWriter writer,
             object instance,
             Formatting formatting,
@@ -145,7 +145,7 @@ namespace XSerializer
             serializer.SerializeObject(xmlWriter, instance, options);
         }
 
-        public static T Deserialize<T>(this IXmlSerializer<T> serializer, string xml)
+        public static T Deserialize<T>(this IXmlSerializerInternal<T> serializer, string xml)
         {
             using (var stringReader = new StringReader(xml))
             {
@@ -156,7 +156,7 @@ namespace XSerializer
             }
         }
 
-        public static object DeserializeObject(this IXmlSerializer serializer, string xml)
+        public static object DeserializeObject(this IXmlSerializerInternal serializer, string xml)
         {
             using (var stringReader = new StringReader(xml))
             {
@@ -167,25 +167,25 @@ namespace XSerializer
             }
         }
 
-        public static T Deserialize<T>(this IXmlSerializer<T> serializer, Stream stream)
+        public static T Deserialize<T>(this IXmlSerializerInternal<T> serializer, Stream stream)
         {
             var xmlReader = new XmlTextReader(stream);
             return serializer.Deserialize(xmlReader);
         }
 
-        public static object DeserializeObject(this IXmlSerializer serializer, Stream stream)
+        public static object DeserializeObject(this IXmlSerializerInternal serializer, Stream stream)
         {
             var xmlReader = new XmlTextReader(stream);
             return serializer.DeserializeObject(xmlReader);
         }
 
-        public static T Deserialize<T>(this IXmlSerializer<T> serializer, TextReader reader)
+        public static T Deserialize<T>(this IXmlSerializerInternal<T> serializer, TextReader reader)
         {
             var xmlReader = new XmlTextReader(reader);
             return serializer.Deserialize(xmlReader);
         }
 
-        public static object DeserializeObject(this IXmlSerializer serializer, TextReader reader)
+        public static object DeserializeObject(this IXmlSerializerInternal serializer, TextReader reader)
         {
             var xmlReader = new XmlTextReader(reader);
             return serializer.DeserializeObject(xmlReader);

@@ -21,7 +21,7 @@ namespace XSerializer.Tests
             XmlSerializerNamespaces namespaces)
         {
             var defaultSerializer = 
-                (IXmlSerializer)Activator.CreateInstance(
+                (IXmlSerializerInternal)Activator.CreateInstance(
                     typeof(DefaultSerializer<>).MakeGenericType(instance.GetType()),
                     new TestXmlSerializerOptions
                     {
@@ -30,7 +30,7 @@ namespace XSerializer.Tests
                         RootElementName = rootElementName
                     });
             var customSerializer = 
-                (IXmlSerializer)Activator.CreateInstance(
+                (IXmlSerializerInternal)Activator.CreateInstance(
                     typeof(CustomSerializer<>).MakeGenericType(instance.GetType()),
                     new TestXmlSerializerOptions
                     {
@@ -76,7 +76,7 @@ namespace XSerializer.Tests
             IEnumerable<Tuple<string, string>> defaultXmlReplacements)
         {
             var defaultSerializer =
-                (IXmlSerializer)Activator.CreateInstance(
+                (IXmlSerializerInternal)Activator.CreateInstance(
                     typeof(DefaultSerializer<>).MakeGenericType(instanceWithAbstract.GetType()),
                     new TestXmlSerializerOptions
                     {
@@ -85,7 +85,7 @@ namespace XSerializer.Tests
                         RootElementName = rootElementName
                     });
             var customSerializer =
-                (IXmlSerializer)Activator.CreateInstance(
+                (IXmlSerializerInternal)Activator.CreateInstance(
                     typeof(CustomSerializer<>).MakeGenericType(instanceWithInterface.GetType()),
                     new TestXmlSerializerOptions
                     {

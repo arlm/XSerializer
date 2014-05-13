@@ -3,20 +3,19 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Xml;
 
 namespace XSerializer
 {
-    public abstract class DictionarySerializer : IXmlSerializer
+    internal abstract class DictionarySerializer : IXmlSerializerInternal
     {
-        private static readonly ConcurrentDictionary<int, IXmlSerializer> _serializerCache = new ConcurrentDictionary<int, IXmlSerializer>();
+        private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
         private static readonly object _serializerCacheLocker = new object();
 
         private readonly IXmlSerializerOptions _options;
 
-        private readonly IXmlSerializer _keySerializer;
-        private readonly IXmlSerializer _valueSerializer;
+        private readonly IXmlSerializerInternal _keySerializer;
+        private readonly IXmlSerializerInternal _valueSerializer;
 
         private readonly Func<object> _createDictionary;
 
@@ -156,7 +155,7 @@ namespace XSerializer
             throw new InvalidOperationException("Deserialization error: reached the end of the document without returning a value.");
         }
 
-        private static object DeserializeKeyOrValue(XmlReader reader, IXmlSerializer serializer, out bool shouldIssueRead)
+        private static object DeserializeKeyOrValue(XmlReader reader, IXmlSerializerInternal serializer, out bool shouldIssueRead)
         {
             var deserialized = serializer.DeserializeObject(reader);
 
@@ -175,9 +174,9 @@ namespace XSerializer
             return instance;
         }
 
-        public static IXmlSerializer GetSerializer(Type type, IXmlSerializerOptions options)
+        public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options)
         {
-            IXmlSerializer serializer;
+            IXmlSerializerInternal serializer;
             var key = XmlSerializerFactory.Instance.CreateKey(type, options);
 
             if (!_serializerCache.TryGetValue(key, out serializer))
@@ -191,11 +190,11 @@ namespace XSerializer
                             var genericArguments = type.GetGenericIDictionaryType().GetGenericArguments();
                             var keyType = genericArguments[0];
                             var valueType = genericArguments[1];
-                            serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), options);
+                            serializer = (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), options);
                         }
                         else if (type.IsAssignableToNonGenericIDictionary())
                         {
-                            serializer = (IXmlSerializer)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), options);
+                            serializer = (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), options);
                         }
                         else
                         {
@@ -211,7 +210,7 @@ namespace XSerializer
         }
     }
 
-    public class DictionarySerializer<TDictionary> : DictionarySerializer, IXmlSerializer<TDictionary>
+    internal class DictionarySerializer<TDictionary> : DictionarySerializer, IXmlSerializerInternal<TDictionary>
         where TDictionary : IDictionary
     {
         public DictionarySerializer(IXmlSerializerOptions options)
@@ -276,7 +275,7 @@ namespace XSerializer
         }
     }
 
-    public class DictionarySerializer<TDictionary, TKey, TValue> : DictionarySerializer, IXmlSerializer<TDictionary>
+    internal class DictionarySerializer<TDictionary, TKey, TValue> : DictionarySerializer, IXmlSerializerInternal<TDictionary>
         where TDictionary : IDictionary<TKey, TValue>
     {
         public DictionarySerializer(IXmlSerializerOptions options)

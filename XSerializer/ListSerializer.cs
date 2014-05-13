@@ -8,15 +8,15 @@ using System.Xml;
 
 namespace XSerializer
 {
-    public abstract class ListSerializer : IXmlSerializer
+    internal abstract class ListSerializer : IXmlSerializerInternal
     {
-        private static readonly ConcurrentDictionary<int, IXmlSerializer> _serializerCache = new ConcurrentDictionary<int, IXmlSerializer>();
+        private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
         private static readonly object _serializerCacheLocker = new object();
 
         private readonly IXmlSerializerOptions _options;
         private readonly string _itemElementName;
 
-        private readonly IXmlSerializer _itemSerializer;
+        private readonly IXmlSerializerInternal _itemSerializer;
 
         private readonly Func<object> _createCollection;
         private readonly Func<object, object> _finalizeCollection = x => x;
@@ -72,9 +72,9 @@ namespace XSerializer
         protected abstract void AddItemToCollection(object collection, object item);
         protected abstract object FinalizeCollectionIntoArray(object collection);
 
-        public static IXmlSerializer GetSerializer(Type type, IXmlSerializerOptions options, string itemElementName)
+        public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options, string itemElementName)
         {
-            IXmlSerializer serializer;
+            IXmlSerializerInternal serializer;
             var key = XmlSerializerFactory.Instance.CreateKey(type, options.WithRootElementName(options.RootElementName + "<>" + itemElementName));
 
             if (!_serializerCache.TryGetValue(key, out serializer))
@@ -86,11 +86,11 @@ namespace XSerializer
                         if (type.IsAssignableToGenericIEnumerable())
                         {
                             var itemType = type.GetGenericIEnumerableType().GetGenericArguments()[0];
-                            serializer = (IXmlSerializer)Activator.CreateInstance(typeof(ListSerializer<,>).MakeGenericType(type, itemType), options, itemElementName);
+                            serializer = (IXmlSerializerInternal)Activator.CreateInstance(typeof(ListSerializer<,>).MakeGenericType(type, itemType), options, itemElementName);
                         }
                         else if (type.IsAssignableToNonGenericIEnumerable())
                         {
-                            serializer = (IXmlSerializer)Activator.CreateInstance(typeof(ListSerializer<>).MakeGenericType(type), options, itemElementName);
+                            serializer = (IXmlSerializerInternal)Activator.CreateInstance(typeof(ListSerializer<>).MakeGenericType(type), options, itemElementName);
                         }
                         else
                         {
@@ -203,7 +203,7 @@ namespace XSerializer
             throw new InvalidOperationException("Deserialization error: attempted to return a deserialized instance before it was created.");
         }
 
-        private static object DeserializeItem(XmlReader reader, IXmlSerializer serializer, bool hasInstanceBeenCreated, out bool shouldIssueRead)
+        private static object DeserializeItem(XmlReader reader, IXmlSerializerInternal serializer, bool hasInstanceBeenCreated, out bool shouldIssueRead)
         {
             if (!hasInstanceBeenCreated)
             {
@@ -228,7 +228,7 @@ namespace XSerializer
         }
     }
 
-    public sealed class ListSerializer<TEnumerable> : ListSerializer, IXmlSerializer<TEnumerable>
+    internal sealed class ListSerializer<TEnumerable> : ListSerializer, IXmlSerializerInternal<TEnumerable>
         where TEnumerable : IEnumerable
     {
         private readonly Action<object, object> _addItemToCollection;
@@ -325,7 +325,7 @@ namespace XSerializer
         }
     }
 
-    public sealed class ListSerializer<TEnumerable, TItem> : ListSerializer, IXmlSerializer<TEnumerable>
+    internal sealed class ListSerializer<TEnumerable, TItem> : ListSerializer, IXmlSerializerInternal<TEnumerable>
         where TEnumerable : IEnumerable<TItem>
     {
         private readonly Action<object, object> _addItemToCollection;

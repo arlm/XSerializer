@@ -4,7 +4,7 @@ using System.Globalization;
 
 namespace XSerializer
 {
-    public class SimpleTypeValueConverter
+    internal class SimpleTypeValueConverter
     {
         private static readonly ConcurrentDictionary<int, SimpleTypeValueConverter> Map = new ConcurrentDictionary<int, SimpleTypeValueConverter>();
         private static readonly object MapLocker = new object();

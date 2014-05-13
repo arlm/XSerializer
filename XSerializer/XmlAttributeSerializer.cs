@@ -3,7 +3,7 @@ using System.Xml;
 
 namespace XSerializer
 {
-    public class XmlAttributeSerializer : IXmlSerializer
+    internal class XmlAttributeSerializer : IXmlSerializerInternal
     {
         private readonly string _attributeName;
         private readonly SimpleTypeValueConverter _valueConverter;

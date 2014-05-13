@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Reflection;
+using NUnit.Framework;
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
@@ -231,7 +232,7 @@ namespace XSerializer.Tests
         {
             var serializerType = typeof(XmlSerializer<>).MakeGenericType(type);
             var ctor = serializerType.GetConstructor(new[] { typeof(Type[]) });
-            var serializerProperty = serializerType.GetProperty("Serializer");
+            var serializerProperty = serializerType.GetProperty("Serializer", BindingFlags.Instance | BindingFlags.NonPublic);
 
             var serializer = ctor.Invoke(new object[] { new Type[0] });
             var serializerImplementation = serializerProperty.GetValue(serializer);
@@ -293,7 +294,7 @@ namespace XSerializer.Tests
             public string Zirble { get; set; }
         }
 
-        public class DynamicSerializationTestsWithAlwaysEmitTypesSetToFalse : ObjectToXml
+        internal class DynamicSerializationTestsWithAlwaysEmitTypesSetToFalse : ObjectToXml
         {
             protected override IEnumerable<TestCaseData> GetTestCaseData()
             {
@@ -401,7 +402,7 @@ namespace XSerializer.Tests
             }
         }
 
-        public class DynamicSerializationTestsWithAlwaysEmitTypesSetToTrue : DynamicSerializationTestsWithAlwaysEmitTypesSetToFalse
+        internal class DynamicSerializationTestsWithAlwaysEmitTypesSetToTrue : DynamicSerializationTestsWithAlwaysEmitTypesSetToFalse
         {
             protected override bool AlwaysEmitTypes
             {
@@ -419,7 +420,7 @@ namespace XSerializer.Tests
             }
         }
 
-        public class DynamicDeserializationTestsWithWithXsdTypes : XmlToObject
+        internal class DynamicDeserializationTestsWithWithXsdTypes : XmlToObject
         {
             protected override IEnumerable<TestCaseData> GetTestCaseData()
             {
@@ -530,7 +531,7 @@ namespace XSerializer.Tests
             }
         }
 
-        public class DynamicDeserializationTestsWithWithoutXsdTypes : DynamicDeserializationTestsWithWithXsdTypes
+        internal class DynamicDeserializationTestsWithWithoutXsdTypes : DynamicDeserializationTestsWithWithXsdTypes
         {
             protected override ClassWithDynamicProperty GetExpected(ClassWithDynamicProperty expected)
             {

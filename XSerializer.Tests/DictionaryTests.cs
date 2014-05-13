@@ -22,7 +22,7 @@ namespace XSerializer.Tests
   <Z>End</Z>
 </{0}>";
 
-        public class DictionarySerializationTests : ObjectToXml
+        internal class DictionarySerializationTests : ObjectToXml
         {
             protected override IEnumerable<TestCaseData> GetTestCaseData()
             {
@@ -84,7 +84,7 @@ namespace XSerializer.Tests
             }
         }
 
-        public class DictionaryDeserializationTests : XmlToObject
+        internal class DictionaryDeserializationTests : XmlToObject
         {
             protected override IEnumerable<TestCaseData> GetTestCaseData()
             {

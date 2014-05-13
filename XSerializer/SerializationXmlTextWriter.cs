@@ -4,7 +4,7 @@ using System.Xml;
 
 namespace XSerializer
 {
-    public class SerializationXmlTextWriter : XmlTextWriter
+    internal class SerializationXmlTextWriter : XmlTextWriter
     {
         private bool _hasWrittenStartDocument;
         private bool _hasWritternDefaultNamespaces;

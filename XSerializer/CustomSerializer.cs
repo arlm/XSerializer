@@ -10,14 +10,14 @@ using System.Xml.Serialization;
 
 namespace XSerializer
 {
-    public class CustomSerializer
+    internal class CustomSerializer
     {
-        private static readonly ConcurrentDictionary<int, IXmlSerializer> _serializerCache = new ConcurrentDictionary<int, IXmlSerializer>();
+        private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
         private static readonly object _serializerCacheLocker = new object();
 
-        public static IXmlSerializer GetSerializer(Type type, IXmlSerializerOptions options)
+        public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options)
         {
-            IXmlSerializer serializer;
+            IXmlSerializerInternal serializer;
             var key = XmlSerializerFactory.Instance.CreateKey(type, options);
 
             if (!_serializerCache.TryGetValue(key, out serializer))
@@ -28,7 +28,7 @@ namespace XSerializer
                     {
                         try
                         {
-                            serializer = (IXmlSerializer)Activator.CreateInstance(typeof(CustomSerializer<>).MakeGenericType(type), options);
+                            serializer = (IXmlSerializerInternal)Activator.CreateInstance(typeof(CustomSerializer<>).MakeGenericType(type), options);
                         }
                         catch (TargetInvocationException ex) // True exception gets masked due to reflection. Preserve stacktrace and rethrow
                         {
@@ -59,7 +59,7 @@ namespace XSerializer
         }
     }
 
-    public class CustomSerializer<T> : CustomSerializer, IXmlSerializer<T>
+    internal class CustomSerializer<T> : CustomSerializer, IXmlSerializerInternal<T>
     {
         private readonly IXmlSerializerOptions _options;
         private readonly Dictionary<Type, SerializableProperty[]> _serializablePropertiesMap = new Dictionary<Type, SerializableProperty[]>();
@@ -308,7 +308,7 @@ namespace XSerializer
             writer.WriteEndElement();
         }
 
-        void IXmlSerializer.SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
+        void IXmlSerializerInternal.SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             Serialize(writer, (T)instance, options);
         }
@@ -389,7 +389,7 @@ namespace XSerializer
             throw new InvalidOperationException("Deserialization error: reached the end of the document without returning a value.");
         }
 
-        object IXmlSerializer.DeserializeObject(XmlReader reader)
+        object IXmlSerializerInternal.DeserializeObject(XmlReader reader)
         {
             return Deserialize(reader);
         }

@@ -52,6 +52,7 @@
     <Compile Include="DictionarySerializer.cs" />
     <Compile Include="DynamicMethodFactory.cs" />
     <Compile Include="DynamicSerializer.cs" />
+    <Compile Include="IXmlSerializer.cs" />
     <Compile Include="XmlElementSerializer.cs" />
     <Compile Include="ISerializeOptions.cs" />
     <Compile Include="IXmlSerializerOptions.cs" />
@@ -60,7 +61,7 @@
     <Compile Include="OptionsExtensions.cs" />
     <Compile Include="RedactAttribute.cs" />
     <Compile Include="SerializationExtensions.cs" />
-    <Compile Include="IXmlSerializer.cs" />
+    <Compile Include="IXmlSerializerInternal.cs" />
     <Compile Include="SerializableProperty.cs" />
     <Compile Include="SerializationXmlTextWriter.cs" />
     <Compile Include="SimpleTypeValueConverter.cs" />

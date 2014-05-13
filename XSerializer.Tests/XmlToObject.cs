@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace XSerializer.Tests
 {
-    public abstract class XmlToObject
+    internal abstract class XmlToObject
     {
         [TestCaseSource("TestCaseData")]
         public void DeserializesCorrectly(string xml, Type type, object expectedObject)
@@ -21,7 +21,7 @@ namespace XSerializer.Tests
             Assert.That(customObject, Has.PropertiesEqualTo(expectedObject));
         }
 
-        protected virtual IXmlSerializer GetSerializer(Type type)
+        protected virtual IXmlSerializerInternal GetSerializer(Type type)
         {
             return CustomSerializer.GetSerializer(type, TestXmlSerializerOptions.Empty);
         }

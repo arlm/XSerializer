@@ -145,7 +145,7 @@ namespace XSerializer.Tests
             return expando;
         }
 
-        public class ListSerializationTests : ObjectToXml
+        internal class ListSerializationTests : ObjectToXml
         {
             protected override IEnumerable<TestCaseData> GetTestCaseData()
             {
@@ -300,7 +300,7 @@ namespace XSerializer.Tests
                         .SetName("Container with read-write Custom collection inheriting from IEnumerable with xml element attribute");
             }
 
-            protected override IXmlSerializer GetSerializer(Type type)
+            protected override IXmlSerializerInternal GetSerializer(Type type)
             {
                 if (typeof(IEnumerable).IsAssignableFrom(type))
                 {
@@ -316,7 +316,7 @@ namespace XSerializer.Tests
             }
         }
 
-        public class ListDeserializationTests : XmlToObject
+        internal class ListDeserializationTests : XmlToObject
         {
             protected override IEnumerable<TestCaseData> GetTestCaseData()
             {
@@ -483,7 +483,7 @@ namespace XSerializer.Tests
                         .SetName("Container with read-only collection with xml element attribute and out-of-order xml input");
             }
 
-            protected override IXmlSerializer GetSerializer(Type type)
+            protected override IXmlSerializerInternal GetSerializer(Type type)
             {
                 if (typeof(IEnumerable).IsAssignableFrom(type))
                 {

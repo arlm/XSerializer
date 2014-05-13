@@ -1,16 +1,14 @@
-﻿namespace XSerializer
-{
-    using System.Xml;
+﻿using System.IO;
 
+namespace XSerializer
+{
     public interface IXmlSerializer
     {
-        void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options);
-        object DeserializeObject(XmlReader reader);
-    }
-
-    public interface IXmlSerializer<T> : IXmlSerializer
-    {
-        void Serialize(SerializationXmlTextWriter writer, T instance, ISerializeOptions options);
-        T Deserialize(XmlReader reader);
+        string Serialize(object instance);
+        void Serialize(Stream stream, object instance);
+        void Serialize(TextWriter writer, object instance);
+        object Deserialize(string xml);
+        object Deserialize(Stream stream);
+        object Deserialize(TextReader reader);
     }
 }

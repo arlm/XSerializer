@@ -1,6 +1,6 @@
 ﻿namespace XSerializer
 {
-    public enum NodeType
+    internal enum NodeType
     {
         Attribute,
         Text,

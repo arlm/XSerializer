@@ -14,7 +14,7 @@ namespace XSerializer.Tests
             Exception thrownException;
             try
             {
-                new XmlSerializer(type);
+                new System.Xml.Serialization.XmlSerializer(type);
                 thrownException = null;
             }
             catch (Exception ex)
