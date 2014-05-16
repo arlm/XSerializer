@@ -71,6 +71,7 @@
     <Compile Include="RoundTripTests.cs" />
     <Compile Include="SerializationTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="StripXsiXsdExtension.cs" />
     <Compile Include="TestClasses.cs" />
     <Compile Include="NUnit\Has.cs" />
     <Compile Include="TestSerializeOptions.cs" />
