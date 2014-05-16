@@ -2,9 +2,11 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Xml;
+using System.Xml.Serialization;
 
 namespace XSerializer
 {
@@ -67,7 +69,14 @@ namespace XSerializer
 
             if (options.RootElementName == null)
             {
-                options.SetRootElementName(typeof(T).GetElementName());
+                var xmlRootAttribute = typeof(T).GetCustomAttributes(typeof(XmlRootAttribute), false).FirstOrDefault() as XmlRootAttribute;
+
+                var rootElementName =
+                    xmlRootAttribute != null && !string.IsNullOrWhiteSpace(xmlRootAttribute.ElementName)
+                        ? xmlRootAttribute.ElementName
+                        : typeof(T).GetElementName();
+
+                options.SetRootElementName(rootElementName);
             }
 
             options.ExtraTypes = extraTypes;
