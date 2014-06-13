@@ -417,11 +417,20 @@ namespace XSerializer
                                             property.PropertyType == parameter.ParameterType)))
                         .ToArray();
 
+                var caseSensitiveSerializableProperties = serializableProperties.ToDictionary(p => p.Name);
+                var textNodeProperty = serializableProperties.SingleOrDefault(p => p.NodeType == NodeType.Text);
+                var attributeProperties = serializableProperties.Where(p => p.NodeType == NodeType.Attribute).ToDictionary(p => p.Name);
+
                 if (validConstructors.Length == 0)
                 {
                     if (type.IsValueType)
                     {
-                        return reader => new DefaultConstructorHelper(() => (T)FormatterServices.GetUninitializedObject(typeof(T)), serializableProperties, reader);
+                        return reader => new DefaultConstructorHelper(
+                            () => (T)FormatterServices.GetUninitializedObject(typeof(T)),
+                            caseSensitiveSerializableProperties,
+                            textNodeProperty,
+                            attributeProperties,
+                            reader);
                     }
 
                     throw new InvalidOperationException("No valid constructors were found for type: " + type);
@@ -433,15 +442,15 @@ namespace XSerializer
                     var lambda = Expression.Lambda<Func<T>>(Expression.Convert(Expression.New(ctor), typeof(T)));
                     var createInstance = lambda.Compile();
 
-                    return reader => new DefaultConstructorHelper(createInstance, serializableProperties, reader);
+                    return reader => new DefaultConstructorHelper(
+                        createInstance,
+                        caseSensitiveSerializableProperties,
+                        textNodeProperty,
+                        attributeProperties,
+                        reader);
                 }
 
                 var constructorWrappers = validConstructors.Select(c => new ConstructorWrapper(c)).ToArray();
-
-                var textNodeProperty = serializableProperties.SingleOrDefault(p => p.NodeType == NodeType.Text);
-                var attributeProperties = serializableProperties.Where(p => p.NodeType == NodeType.Attribute).ToDictionary(p => p.Name);
-                var caseSensitiveSerializableProperties = serializableProperties.ToDictionary(p => p.Name);
-                var caseInsensitiveSerializableProperties = serializableProperties.ToDictionary(p => p.Name.ToLower());
 
                 return reader => new NonDefaultConstructorHelper(
                     constructorWrappers,
@@ -449,7 +458,6 @@ namespace XSerializer
                     textNodeProperty,
                     attributeProperties,
                     caseSensitiveSerializableProperties,
-                    caseInsensitiveSerializableProperties,
                     reader);
             }
 
@@ -514,19 +522,28 @@ namespace XSerializer
 
             private readonly XmlReader _reader;
             private readonly T _instance;
-            private readonly IEnumerable<SerializableProperty> _serializableProperties;
+            private readonly Dictionary<string, SerializableProperty> _caseSensitiveSerializableProperties;
+            private readonly SerializableProperty _textNodeProperty;
+            private readonly IDictionary<string, SerializableProperty> _attributeProperties;
 
-            public DefaultConstructorHelper(Func<T> createInstance, IEnumerable<SerializableProperty> serializableProperties, XmlReader reader)
+            public DefaultConstructorHelper(
+                Func<T> createInstance,
+                Dictionary<string, SerializableProperty> caseSensitiveSerializableProperties,
+                SerializableProperty textNodeProperty,
+                IDictionary<string, SerializableProperty> attributeProperties,
+                XmlReader reader)
             {
                 _reader = reader;
-                _serializableProperties = serializableProperties;
+                _caseSensitiveSerializableProperties = caseSensitiveSerializableProperties;
+                _textNodeProperty = textNodeProperty;
+                _attributeProperties = attributeProperties;
                 _instance = createInstance();
             }
 
             public void SetElementPropertyValue(out bool shouldIssueRead)
             {
-                var property = _serializableProperties.SingleOrDefault(p => _reader.Name == p.Name);
-                if (property != null)
+                SerializableProperty property;
+                if (_caseSensitiveSerializableProperties.TryGetValue(_reader.Name, out property))
                 {
                     property.ReadValue(_reader, _instance);
                     shouldIssueRead = !property.ReadsPastLastElement;
@@ -539,17 +556,16 @@ namespace XSerializer
 
             public void SetTextNodePropertyValue()
             {
-                var property = _serializableProperties.SingleOrDefault(p => p.NodeType == NodeType.Text);
-                if (property != null)
+                if (_textNodeProperty != null)
                 {
-                    property.ReadValue(_reader, _instance);
+                    _textNodeProperty.ReadValue(_reader, _instance);
                 }
             }
 
             public void StageAttributeValue()
             {
-                var property = _serializableProperties.SingleOrDefault(p => p.NodeType == NodeType.Attribute && p.Name == _reader.Name);
-                if (property != null)
+                SerializableProperty property;
+                if (_attributeProperties.TryGetValue(_reader.Name, out property))
                 {
                     _setPropertyActions.Add(() => property.ReadValue(_reader, _instance));
                 }
@@ -567,72 +583,6 @@ namespace XSerializer
             }
         }
 
-        private class ConstructorWrapper
-        {
-            private readonly IList<ParameterInfo> _parameters;
-            private readonly IList<string> _parameterNames;
-
-            private readonly Func<object[], T> _createInstance; 
-
-            public ConstructorWrapper(ConstructorInfo constructor)
-            {
-                _parameters = constructor.GetParameters().ToList();
-                _parameterNames = _parameters.Select(p => p.Name.ToLower()).ToList();
-
-                var argsParameter = Expression.Parameter(typeof(object[]), "args");
-
-                var lambda =
-                    Expression.Lambda<Func<object[], T>>(
-                        Expression.New(
-                            constructor,
-                            _parameters.Select(
-                                (p, i) =>
-                                    Expression.Convert(
-                                        Expression.ArrayAccess(
-                                            argsParameter,
-                                            Expression.Constant(i)),
-                                        p.ParameterType))),
-                        argsParameter);
-
-                _createInstance = lambda.Compile();
-            }
-
-            public int GetScore(IDictionary<string, object> availableValues)
-            {
-                var matchedParameterCount = _parameterNames.Count(availableValues.ContainsKey);
-
-                return (matchedParameterCount * 100) - ((_parameterNames.Count - matchedParameterCount) * 99);
-            }
-
-            public T Invoke(IDictionary<string, object> availableValues, IEnumerable<SerializableProperty> serializableProperties, out IEnumerable<SerializableProperty> remainingProperties)
-            {
-                remainingProperties = serializableProperties.Where(p => !_parameterNames.Contains(p.Name.ToLower()));
-
-                var args = new object[_parameterNames.Count];
-
-                for (int i = 0; i < args.Length; i++)
-                {
-                    object value;
-                    if (!availableValues.TryGetValue(_parameterNames[i], out value))
-                    {
-                        if ((_parameters[i].Attributes & ParameterAttributes.HasDefault) == ParameterAttributes.HasDefault)
-                        {
-                            value = _parameters[i].DefaultValue;
-                        }
-                        else
-                        {
-                            var parameterType = _parameters[i].ParameterType;
-                            value = parameterType.IsValueType ? FormatterServices.GetUninitializedObject(parameterType) : null;
-                        }
-                    }
-
-                    args[i] = value;
-                }
-
-                return _createInstance(args);
-            }
-        }
-
         private class NonDefaultConstructorHelper : IHelper
         {
             private readonly IDictionary<string, object> _accumulatedValues = new Dictionary<string, object>();
@@ -644,7 +594,6 @@ namespace XSerializer
             private readonly SerializableProperty _textNodeProperty;
             private readonly IDictionary<string, SerializableProperty> _attributeProperties;
             private readonly IDictionary<string, SerializableProperty> _caseSensitiveSerializableProperties;
-            private readonly IDictionary<string, SerializableProperty> _caseInsensitiveSerializableProperties;
 
             private readonly XmlReader _reader;
 
@@ -654,7 +603,6 @@ namespace XSerializer
                 SerializableProperty textNodeProperty,
                 IDictionary<string, SerializableProperty> attributeProperties,
                 IDictionary<string, SerializableProperty> caseSensitiveSerializableProperties,
-                IDictionary<string, SerializableProperty> caseInsensitiveSerializableProperties,
                 XmlReader reader)
             {
                 _constructors = constructors;
@@ -662,7 +610,6 @@ namespace XSerializer
                 _textNodeProperty = textNodeProperty;
                 _attributeProperties = attributeProperties;
                 _caseSensitiveSerializableProperties = caseSensitiveSerializableProperties;
-                _caseInsensitiveSerializableProperties = caseInsensitiveSerializableProperties;
                 _reader = reader;
             }
 
@@ -731,6 +678,73 @@ namespace XSerializer
                 }
 
                 return instance;
+            }
+        }
+
+        private class ConstructorWrapper
+        {
+            private readonly IList<ParameterInfo> _parameters;
+            private readonly IList<string> _parameterNames;
+
+            private readonly Func<object[], T> _createInstance; 
+
+            public ConstructorWrapper(ConstructorInfo constructor)
+            {
+                _parameters = constructor.GetParameters().ToList();
+                _parameterNames = _parameters.Select(p => p.Name.ToLower()).ToList();
+
+                var argsParameter = Expression.Parameter(typeof(object[]), "args");
+
+                var lambda =
+                    Expression.Lambda<Func<object[], T>>(
+                        Expression.New(
+                            constructor,
+                            _parameters.Select(
+                                (p, i) =>
+                                    Expression.Convert(
+                                        Expression.ArrayAccess(
+                                            argsParameter,
+                                            Expression.Constant(i)),
+                                        p.ParameterType))),
+                        argsParameter);
+
+                _createInstance = lambda.Compile();
+            }
+
+            public int GetScore(IDictionary<string, object> availableValues)
+            {
+                // TODO: this needs work - the algorithm isn't quite right.
+                var matchedParameterCount = _parameterNames.Count(availableValues.ContainsKey);
+
+                return (matchedParameterCount * 100) - ((_parameterNames.Count - matchedParameterCount) * 99);
+            }
+
+            public T Invoke(IDictionary<string, object> availableValues, IEnumerable<SerializableProperty> serializableProperties, out IEnumerable<SerializableProperty> remainingProperties)
+            {
+                remainingProperties = serializableProperties.Where(p => !_parameterNames.Contains(p.Name.ToLower()));
+
+                var args = new object[_parameterNames.Count];
+
+                for (int i = 0; i < args.Length; i++)
+                {
+                    object value;
+                    if (!availableValues.TryGetValue(_parameterNames[i], out value))
+                    {
+                        if ((_parameters[i].Attributes & ParameterAttributes.HasDefault) == ParameterAttributes.HasDefault)
+                        {
+                            value = _parameters[i].DefaultValue;
+                        }
+                        else
+                        {
+                            var parameterType = _parameters[i].ParameterType;
+                            value = parameterType.IsValueType ? FormatterServices.GetUninitializedObject(parameterType) : null;
+                        }
+                    }
+
+                    args[i] = value;
+                }
+
+                return _createInstance(args);
             }
         }
     }
