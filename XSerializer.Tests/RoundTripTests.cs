@@ -22,7 +22,7 @@ namespace XSerializer.Tests
         {
             Assert.That(instance.GetType(), Is.EqualTo(otherInstance.GetType()));
 
-            foreach (var property in instance.GetType().GetProperties().Where(p => p.IsSerializable()))
+            foreach (var property in instance.GetType().GetProperties().Where(p => p.IsSerializable(instance.GetType().GetConstructors().SelectMany(c => c.GetParameters()))))
             {
                 var instancePropertyValue = property.GetValue(instance, null);
                 var otherInstancePropertyValue = property.GetValue(otherInstance, null);

@@ -109,9 +109,11 @@ namespace XSerializer
                 return false;
             }
 
+            var constructorParameters = type.GetConstructors().SelectMany(c => c.GetParameters());
+
             return allTypes
                 .SelectMany(t => t.GetProperties())
-                .Where(p => p.IsSerializable())
+                .Where(p => p.IsSerializable(constructorParameters))
                 .Any(p => 
                     Attribute.IsDefined(p, typeof(RedactAttribute))
                     || ShouldNotAttemptToUseDefaultSerializer(p.PropertyType, null));

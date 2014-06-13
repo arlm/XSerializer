@@ -50,7 +50,15 @@ namespace XSerializer
                     }
                     else
                     {
-                        _setValueFunc = DynamicMethodFactory.CreateAction(propertyInfo.GetSetMethod());
+                        var setMethod = propertyInfo.GetSetMethod();
+                        if (setMethod != null)
+                        {
+                            _setValueFunc = DynamicMethodFactory.CreateAction(propertyInfo.GetSetMethod());
+                        }
+                        else
+                        {
+                            _setValueFunc = null;
+                        }
                     }
                 }
             }
@@ -68,6 +76,11 @@ namespace XSerializer
 
         public void ReadValue(XmlReader reader, object instance)
         {
+            if (_setValueFunc == null)
+            {
+                throw new Exception("crap.");
+            }
+
             _setValueFunc(instance, _serializer.Value.DeserializeObject(reader));
         }
 
@@ -143,7 +156,7 @@ namespace XSerializer
 
                     var itemElementNameFallback =
                         propertyInfo.PropertyType.IsAssignableToGenericIEnumerable()
-                            ? propertyInfo.PropertyType.GetGenericIEnumerableType().GetGenericArguments()[0].Name
+                            ? propertyInfo.PropertyType.GetGenericIEnumerableType().GetGenericArguments()[0].GetElementName()
                             : "Item";
 
                     itemElementName = GetElementName(arrayItemAttribute, x => x.ElementName, itemElementNameFallback);

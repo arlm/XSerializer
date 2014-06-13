@@ -195,14 +195,14 @@ namespace XSerializer
             return type.GetConstructor(Type.EmptyTypes) != null;
         }
 
-        public static bool IsSerializable(this PropertyInfo property)
+        public static bool IsSerializable(this PropertyInfo property, IEnumerable<ParameterInfo> constructorParameters)
         {
             if (property.DeclaringType.IsAnonymous())
             {
                 return true;
             }
 
-            var isSerializable = property.GetIndexParameters().Length == 0 && (property.IsReadWriteProperty() || property.IsSerializableReadOnlyProperty());
+            var isSerializable = property.GetIndexParameters().Length == 0 && (property.IsReadWriteProperty() || property.IsSerializableReadOnlyProperty(constructorParameters));
             return isSerializable;
         }
 
@@ -212,18 +212,33 @@ namespace XSerializer
             return isReadWriteProperty;
         }
 
-        internal static bool IsSerializableReadOnlyProperty(this PropertyInfo property)
+        internal static bool IsSerializableReadOnlyProperty(this PropertyInfo property, IEnumerable<ParameterInfo> constructorParameters = null)
         {
             return
                 property.IsReadOnlyProperty()
                 &&
+                !IsConditionalProperty(property, constructorParameters)
+                &&
                 (
+                    ((constructorParameters ?? Enumerable.Empty<ParameterInfo>()).Any(p => p.Name.ToLower() == property.Name.ToLower() && p.ParameterType == property.PropertyType))
+                    ||
                     (property.PropertyType.IsAnyKindOfDictionary() && property.PropertyType != typeof(ExpandoObject))
                     ||
                     (property.PropertyType.IsAssignableToGenericIEnumerable() && property.PropertyType.HasAddMethodOfType(property.PropertyType.GetGenericIEnumerableType().GetGenericArguments()[0]))
                     ||
                     (property.PropertyType.IsAssignableToNonGenericIEnumerable() && property.PropertyType.HasAddMethod())
                 ); // TODO: add additional serializable types?
+        }
+
+        private static bool IsConditionalProperty(PropertyInfo property, IEnumerable<ParameterInfo> constructorParameters)
+        {
+            if (property.Name.EndsWith("Specified"))
+            {
+                var otherPropertyName = property.Name.Substring(0, property.Name.LastIndexOf("Specified"));
+                return property.DeclaringType.GetProperties().Any(p => p.Name == otherPropertyName);
+            }
+
+            return false;
         }
 
         internal static bool HasAddMethodOfType(this Type type, Type addMethodType)

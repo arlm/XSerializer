@@ -177,7 +177,7 @@ namespace XSerializer.Tests
                 }
                 else
                 {
-                    properties = actualValue.GetType().GetProperties().Where(p => p.IsSerializable()).Select(p => new Property(p, actualValue, expectedValue));
+                    properties = actualValue.GetType().GetProperties().Where(p => p.IsSerializable(actualValue.GetType().GetConstructors().SelectMany(c => c.GetParameters()))).Select(p => new Property(p, actualValue, expectedValue));
                 }
 
                 return properties.All(property => DoPropertyValuesMatch(property.ActualValue, property.ExpectedValue, property.Type, property.Name, path));

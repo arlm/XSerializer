@@ -60,6 +60,7 @@
     <Compile Include="IgnoreAttributeTests.cs" />
     <Compile Include="ListTests.cs" />
     <Compile Include="NonAbstractClassesWithOnlySimpleElements.cs" />
+    <Compile Include="NonDefaultConstructorTests.cs" />
     <Compile Include="ObjectToXml.cs" />
     <Compile Include="ObjectToXmlToObjectWithDefaultComparison.cs" />
     <Compile Include="ObjectToXmlWithDefaultComparison.cs" />
