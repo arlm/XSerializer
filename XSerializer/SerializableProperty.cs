@@ -76,12 +76,22 @@ namespace XSerializer
 
         public void ReadValue(XmlReader reader, object instance)
         {
+            SetValue(instance, ReadValue(reader));
+        }
+
+        public object ReadValue(XmlReader reader)
+        {
+            return _serializer.Value.DeserializeObject(reader);
+        }
+
+        public void SetValue(object instance, object value)
+        {
             if (_setValueFunc == null)
             {
-                throw new Exception("crap.");
+                throw new InvalidOperationException("Cannot set the value of a read-only property.");
             }
 
-            _setValueFunc(instance, _serializer.Value.DeserializeObject(reader));
+            _setValueFunc(instance, value);
         }
 
         public void WriteValue(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)

@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Xml;
@@ -51,7 +52,7 @@ namespace XSerializer
     {
         private readonly IXmlSerializerOptions _options;
 
-        private readonly IHelperFactory _helperFactory;
+        private readonly HelperFactory _helperFactory;
 
         private readonly Dictionary<Type, SerializableProperty[]> _serializablePropertiesMap = new Dictionary<Type, SerializableProperty[]>();
 
@@ -86,31 +87,7 @@ namespace XSerializer
                             .OrderBy(p => p.NodeType)
                             .ToArray());
 
-            // TODO: find the constructor with the most parameters whose names match properties of the type.
-            // TODO: if the found constructor is no parameters, use DefaultConstructorHelperFactory.
-            // TODO: else, use the other (as yet unimplemented) helper factory.
-            _helperFactory = new DefaultConstructorHelperFactory(_serializablePropertiesMap, _options);
-        }
-
-        private static ILookup<Type, IEnumerable<ConstructorInfo>> GetValidConstructors(IEnumerable<Type> types)
-        {
-            return
-                types.ToLookup(
-                    t => t,
-                    t =>
-                    {
-                        var properties = t.GetProperties();
-
-                        return
-                            t.GetConstructors()
-                                .Where(constructor =>
-                                    constructor.GetParameters()
-                                        .All(parameter =>
-                                            (parameter.Attributes & ParameterAttributes.HasDefault) == ParameterAttributes.HasDefault
-                                            || properties.Any(property =>
-                                                    property.Name.ToLower() == parameter.Name.ToLower() &&
-                                                    property.PropertyType == parameter.ParameterType)));
-                    });
+            _helperFactory = new HelperFactory(_serializablePropertiesMap);
         }
 
         private void AssertValidHeirarchy(Type type)
@@ -332,7 +309,7 @@ namespace XSerializer
 
         public T Deserialize(XmlReader reader)
         {
-            var helper = _helperFactory.CreateHelper(reader);
+            var helper = NullHelper.Instance;
 
             bool shouldIssueRead;
 
@@ -347,7 +324,9 @@ namespace XSerializer
                         {
                             if (!typeof(T).IsPrimitiveLike())
                             {
-                                helper.CreateInstance();
+                                var type = reader.GetXsdType<T>(_options.ExtraTypes) ?? typeof(T);
+
+                                helper = _helperFactory.CreateHelper(type, reader);
 
                                 while (reader.MoveToNextAttribute())
                                 {
@@ -376,6 +355,8 @@ namespace XSerializer
                     case XmlNodeType.Text:
                         if (typeof(T).IsPrimitiveLike())
                         {
+                            // This is left-over (and commented-out) from an earlier time. Is it even possible to have a CustomSerializer for a primitive type???
+
                             //instance = (T)XmlTextSerializer.GetSerializer(typeof(T), _options.RedactAttribute).DeserializeObject(reader);
                             //hasInstanceBeenCreated = true;
                         }
@@ -401,57 +382,150 @@ namespace XSerializer
             return Deserialize(reader);
         }
 
-        public interface IHelperFactory
+        private class HelperFactory
         {
-            IHelper CreateHelper(XmlReader reader);
-        }
+            private readonly IDictionary<Type, Lazy<Func<XmlReader, IHelper>>> _createHelperFuncs;
 
-        public class DefaultConstructorHelperFactory : IHelperFactory
-        {
-            private readonly IXmlSerializerOptions _options;
-            private readonly Dictionary<Type, SerializableProperty[]> _serializablePropertiesMap = new Dictionary<Type, SerializableProperty[]>();
-
-            public DefaultConstructorHelperFactory(Dictionary<Type, SerializableProperty[]> serializablePropertiesMap, IXmlSerializerOptions options)
+            public HelperFactory(Dictionary<Type, SerializableProperty[]> serializablePropertiesMap)
             {
-                _options = options;
-                _serializablePropertiesMap = serializablePropertiesMap;
+                _createHelperFuncs =
+                    serializablePropertiesMap
+                        .Where(item => typeof(T).IsAssignableFrom(item.Key))
+                        .ToDictionary(
+                            item => item.Key,
+                            item => new Lazy<Func<XmlReader, IHelper>>(() => GetCreateHelperFunc(item.Key, item.Value)));
             }
 
-            public IHelper CreateHelper(XmlReader reader)
+            private static Func<XmlReader, IHelper> GetCreateHelperFunc(Type type, ICollection<SerializableProperty> serializableProperties)
             {
-                return new DefaultConstructorHelper(_serializablePropertiesMap, _options, reader);
+                if (type.IsAbstract)
+                {
+                    throw new InvalidOperationException("Cannot create instance of abstract type: " + type);
+                }
+
+                var properties = type.GetProperties();
+
+                var validConstructors = 
+                    type.GetConstructors()
+                        .Where(constructor =>
+                            constructor.GetParameters()
+                                .All(parameter =>
+                                    (parameter.Attributes & ParameterAttributes.HasDefault) == ParameterAttributes.HasDefault
+                                    || properties.Any(
+                                        property =>
+                                            property.Name.ToLower() == parameter.Name.ToLower() &&
+                                            property.PropertyType == parameter.ParameterType)))
+                        .ToArray();
+
+                if (validConstructors.Length == 0)
+                {
+                    if (type.IsValueType)
+                    {
+                        return reader => new DefaultConstructorHelper(() => (T)FormatterServices.GetUninitializedObject(typeof(T)), serializableProperties, reader);
+                    }
+
+                    throw new InvalidOperationException("No valid constructors were found for type: " + type);
+                }
+
+                if (validConstructors.Length == 1 && validConstructors[0].GetParameters().Length == 0)
+                {
+                    var ctor = validConstructors[0];
+                    var lambda = Expression.Lambda<Func<T>>(Expression.Convert(Expression.New(ctor), typeof(T)));
+                    var createInstance = lambda.Compile();
+
+                    return reader => new DefaultConstructorHelper(createInstance, serializableProperties, reader);
+                }
+
+                var constructorWrappers = validConstructors.Select(c => new ConstructorWrapper(c)).ToArray();
+
+                var textNodeProperty = serializableProperties.SingleOrDefault(p => p.NodeType == NodeType.Text);
+                var attributeProperties = serializableProperties.Where(p => p.NodeType == NodeType.Attribute).ToDictionary(p => p.Name);
+                var caseSensitiveSerializableProperties = serializableProperties.ToDictionary(p => p.Name);
+                var caseInsensitiveSerializableProperties = serializableProperties.ToDictionary(p => p.Name.ToLower());
+
+                return reader => new NonDefaultConstructorHelper(
+                    constructorWrappers,
+                    serializableProperties,
+                    textNodeProperty,
+                    attributeProperties,
+                    caseSensitiveSerializableProperties,
+                    caseInsensitiveSerializableProperties,
+                    reader);
+            }
+
+            public IHelper CreateHelper(Type type, XmlReader reader)
+            {
+                var createHelper = _createHelperFuncs[type].Value;
+                return createHelper(reader);
             }
         }
 
-        public interface IHelper
+        private interface IHelper
         {
             void SetElementPropertyValue(out bool shouldIssueRead);
             void SetTextNodePropertyValue();
             void StageAttributeValue();
             void FlushAttributeValues();
             T GetInstance();
-            void CreateInstance();
         }
 
-        public class DefaultConstructorHelper : IHelper
+        private class NullHelper : IHelper
         {
-            private readonly IXmlSerializerOptions _options;
-            private readonly XmlReader _reader;
-            private T _instance;
-            private readonly Dictionary<Type, SerializableProperty[]> _serializablePropertiesMap = new Dictionary<Type, SerializableProperty[]>();
-            private bool _hasInstanceBeenCreated;
+            public static readonly IHelper Instance = new NullHelper();
 
-            public DefaultConstructorHelper(Dictionary<Type, SerializableProperty[]> serializablePropertiesMap, IXmlSerializerOptions options, XmlReader reader)
+            private NullHelper()
+            {
+            }
+
+            void IHelper.SetElementPropertyValue(out bool shouldIssueRead)
+            {
+                throw NotInitializedException();
+            }
+
+            void IHelper.SetTextNodePropertyValue()
+            {
+                throw NotInitializedException();
+            }
+
+            void IHelper.StageAttributeValue()
+            {
+                throw NotInitializedException();
+            }
+
+            void IHelper.FlushAttributeValues()
+            {
+                throw NotInitializedException();
+            }
+
+            T IHelper.GetInstance()
+            {
+                throw NotInitializedException();
+            }
+
+            private static Exception NotInitializedException()
+            {
+                return new InvalidOperationException("Serialization Helper object has not been initialized.");
+            }
+        }
+
+        private class DefaultConstructorHelper : IHelper
+        {
+            private readonly List<Action> _setPropertyActions = new List<Action>();
+
+            private readonly XmlReader _reader;
+            private readonly T _instance;
+            private readonly IEnumerable<SerializableProperty> _serializableProperties;
+
+            public DefaultConstructorHelper(Func<T> createInstance, IEnumerable<SerializableProperty> serializableProperties, XmlReader reader)
             {
                 _reader = reader;
-                _options = options;
-
-                _serializablePropertiesMap = serializablePropertiesMap;
+                _serializableProperties = serializableProperties;
+                _instance = createInstance();
             }
 
             public void SetElementPropertyValue(out bool shouldIssueRead)
             {
-                var property = _serializablePropertiesMap[_instance.GetType()].SingleOrDefault(p => _reader.Name == p.Name);
+                var property = _serializableProperties.SingleOrDefault(p => _reader.Name == p.Name);
                 if (property != null)
                 {
                     property.ReadValue(_reader, _instance);
@@ -465,20 +539,16 @@ namespace XSerializer
 
             public void SetTextNodePropertyValue()
             {
-                var property = _serializablePropertiesMap[_instance.GetType()].SingleOrDefault(p => p.NodeType == NodeType.Text);
+                var property = _serializableProperties.SingleOrDefault(p => p.NodeType == NodeType.Text);
                 if (property != null)
                 {
                     property.ReadValue(_reader, _instance);
                 }
             }
 
-            private readonly List<Action> _setPropertyActions = new List<Action>();
-
             public void StageAttributeValue()
             {
-                var property =
-                    _serializablePropertiesMap[_instance.GetType()]
-                        .SingleOrDefault(p => p.NodeType == NodeType.Attribute && p.Name == _reader.Name);
+                var property = _serializableProperties.SingleOrDefault(p => p.NodeType == NodeType.Attribute && p.Name == _reader.Name);
                 if (property != null)
                 {
                     _setPropertyActions.Add(() => property.ReadValue(_reader, _instance));
@@ -493,30 +563,174 @@ namespace XSerializer
 
             public T GetInstance()
             {
-                if (!_hasInstanceBeenCreated)
-                {
-                    throw new Exception("Instance has not been created");
-                }
-
                 return _instance;
             }
+        }
 
-            public void CreateInstance()
+        private class ConstructorWrapper
+        {
+            private readonly IList<ParameterInfo> _parameters;
+            private readonly IList<string> _parameterNames;
+
+            private readonly Func<object[], T> _createInstance; 
+
+            public ConstructorWrapper(ConstructorInfo constructor)
             {
-                var type = _reader.GetXsdType<T>(_options.ExtraTypes);
+                _parameters = constructor.GetParameters().ToList();
+                _parameterNames = _parameters.Select(p => p.Name.ToLower()).ToList();
 
-                // This is the spot where we would access the constructor from the lookup.
+                var argsParameter = Expression.Parameter(typeof(object[]), "args");
 
-                if (type != null)
+                var lambda =
+                    Expression.Lambda<Func<object[], T>>(
+                        Expression.New(
+                            constructor,
+                            _parameters.Select(
+                                (p, i) =>
+                                    Expression.Convert(
+                                        Expression.ArrayAccess(
+                                            argsParameter,
+                                            Expression.Constant(i)),
+                                        p.ParameterType))),
+                        argsParameter);
+
+                _createInstance = lambda.Compile();
+            }
+
+            public int GetScore(IDictionary<string, object> availableValues)
+            {
+                var matchedParameterCount = _parameterNames.Count(availableValues.ContainsKey);
+
+                return (matchedParameterCount * 100) - ((_parameterNames.Count - matchedParameterCount) * 99);
+            }
+
+            public T Invoke(IDictionary<string, object> availableValues, IEnumerable<SerializableProperty> serializableProperties, out IEnumerable<SerializableProperty> remainingProperties)
+            {
+                remainingProperties = serializableProperties.Where(p => !_parameterNames.Contains(p.Name.ToLower()));
+
+                var args = new object[_parameterNames.Count];
+
+                for (int i = 0; i < args.Length; i++)
                 {
-                    _instance = (T)Activator.CreateInstance(type); // TODO: cache into constructor func
+                    object value;
+                    if (!availableValues.TryGetValue(_parameterNames[i], out value))
+                    {
+                        if ((_parameters[i].Attributes & ParameterAttributes.HasDefault) == ParameterAttributes.HasDefault)
+                        {
+                            value = _parameters[i].DefaultValue;
+                        }
+                        else
+                        {
+                            var parameterType = _parameters[i].ParameterType;
+                            value = parameterType.IsValueType ? FormatterServices.GetUninitializedObject(parameterType) : null;
+                        }
+                    }
+
+                    args[i] = value;
+                }
+
+                return _createInstance(args);
+            }
+        }
+
+        private class NonDefaultConstructorHelper : IHelper
+        {
+            private readonly IDictionary<string, object> _accumulatedValues = new Dictionary<string, object>();
+            private readonly List<Action> _setPropertyActions = new List<Action>();
+
+            private readonly IEnumerable<ConstructorWrapper> _constructors;
+
+            private readonly IEnumerable<SerializableProperty> _serializableProperties;
+            private readonly SerializableProperty _textNodeProperty;
+            private readonly IDictionary<string, SerializableProperty> _attributeProperties;
+            private readonly IDictionary<string, SerializableProperty> _caseSensitiveSerializableProperties;
+            private readonly IDictionary<string, SerializableProperty> _caseInsensitiveSerializableProperties;
+
+            private readonly XmlReader _reader;
+
+            public NonDefaultConstructorHelper(
+                IEnumerable<ConstructorWrapper> constructors,
+                IEnumerable<SerializableProperty> serializableProperties,
+                SerializableProperty textNodeProperty,
+                IDictionary<string, SerializableProperty> attributeProperties,
+                IDictionary<string, SerializableProperty> caseSensitiveSerializableProperties,
+                IDictionary<string, SerializableProperty> caseInsensitiveSerializableProperties,
+                XmlReader reader)
+            {
+                _constructors = constructors;
+                _serializableProperties = serializableProperties;
+                _textNodeProperty = textNodeProperty;
+                _attributeProperties = attributeProperties;
+                _caseSensitiveSerializableProperties = caseSensitiveSerializableProperties;
+                _caseInsensitiveSerializableProperties = caseInsensitiveSerializableProperties;
+                _reader = reader;
+            }
+
+            public void SetElementPropertyValue(out bool shouldIssueRead)
+            {
+                SerializableProperty property;
+                if (_caseSensitiveSerializableProperties.TryGetValue(_reader.Name, out property))
+                {
+                    var value = property.ReadValue(_reader);
+
+                    _accumulatedValues[property.Name.ToLower()] = value;
+
+                    shouldIssueRead = !property.ReadsPastLastElement;
                 }
                 else
                 {
-                    _instance = Activator.CreateInstance<T>(); // TODO: cache into constructor func
+                    shouldIssueRead = true;
+                }
+            }
+
+            public void SetTextNodePropertyValue()
+            {
+                if (_textNodeProperty != null)
+                {
+                    var value = _textNodeProperty.ReadValue(_reader);
+
+                    _accumulatedValues[_textNodeProperty.Name.ToLower()] = value;
+                }
+            }
+
+            public void StageAttributeValue()
+            {
+                SerializableProperty property;
+                if (_attributeProperties.TryGetValue(_reader.Name, out property))
+                {
+                    _setPropertyActions.Add(
+                        () =>
+                        {
+                            var value = property.ReadValue(_reader);
+
+                            _accumulatedValues[property.Name.ToLower()] = value;
+                        });
+                }
+            }
+
+            public void FlushAttributeValues()
+            {
+                _setPropertyActions.ForEach(a => a());
+                _setPropertyActions.Clear();
+            }
+
+            public T GetInstance()
+            {
+                var constructor = _constructors.OrderByDescending(c => c.GetScore(_accumulatedValues)).First();
+
+                IEnumerable<SerializableProperty> remainingProperties;
+                var instance = constructor.Invoke(_accumulatedValues, _serializableProperties, out remainingProperties);
+
+                foreach (var property in remainingProperties)
+                {
+                    object value;
+                    if (_accumulatedValues.TryGetValue(property.Name.ToLower(), out value))
+                    {
+                        property.SetValue(instance, value);
+                    }
                 }
 
-                _hasInstanceBeenCreated = true;
+                return instance;
             }
         }
     }
