@@ -337,7 +337,14 @@ namespace XSerializer
 
                 if (addFuncs.Count == 0)
                 {
-                    throw new InvalidOperationException(string.Format("No suitable 'Add' method found for type '{0}'.", typeof(TEnumerable).FullName));
+                    if (typeof(TEnumerable) == typeof(IEnumerable<>).MakeGenericType(typeof(TItem)))
+                    {
+                        addFuncs.Add((collection, item) => ((IList)collection).Add(item));
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException(string.Format("No suitable 'Add' method found for type '{0}'.", typeof(TEnumerable).FullName));
+                    }
                 }
 
                 _addItemToCollection = (collection, item) =>

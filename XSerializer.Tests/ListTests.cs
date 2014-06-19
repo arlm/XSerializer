@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Linq;
 using System.Xml.Serialization;
 using NUnit.Framework;
 
@@ -186,6 +187,12 @@ namespace XSerializer.Tests
                         .SetName("Container with read-write List<>");
 
                 yield return new TestCaseData(
+                    new ContainerWithReadWriteGenericIEnumerable { Items = new List<ListTests_ClassWithDynamicProperty> { Item } },
+                    typeof(ContainerWithReadWriteGenericIEnumerable),
+                    ContainerXmlWithNoAttributesWithoutTypeHint)
+                        .SetName("Container with read-write IEnumerable<>");
+
+                yield return new TestCaseData(
                     new ContainerWithReadWriteCustomCollection { Items = new CustomCollection { Item } },
                     typeof(ContainerWithReadWriteCustomCollection),
                     ContainerXmlWithNoAttributesWithoutTypeHint)
@@ -246,6 +253,12 @@ namespace XSerializer.Tests
                         .SetName("Container with read-write List<> with xml array attributes");
 
                 yield return new TestCaseData(
+                    new ContainerWithReadWriteGenericIEnumerableAndArrayAttributes { Items = new List<ListTests_ClassWithDynamicProperty> { Item } },
+                    typeof(ContainerWithReadWriteGenericIEnumerableAndArrayAttributes),
+                    ContainerXmlWithArrayAttributesWithoutTypeHint)
+                        .SetName("Container with read-write IEnumerable<> with xml array attributes");
+
+                yield return new TestCaseData(
                     new ContainerWithReadWriteCustomCollectionAndArrayAttributes { Items = new CustomCollection { Item } },
                     typeof(ContainerWithReadWriteCustomCollectionAndArrayAttributes),
                     ContainerXmlWithArrayAttributesWithoutTypeHint)
@@ -274,6 +287,12 @@ namespace XSerializer.Tests
                     typeof(ContainerWithReadWriteGenericListAndElementAttribute),
                     ContainerXmlWithElementAttributeWithoutTypeHint)
                         .SetName("Container with read-write List<> with xml element attribute");
+
+                yield return new TestCaseData(
+                    new ContainerWithReadWriteGenericIEnumerableAndElementAttribute { Items = new List<ListTests_ClassWithDynamicProperty> { Item } },
+                    typeof(ContainerWithReadWriteGenericIEnumerableAndElementAttribute),
+                    ContainerXmlWithElementAttributeWithoutTypeHint)
+                        .SetName("Container with read-write IEnumerable<> with xml element attribute");
 
                 yield return new TestCaseData(
                     new ContainerWithReadWriteCustomCollectionAndElementAttribute { Items = new CustomCollection { Item } },
@@ -538,11 +557,60 @@ namespace XSerializer.Tests
             Assert.That(data.Count, Is.EqualTo(1));
         }
 
+        [Test]
+        public void CanSerializeIEnumerableAsRoot()
+        {
+            IEnumerable<ArrayTests.DataPoint> data = new List<ArrayTests.DataPoint>
+                {
+                    new ArrayTests.DataPoint
+                    {
+                        Name = "FooBar",
+                        Preference = new ArrayTests.Preference
+                        {
+                            Id = 123
+                        }
+                    }
+                };
+
+            var serializer = new XmlSerializer<IEnumerable<ArrayTests.DataPoint>>(options => options.Indent(), typeof(ArrayTests.Preference));
+
+            var xml = serializer.Serialize(data);
+
+            Assert.That(xml, Contains.Substring("</IEnumerableOfDataPoint>"));
+            Assert.That(xml, Contains.Substring(@"xsi:type=""Preference"""));
+            Assert.IsTrue(xml.IndexOf(@"xsi:type=""Preference""") == xml.LastIndexOf(@"xsi:type=""Preference"""));
+        }
+
+        [Test]
+        public void CanDeserializeIEnumerableAsRoot()
+        {
+            var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<IEnumerableOfDataPoint xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <DataPoint>
+    <Name>FooBar</Name>
+    <Preference xsi:type=""Preference"">
+      <Id>123</Id>
+    </Preference>
+  </DataPoint>
+</IEnumerableOfDataPoint>";
+
+            var serializer = new XmlSerializer<IEnumerable<ArrayTests.DataPoint>>(options => options.Indent(), typeof(ArrayTests.Preference));
+
+            var data = serializer.Deserialize(xml);
+
+            Assert.That(data.Count(), Is.EqualTo(1));
+        }
+
         #region read-write with no attributes
 
         public class ContainerWithReadWriteGenericList
         {
             public List<ListTests_ClassWithDynamicProperty> Items { get; set; }
+        }
+
+        public class ContainerWithReadWriteGenericIEnumerable
+        {
+            public IEnumerable<ListTests_ClassWithDynamicProperty> Items { get; set; }
         }
 
         public class ContainerWithReadWriteCustomCollection
@@ -675,6 +743,13 @@ namespace XSerializer.Tests
             public List<ListTests_ClassWithDynamicProperty> Items { get; set; }
         }
 
+        public class ContainerWithReadWriteGenericIEnumerableAndArrayAttributes
+        {
+            [XmlArray("Thingies")]
+            [XmlArrayItem("Thingy")]
+            public IEnumerable<ListTests_ClassWithDynamicProperty> Items { get; set; }
+        }
+
         public class ContainerWithReadWriteCustomCollectionAndArrayAttributes
         {
             [XmlArray("Thingies")]
@@ -711,6 +786,12 @@ namespace XSerializer.Tests
         {
             [XmlElement("Piece")]
             public List<ListTests_ClassWithDynamicProperty> Items { get; set; }
+        }
+
+        public class ContainerWithReadWriteGenericIEnumerableAndElementAttribute
+        {
+            [XmlElement("Piece")]
+            public IEnumerable<ListTests_ClassWithDynamicProperty> Items { get; set; }
         }
 
         public class ContainerWithReadWriteCustomCollectionAndElementAttribute
