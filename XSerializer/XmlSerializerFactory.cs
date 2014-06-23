@@ -63,6 +63,10 @@ namespace XSerializer
                         {
                             serializer = (IXmlSerializerInternal<T>)ListSerializer.GetSerializer(type, options, null);
                         }
+                        else if (type == typeof(Enum))
+                        {
+                            serializer = new XmlElementSerializer<T>(options);
+                        }
                         else
                         {
                             serializer = (IXmlSerializerInternal<T>)CustomSerializer.GetSerializer(type, options);
@@ -87,6 +91,11 @@ namespace XSerializer
 
         private bool ShouldNotAttemptToUseDefaultSerializer(Type type, IXmlSerializerOptions options)
         {
+            if (type == typeof(Enum))
+            {
+                return true;
+            }
+
             if (options == null)
             {
                 options = new XmlSerializationOptions();

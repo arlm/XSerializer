@@ -6,12 +6,22 @@ namespace XSerializer
     internal class XmlAttributeSerializer : IXmlSerializerInternal
     {
         private readonly string _attributeName;
-        private readonly SimpleTypeValueConverter _valueConverter;
+        private readonly IXmlSerializerOptions _options;
+        private readonly IValueConverter _valueConverter;
 
-        public XmlAttributeSerializer(Type type, string attributeName, RedactAttribute redactAttribute)
+        public XmlAttributeSerializer(Type type, string attributeName, RedactAttribute redactAttribute, IXmlSerializerOptions options)
         {
             _attributeName = attributeName;
-            _valueConverter = SimpleTypeValueConverter.Create(type, redactAttribute);
+            _options = options;
+
+            if (type == typeof(Enum))
+            {
+                _valueConverter = new EnumTypeValueConverter(redactAttribute, options);
+            }
+            else
+            {
+                _valueConverter = SimpleTypeValueConverter.Create(type, redactAttribute);
+            }
         }
 
         public void SerializeObject(SerializationXmlTextWriter writer, object value, ISerializeOptions options)

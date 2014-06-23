@@ -8,7 +8,7 @@ namespace XSerializer
     {
         private static readonly ConcurrentDictionary<int, XmlTextSerializer> _map = new ConcurrentDictionary<int, XmlTextSerializer>();
 
-        private readonly SimpleTypeValueConverter _valueConverter;
+        private readonly IValueConverter _valueConverter;
 
         private XmlTextSerializer(Type type, RedactAttribute redactAttribute)
         {

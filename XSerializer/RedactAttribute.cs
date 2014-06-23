@@ -9,11 +9,11 @@ namespace XSerializer
         private static readonly Regex AllNumbers = new Regex(@"[-.0-9]", RegexOptions.Compiled);
         private static readonly Regex Letters = new Regex(@"[a-zA-Z]", RegexOptions.Compiled);
 
-        private static readonly Lazy<SimpleTypeValueConverter> _booleanConverter =
-            new Lazy<SimpleTypeValueConverter>(() => SimpleTypeValueConverter.Create(typeof(bool), null));
+        private static readonly Lazy<IValueConverter> _booleanConverter =
+            new Lazy<IValueConverter>(() => SimpleTypeValueConverter.Create(typeof(bool), null));
 
-        private static readonly Lazy<SimpleTypeValueConverter> _dateTimeConverter =
-            new Lazy<SimpleTypeValueConverter>(() => SimpleTypeValueConverter.Create(typeof(DateTime), null));
+        private static readonly Lazy<IValueConverter> _dateTimeConverter =
+            new Lazy<IValueConverter>(() => SimpleTypeValueConverter.Create(typeof(DateTime), null));
 
         /// <summary>
         /// Redacts the clear-text.

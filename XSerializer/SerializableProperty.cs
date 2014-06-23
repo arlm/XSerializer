@@ -53,7 +53,7 @@ namespace XSerializer
                         var setMethod = propertyInfo.GetSetMethod();
                         if (setMethod != null)
                         {
-                            _setValueFunc = DynamicMethodFactory.CreateAction(propertyInfo.GetSetMethod());
+                            _setValueFunc = DynamicMethodFactory.CreateAction(setMethod);
                         }
                         else
                         {
@@ -120,7 +120,7 @@ namespace XSerializer
                 var attributeName = !string.IsNullOrWhiteSpace(attributeAttribute.AttributeName) ? attributeAttribute.AttributeName : propertyInfo.Name;
                 NodeType = NodeType.Attribute;
                 Name = attributeName;
-                return () => new XmlAttributeSerializer(propertyInfo.PropertyType, attributeName, redactAttribute);
+                return () => new XmlAttributeSerializer(propertyInfo.PropertyType, attributeName, redactAttribute, options);
             }
 
             var textAttribute = (XmlTextAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlTextAttribute));
