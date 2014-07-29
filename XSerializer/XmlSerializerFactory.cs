@@ -96,6 +96,11 @@ namespace XSerializer
                 return true;
             }
 
+            if (type.IsArray)
+            {
+                return ShouldNotAttemptToUseDefaultSerializer(type.GetElementType(), options);
+            }
+
             if (options == null)
             {
                 options = new XmlSerializationOptions();
