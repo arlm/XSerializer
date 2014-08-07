@@ -12,37 +12,54 @@ namespace XSerializer
 {
     public static class XmlSerializer
     {
-        private static readonly ConcurrentDictionary<Type, Func<Action<XmlSerializationOptions>, Type[], IXmlSerializer>> _createXmlSerializerFuncs = new ConcurrentDictionary<Type, Func<Action<XmlSerializationOptions>, Type[], IXmlSerializer>>(); 
+        private static readonly ConcurrentDictionary<Type, Func<XmlSerializationOptions, Type[], IXmlSerializer>> _createXmlSerializerFuncs = new ConcurrentDictionary<Type, Func<XmlSerializationOptions, Type[], IXmlSerializer>>(); 
 
         public static IXmlSerializer Create(Type type, params Type[] extraTypes)
         {
-            return Create(type, options => {}, extraTypes);
+            return Create(type, new XmlSerializationOptions(), extraTypes);
         }
 
         public static IXmlSerializer Create(Type type, Action<XmlSerializationOptions> setOptions, params Type[] extraTypes)
         {
+            return Create(type, GetSerializationOptions(setOptions), extraTypes);
+        }
+
+        public static IXmlSerializer Create(Type type, XmlSerializationOptions options, params Type[] extraTypes)
+        {
             var createXmlSerializer = _createXmlSerializerFuncs.GetOrAdd(
                 type,
                 t =>
-                    {
-                        var xmlSerializerType = typeof(XmlSerializer<>).MakeGenericType(t);
-                        var ctor = xmlSerializerType.GetConstructor(new[] { typeof(Action<XmlSerializationOptions>), typeof(Type[]) });
+                {
+                    var xmlSerializerType = typeof(XmlSerializer<>).MakeGenericType(t);
+                    var ctor = xmlSerializerType.GetConstructor(new[] { typeof(XmlSerializationOptions), typeof(Type[]) });
 
-                        Debug.Assert(ctor != null);
+                    Debug.Assert(ctor != null);
 
-                        var setOptionsParameter = Expression.Parameter(typeof(Action<XmlSerializationOptions>), "setOptions");
-                        var extraTypesParameter = Expression.Parameter(typeof(Type[]), "extraTypes");
+                    var optionsParameter = Expression.Parameter(typeof(XmlSerializationOptions), "options");
+                    var extraTypesParameter = Expression.Parameter(typeof(Type[]), "extraTypes");
 
-                        var lambda =
-                            Expression.Lambda<Func<Action<XmlSerializationOptions>, Type[], IXmlSerializer>>(
-                                Expression.New(ctor, setOptionsParameter, extraTypesParameter),
-                                setOptionsParameter,
-                                extraTypesParameter);
+                    var lambda =
+                        Expression.Lambda<Func<XmlSerializationOptions, Type[], IXmlSerializer>>(
+                            Expression.New(ctor, optionsParameter, extraTypesParameter),
+                            optionsParameter,
+                            extraTypesParameter);
 
-                        return lambda.Compile();
-                    });
+                    return lambda.Compile();
+                });
 
-            return createXmlSerializer(setOptions, extraTypes);
+            return createXmlSerializer(options, extraTypes);
+        }
+
+        internal static XmlSerializationOptions GetSerializationOptions(Action<XmlSerializationOptions> setOptions)
+        {
+            var options = new XmlSerializationOptions();
+
+            if (setOptions != null)
+            {
+                setOptions(options);
+            }
+
+            return options;
         }
     }
 
@@ -54,20 +71,18 @@ namespace XSerializer
         private readonly ISerializeOptions _serializeOptions;
 
         public XmlSerializer(params Type[] extraTypes)
-            : this(options => {}, extraTypes)
+            : this(new XmlSerializationOptions(), extraTypes)
         {
         }
 
         public XmlSerializer(Action<XmlSerializationOptions> setOptions, params Type[] extraTypes)
+            : this(XmlSerializer.GetSerializationOptions(setOptions), extraTypes)
         {
-            var options = new XmlSerializationOptions();
-            
-            if (setOptions != null)
-            {
-                setOptions(options);
-            }
+        }
 
-            if (options.RootElementName == null)
+        public XmlSerializer(XmlSerializationOptions options, params Type[] extraTypes)
+        {
+            if (((IXmlSerializerOptions)options).RootElementName == null)
             {
                 var xmlRootAttribute = typeof(T).GetCustomAttributes(typeof(XmlRootAttribute), false).FirstOrDefault() as XmlRootAttribute;
 
@@ -79,7 +94,7 @@ namespace XSerializer
                 options.SetRootElementName(rootElementName);
             }
 
-            options.ExtraTypes = extraTypes;
+            options.SetExtraTypes(extraTypes);
 
             _serializer = XmlSerializerFactory.Instance.GetSerializer<T>(options);
             _encoding = options.Encoding ?? Encoding.UTF8;

@@ -6,69 +6,98 @@ namespace XSerializer
 {
     public class XmlSerializationOptions : IXmlSerializerOptions, ISerializeOptions
     {
-        internal XmlSerializationOptions()
+        private readonly XmlSerializerNamespaces _namespaces;
+        private string _defaultNamespace;
+        private string _rootElementName;
+        private bool _shouldAlwaysEmitTypes;
+        private bool _shouldRedact;
+        private Type[] _extraTypes;
+        private bool _treatEmptyElementAsString;
+        private Encoding _encoding;
+        private bool _shouldIndent;
+
+        public XmlSerializationOptions(
+            XmlSerializerNamespaces namespaces = null,
+            Encoding encoding = null,
+            string defaultNamespace = null,
+            bool shouldIndent = false,
+            string rootElementName = null,
+            bool shouldAlwaysEmitTypes = false,
+            bool shouldRedact = true,
+            bool treatEmptyElementAsString = false)
         {
-            Encoding = Encoding.UTF8;
-            Namespaces = new XmlSerializerNamespaces();
-            ShouldRedact = true;
+            _namespaces = namespaces ?? new XmlSerializerNamespaces();
+            _encoding = encoding ?? Encoding.UTF8;
+            _defaultNamespace = defaultNamespace;
+            _shouldIndent = shouldIndent;
+            _rootElementName = rootElementName;
+            _shouldAlwaysEmitTypes = shouldAlwaysEmitTypes;
+            _shouldRedact = shouldRedact;
+            _extraTypes = null;
+            _treatEmptyElementAsString = treatEmptyElementAsString;
         }
 
-        public Encoding Encoding { get; private set; }
-        public string DefaultNamespace { get; private set; }
-        public XmlSerializerNamespaces Namespaces { get; private set; }
-        public bool ShouldIndent { get; private set; }
-        public string RootElementName { get; private set; }
-        public bool ShouldAlwaysEmitTypes { get; private set; }
-        public bool ShouldRedact { get; private set; }
-        public Type[] ExtraTypes { get; internal set; }
-        public RedactAttribute RedactAttribute { get { return null; } }
-        public bool TreatEmptyElementAsString { get; private set; }
+        internal Encoding Encoding { get { return _encoding; } }
+        string IXmlSerializerOptions.DefaultNamespace { get { return _defaultNamespace; } }
+        XmlSerializerNamespaces ISerializeOptions.Namespaces { get { return _namespaces; } }
+        internal bool ShouldIndent { get { return _shouldIndent; } }
+        string IXmlSerializerOptions.RootElementName { get { return _rootElementName; } }
+        bool ISerializeOptions.ShouldAlwaysEmitTypes { get { return _shouldAlwaysEmitTypes; } }
+        bool ISerializeOptions.ShouldRedact { get { return _shouldRedact; } }
+        Type[] IXmlSerializerOptions.ExtraTypes { get { return _extraTypes; } }
+        RedactAttribute IXmlSerializerOptions.RedactAttribute { get { return null; } }
+        bool IXmlSerializerOptions.TreatEmptyElementAsString { get { return _treatEmptyElementAsString; } }
+
+        internal void SetExtraTypes(Type[] extraTypes)
+        {
+            _extraTypes = extraTypes;
+        }
+
+        public XmlSerializationOptions AddNamespace(string prefix, string ns)
+        {
+            _namespaces.Add(prefix, ns);
+            return this;
+        }
 
         public XmlSerializationOptions WithEncoding(Encoding encoding)
         {
-            Encoding = encoding;
+            _encoding = encoding;
             return this;
         }
 
         public XmlSerializationOptions WithDefaultNamespace(string defaultNamespace)
         {
-            DefaultNamespace = defaultNamespace;
-            return this;
-        }
-
-        public XmlSerializationOptions AddNamespace(string prefix, string ns)
-        {
-            Namespaces.Add(prefix, ns);
+            _defaultNamespace = defaultNamespace;
             return this;
         }
 
         public XmlSerializationOptions Indent()
         {
-            ShouldIndent = true;
+            _shouldIndent = true;
             return this;
         }
 
         public XmlSerializationOptions SetRootElementName(string rootElementName)
         {
-            RootElementName = rootElementName;
+            _rootElementName = rootElementName;
             return this;
         }
 
         public XmlSerializationOptions AlwaysEmitTypes()
         {
-            ShouldAlwaysEmitTypes = true;
+            _shouldAlwaysEmitTypes = true;
             return this;
         }
 
         public XmlSerializationOptions DisableRedact()
         {
-            ShouldRedact = false;
+            _shouldRedact = false;
             return this;
         }
 
         public XmlSerializationOptions ShouldTreatEmptyElementAsString()
         {
-            TreatEmptyElementAsString = true;
+            _treatEmptyElementAsString = true;
             return this;
         }
     }
