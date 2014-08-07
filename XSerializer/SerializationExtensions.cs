@@ -423,7 +423,7 @@ namespace XSerializer
         {
             if (type.IsGenericType)
             {
-                return type.Name.Substring(0, type.Name.IndexOf("`")) + "Of" + string.Join("_", type.GetGenericArguments().Select(x => x.Name));
+                return type.Name.Substring(0, type.Name.IndexOf("`")) + "Of" + string.Join("_", type.GetGenericArguments().Select(x => x.GetElementName()));
             }
 
             if (type.IsArray)
