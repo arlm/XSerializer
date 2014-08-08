@@ -94,6 +94,11 @@ namespace XSerializer
 
         public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
         {
+            if (instance == null && !options.ShouldEmitNil)
+            {
+                return;
+            }
+
             if (_options.RootElementName != null)
             {
                 writer.WriteStartDocument();
@@ -106,9 +111,16 @@ namespace XSerializer
                 }
             }
 
-            foreach (var item in (IEnumerable)instance)
+            if (instance == null)
             {
-                _itemSerializer.SerializeObject(writer, item, options);
+                writer.WriteNilAttribute();
+            }
+            else
+            {
+                foreach (var item in (IEnumerable)instance)
+                {
+                    _itemSerializer.SerializeObject(writer, item, options);
+                }
             }
 
             if (_options.RootElementName != null)
@@ -142,12 +154,25 @@ namespace XSerializer
                         {
                             if (reader.Name == _options.RootElementName)
                             {
-                                collection = _createCollection();
-                                hasInstanceBeenCreated = true;
-
-                                if (reader.IsEmptyElement)
+                                if (reader.IsNil())
                                 {
-                                    return _finalizeCollection(collection);
+                                    if (reader.IsEmptyElement)
+                                    {
+                                        return null;
+                                    }
+
+                                    collection = null;
+                                    hasInstanceBeenCreated = true;
+                                }
+                                else
+                                {
+                                    collection = _createCollection();
+                                    hasInstanceBeenCreated = true;
+
+                                    if (reader.IsEmptyElement)
+                                    {
+                                        return _finalizeCollection(collection);
+                                    }
                                 }
 
                                 break;
@@ -158,14 +183,21 @@ namespace XSerializer
                             // If there's no root element, and we encounter another element, we're done - get out!
                             if (reader.Name != _itemElementName)
                             {
-                                return _finalizeCollection(CheckAndReturn(hasInstanceBeenCreated, collection));
+                                return
+                                    collection == null
+                                        ? null
+                                        : _finalizeCollection(CheckAndReturn(hasInstanceBeenCreated, collection));
                             }
                         }
 
                         if (reader.Name == _itemElementName)
                         {
                             var item = DeserializeItem(reader, _itemSerializer, hasInstanceBeenCreated, out shouldIssueRead);
-                            AddItemToCollection(collection, item);
+
+                            if (collection != null)
+                            {
+                                AddItemToCollection(collection, item);
+                            }
                         }
                         break;
                     case XmlNodeType.EndElement:
@@ -173,14 +205,20 @@ namespace XSerializer
                         {
                             if (reader.Name == _options.RootElementName)
                             {
-                                return _finalizeCollection(CheckAndReturn(hasInstanceBeenCreated, collection));
+                                return
+                                    collection == null
+                                        ? null
+                                        : _finalizeCollection(CheckAndReturn(hasInstanceBeenCreated, collection));
                             }
                         }
                         else
                         {
                             if (reader.Name != _itemElementName)
                             {
-                                return _finalizeCollection(CheckAndReturn(hasInstanceBeenCreated, collection));
+                                return
+                                    collection == null
+                                        ? null
+                                        : _finalizeCollection(CheckAndReturn(hasInstanceBeenCreated, collection));
                             }
                         }
                         break;

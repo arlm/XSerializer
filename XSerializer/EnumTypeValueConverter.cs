@@ -17,7 +17,7 @@ namespace XSerializer
 
         public object ParseString(string value)
         {
-            if (value == null)
+            if (string.IsNullOrEmpty(value))
             {
                 return null;
             }

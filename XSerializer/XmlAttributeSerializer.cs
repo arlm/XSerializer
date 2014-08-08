@@ -6,13 +6,11 @@ namespace XSerializer
     internal class XmlAttributeSerializer : IXmlSerializerInternal
     {
         private readonly string _attributeName;
-        private readonly IXmlSerializerOptions _options;
         private readonly IValueConverter _valueConverter;
 
         public XmlAttributeSerializer(Type type, string attributeName, RedactAttribute redactAttribute, IXmlSerializerOptions options)
         {
             _attributeName = attributeName;
-            _options = options;
 
             if (type == typeof(Enum))
             {

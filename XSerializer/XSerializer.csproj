@@ -52,7 +52,6 @@
     <Compile Include="DictionarySerializer.cs" />
     <Compile Include="DynamicMethodFactory.cs" />
     <Compile Include="DynamicSerializer.cs" />
-    <Compile Include="EnumSerializer.cs" />
     <Compile Include="EnumTypeValueConverter.cs" />
     <Compile Include="IValueConverter.cs" />
     <Compile Include="IXmlSerializer.cs" />

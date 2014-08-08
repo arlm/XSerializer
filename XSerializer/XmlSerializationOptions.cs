@@ -15,6 +15,7 @@ namespace XSerializer
         private bool _treatEmptyElementAsString;
         private Encoding _encoding;
         private bool _shouldIndent;
+        private bool _emitNil;
 
         public XmlSerializationOptions(
             XmlSerializerNamespaces namespaces = null,
@@ -24,7 +25,8 @@ namespace XSerializer
             string rootElementName = null,
             bool shouldAlwaysEmitTypes = false,
             bool shouldRedact = true,
-            bool treatEmptyElementAsString = false)
+            bool treatEmptyElementAsString = false,
+            bool emitNil = false)
         {
             _namespaces = namespaces ?? new XmlSerializerNamespaces();
             _encoding = encoding ?? Encoding.UTF8;
@@ -35,6 +37,7 @@ namespace XSerializer
             _shouldRedact = shouldRedact;
             _extraTypes = null;
             _treatEmptyElementAsString = treatEmptyElementAsString;
+            _emitNil = emitNil;
         }
 
         internal Encoding Encoding { get { return _encoding; } }
@@ -47,6 +50,7 @@ namespace XSerializer
         Type[] IXmlSerializerOptions.ExtraTypes { get { return _extraTypes; } }
         RedactAttribute IXmlSerializerOptions.RedactAttribute { get { return null; } }
         bool IXmlSerializerOptions.TreatEmptyElementAsString { get { return _treatEmptyElementAsString; } }
+        bool ISerializeOptions.ShouldEmitNil { get { return _emitNil; } }
 
         internal void SetExtraTypes(Type[] extraTypes)
         {
@@ -98,6 +102,12 @@ namespace XSerializer
         public XmlSerializationOptions ShouldTreatEmptyElementAsString()
         {
             _treatEmptyElementAsString = true;
+            return this;
+        }
+
+        public XmlSerializationOptions EmitNil()
+        {
+            _emitNil = true;
             return this;
         }
     }

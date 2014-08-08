@@ -99,10 +99,7 @@ namespace XSerializer
             if (_shouldSerializeFunc(instance))
             {
                 var value = _getValueFunc(instance);
-                if (value != null)
-                {
-                    _serializer.Value.SerializeObject(writer, value, options);
-                }
+                _serializer.Value.SerializeObject(writer, value, options);
             }
         }
 

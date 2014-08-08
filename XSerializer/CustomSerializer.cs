@@ -266,7 +266,7 @@ namespace XSerializer
 
         public void Serialize(SerializationXmlTextWriter writer, T instance, ISerializeOptions options)
         {
-            if (instance == null)
+            if (instance == null && !options.ShouldEmitNil)
             {
                 return;
             }
@@ -278,6 +278,13 @@ namespace XSerializer
             if (!string.IsNullOrWhiteSpace(_options.DefaultNamespace))
             {
                 writer.WriteAttributeString("xmlns", null, null, _options.DefaultNamespace);
+            }
+
+            if (instance == null)
+            {
+                writer.WriteNilAttribute();
+                writer.WriteEndElement();
+                return;
             }
 
             var instanceType = instance.GetType();
@@ -324,7 +331,24 @@ namespace XSerializer
                         {
                             if (!typeof(T).IsPrimitiveLike())
                             {
-                                var type = reader.GetXsdType<T>(_options.ExtraTypes) ?? typeof(T);
+                                var type = reader.GetXsdType<T>(_options.ExtraTypes);
+
+                                if (type == null && typeof(T).IsInterface)
+                                {
+                                    // We have no idea what concrete type we have here. The only
+                                    // successful situation is if we have xsi:nil="true"
+                                    if (reader.IsNil())
+                                    {
+                                        return default(T);
+                                    }
+                                    
+                                    throw new InvalidOperationException("Unable to create concrete instance of interface type " + typeof(T) + " - no type hint found.");
+                                }
+                                
+                                if (type == null)
+                                {
+                                    type = typeof(T);
+                                }
 
                                 helper = _helperFactory.CreateHelper(type, reader);
 
@@ -728,9 +752,10 @@ namespace XSerializer
                 for (int i = 0; i < args.Length; i++)
                 {
                     object value;
+
                     if (!availableValues.TryGetValue(_parameterNames[i], out value))
                     {
-                        if ((_parameters[i].Attributes & ParameterAttributes.HasDefault) == ParameterAttributes.HasDefault)
+                        if (HasDefaultValue(_parameters[i]))
                         {
                             value = _parameters[i].DefaultValue;
                         }
@@ -745,6 +770,11 @@ namespace XSerializer
                 }
 
                 return _createInstance(args);
+            }
+
+            private static bool HasDefaultValue(ParameterInfo parameter)
+            {
+                return (parameter.Attributes & ParameterAttributes.HasDefault) == ParameterAttributes.HasDefault;
             }
         }
     }

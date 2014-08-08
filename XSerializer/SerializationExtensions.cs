@@ -376,6 +376,29 @@ namespace XSerializer
             return true;
         }
 
+        internal static bool IsNil(this XmlReader reader)
+        {
+            var nilFound = false;
+
+            while (reader.MoveToNextAttribute())
+            {
+                if (reader.LocalName == "nil" && reader.NamespaceURI == "http://www.w3.org/2001/XMLSchema-instance")
+                {
+                    nilFound = true;
+                    break;
+                }
+            }
+
+            reader.MoveToElement();
+
+            return nilFound;
+        }
+
+        internal static void WriteNilAttribute(this XmlWriter writer)
+        {
+            writer.WriteAttributeString("xsi", "nil", null, "true");
+        }
+
         internal static bool IsPrimitiveLike(this Type type)
         {
             return

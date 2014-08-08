@@ -65,6 +65,11 @@ namespace XSerializer
 
         public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
         {
+            if (instance == null && !options.ShouldEmitNil)
+            {
+                return;
+            }
+
             writer.WriteStartDocument();
             writer.WriteStartElement(_options.RootElementName);
             writer.WriteDefaultNamespaces();
@@ -72,6 +77,13 @@ namespace XSerializer
             if (!string.IsNullOrWhiteSpace(_options.DefaultNamespace))
             {
                 writer.WriteAttributeString("xmlns", null, null, _options.DefaultNamespace);
+            }
+
+            if (instance == null)
+            {
+                writer.WriteNilAttribute();
+                writer.WriteEndElement();
+                return;
             }
 
             foreach (var item in GetDictionaryEntries(instance))
@@ -114,8 +126,21 @@ namespace XSerializer
                     case XmlNodeType.Element:
                         if (reader.Name == _options.RootElementName)
                         {
-                            dictionary = _createDictionary();
-                            hasInstanceBeenCreated = true;
+                            if (reader.IsNil())
+                            {
+                                if (reader.IsEmptyElement)
+                                {
+                                    return null;
+                                }
+
+                                dictionary = null;
+                                hasInstanceBeenCreated = true;
+                            }
+                            else
+                            {
+                                dictionary = _createDictionary();
+                                hasInstanceBeenCreated = true;
+                            }
                         }
                         else if (reader.Name == "Item" && hasInstanceBeenCreated)
                         {
@@ -258,7 +283,10 @@ namespace XSerializer
 
         protected override void AddItemToDictionary(object dictionary, object key, object value)
         {
-            ((TDictionary)dictionary).Add(key, value);
+            if (dictionary != null)
+            {
+                ((TDictionary)dictionary).Add(key, value);
+            }
         }
     }
 
@@ -319,9 +347,12 @@ namespace XSerializer
 
         protected override void AddItemToDictionary(object dictionary, object key, object value)
         {
-            ((TDictionary)dictionary).Add(
-                typeof(TKey).IsValueType && key == null ? default(TKey) : (TKey)key,
-                typeof(TValue).IsValueType && value == null ? default(TValue) : (TValue)value);
+            if (dictionary != null)
+            {
+                ((TDictionary)dictionary).Add(
+                    typeof(TKey).IsValueType && key == null ? default(TKey) : (TKey)key,
+                    typeof(TValue).IsValueType && value == null ? default(TValue) : (TValue)value);
+            }
         }
     }
 }

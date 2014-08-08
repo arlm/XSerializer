@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="ArrayTests.cs" />
     <Compile Include="AttributeTests.cs" />
+    <Compile Include="NilTests.cs" />
     <Compile Include="PrimitiveArrayTests.cs" />
     <Compile Include="ConditionalSerializationTests.cs" />
     <Compile Include="AttributedPropertyTests.cs" />

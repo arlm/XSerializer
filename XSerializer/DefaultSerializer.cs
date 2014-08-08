@@ -66,7 +66,10 @@ namespace XSerializer
 
         public void Serialize(SerializationXmlTextWriter writer, T instance, ISerializeOptions options)
         {
-            _serializer.Serialize(writer, instance, options.Namespaces);
+            if (instance != null || options.ShouldEmitNil)
+            {
+                _serializer.Serialize(writer, instance, options.Namespaces);
+            }
         }
 
         void IXmlSerializerInternal.SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)

@@ -38,13 +38,8 @@ namespace XSerializer
 
         public void Serialize(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
         {
-            if (instance == null)
-            {
-                return;
-            }
-
             var expando = instance as ExpandoObject;
-            if (expando != null)
+            if (expando != null || instance == null)
             {
                 SerializeExpandoObject(writer, expando, options);
                 return;
@@ -71,18 +66,40 @@ namespace XSerializer
 
         public object Deserialize(XmlReader reader)
         {
+            var isNil = reader.IsNil();
+
+            if (isNil && reader.IsEmptyElement)
+            {
+                return null;
+            }
+
+            object deserializedObject;
+
             var type = reader.GetXsdType<object>(_options.ExtraTypes);
+
             if (type != null)
             {
                 var serializer = XmlSerializerFactory.Instance.GetSerializer(type, _options.WithRootElementName(reader.Name));
-                return serializer.DeserializeObject(reader);
+                deserializedObject = serializer.DeserializeObject(reader);
+            }
+            else
+            {
+                deserializedObject = DeserializeToDynamic(reader);
             }
 
-            return DeserializeToDynamic(reader);
+            return
+                isNil
+                    ? null
+                    : deserializedObject;
         }
 
         private void SerializeExpandoObject(SerializationXmlTextWriter writer, IDictionary<string, object> expando, ISerializeOptions options)
         {
+            if (expando == null && !options.ShouldEmitNil)
+            {
+                return;
+            }
+
             writer.WriteStartDocument();
             writer.WriteStartElement(_options.RootElementName);
             writer.WriteDefaultNamespaces();
@@ -90,6 +107,13 @@ namespace XSerializer
             if (!string.IsNullOrWhiteSpace(_options.DefaultNamespace))
             {
                 writer.WriteAttributeString("xmlns", null, null, _options.DefaultNamespace);
+            }
+
+            if (expando == null)
+            {
+                writer.WriteNilAttribute();
+                writer.WriteEndElement();
+                return;
             }
 
             foreach (var property in expando)
@@ -241,11 +265,6 @@ namespace XSerializer
 
             public void Serialize(SerializationXmlTextWriter writer, ExpandoObject instance, ISerializeOptions options)
             {
-                if (instance == null)
-                {
-                    return;
-                }
-
                 _serializer.SerializeExpandoObject(writer, instance, options);
             }
 

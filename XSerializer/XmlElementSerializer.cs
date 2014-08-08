@@ -34,10 +34,18 @@ namespace XSerializer
 
         public void SerializeObject(SerializationXmlTextWriter writer, object value, ISerializeOptions options)
         {
+            writer.WriteStartElement(_elementName);
+
             if (value != null)
             {
-                writer.WriteElementString(_elementName, _valueConverter.GetString(value, options));
+                writer.WriteValue(_valueConverter.GetString(value, options));
             }
+            else if (options.ShouldEmitNil)
+            {
+                writer.WriteNilAttribute();
+            }
+
+            writer.WriteEndElement();
         }
 
         public T Deserialize(XmlReader reader)
