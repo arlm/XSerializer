@@ -125,7 +125,7 @@ namespace XSerializer
             {
                 NodeType = NodeType.Text;
                 Name = propertyInfo.Name;
-                return () => XmlTextSerializer.GetSerializer(propertyInfo.PropertyType, redactAttribute);
+                return () => new XmlTextSerializer(propertyInfo.PropertyType, redactAttribute, options.ExtraTypes);
             }
 
             if (redactAttribute != null)

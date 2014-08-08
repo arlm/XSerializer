@@ -1,25 +1,27 @@
 ﻿using System;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Xml;
 
 namespace XSerializer
 {
     internal class XmlTextSerializer : IXmlSerializerInternal
     {
-        private static readonly ConcurrentDictionary<int, XmlTextSerializer> _map = new ConcurrentDictionary<int, XmlTextSerializer>();
-
         private readonly IValueConverter _valueConverter;
 
-        private XmlTextSerializer(Type type, RedactAttribute redactAttribute)
+        public XmlTextSerializer(Type type, RedactAttribute redactAttribute, IEnumerable<Type> extraTypes)
         {
-            _valueConverter = SimpleTypeValueConverter.Create(type, redactAttribute);
-        }
-
-        public static XmlTextSerializer GetSerializer(Type type, RedactAttribute redactAttribute)
-        {
-            return _map.GetOrAdd(
-                CreateKey(type, redactAttribute),
-                _ => new XmlTextSerializer(type, redactAttribute));
+            if (type == typeof(Enum))
+            {
+                _valueConverter = new EnumTypeValueConverter(redactAttribute, extraTypes);
+            }
+            else if (type == typeof(Type))
+            {
+                _valueConverter = new TypeTypeValueConverter(redactAttribute);
+            }
+            else
+            {
+                _valueConverter = SimpleTypeValueConverter.Create(type, redactAttribute);
+            }
         }
 
         public void SerializeObject(SerializationXmlTextWriter writer, object value, ISerializeOptions options)
@@ -33,21 +35,6 @@ namespace XSerializer
         public object DeserializeObject(XmlReader reader)
         {
             return _valueConverter.ParseString(reader.Value);
-        }
-
-        private static int CreateKey(Type type, RedactAttribute redactAttribute)
-        {
-            unchecked
-            {
-                var key = type.GetHashCode();
-
-                if (redactAttribute != null)
-                {
-                    key = (key * 397) ^ redactAttribute.GetHashCode();
-                }
-
-                return key;
-            }
         }
     }
 }

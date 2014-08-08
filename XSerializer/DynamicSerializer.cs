@@ -171,7 +171,7 @@ namespace XSerializer
                         }
                         break;
                     case XmlNodeType.Text:
-                        var stringValue = (string)XmlTextSerializer.GetSerializer(typeof(string), _options.RedactAttribute).DeserializeObject(reader);
+                        var stringValue = (string)new XmlTextSerializer(typeof(string), _options.RedactAttribute, _options.ExtraTypes).DeserializeObject(reader);
                         hasInstanceBeenCreated = true;
 
                         bool boolValue;

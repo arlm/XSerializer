@@ -296,7 +296,7 @@ namespace XSerializer
 
             if (instanceType.IsPrimitiveLike() || instanceType.IsNullablePrimitiveLike())
             {
-                XmlTextSerializer.GetSerializer(instanceType, _options.RedactAttribute).SerializeObject(writer, instance, options);
+                new XmlTextSerializer(instanceType, _options.RedactAttribute, _options.ExtraTypes).SerializeObject(writer, instance, options);
             }
             else
             {

@@ -15,6 +15,9 @@ namespace XSerializer
         private static readonly Lazy<IValueConverter> _dateTimeConverter =
             new Lazy<IValueConverter>(() => SimpleTypeValueConverter.Create(typeof(DateTime), null));
 
+        private static readonly Lazy<IValueConverter> _typeConverter =
+            new Lazy<IValueConverter>(() => new TypeTypeValueConverter(null));
+
         /// <summary>
         /// Redacts the clear-text.
         /// </summary>
@@ -85,6 +88,24 @@ namespace XSerializer
             return redactEnabled
                 ? Numbers.Replace(_dateTimeConverter.Value.GetString(dateTimeValue, null), "1")
                 : _dateTimeConverter.Value.GetString(dateTimeValue, null);
+        }
+
+        /// <summary>
+        /// Redacts the string representation of <paramref name="typeValue"/>.
+        /// </summary>
+        /// <param name="typeValue">A <see cref="Type"/>.</param>
+        /// <param name="redactEnabled">Whether redaction is currently enabled.</param>
+        /// <returns>The redacted text.</returns>
+        public string Redact(Type typeValue, bool redactEnabled)
+        {
+            if (typeValue == null)
+            {
+                return null;
+            }
+
+            return redactEnabled
+                ? "XXXXXXXXXX"
+                : _typeConverter.Value.GetString(typeValue, null);
         }
 
         /// <summary>

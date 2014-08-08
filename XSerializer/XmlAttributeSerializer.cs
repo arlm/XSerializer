@@ -14,7 +14,11 @@ namespace XSerializer
 
             if (type == typeof(Enum))
             {
-                _valueConverter = new EnumTypeValueConverter(redactAttribute, options);
+                _valueConverter = new EnumTypeValueConverter(redactAttribute, options.ExtraTypes);
+            }
+            else if (type == typeof(Type))
+            {
+                _valueConverter = new TypeTypeValueConverter(options.RedactAttribute);
             }
             else
             {

@@ -9,10 +9,10 @@ namespace XSerializer
         private readonly RedactAttribute _redactAttribute;
         private readonly IEnumerable<Type> _enumExtraTypes;
 
-        public EnumTypeValueConverter(RedactAttribute redactAttribute, IXmlSerializerOptions options)
+        public EnumTypeValueConverter(RedactAttribute redactAttribute, IEnumerable<Type> extraTypes)
         {
             _redactAttribute = redactAttribute;
-            _enumExtraTypes = options.ExtraTypes.Where(t => t.IsEnum).ToList();
+            _enumExtraTypes = extraTypes.Where(t => t.IsEnum).ToList();
         }
 
         public object ParseString(string value)
