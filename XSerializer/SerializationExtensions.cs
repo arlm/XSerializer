@@ -413,9 +413,24 @@ namespace XSerializer
         internal static bool IsNullablePrimitiveLike(this Type type)
         {
             return
-                type.IsGenericType
-                && type.GetGenericTypeDefinition() == typeof(Nullable<>)
+                type.IsNullableType()
                 && type.GetGenericArguments()[0].IsPrimitiveLike();
+        }
+
+        internal static bool IsNullableType(this Type type)
+        {
+            return type.IsGenericType
+                   && type.GetGenericTypeDefinition() == typeof(Nullable<>);
+        }
+
+        internal static bool IsReferenceType(this Type type)
+        {
+            return !type.IsValueType;
+        }
+
+        internal static object GetUninitializedObject(this Type type)
+        {
+            return FormatterServices.GetUninitializedObject(type);
         }
 
         public static bool IsAnonymous(this object instance)

@@ -762,7 +762,10 @@ namespace XSerializer
                         else
                         {
                             var parameterType = _parameters[i].ParameterType;
-                            value = parameterType.IsValueType ? FormatterServices.GetUninitializedObject(parameterType) : null;
+                            value =
+                                parameterType.IsReferenceType() || parameterType.IsNullableType()
+                                    ? null
+                                    : parameterType.GetUninitializedObject();
                         }
                     }
 

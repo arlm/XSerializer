@@ -58,6 +58,18 @@ namespace XSerializer.Tests
             Assert.That(roundTrip.Baz, Is.EqualTo(bar.Baz));
         }
 
+        [Test]
+        public void VerifyThatNotProvidingAnXmlElementForANullableReadonlyPropertyResultsInNull()
+        {
+            var serializer = new XmlSerializer<Baz>(x => x.Indent());
+
+            var xml = @"<Baz/>";
+
+            var baz = serializer.Deserialize(xml);
+
+            Assert.That(baz.Bar, Is.Null); // Should not be 0.
+        }
+
         public class Foo
         {
             public Foo(Tuple<int> thing)
@@ -84,6 +96,21 @@ namespace XSerializer.Tests
 
             public string Baz { get { return _baz; } }
             public Dictionary<string, bool> Qux { get; set; } 
+        }
+
+        public class Baz
+        {
+            private readonly int? _bar;
+
+            public Baz(int? bar)
+            {
+                _bar = bar;
+            }
+
+            public int? Bar
+            {
+                get { return _bar; }
+            }
         }
     }
 }
