@@ -38,17 +38,24 @@ namespace XSerializer
 
         public void SerializeObject(SerializationXmlTextWriter writer, object value, ISerializeOptions options)
         {
-            writer.WriteStartElement(_elementName);
+            var wasEmptyWriter = writer.IsEmpty;
+            writer.WriteStartDocument();
 
             if (value != null)
             {
-                writer.WriteValue(_valueConverter.GetString(value, options));
+                WriteElement(writer, w => w.WriteValue(_valueConverter.GetString(value, options)));
             }
-            else if (options.ShouldEmitNil)
+            else if (options.ShouldEmitNil || wasEmptyWriter)
             {
-                writer.WriteNilAttribute();
+                WriteElement(writer, w => w.WriteNilAttribute());
             }
+        }
 
+        private void WriteElement(SerializationXmlTextWriter writer, Action<SerializationXmlTextWriter> writeValueAction)
+        {
+            writer.WriteStartElement(_elementName);
+            writer.WriteDefaultNamespaces();
+            writeValueAction(writer);
             writer.WriteEndElement();
         }
 
@@ -56,7 +63,7 @@ namespace XSerializer
         {
             if (typeof(T) == typeof(Enum) || typeof(T) == typeof(Type))
             {
-                while (reader.NodeType == XmlNodeType.None)
+                while (reader.NodeType != XmlNodeType.Element)
                 {
                     reader.Read();
                 }

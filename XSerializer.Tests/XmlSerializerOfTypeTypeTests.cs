@@ -35,6 +35,18 @@ namespace XSerializer.Tests
             Assert.That(roundTrip, Is.EqualTo(type));
         }
 
+        [Test]
+        public void ANullPropertyValueShouldNotSerializeAsAnEmptyElement()
+        {
+            var serializer = new XmlSerializer<BlackHole>(x => x.Indent());
+
+            var blackHole = new BlackHole { Type = null };
+
+            var xml = serializer.Serialize(blackHole);
+
+            Assert.That(xml, Is.Not.StringMatching(@"<Type\s*/>"));
+        }
+
         public class BlackHole
         {
             public Type Type { get; set; }
