@@ -1,0 +1,1 @@
+nuget pack ..\XSerializer.WebApi\XSerializer.WebApi.csproj -Properties Configuration=Release
