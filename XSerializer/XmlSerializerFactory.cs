@@ -51,7 +51,9 @@ namespace XSerializer
 
                     if (!TryGetDefaultSerializer(options, out serializer))
                     {
-                        if (type.IsPrimitiveLike() || type.IsNullablePrimitiveLike())
+                        if (type.IsPrimitiveLike()
+                            || type.IsNullablePrimitiveLike()
+                            || ValueTypes.IsRegistered(type))
                         {
                             serializer = new XmlElementSerializer<T>(options);
                         }
@@ -62,14 +64,6 @@ namespace XSerializer
                         else if (type.IsAssignableToNonGenericIEnumerable() || type.IsAssignableToGenericIEnumerable())
                         {
                             serializer = (IXmlSerializerInternal<T>)ListSerializer.GetSerializer(type, options, null);
-                        }
-                        else if (type == typeof(Enum))
-                        {
-                            serializer = new XmlElementSerializer<T>(options);
-                        }
-                        else if (type == typeof(Type))
-                        {
-                            serializer = new XmlElementSerializer<T>(options);
                         }
                         else
                         {
@@ -95,12 +89,7 @@ namespace XSerializer
 
         private bool ShouldNotAttemptToUseDefaultSerializer(Type type, IXmlSerializerOptions options)
         {
-            if (type == typeof(Type))
-            {
-                return true;
-            }
-
-            if (type == typeof(Enum))
+            if (ValueTypes.IsRegistered(type))
             {
                 return true;
             }

@@ -11,23 +11,15 @@ namespace XSerializer
 
         public XmlElementSerializer(IXmlSerializerOptions options)
         {
-            if (!typeof(T).IsPrimitiveLike() && !typeof(T).IsNullablePrimitiveLike() && typeof(T) != typeof(Enum) && typeof(T) != typeof(Type))
+            if (!typeof(T).IsPrimitiveLike() && !typeof(T).IsNullablePrimitiveLike() && !ValueTypes.IsRegistered(typeof(T)))
             {
-                throw new InvalidOperationException("Generic argument of XmlElementSerializer<T> must be an primitive, like a primitive (e.g. Guid, DateTime), a nullable of either, or the Enum or Type type.");
+                throw new InvalidOperationException("Generic argument of XmlElementSerializer<T> must be an primitive, like a primitive (e.g. Guid, DateTime), a nullable of either, or one of: Enum, Type, or Uri.");
             }
 
             _elementName = options.RootElementName;
             _alwaysEmitNil = options.ShouldAlwaysEmitNil;
 
-            if (typeof(T) == typeof(Enum))
-            {
-                _valueConverter = new EnumTypeValueConverter(options.RedactAttribute, options.ExtraTypes);
-            }
-            else if (typeof(T) == typeof(Type))
-            {
-                _valueConverter = new TypeTypeValueConverter(options.RedactAttribute);
-            }
-            else
+            if (!ValueTypes.TryGetValueConverter(typeof(T), options.RedactAttribute, options.ExtraTypes, out _valueConverter))
             {
                 _valueConverter = SimpleTypeValueConverter.Create(typeof(T), options.RedactAttribute);
             }
@@ -63,7 +55,7 @@ namespace XSerializer
 
         public T Deserialize(XmlReader reader)
         {
-            if (typeof(T) == typeof(Enum) || typeof(T) == typeof(Type))
+            if (ValueTypes.IsRegistered(typeof(T)))
             {
                 while (reader.NodeType != XmlNodeType.Element)
                 {

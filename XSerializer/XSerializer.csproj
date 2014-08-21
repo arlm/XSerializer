@@ -54,7 +54,9 @@
     <Compile Include="EnumTypeValueConverter.cs" />
     <Compile Include="IValueConverter.cs" />
     <Compile Include="IXmlSerializer.cs" />
+    <Compile Include="ValueTypes.cs" />
     <Compile Include="TypeTypeValueConverter.cs" />
+    <Compile Include="UriTypeValueConverter.cs" />
     <Compile Include="XmlElementSerializer.cs" />
     <Compile Include="ISerializeOptions.cs" />
     <Compile Include="IXmlSerializerOptions.cs" />

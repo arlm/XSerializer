@@ -12,15 +12,7 @@ namespace XSerializer
         {
             _attributeName = attributeName;
 
-            if (type == typeof(Enum))
-            {
-                _valueConverter = new EnumTypeValueConverter(redactAttribute, options.ExtraTypes);
-            }
-            else if (type == typeof(Type))
-            {
-                _valueConverter = new TypeTypeValueConverter(options.RedactAttribute);
-            }
-            else
+            if (!ValueTypes.TryGetValueConverter(type, redactAttribute, options.ExtraTypes, out _valueConverter))
             {
                 _valueConverter = SimpleTypeValueConverter.Create(type, redactAttribute);
             }

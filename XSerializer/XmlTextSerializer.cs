@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Xml;
 
 namespace XSerializer
@@ -8,17 +7,9 @@ namespace XSerializer
     {
         private readonly IValueConverter _valueConverter;
 
-        public XmlTextSerializer(Type type, RedactAttribute redactAttribute, IEnumerable<Type> extraTypes)
+        public XmlTextSerializer(Type type, RedactAttribute redactAttribute, Type[] extraTypes)
         {
-            if (type == typeof(Enum))
-            {
-                _valueConverter = new EnumTypeValueConverter(redactAttribute, extraTypes);
-            }
-            else if (type == typeof(Type))
-            {
-                _valueConverter = new TypeTypeValueConverter(redactAttribute);
-            }
-            else
+            if (!ValueTypes.TryGetValueConverter(type, redactAttribute, extraTypes, out _valueConverter))
             {
                 _valueConverter = SimpleTypeValueConverter.Create(type, redactAttribute);
             }

@@ -4,11 +4,18 @@ namespace XSerializer
 {
     internal class TypeTypeValueConverter : IValueConverter
     {
+        private static readonly Lazy<IValueConverter> _default = new Lazy<IValueConverter>(() => new TypeTypeValueConverter(null));
+
         private readonly RedactAttribute _redactAttribute;
 
         public TypeTypeValueConverter(RedactAttribute redactAttribute)
         {
             _redactAttribute = redactAttribute;
+        }
+
+        public static IValueConverter Default
+        {
+            get { return _default.Value; }
         }
 
         public object ParseString(string value)
