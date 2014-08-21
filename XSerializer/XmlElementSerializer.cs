@@ -6,6 +6,7 @@ namespace XSerializer
     internal class XmlElementSerializer<T> : IXmlSerializerInternal<T>
     {
         private readonly string _elementName;
+        private readonly bool _alwaysEmitNil;
         private readonly IValueConverter _valueConverter;
 
         public XmlElementSerializer(IXmlSerializerOptions options)
@@ -16,6 +17,7 @@ namespace XSerializer
             }
 
             _elementName = options.RootElementName;
+            _alwaysEmitNil = options.ShouldAlwaysEmitNil;
 
             if (typeof(T) == typeof(Enum))
             {
@@ -45,7 +47,7 @@ namespace XSerializer
             {
                 WriteElement(writer, w => w.WriteValue(_valueConverter.GetString(value, options)));
             }
-            else if (options.ShouldEmitNil || wasEmptyWriter)
+            else if (_alwaysEmitNil || options.ShouldEmitNil || wasEmptyWriter)
             {
                 WriteElement(writer, w => w.WriteNilAttribute());
             }
@@ -54,7 +56,7 @@ namespace XSerializer
         private void WriteElement(SerializationXmlTextWriter writer, Action<SerializationXmlTextWriter> writeValueAction)
         {
             writer.WriteStartElement(_elementName);
-            writer.WriteDefaultNamespaces();
+            writer.WriteDefaultDocumentNamespaces();
             writeValueAction(writer);
             writer.WriteEndElement();
         }
@@ -67,6 +69,11 @@ namespace XSerializer
                 {
                     reader.Read();
                 }
+            }
+
+            if (reader.IsNil())
+            {
+                return default(T);
             }
 
             var value = reader.ReadString();

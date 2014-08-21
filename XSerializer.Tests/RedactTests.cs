@@ -13,11 +13,11 @@ namespace XSerializer.Tests
         }
         
         [Test]
-        public void DefaultSerializerIsUsedIfRedactAttributeDoesNotExist()
+        public void CustomSerializerIsUsedIfRedactAttributeDoesNotExist()
         {
             var serializer = new XmlSerializer<ShouldNotRedactThis>();
 
-            Assert.That(serializer.Serializer, Is.InstanceOf<DefaultSerializer<ShouldNotRedactThis>>());
+            Assert.That(serializer.Serializer, Is.InstanceOf<CustomSerializer<ShouldNotRedactThis>>());
         }
         
         public class ShouldRedactThis

@@ -26,7 +26,7 @@ namespace XSerializer
 
             _options = options;
             _itemElementName = string.IsNullOrEmpty(itemElementName) ? DefaultItemElementName : itemElementName;
-            _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, _options.WithRootElementName(_itemElementName));
+            _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, _options.WithRootElementName(_itemElementName).AlwaysEmitNil());
 
             if (CollectionType.IsArray)
             {
@@ -103,12 +103,8 @@ namespace XSerializer
             {
                 writer.WriteStartDocument();
                 writer.WriteStartElement(_options.RootElementName);
-                writer.WriteDefaultNamespaces();
-
-                if (!string.IsNullOrWhiteSpace(_options.DefaultNamespace))
-                {
-                    writer.WriteAttributeString("xmlns", null, null, _options.DefaultNamespace);
-                }
+                writer.WriteDefaultDocumentNamespaces();
+                writer.WriteDefaultNamespace(_options.DefaultNamespace).Dispose();
             }
 
             if (instance == null)
@@ -237,7 +233,7 @@ namespace XSerializer
 
             var deserialized = serializer.DeserializeObject(reader);
 
-            shouldIssueRead = !(serializer is DefaultSerializer);
+            shouldIssueRead = true;
 
             return deserialized;
         }

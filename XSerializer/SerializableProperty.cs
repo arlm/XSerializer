@@ -64,7 +64,7 @@ namespace XSerializer
             }
 
             _shouldSerializeFunc = GetShouldSerializeFunc(propertyInfo);
-            _readsPastLastElement = () => _serializer.Value is DefaultSerializer;
+            _readsPastLastElement = () => false;
             _serializer = new Lazy<IXmlSerializerInternal>(GetCreateSerializerFunc(propertyInfo, options));
         }
 
