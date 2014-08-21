@@ -11,9 +11,9 @@ namespace XSerializer
 
         public XmlElementSerializer(IXmlSerializerOptions options)
         {
-            if (!typeof(T).IsPrimitiveLike() && !typeof(T).IsNullablePrimitiveLike() && typeof(T) != typeof(Enum) && typeof(T) != typeof(Type))
+            if (!typeof(T).IsPrimitiveLike() && !typeof(T).IsNullablePrimitiveLike() && typeof(T) != typeof(Enum) && typeof(T) != typeof(Type) && typeof(T) != typeof(Uri))
             {
-                throw new InvalidOperationException("Generic argument of XmlElementSerializer<T> must be an primitive, like a primitive (e.g. Guid, DateTime), a nullable of either, or the Enum or Type type.");
+                throw new InvalidOperationException("Generic argument of XmlElementSerializer<T> must be an primitive, like a primitive (e.g. Guid, DateTime), a nullable of either, or one of: Enum, Type, or Uri.");
             }
 
             _elementName = options.RootElementName;
@@ -67,7 +67,9 @@ namespace XSerializer
 
         public T Deserialize(XmlReader reader)
         {
-            if (typeof(T) == typeof(Enum) || typeof(T) == typeof(Type))
+            if (typeof(T) == typeof(Enum)
+                || typeof(T) == typeof(Type)
+                || typeof(T) == typeof(Uri))
             {
                 while (reader.NodeType != XmlNodeType.Element)
                 {

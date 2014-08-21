@@ -83,6 +83,7 @@
     <Compile Include="TestXmlSerializerOptions.cs" />
     <Compile Include="XmlRootAttributeTests.cs" />
     <Compile Include="XmlSerializerFactoryTests.cs" />
+    <Compile Include="XmlSerializerOfTypeUriTests.cs" />
     <Compile Include="XmlSerializerOfTypeTypeTests.cs" />
     <Compile Include="XmlToObject.cs" />
     <Compile Include="XsdTypeTests.cs" />
