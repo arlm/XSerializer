@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <title>XSerializer - Serialize *anything*</title>
+        <id>$id$</id>
+        <version>$version$</version>
+        <authors>Brian Friesen</authors>
+        <owners>Brian Friesen</owners>
+        <description>$description$</description>
+        <summary>A .NET XML serializer that serializes and deserializes anything.</summary>
+        <tags>xmlserializer xmlserialization xmlserialize serializer serialization serialize xml interface dynamic dictionary</tags>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <licenseUrl>https://github.com/QuickenLoans/XSerializer/blob/master/LICENSE.md</licenseUrl>
+        <projectUrl>https://github.com/QuickenLoans/XSerializer</projectUrl>
+    </metadata>
+    <files>
+    </files>
+</package>
