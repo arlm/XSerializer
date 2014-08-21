@@ -75,7 +75,7 @@ namespace XSerializer.Tests.Performance
             customSerializerStopwatch.Stop();
 
             Console.WriteLine("XmlSerializer Elapsed Time: {0}", xmlSerializerStopwatch.Elapsed);
-            Console.WriteLine("CustomSerializder Elapsed Time: {0}", customSerializerStopwatch.Elapsed);
+            Console.WriteLine("CustomSerializer Elapsed Time: {0}", customSerializerStopwatch.Elapsed);
         } 
     }
 }
