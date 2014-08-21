@@ -56,7 +56,7 @@ namespace XSerializer
         private void WriteElement(SerializationXmlTextWriter writer, Action<SerializationXmlTextWriter> writeValueAction)
         {
             writer.WriteStartElement(_elementName);
-            writer.WriteDefaultNamespaces();
+            writer.WriteDefaultDocumentNamespaces();
             writeValueAction(writer);
             writer.WriteEndElement();
         }

@@ -273,40 +273,39 @@ namespace XSerializer
 
             writer.WriteStartDocument();
             writer.WriteStartElement(_options.RootElementName);
-            writer.WriteDefaultNamespaces();
+            writer.WriteDefaultDocumentNamespaces();
 
-            if (!string.IsNullOrWhiteSpace(_options.DefaultNamespace))
+            using (writer.WriteDefaultNamespace(_options.DefaultNamespace))
             {
-                writer.WriteAttributeString("xmlns", null, null, _options.DefaultNamespace);
-            }
-
-            if (instance == null)
-            {
-                writer.WriteNilAttribute();
-                writer.WriteEndElement();
-                return;
-            }
-
-            var instanceType = instance.GetType();
-
-            if (typeof(T).IsInterface || typeof(T).IsAbstract || typeof(T) != instanceType)
-            {
-                writer.WriteAttributeString("xsi", "type", null, instance.GetType().GetXsdType());
-            }
-
-            if (instanceType.IsPrimitiveLike() || instanceType.IsNullablePrimitiveLike())
-            {
-                new XmlTextSerializer(instanceType, _options.RedactAttribute, _options.ExtraTypes).SerializeObject(writer, instance, options);
-            }
-            else
-            {
-                foreach (var property in _serializablePropertiesMap[instanceType])
+                if (instance == null)
                 {
-                    property.WriteValue(writer, instance, options);
+                    writer.WriteNilAttribute();
+                    writer.WriteEndElement();
+                    return;
                 }
-            }
 
-            writer.WriteEndElement();
+                var instanceType = instance.GetType();
+
+                if (typeof(T).IsInterface || typeof(T).IsAbstract || typeof(T) != instanceType)
+                {
+                    writer.WriteAttributeString("xsi", "type", null, instance.GetType().GetXsdType());
+                }
+
+                if (instanceType.IsPrimitiveLike() || instanceType.IsNullablePrimitiveLike())
+                {
+                    var xmlTextSerializer = new XmlTextSerializer(instanceType, _options.RedactAttribute, _options.ExtraTypes);
+                    xmlTextSerializer.SerializeObject(writer, instance, options);
+                }
+                else
+                {
+                    foreach (var property in _serializablePropertiesMap[instanceType])
+                    {
+                        property.WriteValue(writer, instance, options);
+                    }
+                }
+
+                writer.WriteEndElement();
+            }
         }
 
         void IXmlSerializerInternal.SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)

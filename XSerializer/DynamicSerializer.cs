@@ -102,42 +102,40 @@ namespace XSerializer
 
             writer.WriteStartDocument();
             writer.WriteStartElement(_options.RootElementName);
-            writer.WriteDefaultNamespaces();
+            writer.WriteDefaultDocumentNamespaces();
 
-            if (!string.IsNullOrWhiteSpace(_options.DefaultNamespace))
+            using (writer.WriteDefaultNamespace(_options.DefaultNamespace))
             {
-                writer.WriteAttributeString("xmlns", null, null, _options.DefaultNamespace);
-            }
+                if (expando == null)
+                {
+                    writer.WriteNilAttribute();
+                    writer.WriteEndElement();
+                    return;
+                }
 
-            if (expando == null)
-            {
-                writer.WriteNilAttribute();
+                foreach (var property in expando)
+                {
+                    if (property.Value == null)
+                    {
+                        continue;
+                    }
+
+                    IXmlSerializerInternal serializer;
+
+                    if (property.Value is ExpandoObject)
+                    {
+                        serializer = DynamicSerializer.GetSerializer<ExpandoObject>(_options.WithRootElementName(property.Key));
+                    }
+                    else
+                    {
+                        serializer = CustomSerializer.GetSerializer(property.Value.GetType(), _options.WithRootElementName(property.Key));
+                    }
+
+                    serializer.SerializeObject(writer, property.Value, options);
+                }
+
                 writer.WriteEndElement();
-                return;
             }
-
-            foreach (var property in expando)
-            {
-                if (property.Value == null)
-                {
-                    continue;
-                }
-
-                IXmlSerializerInternal serializer;
-
-                if (property.Value is ExpandoObject)
-                {
-                    serializer = DynamicSerializer.GetSerializer<ExpandoObject>(_options.WithRootElementName(property.Key));
-                }
-                else
-                {
-                    serializer = CustomSerializer.GetSerializer(property.Value.GetType(), _options.WithRootElementName(property.Key));
-                }
-
-                serializer.SerializeObject(writer, property.Value, options);
-            }
-
-            writer.WriteEndElement();
         }
 
         private dynamic DeserializeToDynamic(XmlReader reader)

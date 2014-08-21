@@ -103,12 +103,8 @@ namespace XSerializer
             {
                 writer.WriteStartDocument();
                 writer.WriteStartElement(_options.RootElementName);
-                writer.WriteDefaultNamespaces();
-
-                if (!string.IsNullOrWhiteSpace(_options.DefaultNamespace))
-                {
-                    writer.WriteAttributeString("xmlns", null, null, _options.DefaultNamespace);
-                }
+                writer.WriteDefaultDocumentNamespaces();
+                writer.WriteDefaultNamespace(_options.DefaultNamespace).Dispose();
             }
 
             if (instance == null)

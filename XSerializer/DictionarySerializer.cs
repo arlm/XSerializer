@@ -51,7 +51,6 @@ namespace XSerializer
             {
                 throw new ArgumentException("Unable to find suitable dictionary to create.");
             }
-
             // ReSharper restore DoNotCallOverridableMethodsInConstructor
         }
 
@@ -72,38 +71,36 @@ namespace XSerializer
 
             writer.WriteStartDocument();
             writer.WriteStartElement(_options.RootElementName);
-            writer.WriteDefaultNamespaces();
+            writer.WriteDefaultDocumentNamespaces();
 
-            if (!string.IsNullOrWhiteSpace(_options.DefaultNamespace))
+            using (writer.WriteDefaultNamespace(_options.DefaultNamespace))
             {
-                writer.WriteAttributeString("xmlns", null, null, _options.DefaultNamespace);
-            }
-
-            if (instance == null)
-            {
-                writer.WriteNilAttribute();
-                writer.WriteEndElement();
-                return;
-            }
-
-            foreach (var item in GetDictionaryEntries(instance))
-            {
-                writer.WriteStartElement("Item");
-
-                if (item.Key != null)
+                if (instance == null)
                 {
-                    _keySerializer.SerializeObject(writer, item.Key, options);
+                    writer.WriteNilAttribute();
+                    writer.WriteEndElement();
+                    return;
                 }
 
-                if (item.Value != null)
+                foreach (var item in GetDictionaryEntries(instance))
                 {
-                    _valueSerializer.SerializeObject(writer, item.Value, options);
+                    writer.WriteStartElement("Item");
+
+                    if (item.Key != null)
+                    {
+                        _keySerializer.SerializeObject(writer, item.Key, options);
+                    }
+
+                    if (item.Value != null)
+                    {
+                        _valueSerializer.SerializeObject(writer, item.Value, options);
+                    }
+
+                    writer.WriteEndElement();
                 }
 
                 writer.WriteEndElement();
             }
-
-            writer.WriteEndElement();
         }
 
         public object DeserializeObject(XmlReader reader)
