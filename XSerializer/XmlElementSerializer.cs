@@ -69,6 +69,11 @@ namespace XSerializer
                 }
             }
 
+            if (reader.IsNil())
+            {
+                return default(T);
+            }
+
             var value = reader.ReadString();
             return (T)_valueConverter.ParseString(value);
         }
