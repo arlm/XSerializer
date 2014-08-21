@@ -18,6 +18,9 @@ namespace XSerializer
         private static readonly Lazy<IValueConverter> _typeConverter =
             new Lazy<IValueConverter>(() => new TypeTypeValueConverter(null));
 
+        private static readonly Lazy<IValueConverter> _uriConverter =
+            new Lazy<IValueConverter>(() => new UriTypeValueConverter(null));
+
         /// <summary>
         /// Redacts the clear-text.
         /// </summary>
@@ -106,6 +109,24 @@ namespace XSerializer
             return redactEnabled
                 ? "XXXXXXXXXX"
                 : _typeConverter.Value.GetString(typeValue, null);
+        }
+
+        /// <summary>
+        /// Redacts the string representation of <paramref name="typeValue"/>.
+        /// </summary>
+        /// <param name="uriValue">A <see cref="Uri"/>.</param>
+        /// <param name="redactEnabled">Whether redaction is currently enabled.</param>
+        /// <returns>The redacted text.</returns>
+        public string Redact(Uri uriValue, bool redactEnabled)
+        {
+            if (uriValue == null)
+            {
+                return null;
+            }
+
+            return redactEnabled
+                ? "XXXXXXXXXX"
+                : _uriConverter.Value.GetString(uriValue, null);
         }
 
         /// <summary>

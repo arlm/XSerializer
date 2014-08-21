@@ -18,6 +18,10 @@ namespace XSerializer
             {
                 _valueConverter = new TypeTypeValueConverter(redactAttribute);
             }
+            else if (type == typeof(Uri))
+            {
+                _valueConverter = new UriTypeValueConverter(redactAttribute);
+            }
             else
             {
                 _valueConverter = SimpleTypeValueConverter.Create(type, redactAttribute);
