@@ -1,0 +1,1 @@
+nuget pack ..\XSerializer\XSerializer.csproj -Properties Configuration=Release
