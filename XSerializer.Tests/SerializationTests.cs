@@ -21,14 +21,12 @@ namespace XSerializer.Tests
             XmlSerializerNamespaces namespaces)
         {
             var defaultSerializer = 
-                (IXmlSerializerInternal)Activator.CreateInstance(
-                    typeof(DefaultSerializer<>).MakeGenericType(instance.GetType()),
-                    new TestXmlSerializerOptions
-                    {
-                        DefaultNamespace = defaultNamespace,
-                        ExtraTypes = extraTypes,
-                        RootElementName = rootElementName
-                    });
+                new System.Xml.Serialization.XmlSerializer(
+                    instance.GetType(),
+                    null,
+                    extraTypes,
+                    string.IsNullOrWhiteSpace(rootElementName) ? null : new XmlRootAttribute(rootElementName),
+                    defaultNamespace);
             var customSerializer = 
                 (IXmlSerializerInternal)Activator.CreateInstance(
                     typeof(CustomSerializer<>).MakeGenericType(instance.GetType()),
@@ -76,14 +74,12 @@ namespace XSerializer.Tests
             IEnumerable<Tuple<string, string>> defaultXmlReplacements)
         {
             var defaultSerializer =
-                (IXmlSerializerInternal)Activator.CreateInstance(
-                    typeof(DefaultSerializer<>).MakeGenericType(instanceWithAbstract.GetType()),
-                    new TestXmlSerializerOptions
-                    {
-                        DefaultNamespace = defaultNamespace,
-                        ExtraTypes = extraTypes,
-                        RootElementName = rootElementName
-                    });
+                new System.Xml.Serialization.XmlSerializer(
+                    instanceWithAbstract.GetType(),
+                    null,
+                    extraTypes,
+                    string.IsNullOrWhiteSpace(rootElementName) ? null : new XmlRootAttribute(rootElementName),
+                    defaultNamespace);
             var customSerializer =
                 (IXmlSerializerInternal)Activator.CreateInstance(
                     typeof(CustomSerializer<>).MakeGenericType(instanceWithInterface.GetType()),

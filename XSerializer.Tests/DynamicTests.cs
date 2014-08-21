@@ -46,10 +46,10 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void AClassWithoutADynamicOrObjectPropertyUsesDefaultSerializerIfLegal()
+        public void AClassWithoutADynamicOrObjectPropertyUsesCustomSerializer()
         {
             var xmlSerializer = new XmlSerializer<FooWithoutDynamicOrObjectProperty>();
-            Assert.That(xmlSerializer.Serializer, Is.InstanceOf<DefaultSerializer<FooWithoutDynamicOrObjectProperty>>());
+            Assert.That(xmlSerializer.Serializer, Is.InstanceOf<CustomSerializer<FooWithoutDynamicOrObjectProperty>>());
         }
 
         [Test]

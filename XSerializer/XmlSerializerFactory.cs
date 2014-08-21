@@ -89,8 +89,8 @@ namespace XSerializer
                 return false;
             }
 
-            serializer = DefaultSerializer.GetSerializer<T>(options);
-            return serializer != null;
+            serializer = null;
+            return false;
         }
 
         private bool ShouldNotAttemptToUseDefaultSerializer(Type type, IXmlSerializerOptions options)

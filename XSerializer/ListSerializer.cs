@@ -237,7 +237,7 @@ namespace XSerializer
 
             var deserialized = serializer.DeserializeObject(reader);
 
-            shouldIssueRead = !(serializer is DefaultSerializer);
+            shouldIssueRead = true;
 
             return deserialized;
         }
