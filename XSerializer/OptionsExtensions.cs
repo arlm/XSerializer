@@ -14,7 +14,8 @@ namespace XSerializer
                 ExtraTypes = options.ExtraTypes,
                 RootElementName = rootElementName,
                 RedactAttribute = options.RedactAttribute,
-                TreatEmptyElementAsString = options.TreatEmptyElementAsString
+                TreatEmptyElementAsString = options.TreatEmptyElementAsString,
+                ShouldAlwaysEmitNil = options.ShouldAlwaysEmitNil
             };
         }
 
@@ -31,7 +32,8 @@ namespace XSerializer
                 ExtraTypes = (options.ExtraTypes ?? new Type[0]).Concat(additionalExtraTypes).Distinct().ToArray(),
                 RootElementName = options.RootElementName,
                 RedactAttribute = options.RedactAttribute,
-                TreatEmptyElementAsString = options.TreatEmptyElementAsString
+                TreatEmptyElementAsString = options.TreatEmptyElementAsString,
+                ShouldAlwaysEmitNil = options.ShouldAlwaysEmitNil
             };
         }
 
@@ -43,7 +45,21 @@ namespace XSerializer
                 ExtraTypes = options.ExtraTypes,
                 RootElementName = options.RootElementName,
                 RedactAttribute = redactAttribute,
-                TreatEmptyElementAsString = options.TreatEmptyElementAsString
+                TreatEmptyElementAsString = options.TreatEmptyElementAsString,
+                ShouldAlwaysEmitNil = options.ShouldAlwaysEmitNil
+            };
+        }
+
+        public static IXmlSerializerOptions AlwaysEmitNil(this IXmlSerializerOptions options)
+        {
+            return new XmlSerializerOptions
+            {
+                DefaultNamespace = options.DefaultNamespace,
+                ExtraTypes = options.ExtraTypes,
+                RootElementName = options.RootElementName,
+                RedactAttribute = options.RedactAttribute,
+                TreatEmptyElementAsString = options.TreatEmptyElementAsString,
+                ShouldAlwaysEmitNil = true
             };
         }
 
@@ -54,6 +70,7 @@ namespace XSerializer
             public string RootElementName { get; set; }
             public RedactAttribute RedactAttribute { get; set; }
             public bool TreatEmptyElementAsString { get; set; }
+            public bool ShouldAlwaysEmitNil { get; set; }
         }
     }
 }

@@ -26,7 +26,7 @@ namespace XSerializer
 
             _options = options;
             _itemElementName = string.IsNullOrEmpty(itemElementName) ? DefaultItemElementName : itemElementName;
-            _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, _options.WithRootElementName(_itemElementName));
+            _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, _options.WithRootElementName(_itemElementName).AlwaysEmitNil());
 
             if (CollectionType.IsArray)
             {

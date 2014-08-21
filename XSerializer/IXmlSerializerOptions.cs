@@ -9,5 +9,6 @@ namespace XSerializer
         string RootElementName { get; }
         RedactAttribute RedactAttribute { get; }
         bool TreatEmptyElementAsString { get; }
+        bool ShouldAlwaysEmitNil { get; }
     }
 }

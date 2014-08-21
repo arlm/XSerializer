@@ -50,6 +50,12 @@ namespace XSerializer
         Type[] IXmlSerializerOptions.ExtraTypes { get { return _extraTypes; } }
         RedactAttribute IXmlSerializerOptions.RedactAttribute { get { return null; } }
         bool IXmlSerializerOptions.TreatEmptyElementAsString { get { return _treatEmptyElementAsString; } }
+
+        bool IXmlSerializerOptions.ShouldAlwaysEmitNil
+        {
+            get { return false; }
+        }
+
         bool ISerializeOptions.ShouldEmitNil { get { return _emitNil; } }
 
         internal void SetExtraTypes(Type[] extraTypes)

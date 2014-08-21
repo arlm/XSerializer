@@ -7,7 +7,7 @@ namespace XSerializer.Tests
     public class PrimitiveArrayTests
     {
         [TestCaseSource("GetTestCases")]
-        public void CanSerializeByteArray(dynamic item)
+        public void CanSerializeArray(dynamic item)
         {
             var serializer = XmlSerializer.Create(item.GetType());
 

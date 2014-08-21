@@ -120,7 +120,8 @@ namespace XSerializer
                 && type.GetGenericTypeDefinition() == typeof(Nullable<>)
                 && type.GetGenericArguments()[0].IsEnum)
             {
-                return value => value == null ? null : Enum.Parse(type, value);
+                var enumType = type.GetGenericArguments()[0];
+                return value => value == null ? null : Enum.Parse(enumType, value);
             }
 
             if (type == typeof(DateTime))
