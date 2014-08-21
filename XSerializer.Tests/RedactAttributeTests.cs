@@ -84,7 +84,7 @@ namespace XSerializer.Tests
 
             var redacted = attribute.Redact(enumValue, true);
 
-            Assert.That(redacted, Is.EqualTo("XXXXXX"));
+            Assert.That(redacted, Is.EqualTo("XXXXXXXXXX"));
         }
         
         [TestCase(123, "111")]

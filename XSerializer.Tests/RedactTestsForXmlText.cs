@@ -111,9 +111,9 @@ namespace XSerializer.Tests
             Assert.That(instance.BoolTextProperty.Value, Is.False);
         }
 
-        [TestCase(RedactEnumForXmlText.First, "XXXXXX")]
-        [TestCase(RedactEnumForXmlText.Second, "XXXXXX")]
-        [TestCase(RedactEnumForXmlText.Third, "XXXXXX")]
+        [TestCase(RedactEnumForXmlText.First, "XXXXXXXXXX")]
+        [TestCase(RedactEnumForXmlText.Second, "XXXXXXXXXX")]
+        [TestCase(RedactEnumForXmlText.Third, "XXXXXXXXXX")]
         public void NullableEnumTextRedactsCorrectly(RedactEnumForXmlText value, string expectedAttributeValue)
         {
             _testClass.NullableEnumTextProperty = new NullableRedactEnumText { Value = value };
@@ -124,9 +124,9 @@ namespace XSerializer.Tests
             Assert.That(xml, Contains.Substring(string.Format("<NullableEnumTextProperty>{0}</NullableEnumTextProperty>", expectedAttributeValue)));
         }
 
-        [TestCase(RedactEnumForXmlText.First, "XXXXXX")]
-        [TestCase(RedactEnumForXmlText.Second, "XXXXXX")]
-        [TestCase(RedactEnumForXmlText.Third, "XXXXXX")]
+        [TestCase(RedactEnumForXmlText.First, "XXXXXXXXXX")]
+        [TestCase(RedactEnumForXmlText.Second, "XXXXXXXXXX")]
+        [TestCase(RedactEnumForXmlText.Third, "XXXXXXXXXX")]
         public void EnumTextRedactsCorrectly(RedactEnumForXmlText value, string expectedAttributeValue)
         {
             _testClass.EnumTextProperty = new RedactEnumText { Value = value };

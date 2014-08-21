@@ -6,6 +6,8 @@ namespace XSerializer
 {
     internal class EnumTypeValueConverter : IValueConverter
     {
+        private static readonly Lazy<IValueConverter> _default = new Lazy<IValueConverter>(() => new EnumTypeValueConverter(null, Enumerable.Empty<Type>()));
+
         private readonly RedactAttribute _redactAttribute;
         private readonly IEnumerable<Type> _enumExtraTypes;
 
@@ -13,6 +15,11 @@ namespace XSerializer
         {
             _redactAttribute = redactAttribute;
             _enumExtraTypes = extraTypes.Where(t => t.IsEnum).ToList();
+        }
+
+        public static IValueConverter Default
+        {
+            get { return _default.Value; }
         }
 
         public object ParseString(string value)
@@ -31,17 +38,19 @@ namespace XSerializer
 
         public string GetString(object value, ISerializeOptions options)
         {
-            if (value == null)
+            var enumValue = value as Enum;
+
+            if (enumValue == null)
             {
                 return null;
             }
 
-            var enumValue =
+            var enumString =
                 _redactAttribute != null
-                    ? _redactAttribute.Redact((Enum)value, options.ShouldRedact)
+                    ? _redactAttribute.Redact(enumValue, options.ShouldRedact)
                     : value.ToString();
 
-            return value.GetType().Name + "." + enumValue;
+            return value.GetType().Name + "." + enumString;
         }
     }
 }

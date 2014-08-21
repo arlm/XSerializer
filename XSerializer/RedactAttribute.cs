@@ -15,12 +15,6 @@ namespace XSerializer
         private static readonly Lazy<IValueConverter> _dateTimeConverter =
             new Lazy<IValueConverter>(() => SimpleTypeValueConverter.Create(typeof(DateTime), null));
 
-        private static readonly Lazy<IValueConverter> _typeConverter =
-            new Lazy<IValueConverter>(() => new TypeTypeValueConverter(null));
-
-        private static readonly Lazy<IValueConverter> _uriConverter =
-            new Lazy<IValueConverter>(() => new UriTypeValueConverter(null));
-
         /// <summary>
         /// Redacts the clear-text.
         /// </summary>
@@ -58,24 +52,6 @@ namespace XSerializer
         }
 
         /// <summary>
-        /// Redacts the string representation of <paramref name="enumValue"/>.
-        /// </summary>
-        /// <param name="enumValue">An <see cref="Enum"/>.</param>
-        /// <param name="redactEnabled">Whether redaction is currently enabled.</param>
-        /// <returns>The redacted text.</returns>
-        public string Redact(Enum enumValue, bool redactEnabled)
-        {
-            if (enumValue == null)
-            {
-                return null;
-            }
-
-            return redactEnabled
-                ? "XXXXXX"
-                : enumValue.ToString();
-        }
-
-        /// <summary>
         /// Redacts the string representation of <paramref name="dateTimeValue"/>.
         /// </summary>
         /// <param name="dateTimeValue">A <see cref="DateTime"/>.</param>
@@ -94,42 +70,6 @@ namespace XSerializer
         }
 
         /// <summary>
-        /// Redacts the string representation of <paramref name="typeValue"/>.
-        /// </summary>
-        /// <param name="typeValue">A <see cref="Type"/>.</param>
-        /// <param name="redactEnabled">Whether redaction is currently enabled.</param>
-        /// <returns>The redacted text.</returns>
-        public string Redact(Type typeValue, bool redactEnabled)
-        {
-            if (typeValue == null)
-            {
-                return null;
-            }
-
-            return redactEnabled
-                ? "XXXXXXXXXX"
-                : _typeConverter.Value.GetString(typeValue, null);
-        }
-
-        /// <summary>
-        /// Redacts the string representation of <paramref name="typeValue"/>.
-        /// </summary>
-        /// <param name="uriValue">A <see cref="Uri"/>.</param>
-        /// <param name="redactEnabled">Whether redaction is currently enabled.</param>
-        /// <returns>The redacted text.</returns>
-        public string Redact(Uri uriValue, bool redactEnabled)
-        {
-            if (uriValue == null)
-            {
-                return null;
-            }
-
-            return redactEnabled
-                ? "XXXXXXXXXX"
-                : _uriConverter.Value.GetString(uriValue, null);
-        }
-
-        /// <summary>
         /// Redacts the string representation of <paramref name="value"/>.
         /// </summary>
         /// <param name="value">An object.</param>
@@ -137,9 +77,10 @@ namespace XSerializer
         /// <returns>The redacted text.</returns>
         public string Redact(object value, bool redactEnabled)
         {
-            if (value == null)
+            string redactedValue;
+            if (ValueTypes.TryRedact(this, value, redactEnabled, out redactedValue))
             {
-                return null;
+                return redactedValue;
             }
 
             return redactEnabled

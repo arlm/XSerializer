@@ -92,14 +92,6 @@ namespace XSerializer
                 return (value, options) => redactAttribute.Redact((bool?)value, options.ShouldRedact);
             }
 
-            if (type.IsEnum ||
-                (type.IsGenericType
-                    && type.GetGenericTypeDefinition() == typeof(Nullable<>)
-                    && type.GetGenericArguments()[0].IsEnum))
-            {
-                return (value, options) => redactAttribute.Redact((Enum)value, options.ShouldRedact);
-            }
-
             if (type == typeof(DateTime) || type == typeof(DateTime?))
             {
                 return (value, options) => redactAttribute.Redact((DateTime?)value, options.ShouldRedact);
