@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 
 namespace XSerializer.Tests
@@ -59,6 +60,22 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void CanRoundTripClassWithReadOnlyPropertyOfTypeIEnumerableOfCustomType()
+        {
+            var qux = new Qux(new[] { new Corge { Value = "abc" }, new Corge { Value = "xyz" } });
+
+            var serializer = new XmlSerializer<Qux>(o => o.Indent());
+
+            var xml = serializer.Serialize(qux);
+
+            var roundTrip = serializer.Deserialize(xml);
+
+            Assert.That(roundTrip.Corges.Count(), Is.EqualTo(qux.Corges.Count()));
+            Assert.That(roundTrip.Corges.First().Value, Is.EqualTo(qux.Corges.First().Value));
+            Assert.That(roundTrip.Corges.Last().Value, Is.EqualTo(qux.Corges.Last().Value));
+        }
+
+        [Test]
         public void VerifyThatNotProvidingAnXmlElementForANullableReadonlyPropertyResultsInNull()
         {
             var serializer = new XmlSerializer<Baz>(x => x.Indent());
@@ -111,6 +128,26 @@ namespace XSerializer.Tests
             {
                 get { return _bar; }
             }
+        }
+
+        public class Qux
+        {
+            private readonly IEnumerable<Corge> _corges;
+
+            public Qux(IEnumerable<Corge> corges)
+            {
+                _corges = corges;
+            }
+
+            public IEnumerable<Corge> Corges
+            {
+                get { return _corges; }
+            }
+        }
+
+        public class Corge
+        {
+            public string Value { get; set; }
         }
     }
 }

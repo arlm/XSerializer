@@ -305,11 +305,18 @@ namespace XSerializer
             return isAssignableToIEnumerable;
         }
 
+        internal static bool IsGenericIEnumerable(this Type type)
+        {
+            return type.IsInterface
+                && type.IsGenericType
+                && type.GetGenericTypeDefinition() == typeof(IEnumerable<>);
+        }
+
         internal static bool IsAssignableToGenericIEnumerable(this Type type)
         {
             var isAssignableToGenericIEnumerable =
-                (type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-                || type.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+                type.IsGenericIEnumerable()
+                || type.GetInterfaces().Any(i => i.IsGenericIEnumerable());
             return isAssignableToGenericIEnumerable;
         }
 
@@ -321,15 +328,10 @@ namespace XSerializer
                 return false;
             }
 
-            Type iEnumerableType;
-            if (type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
-            {
-                iEnumerableType = type;
-            }
-            else
-            {
-                iEnumerableType = type.GetInterfaces().Single(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
-            }
+            var iEnumerableType =
+                type.IsGenericIEnumerable()
+                    ? type
+                    : type.GetInterfaces().Single(i => i.IsGenericIEnumerable());
 
             return iEnumerableType.GetGenericArguments()[0] == typeof(object);
         }
@@ -346,12 +348,12 @@ namespace XSerializer
 
         internal static Type GetGenericIEnumerableType(this Type type)
         {
-            if (type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+            if (type.IsGenericIEnumerable())
             {
                 return type;
             }
 
-            return type.GetInterfaces().First(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEnumerable<>));
+            return type.GetInterfaces().First(i => i.IsGenericIEnumerable());
         }
 
         internal static bool CanCallGetter(this PropertyInfo property)

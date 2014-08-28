@@ -24,7 +24,8 @@ namespace XSerializer
         {
             _getValueFunc = DynamicMethodFactory.CreateFunc<object>(propertyInfo.GetGetMethod());
 
-            if (!propertyInfo.DeclaringType.IsAnonymous())
+            if (!propertyInfo.DeclaringType.IsAnonymous()
+                && !(propertyInfo.IsReadOnlyProperty() && propertyInfo.PropertyType.IsGenericIEnumerable()))
             {
                 if (propertyInfo.IsSerializableReadOnlyProperty())
                 {
