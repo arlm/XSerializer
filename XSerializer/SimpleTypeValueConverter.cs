@@ -126,6 +126,16 @@ namespace XSerializer
                 return ParseStringForNullableDateTime;
             }
 
+            if (type == typeof(Guid))
+            {
+                return ParseStringForGuid;
+            }
+
+            if (type == typeof(Guid?))
+            {
+                return ParseStringForNullableGuid;
+            }
+
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 return value => Convert.ChangeType(value, type.GetGenericArguments()[0]);
@@ -183,6 +193,26 @@ namespace XSerializer
                 value,
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.RoundtripKind);
+        }
+
+        private static object ParseStringForGuid(string value)
+        {
+            if (value == null)
+            {
+                return new Guid();
+            }
+
+            return Guid.Parse(value);
+        }
+
+        private static object ParseStringForNullableGuid(string value)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+
+            return Guid.Parse(value);
         }
 
         private static string GetStringFromBool(object value, ISerializeOptions options)
