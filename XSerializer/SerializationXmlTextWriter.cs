@@ -13,11 +13,6 @@ namespace XSerializer
         private bool _hasWrittenStartDocument;
         private bool _hasWritternDefaultDocumentNamespaces;
 
-        public SerializationXmlTextWriter(Stream stream, Encoding encoding)
-            : base(stream, encoding)
-        {
-        }
-
         public SerializationXmlTextWriter(TextWriter writer)
             : base(writer)
         {
