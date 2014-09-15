@@ -50,6 +50,7 @@ namespace XSerializer
             ISerializeOptions options)
         {
             var sb = new StringBuilder();
+
             using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
             {
                 using (var xmlWriter = new SerializationXmlTextWriter(stringWriter))
@@ -70,6 +71,7 @@ namespace XSerializer
             ISerializeOptions options)
         {
             var sb = new StringBuilder();
+
             using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
             {
                 using (var xmlWriter = new SerializationXmlTextWriter(stringWriter))
@@ -90,28 +92,26 @@ namespace XSerializer
             Formatting formatting,
             ISerializeOptions options)
         {
-            var xmlWriter = new SerializationXmlTextWriter(stream, encoding ?? Encoding.UTF8)
+            StreamWriter streamWriter = null;
+
+            try
             {
-                Formatting = formatting
-            };
+                streamWriter = new StreamWriter(stream, encoding ?? Encoding.UTF8);
 
-            serializer.Serialize(xmlWriter, instance, options);
-        }
+                var xmlWriter = new SerializationXmlTextWriter(streamWriter)
+                {
+                    Formatting = formatting
+                };
 
-        public static void SerializeObject(
-            this IXmlSerializerInternal serializer,
-            Stream stream,
-            object instance,
-            Encoding encoding,
-            Formatting formatting,
-            ISerializeOptions options)
-        {
-            var xmlWriter = new SerializationXmlTextWriter(stream, encoding ?? Encoding.UTF8)
+                serializer.Serialize(xmlWriter, instance, options);
+            }
+            finally
             {
-                Formatting = formatting
-            };
-
-            serializer.SerializeObject(xmlWriter, instance, options);
+                if (streamWriter != null)
+                {
+                    streamWriter.Flush();
+                }
+            }
         }
 
         public static void Serialize<T>(
@@ -127,21 +127,6 @@ namespace XSerializer
             };
 
             serializer.Serialize(xmlWriter, instance, options);
-        }
-
-        public static void SerializeObject(
-            this IXmlSerializerInternal serializer,
-            TextWriter writer,
-            object instance,
-            Formatting formatting,
-            ISerializeOptions options)
-        {
-            var xmlWriter = new SerializationXmlTextWriter(writer)
-            {
-                Formatting = formatting
-            };
-
-            serializer.SerializeObject(xmlWriter, instance, options);
         }
 
         public static T Deserialize<T>(this IXmlSerializerInternal<T> serializer, string xml)
