@@ -326,7 +326,7 @@ namespace XSerializer
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                        if (reader.Name == _options.RootElementName)
+                        if (reader.Name == _options.RootElementName && ReferenceEquals(helper, NullHelper.Instance))
                         {
                             if (!typeof(T).IsPrimitiveLike())
                             {

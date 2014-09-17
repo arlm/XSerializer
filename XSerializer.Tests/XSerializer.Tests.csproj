@@ -68,6 +68,7 @@
     <Compile Include="ObjectToXml.cs" />
     <Compile Include="ObjectToXmlToObjectWithDefaultComparison.cs" />
     <Compile Include="ObjectToXmlWithDefaultComparison.cs" />
+    <Compile Include="PropertyNameCycleTests.cs" />
     <Compile Include="RedactAttributeTests.cs" />
     <Compile Include="RedactTests.cs" />
     <Compile Include="RedactTestsForXmlAttributes.cs" />
