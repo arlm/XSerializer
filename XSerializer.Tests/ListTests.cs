@@ -135,6 +135,25 @@ namespace XSerializer.Tests
   </Item>
 </MyContainer>";
 
+        [Test]
+        public void CanHandleEmptyList()
+        {
+            var serializer = new XmlSerializer<Foo>(x => x.Indent());
+
+            var foo = new Foo { Bar = new List<string>() };
+
+            var xml = serializer.Serialize(foo);
+
+            var roundTrip = serializer.Deserialize(xml);
+
+            Assert.That(roundTrip.Bar, Is.Not.Null);
+        }
+
+        public class Foo
+        {
+            public List<string> Bar { get; set; }
+        }
+
         private static readonly ListTests_ClassWithDynamicProperty Item = new ListTests_ClassWithDynamicProperty { Foo = "abc", Bar = GetExpando("Brian", 35), Baz = "xyz" };
         private static readonly ListTests_ClassWithDynamicProperty SecondItem = new ListTests_ClassWithDynamicProperty { Foo = "ABC", Bar = GetExpando("Matilda", 3), Baz = "XYZ" };
         
