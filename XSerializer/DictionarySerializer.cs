@@ -137,6 +137,11 @@ namespace XSerializer
                             {
                                 dictionary = _createDictionary();
                                 hasInstanceBeenCreated = true;
+
+                                if (reader.IsEmptyElement)
+                                {
+                                    return dictionary;
+                                }
                             }
                         }
                         else if (reader.Name == "Item" && hasInstanceBeenCreated)

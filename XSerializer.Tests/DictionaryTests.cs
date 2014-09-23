@@ -22,6 +22,25 @@ namespace XSerializer.Tests
   <Z>End</Z>
 </{0}>";
 
+        [Test]
+        public void CanHandleEmptyDictionary()
+        {
+            var serializer = new XmlSerializer<Foo>(x => x.Indent());
+
+            var foo = new Foo { Bar = new Dictionary<string, string>() };
+
+            var xml = serializer.Serialize(foo);
+
+            var roundTrip = serializer.Deserialize(xml);
+
+            Assert.That(roundTrip.Bar, Is.Not.Null);
+        }
+
+        public class Foo
+        {
+            public Dictionary<string, string> Bar { get; set; }
+        }
+
         internal class DictionarySerializationTests : ObjectToXml
         {
             protected override IEnumerable<TestCaseData> GetTestCaseData()
