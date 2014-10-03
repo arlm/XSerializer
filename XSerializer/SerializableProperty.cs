@@ -372,12 +372,6 @@ namespace XSerializer
 
         private Func<object, bool> GetShouldSerializeFunc(PropertyInfo propertyInfo)
         {
-            var xmlIgnoreAttribute = Attribute.GetCustomAttribute(propertyInfo, typeof(XmlIgnoreAttribute));
-            if (xmlIgnoreAttribute != null)
-            {
-                return instance => false;
-            }
-
             Func<object, bool> specifiedFunc = null;
             var specifiedProperty = propertyInfo.DeclaringType.GetProperty(propertyInfo.Name + "Specified");
             if (specifiedProperty != null && specifiedProperty.CanRead)

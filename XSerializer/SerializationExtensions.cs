@@ -10,6 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
+using System.Xml.Serialization;
 
 namespace XSerializer
 {
@@ -185,6 +186,11 @@ namespace XSerializer
             if (property.DeclaringType.IsAnonymous())
             {
                 return true;
+            }
+
+            if (Attribute.IsDefined(property, typeof(XmlIgnoreAttribute)))
+            {
+                return false;
             }
 
             var isSerializable = property.GetIndexParameters().Length == 0 && (property.IsReadWriteProperty() || property.IsSerializableReadOnlyProperty(constructorParameters));
