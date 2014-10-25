@@ -188,6 +188,7 @@ namespace XSerializer
             return propertyInfo.PropertyType != typeof(string)
                    && !propertyInfo.PropertyType.IsAssignableToNonGenericIDictionary()
                    && !propertyInfo.PropertyType.IsAssignableToGenericIDictionary()
+                   && !propertyInfo.PropertyType.IsReadOnlyDictionary()
                    && (propertyInfo.PropertyType.IsAssignableToNonGenericIEnumerable()
                        || propertyInfo.PropertyType.IsAssignableToGenericIEnumerable());
         }

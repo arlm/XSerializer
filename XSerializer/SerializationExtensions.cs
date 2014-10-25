@@ -17,6 +17,11 @@ namespace XSerializer
 {
     internal static class SerializationExtensions
     {
+        internal const string ReadOnlyDictionary = "System.Collections.ObjectModel.ReadOnlyDictionary`2, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+        internal const string IReadOnlyDictionary = "System.Collections.Generic.IReadOnlyDictionary`2, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+        internal const string IReadOnlyCollection = "System.Collections.Generic.IReadOnlyCollection`1, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+        internal const string IReadOnlyList = "System.Collections.Generic.IReadOnlyList`1, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+
         private static readonly Dictionary<Type, string> _typeToXsdTypeMap = new Dictionary<Type, string>();
         private static readonly Dictionary<string, Type> _xsdTypeToTypeMap = new Dictionary<string, Type>();
         private static readonly ConcurrentDictionary<int, Type> _xsdTypeToTypeCache = new ConcurrentDictionary<int, Type>();
@@ -223,6 +228,8 @@ namespace XSerializer
                     (property.PropertyType.IsReadOnlyCollection())
                     ||
                     (property.PropertyType.IsArray && property.PropertyType.GetArrayRank() == 1)
+                    ||
+                    (property.PropertyType.IsReadOnlyDictionary())
                 ); // TODO: add additional serializable types?
         }
 
@@ -239,13 +246,44 @@ namespace XSerializer
 
                 switch (openGeneric.AssemblyQualifiedName)
                 {
-                    case "System.Collections.Generic.IReadOnlyCollection`1, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089":
-                    case "System.Collections.Generic.IReadOnlyList`1, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089":
+                    case IReadOnlyCollection:
+                    case IReadOnlyList:
                         return true;
                 }
             }
 
             return false;
+        }
+
+        internal static bool IsReadOnlyDictionary(this Type type)
+        {
+            var openGenerics = GetOpenGenerics(type);
+
+            foreach (var openGeneric in openGenerics)
+            {
+                switch (openGeneric.AssemblyQualifiedName)
+                {
+                    case IReadOnlyDictionary:
+                    case ReadOnlyDictionary:
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static Type GetIReadOnlyDictionaryInterface(this Type type)
+        {
+            var iReadOnlyDictionaryType = Type.GetType(IReadOnlyDictionary);
+
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == iReadOnlyDictionaryType)
+            {
+                return type;
+            }
+
+            return
+                type.GetInterfaces()
+                    .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == iReadOnlyDictionaryType);
         }
 
         private static IEnumerable<Type> GetOpenGenerics(Type type)

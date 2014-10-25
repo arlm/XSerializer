@@ -55,7 +55,7 @@ namespace XSerializer
                     {
                         serializer = new XmlElementSerializer<T>(options);
                     }
-                    else if (type.IsAssignableToNonGenericIDictionary() || type.IsAssignableToGenericIDictionary())
+                    else if (type.IsAssignableToNonGenericIDictionary() || type.IsAssignableToGenericIDictionary() || type.IsReadOnlyDictionary())
                     {
                         serializer = (IXmlSerializerInternal<T>)DictionarySerializer.GetSerializer(type, options);
                     }

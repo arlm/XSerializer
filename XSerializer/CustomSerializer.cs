@@ -439,9 +439,8 @@ namespace XSerializer
                                         property =>
                                             property.Name.ToLower() == parameter.Name.ToLower()
                                             && (parameter.ParameterType.IsAssignableFrom(property.PropertyType)
-                                                || (parameter.ParameterType.IsGenericType
-                                                    && parameter.ParameterType.GetGenericTypeDefinition() == typeof(IList<>)
-                                                    && property.PropertyType.IsReadOnlyCollection())))))
+                                                || IsIListParameterAndReadOnlyCollectionProperty(parameter, property)
+                                                || IsIDictionaryParameterAndReadOnlyDictionaryProperty(parameter, property)))))
                         .ToArray();
 
                 var caseSensitiveSerializableProperties = serializableProperties.ToDictionary(p => p.Name);
@@ -486,6 +485,20 @@ namespace XSerializer
                     attributeProperties,
                     caseSensitiveSerializableProperties,
                     reader);
+            }
+
+            private static bool IsIListParameterAndReadOnlyCollectionProperty(ParameterInfo parameter, PropertyInfo property)
+            {
+                return (parameter.ParameterType.IsGenericType
+                        && parameter.ParameterType.GetGenericTypeDefinition() == typeof(IList<>)
+                        && property.PropertyType.IsReadOnlyCollection());
+            }
+
+            private static bool IsIDictionaryParameterAndReadOnlyDictionaryProperty(ParameterInfo parameter, PropertyInfo property)
+            {
+                return (parameter.ParameterType.IsGenericType
+                        && parameter.ParameterType.GetGenericTypeDefinition() == typeof(IDictionary<,>)
+                        && property.PropertyType.IsReadOnlyDictionary());
             }
 
             public IHelper CreateHelper(Type type, XmlReader reader)

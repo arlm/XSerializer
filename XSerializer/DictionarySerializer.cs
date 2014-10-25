@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
+using System.Reflection;
 using System.Xml;
 
 namespace XSerializer
@@ -17,6 +19,7 @@ namespace XSerializer
         private readonly IXmlSerializerInternal _valueSerializer;
 
         private readonly Func<object> _createDictionary;
+        private readonly Func<object, object> _finalizeDictionary = x => x;
 
         protected DictionarySerializer(IXmlSerializerOptions options)
         {
@@ -26,7 +29,12 @@ namespace XSerializer
             _keySerializer = XmlSerializerFactory.Instance.GetSerializer(KeyType, _options.WithRootElementName("Key").WithRedactAttribute(null));
             _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(ValueType, _options.WithRootElementName("Value"));
 
-            if (DictionaryType.IsInterface || DictionaryType.IsAbstract)
+            if (DictionaryType.IsReadOnlyDictionary())
+            {
+                _createDictionary = DefaultDictionaryType.CreateDefaultConstructorFunc<object>();
+                _finalizeDictionary = FinalizeCollectionIntoReadOnlyDictionary;
+            }
+            else if (DictionaryType.IsInterface || DictionaryType.IsAbstract)
             {
                 if (DictionaryType.IsAssignableFrom(DefaultDictionaryType))
                 {
@@ -61,6 +69,8 @@ namespace XSerializer
 
         protected abstract IEnumerable<DictionaryEntry> GetDictionaryEntries(object dictionary);
         protected abstract void AddItemToDictionary(object dictionary, object key, object value);
+
+        protected abstract object FinalizeCollectionIntoReadOnlyDictionary(object collection);
 
         public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
         {
@@ -140,7 +150,7 @@ namespace XSerializer
 
                                 if (reader.IsEmptyElement)
                                 {
-                                    return dictionary;
+                                    return _finalizeDictionary(dictionary);
                                 }
                             }
                         }
@@ -171,7 +181,7 @@ namespace XSerializer
                         }
                         else if (reader.Name == _options.RootElementName)
                         {
-                            return CheckAndReturn(hasInstanceBeenCreated, dictionary);
+                            return CheckAndReturn(hasInstanceBeenCreated, _finalizeDictionary(dictionary));
                         }
 
                         break;
@@ -206,17 +216,28 @@ namespace XSerializer
                 XmlSerializerFactory.Instance.CreateKey(type, options),
                 _ =>
                 {
+                    Func<Type, IXmlSerializerInternal> createDictionarySerializer =
+                        genericDictionaryInterface =>
+                        {
+                            var genericArguments = genericDictionaryInterface.GetGenericArguments();
+                            var keyType = genericArguments[0];
+                            var valueType = genericArguments[1];
+                            return (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), options);
+                        };
+
                     if (type.IsAssignableToGenericIDictionary())
                     {
-                        var genericArguments = type.GetGenericIDictionaryType().GetGenericArguments();
-                        var keyType = genericArguments[0];
-                        var valueType = genericArguments[1];
-                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), options);
+                        return createDictionarySerializer(type.GetGenericIDictionaryType());
                     }
 
                     if (type.IsAssignableToNonGenericIDictionary())
                     {
                         return (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), options);
+                    }
+
+                    if (type.IsReadOnlyDictionary())
+                    {
+                        return createDictionarySerializer(type.GetIReadOnlyDictionaryInterface());
                     }
 
                     throw new InvalidOperationException(string.Format("Cannot create a DictionarySerializer of type '{0}'.", type.FullName));
@@ -290,14 +311,41 @@ namespace XSerializer
                 ((TDictionary)dictionary).Add(key, value);
             }
         }
+
+        protected override object FinalizeCollectionIntoReadOnlyDictionary(object collection)
+        {
+            throw new NotSupportedException();
+        }
     }
 
     internal class DictionarySerializer<TDictionary, TKey, TValue> : DictionarySerializer, IXmlSerializerInternal<TDictionary>
-        where TDictionary : IDictionary<TKey, TValue>
+        where TDictionary : IEnumerable<KeyValuePair<TKey, TValue>>
     {
+        private readonly Lazy<Func<object, object>> _finalizeCollectionIntoReadOnlyDictionary;
+        
         public DictionarySerializer(IXmlSerializerOptions options)
             : base(options)
         {
+            _finalizeCollectionIntoReadOnlyDictionary = new Lazy<Func<object, object>>(
+                () =>
+                {
+                    var ctor =
+                        Type.GetType(SerializationExtensions.ReadOnlyDictionary)
+                            .MakeGenericType(KeyType, ValueType)
+                            .GetConstructors()
+                            .Single(c => c.GetParameters().Length == 1 && c.GetParameters()[0].ParameterType.IsGenericType && c.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(IDictionary<,>));
+
+                    var dictionaryParameter = Expression.Parameter(typeof(object), "dictionary");
+
+                    var lambda =
+                        Expression.Lambda<Func<object, object>>(
+                            Expression.New(
+                                ctor,
+                                Expression.Convert(dictionaryParameter, typeof (IDictionary<TKey, TValue>))),
+                            dictionaryParameter);
+
+                    return lambda.Compile();
+                });
         }
 
         public void Serialize(SerializationXmlTextWriter writer, TDictionary instance, ISerializeOptions options)
@@ -349,12 +397,20 @@ namespace XSerializer
 
         protected override void AddItemToDictionary(object dictionary, object key, object value)
         {
-            if (dictionary != null)
+            var iDictionary = dictionary as IDictionary<TKey, TValue>;
+
+            if (iDictionary != null)
             {
-                ((TDictionary)dictionary).Add(
+                iDictionary.Add(
                     typeof(TKey).IsValueType && key == null ? default(TKey) : (TKey)key,
                     typeof(TValue).IsValueType && value == null ? default(TValue) : (TValue)value);
             }
+
+        }
+
+        protected override object FinalizeCollectionIntoReadOnlyDictionary(object dictionary)
+        {
+            return _finalizeCollectionIntoReadOnlyDictionary.Value(dictionary);
         }
     }
 }
