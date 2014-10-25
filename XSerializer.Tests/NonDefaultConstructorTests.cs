@@ -76,6 +76,20 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void CanRoundTripClassWithReadOnlyOfTypeArray()
+        {
+            var grault = new Grault(new[] { 1, 2, 3 });
+
+            var serializer = new XmlSerializer<Grault>(o => o.Indent());
+
+            var xml = serializer.Serialize(grault);
+
+            var roundTrip = serializer.Deserialize(xml);
+
+            Assert.That(roundTrip.Garplies, Is.EquivalentTo(grault.Garplies));
+        }
+
+        [Test]
         public void VerifyThatNotProvidingAnXmlElementForANullableReadonlyPropertyResultsInNull()
         {
             var serializer = new XmlSerializer<Baz>(x => x.Indent());
@@ -148,6 +162,21 @@ namespace XSerializer.Tests
         public class Corge
         {
             public string Value { get; set; }
+        }
+
+        public class Grault
+        {
+            private readonly int[] _garplies;
+
+            public Grault(int[] garplies)
+            {
+                _garplies = garplies;
+            }
+
+            public int[] Garplies
+            {
+                get { return _garplies; }
+            }
         }
     }
 }

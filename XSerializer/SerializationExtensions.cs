@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
@@ -218,7 +219,64 @@ namespace XSerializer
                     (property.PropertyType.IsAssignableToGenericIEnumerable() && property.PropertyType.HasAddMethodOfType(property.PropertyType.GetGenericIEnumerableType().GetGenericArguments()[0]))
                     ||
                     (property.PropertyType.IsAssignableToNonGenericIEnumerable() && property.PropertyType.HasAddMethod())
+                    ||
+                    (property.PropertyType.IsReadOnlyCollection())
+                    ||
+                    (property.PropertyType.IsArray && property.PropertyType.GetArrayRank() == 1)
                 ); // TODO: add additional serializable types?
+        }
+
+        internal static bool IsReadOnlyCollection(this Type type)
+        {
+            var openGenerics = GetOpenGenerics(type);
+
+            foreach (var openGeneric in openGenerics)
+            {
+                if (openGeneric == typeof(ReadOnlyCollection<>))
+                {
+                    return true;
+                }
+
+                switch (openGeneric.AssemblyQualifiedName)
+                {
+                    case "System.Collections.Generic.IReadOnlyCollection`1, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089":
+                    case "System.Collections.Generic.IReadOnlyList`1, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089":
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static IEnumerable<Type> GetOpenGenerics(Type type)
+        {
+            if (type.IsGenericType)
+            {
+                yield return type.GetGenericTypeDefinition();
+            }
+
+            foreach (var interfaceType in type.GetInterfaces())
+            {
+                if (interfaceType.IsGenericType)
+                {
+                    yield return interfaceType;
+                }
+            }
+
+            while (true)
+            {
+                type = type.BaseType;
+
+                if (type == null)
+                {
+                    yield break;
+                }
+
+                if (type.IsGenericType)
+                {
+                    yield return type.GetGenericTypeDefinition();
+                }
+            }
         }
 
         private static bool IsConditionalProperty(PropertyInfo property, IEnumerable<ParameterInfo> constructorParameters)

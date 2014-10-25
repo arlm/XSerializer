@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
@@ -33,6 +34,11 @@ namespace XSerializer
                 _createCollection = DefaultCollectionType.CreateDefaultConstructorFunc<object>();
                 _finalizeCollection = FinalizeCollectionIntoArray;
             }
+            else if (CollectionType.IsReadOnlyCollection())
+            {
+                _createCollection = DefaultCollectionType.CreateDefaultConstructorFunc<object>();
+                _finalizeCollection = FinalizeCollectionIntoReadOnlyCollection;
+            }
             else if (CollectionType.IsInterface || CollectionType.IsAbstract)
             {
                 if (CollectionType.IsAssignableFrom(DefaultCollectionType))
@@ -62,7 +68,6 @@ namespace XSerializer
             // ReSharper restore DoNotCallOverridableMethodsInConstructor
         }
 
-
         protected abstract Type CollectionType { get; }
         protected abstract Type DefaultCollectionType { get; }
         protected abstract Type ItemType { get; }
@@ -70,6 +75,7 @@ namespace XSerializer
 
         protected abstract void AddItemToCollection(object collection, object item);
         protected abstract object FinalizeCollectionIntoArray(object collection);
+        protected abstract object FinalizeCollectionIntoReadOnlyCollection(object collection);
 
         public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options, string itemElementName)
         {
@@ -344,6 +350,11 @@ namespace XSerializer
         {
             throw new NotSupportedException();
         }
+
+        protected override object FinalizeCollectionIntoReadOnlyCollection(object collection)
+        {
+            throw new NotSupportedException();
+        }
     }
 
     internal sealed class ListSerializer<TEnumerable, TItem> : ListSerializer, IXmlSerializerInternal<TEnumerable>
@@ -372,6 +383,10 @@ namespace XSerializer
                 if (addFuncs.Count == 0)
                 {
                     if (typeof(TEnumerable) == typeof(IEnumerable<>).MakeGenericType(typeof(TItem)))
+                    {
+                        addFuncs.Add((collection, item) => ((IList)collection).Add(item));
+                    }
+                    else if (typeof(TEnumerable).IsReadOnlyCollection())
                     {
                         addFuncs.Add((collection, item) => ((IList)collection).Add(item));
                     }
@@ -449,6 +464,11 @@ namespace XSerializer
         protected override object FinalizeCollectionIntoArray(object collection)
         {
             return ((List<TItem>)collection).ToArray();
+        }
+
+        protected override object FinalizeCollectionIntoReadOnlyCollection(object collection)
+        {
+            return new ReadOnlyCollection<TItem>((List<TItem>)collection);
         }
     }
 }

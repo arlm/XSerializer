@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -436,8 +437,11 @@ namespace XSerializer
                                     (parameter.Attributes & ParameterAttributes.HasDefault) == ParameterAttributes.HasDefault
                                     || properties.Any(
                                         property =>
-                                            property.Name.ToLower() == parameter.Name.ToLower() &&
-                                            property.PropertyType == parameter.ParameterType)))
+                                            property.Name.ToLower() == parameter.Name.ToLower()
+                                            && (parameter.ParameterType.IsAssignableFrom(property.PropertyType)
+                                                || (parameter.ParameterType.IsGenericType
+                                                    && parameter.ParameterType.GetGenericTypeDefinition() == typeof(IList<>)
+                                                    && property.PropertyType.IsReadOnlyCollection())))))
                         .ToArray();
 
                 var caseSensitiveSerializableProperties = serializableProperties.ToDictionary(p => p.Name);
@@ -643,7 +647,15 @@ namespace XSerializer
                 {
                     var value = property.ReadValue(_reader);
 
-                    _accumulatedValues[property.Name.ToLower()] = value;
+                    if (_accumulatedValues.ContainsKey(property.Name.ToLower()))
+                    {
+                        var existingValue = _accumulatedValues[property.Name.ToLower()];
+                        Combine(existingValue, value);
+                    }
+                    else
+                    {
+                        _accumulatedValues.Add(property.Name.ToLower(), value);
+                    }
 
                     shouldIssueRead = !property.ReadsPastLastElement;
                 }
@@ -651,6 +663,24 @@ namespace XSerializer
                 {
                     shouldIssueRead = true;
                 }
+            }
+
+            private static void Combine(object existingValue, object value)
+            {
+                var list = value as IList;
+                var existingList = existingValue as IList;
+
+                if (list != null && existingList != null)
+                {
+                    foreach (var item in list)
+                    {
+                        existingList.Add(item);
+                    }
+
+                    return;
+                }
+
+                throw new InvalidOperationException();
             }
 
             public void SetTextNodePropertyValue()
