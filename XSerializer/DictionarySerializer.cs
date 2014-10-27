@@ -245,22 +245,12 @@ namespace XSerializer
         }
     }
 
-    internal class DictionarySerializer<TDictionary> : DictionarySerializer, IXmlSerializerInternal<TDictionary>
+    internal class DictionarySerializer<TDictionary> : DictionarySerializer
         where TDictionary : IDictionary
     {
         public DictionarySerializer(IXmlSerializerOptions options)
             : base(options)
         {
-        }
-
-        public void Serialize(SerializationXmlTextWriter writer, TDictionary instance, ISerializeOptions options)
-        {
-            SerializeObject(writer, instance, options);
-        }
-
-        public TDictionary Deserialize(XmlReader reader)
-        {
-            return (TDictionary)DeserializeObject(reader);
         }
 
         protected override Type DictionaryType
@@ -318,7 +308,7 @@ namespace XSerializer
         }
     }
 
-    internal class DictionarySerializer<TDictionary, TKey, TValue> : DictionarySerializer, IXmlSerializerInternal<TDictionary>
+    internal class DictionarySerializer<TDictionary, TKey, TValue> : DictionarySerializer
         where TDictionary : IEnumerable<KeyValuePair<TKey, TValue>>
     {
         private readonly Lazy<Func<object, object>> _finalizeCollectionIntoReadOnlyDictionary;
@@ -346,16 +336,6 @@ namespace XSerializer
 
                     return lambda.Compile();
                 });
-        }
-
-        public void Serialize(SerializationXmlTextWriter writer, TDictionary instance, ISerializeOptions options)
-        {
-            SerializeObject(writer, instance, options);
-        }
-
-        public TDictionary Deserialize(XmlReader reader)
-        {
-            return (TDictionary)DeserializeObject(reader);
         }
 
         protected override Type DictionaryType

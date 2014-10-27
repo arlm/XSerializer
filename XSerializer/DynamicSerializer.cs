@@ -5,22 +5,22 @@ using System.Xml;
 
 namespace XSerializer
 {
-    internal class DynamicSerializer : IXmlSerializerInternal<object>
+    internal class DynamicSerializer : IXmlSerializerInternal
     {
         private readonly IXmlSerializerOptions _options;
 
-        public static IXmlSerializerInternal<T> GetSerializer<T>(IXmlSerializerOptions options)
+        public static IXmlSerializerInternal GetSerializer<T>(IXmlSerializerOptions options)
         {
             var serializer = new DynamicSerializer(options);
 
             if (typeof(T) == typeof(object))
             {
-                return (IXmlSerializerInternal<T>)serializer;
+                return serializer;
             }
             
             if (typeof(T) == typeof(ExpandoObject))
             {
-                return (IXmlSerializerInternal<T>)new DynamicSerializerExpandoObjectProxy(serializer);
+                return new DynamicSerializerExpandoObjectProxy(serializer);
             }
             
             throw new InvalidOperationException("The only valid generic arguments for DynamicSerializer.GetSerializer<T> are object, dynamic, and ExpandoObject");
@@ -32,11 +32,6 @@ namespace XSerializer
         }
 
         public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
-        {
-            Serialize(writer, instance, options);
-        }
-
-        public void Serialize(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             var expando = instance as ExpandoObject;
             if (expando != null || instance == null)
@@ -60,11 +55,6 @@ namespace XSerializer
         }
 
         public object DeserializeObject(XmlReader reader)
-        {
-            return Deserialize(reader);
-        }
-
-        public object Deserialize(XmlReader reader)
         {
             var isNil = reader.IsNil();
 
@@ -238,7 +228,7 @@ namespace XSerializer
         {
             var propertyName = reader.Name;
             var serializer = GetSerializer<object>(_options.WithRootElementName(reader.Name));
-            var value = serializer.Deserialize(reader);
+            var value = serializer.DeserializeObject(reader);
             expando[propertyName] = value;
         }
 
@@ -252,7 +242,7 @@ namespace XSerializer
             return instance;
         }
 
-        private class DynamicSerializerExpandoObjectProxy : IXmlSerializerInternal<ExpandoObject>
+        private class DynamicSerializerExpandoObjectProxy : IXmlSerializerInternal
         {
             private readonly DynamicSerializer _serializer;
 
@@ -261,24 +251,14 @@ namespace XSerializer
                 _serializer = serializer;
             }
 
-            public void Serialize(SerializationXmlTextWriter writer, ExpandoObject instance, ISerializeOptions options)
-            {
-                _serializer.SerializeExpandoObject(writer, instance, options);
-            }
-
             public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
             {
-                Serialize(writer, (ExpandoObject)instance, options);
-            }
-
-            public ExpandoObject Deserialize(XmlReader reader)
-            {
-                return _serializer.DeserializeToDynamic(reader);
+                _serializer.SerializeExpandoObject(writer, (ExpandoObject)instance, options);
             }
 
             public object DeserializeObject(XmlReader reader)
             {
-                return Deserialize(reader);
+                return (ExpandoObject) _serializer.DeserializeToDynamic(reader);
             }
         }
     }

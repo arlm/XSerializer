@@ -37,8 +37,13 @@ namespace XSerializer
                     {
                         var setValue = DynamicMethodFactory.CreateAction(propertyInfo.GetSetMethod());
                         var addValues = GetAddEnumerableValuesAction(propertyInfo.PropertyType);
+
+                        var targetType = propertyInfo.PropertyType;
+
                         _setValueFunc = (destinationInstance, sourceCollection) =>
                         {
+                            sourceCollection = sourceCollection.ConvertIfNecessary(targetType);
+
                             if (_getValueFunc(destinationInstance) == null)
                             {
                                 setValue(destinationInstance, sourceCollection);
