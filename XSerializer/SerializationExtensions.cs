@@ -205,7 +205,7 @@ namespace XSerializer
 
         internal static bool IsReadWriteProperty(this PropertyInfo property)
         {
-            var isReadWriteProperty = property.CanCallGetter() && property.CanCallSetter();
+            var isReadWriteProperty = property.HasPublicGetter() && property.HasPublicSetter();
             return isReadWriteProperty;
         }
 
@@ -345,8 +345,8 @@ namespace XSerializer
 
         internal static bool IsReadOnlyProperty(this PropertyInfo property)
         {
-            var canCallGetter = property.CanCallGetter();
-            var canCallSetter = property.CanCallSetter();
+            var canCallGetter = property.HasPublicGetter();
+            var canCallSetter = property.HasPublicSetter();
 
             return canCallGetter && !canCallSetter;
         }
@@ -443,16 +443,28 @@ namespace XSerializer
             return type.GetInterfaces().First(i => i.IsGenericIEnumerable());
         }
 
-        internal static bool CanCallGetter(this PropertyInfo property)
+        private static bool HasPublicGetter(this PropertyInfo property)
         {
-            var canCallGetter = property.CanRead && property.GetGetMethod() != null;
-            return canCallGetter;
+            if (!property.CanRead)
+            {
+                return false;
+            }
+
+            var getMethod = property.GetGetMethod();
+
+            return getMethod != null && getMethod.IsPublic;
         }
 
-        internal static bool CanCallSetter(this PropertyInfo property)
+        private static bool HasPublicSetter(this PropertyInfo property)
         {
-            var canCallSetter = property.CanWrite && property.GetSetMethod() != null;
-            return canCallSetter;
+            if (!property.CanWrite)
+            {
+                return false;
+            }
+
+            var setMethod = property.GetSetMethod();
+
+            return setMethod != null && setMethod.IsPublic;
         }
 
         internal static bool ReadIfNeeded(this XmlReader reader, bool shouldRead)
