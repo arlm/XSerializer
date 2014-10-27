@@ -65,7 +65,7 @@ namespace XSerializer
 
     public class XmlSerializer<T> : IXmlSerializer
     {
-        private readonly IXmlSerializerInternal<T> _serializer;
+        private readonly IXmlSerializerInternal _serializer;
         private readonly Encoding _encoding;
         private readonly Formatting _formatting;
         private readonly ISerializeOptions _serializeOptions;
@@ -102,14 +102,14 @@ namespace XSerializer
             _serializeOptions = options;
         }
 
-        internal IXmlSerializerInternal<T> Serializer
+        internal IXmlSerializerInternal Serializer
         {
             get { return _serializer; }
         }
 
         public string Serialize(T instance)
         {
-            return _serializer.Serialize(instance, _encoding, _formatting, _serializeOptions);
+            return _serializer.SerializeObject(instance, _encoding, _formatting, _serializeOptions);
         }
 
         string IXmlSerializer.Serialize(object instance)
@@ -119,7 +119,7 @@ namespace XSerializer
 
         public void Serialize(Stream stream, T instance)
         {
-            _serializer.Serialize(stream, instance, _encoding, _formatting, _serializeOptions);
+            _serializer.SerializeObject(stream, instance, _encoding, _formatting, _serializeOptions);
         }
 
         void IXmlSerializer.Serialize(Stream stream, object instance)
@@ -129,7 +129,7 @@ namespace XSerializer
 
         public void Serialize(TextWriter writer, T instance)
         {
-            _serializer.Serialize(writer, instance, _formatting, _serializeOptions);
+            _serializer.SerializeObject(writer, instance, _formatting, _serializeOptions);
         }
 
         void IXmlSerializer.Serialize(TextWriter writer, object instance)
@@ -139,7 +139,7 @@ namespace XSerializer
 
         public T Deserialize(string xml)
         {
-            return _serializer.Deserialize(xml);
+            return (T)_serializer.DeserializeObject(xml).ConvertIfNecessary(typeof(T));
         }
 
         object IXmlSerializer.Deserialize(string xml)
@@ -149,7 +149,7 @@ namespace XSerializer
 
         public T Deserialize(Stream stream)
         {
-            return _serializer.Deserialize(stream);
+            return (T)_serializer.DeserializeObject(stream);
         }
 
         object IXmlSerializer.Deserialize(Stream stream)
@@ -159,7 +159,7 @@ namespace XSerializer
 
         public T Deserialize(TextReader reader)
         {
-            return _serializer.Deserialize(reader);
+            return (T)_serializer.DeserializeObject(reader);
         }
 
         object IXmlSerializer.Deserialize(TextReader reader)

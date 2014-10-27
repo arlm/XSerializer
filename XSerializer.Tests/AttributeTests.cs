@@ -12,7 +12,7 @@ namespace XSerializer.Tests
 
             var serializer = new CustomSerializer<AttributeContainer>(TestXmlSerializerOptions.Empty);
 
-            var container = serializer.Deserialize(xml);
+            var container = (AttributeContainer)serializer.DeserializeObject(xml);
 
             Assert.That(container.SomeValue, Is.EqualTo("abc"));
         }

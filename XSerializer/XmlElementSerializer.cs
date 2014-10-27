@@ -3,7 +3,7 @@ using System.Xml;
 
 namespace XSerializer
 {
-    internal class XmlElementSerializer<T> : IXmlSerializerInternal<T>
+    internal class XmlElementSerializer<T> : IXmlSerializerInternal
     {
         private readonly string _elementName;
         private readonly bool _alwaysEmitNil;
@@ -23,11 +23,6 @@ namespace XSerializer
             {
                 _valueConverter = SimpleTypeValueConverter.Create(typeof(T), options.RedactAttribute);
             }
-        }
-
-        public void Serialize(SerializationXmlTextWriter writer, T value, ISerializeOptions options)
-        {
-            SerializeObject(writer, value, options);
         }
 
         public void SerializeObject(SerializationXmlTextWriter writer, object value, ISerializeOptions options)
@@ -53,7 +48,7 @@ namespace XSerializer
             writer.WriteEndElement();
         }
 
-        public T Deserialize(XmlReader reader)
+        public object DeserializeObject(XmlReader reader)
         {
             if (ValueTypes.IsRegistered(typeof(T)))
             {
@@ -69,12 +64,7 @@ namespace XSerializer
             }
 
             var value = reader.ReadString();
-            return (T)_valueConverter.ParseString(value);
-        }
-
-        public object DeserializeObject(XmlReader reader)
-        {
-            return Deserialize(reader);
+            return _valueConverter.ParseString(value);
         }
     }
 }

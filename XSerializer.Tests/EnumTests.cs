@@ -18,7 +18,7 @@ namespace XSerializer.Tests
 
             var serializer = new CustomSerializer<EnumElementContainer>(TestXmlSerializerOptions.WithExtraTypes(typeof(IFoo)));
 
-            var xml = serializer.Serialize(container, Encoding.UTF8, Formatting.Indented, new TestSerializeOptions());
+            var xml = serializer.SerializeObject(container, Encoding.UTF8, Formatting.Indented, new TestSerializeOptions());
 
             Assert.That(xml, Contains.Substring("Value2"));
         }
@@ -33,7 +33,7 @@ namespace XSerializer.Tests
 
             var serializer = new CustomSerializer<EnumAttributeContainer>(TestXmlSerializerOptions.WithExtraTypes(typeof(IFoo)));
 
-            var xml = serializer.Serialize(container, Encoding.UTF8, Formatting.Indented, new TestSerializeOptions());
+            var xml = serializer.SerializeObject(container, Encoding.UTF8, Formatting.Indented, new TestSerializeOptions());
 
             Assert.That(xml, Contains.Substring("Value2"));
         }
@@ -48,7 +48,7 @@ namespace XSerializer.Tests
 
             var serializer = new CustomSerializer<EnumElementContainer>(TestXmlSerializerOptions.WithExtraTypes(typeof(IFoo)));
 
-            var container = serializer.Deserialize(xml);
+            var container = (EnumElementContainer)serializer.DeserializeObject(xml);
 
             Assert.That(container.MyEnum, Is.EqualTo(MyEnum.Value2));
         }
@@ -61,7 +61,7 @@ namespace XSerializer.Tests
 
             var serializer = new CustomSerializer<EnumAttributeContainer>(TestXmlSerializerOptions.WithExtraTypes(typeof(IFoo)));
 
-            var container = serializer.Deserialize(xml);
+            var container = (EnumAttributeContainer)serializer.DeserializeObject(xml);
 
             Assert.That(container.MyEnum, Is.EqualTo(MyEnum.Value2));
         }

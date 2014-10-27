@@ -18,12 +18,9 @@ namespace XSerializer
         private readonly IXmlSerializerInternal _itemSerializer;
 
         private readonly Func<object> _createCollection;
-        private readonly Func<object, object> _finalizeCollection = x => x;
 
-        protected ListSerializer(IXmlSerializerOptions options, string itemElementName)
+        protected ListSerializer(IXmlSerializerOptions options, string itemElementName)                                                             // ReSharper disable DoNotCallOverridableMethodsInConstructor
         {
-            // ReSharper disable DoNotCallOverridableMethodsInConstructor
-
             _options = options;
             _itemElementName = string.IsNullOrEmpty(itemElementName) ? DefaultItemElementName : itemElementName;
             _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, _options.WithRootElementName(_itemElementName).AlwaysEmitNil());
@@ -31,7 +28,10 @@ namespace XSerializer
             if (CollectionType.IsArray)
             {
                 _createCollection = DefaultCollectionType.CreateDefaultConstructorFunc<object>();
-                _finalizeCollection = FinalizeCollectionIntoArray;
+            }
+            else if (CollectionType.IsReadOnlyCollection())
+            {
+                _createCollection = DefaultCollectionType.CreateDefaultConstructorFunc<object>();
             }
             else if (CollectionType.IsInterface || CollectionType.IsAbstract)
             {
@@ -58,10 +58,7 @@ namespace XSerializer
             {
                 throw new ArgumentException("Unable to find suitable collection to create.");
             }
-
-            // ReSharper restore DoNotCallOverridableMethodsInConstructor
-        }
-
+        }                                                                                                                                           // ReSharper restore DoNotCallOverridableMethodsInConstructor
 
         protected abstract Type CollectionType { get; }
         protected abstract Type DefaultCollectionType { get; }
@@ -69,7 +66,6 @@ namespace XSerializer
         protected abstract string DefaultItemElementName { get; }
 
         protected abstract void AddItemToCollection(object collection, object item);
-        protected abstract object FinalizeCollectionIntoArray(object collection);
 
         public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options, string itemElementName)
         {
@@ -167,7 +163,7 @@ namespace XSerializer
 
                                     if (reader.IsEmptyElement)
                                     {
-                                        return _finalizeCollection(collection);
+                                        return collection;
                                     }
                                 }
 
@@ -182,7 +178,7 @@ namespace XSerializer
                                 return
                                     collection == null
                                         ? null
-                                        : _finalizeCollection(CheckAndReturn(hasInstanceBeenCreated, collection));
+                                        : CheckAndReturn(hasInstanceBeenCreated, collection);
                             }
                         }
 
@@ -204,7 +200,7 @@ namespace XSerializer
                                 return
                                     collection == null
                                         ? null
-                                        : _finalizeCollection(CheckAndReturn(hasInstanceBeenCreated, collection));
+                                        : CheckAndReturn(hasInstanceBeenCreated, collection);
                             }
                         }
                         else
@@ -214,7 +210,7 @@ namespace XSerializer
                                 return
                                     collection == null
                                         ? null
-                                        : _finalizeCollection(CheckAndReturn(hasInstanceBeenCreated, collection));
+                                        : CheckAndReturn(hasInstanceBeenCreated, collection);
                             }
                         }
                         break;
@@ -249,7 +245,7 @@ namespace XSerializer
         }
     }
 
-    internal sealed class ListSerializer<TEnumerable> : ListSerializer, IXmlSerializerInternal<TEnumerable>
+    internal sealed class ListSerializer<TEnumerable> : ListSerializer
         where TEnumerable : IEnumerable
     {
         private readonly Action<object, object> _addItemToCollection;
@@ -268,7 +264,7 @@ namespace XSerializer
                     .Concat(typeof(TEnumerable).GetInterfaces().SelectMany(i => i.GetMethods()))
                     .Where(m => m.Name == "Add" && m.GetParameters().Length == 1);
 
-                var addFuncs = addMethods.Select(m => DynamicMethodFactory.CreateAction(m)).ToList();
+                var addFuncs = addMethods.Select(DynamicMethodFactory.CreateAction).ToList();
 
                 if (addFuncs.Count == 0)
                 {
@@ -305,16 +301,6 @@ namespace XSerializer
             }
         }
 
-        public void Serialize(SerializationXmlTextWriter writer, TEnumerable instance, ISerializeOptions options)
-        {
-            SerializeObject(writer, instance, options);
-        }
-
-        public TEnumerable Deserialize(XmlReader reader)
-        {
-            return (TEnumerable)DeserializeObject(reader);
-        }
-
         protected override Type CollectionType
         {
             get { return typeof(TEnumerable); }
@@ -339,14 +325,9 @@ namespace XSerializer
         {
             _addItemToCollection(collection, item);
         }
-
-        protected override object FinalizeCollectionIntoArray(object collection)
-        {
-            throw new NotSupportedException();
-        }
     }
 
-    internal sealed class ListSerializer<TEnumerable, TItem> : ListSerializer, IXmlSerializerInternal<TEnumerable>
+    internal sealed class ListSerializer<TEnumerable, TItem> : ListSerializer
         where TEnumerable : IEnumerable<TItem>
     {
         private readonly Action<object, object> _addItemToCollection;
@@ -367,11 +348,15 @@ namespace XSerializer
                         && m.GetParameters().Length == 1
                         && m.GetParameters()[0].ParameterType.IsAssignableFrom(typeof(TItem)));
 
-                var addFuncs = addMethods.Select(m => DynamicMethodFactory.CreateAction(m)).ToList();
+                var addFuncs = addMethods.Select(DynamicMethodFactory.CreateAction).ToList();
 
                 if (addFuncs.Count == 0)
                 {
                     if (typeof(TEnumerable) == typeof(IEnumerable<>).MakeGenericType(typeof(TItem)))
+                    {
+                        addFuncs.Add((collection, item) => ((IList)collection).Add(item));
+                    }
+                    else if (typeof(TEnumerable).IsReadOnlyCollection())
                     {
                         addFuncs.Add((collection, item) => ((IList)collection).Add(item));
                     }
@@ -411,16 +396,6 @@ namespace XSerializer
             }
         }
 
-        public void Serialize(SerializationXmlTextWriter writer, TEnumerable instance, ISerializeOptions options)
-        {
-            SerializeObject(writer, instance, options);
-        }
-
-        public TEnumerable Deserialize(XmlReader reader)
-        {
-            return (TEnumerable)DeserializeObject(reader);
-        }
-
         protected override Type CollectionType
         {
             get { return typeof(TEnumerable); }
@@ -444,11 +419,6 @@ namespace XSerializer
         protected override void AddItemToCollection(object collection, object item)
         {
             _addItemToCollection(collection, item);
-        }
-
-        protected override object FinalizeCollectionIntoArray(object collection)
-        {
-            return ((List<TItem>)collection).ToArray();
         }
     }
 }

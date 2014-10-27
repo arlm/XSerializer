@@ -37,8 +37,13 @@ namespace XSerializer
                     {
                         var setValue = DynamicMethodFactory.CreateAction(propertyInfo.GetSetMethod());
                         var addValues = GetAddEnumerableValuesAction(propertyInfo.PropertyType);
+
+                        var targetType = propertyInfo.PropertyType;
+
                         _setValueFunc = (destinationInstance, sourceCollection) =>
                         {
+                            sourceCollection = sourceCollection.ConvertIfNecessary(targetType);
+
                             if (_getValueFunc(destinationInstance) == null)
                             {
                                 setValue(destinationInstance, sourceCollection);
@@ -188,6 +193,7 @@ namespace XSerializer
             return propertyInfo.PropertyType != typeof(string)
                    && !propertyInfo.PropertyType.IsAssignableToNonGenericIDictionary()
                    && !propertyInfo.PropertyType.IsAssignableToGenericIDictionary()
+                   && !propertyInfo.PropertyType.IsReadOnlyDictionary()
                    && (propertyInfo.PropertyType.IsAssignableToNonGenericIEnumerable()
                        || propertyInfo.PropertyType.IsAssignableToGenericIEnumerable());
         }

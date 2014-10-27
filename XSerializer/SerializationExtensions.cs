@@ -2,9 +2,11 @@
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
@@ -16,6 +18,15 @@ namespace XSerializer
 {
     internal static class SerializationExtensions
     {
+        internal const string ReadOnlyDictionary = "System.Collections.ObjectModel.ReadOnlyDictionary`2, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+        internal const string IReadOnlyDictionary = "System.Collections.Generic.IReadOnlyDictionary`2, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+        internal const string IReadOnlyCollection = "System.Collections.Generic.IReadOnlyCollection`1, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+        internal const string IReadOnlyList = "System.Collections.Generic.IReadOnlyList`1, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+        
+        private static readonly Type[] _readOnlyCollections = new[] { Type.GetType(IReadOnlyCollection), Type.GetType(IReadOnlyList), typeof(ReadOnlyCollection<>) }.Where(t => t != null).ToArray();
+
+        private static readonly ConcurrentDictionary<Tuple<Type, Type>, Func<object, object>> _convertFuncs = new ConcurrentDictionary<Tuple<Type, Type>, Func<object, object>>(); 
+
         private static readonly Dictionary<Type, string> _typeToXsdTypeMap = new Dictionary<Type, string>();
         private static readonly Dictionary<string, Type> _xsdTypeToTypeMap = new Dictionary<string, Type>();
         private static readonly ConcurrentDictionary<int, Type> _xsdTypeToTypeCache = new ConcurrentDictionary<int, Type>();
@@ -43,27 +54,6 @@ namespace XSerializer
             }
         }
 
-        public static string Serialize<T>(
-            this IXmlSerializerInternal<T> serializer,
-            T instance,
-            Encoding encoding,
-            Formatting formatting,
-            ISerializeOptions options)
-        {
-            var sb = new StringBuilder();
-
-            using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
-            {
-                using (var xmlWriter = new SerializationXmlTextWriter(stringWriter))
-                {
-                    xmlWriter.Formatting = formatting;
-                    serializer.Serialize(xmlWriter, instance, options);
-                }
-            }
-
-            return sb.ToString();
-        }
-
         public static string SerializeObject(
             this IXmlSerializerInternal serializer,
             object instance,
@@ -85,10 +75,10 @@ namespace XSerializer
             return sb.ToString();
         }
 
-        public static void Serialize<T>(
-            this IXmlSerializerInternal<T> serializer,
+        public static void SerializeObject(
+            this IXmlSerializerInternal serializer,
             Stream stream,
-            T instance,
+            object instance,
             Encoding encoding,
             Formatting formatting,
             ISerializeOptions options)
@@ -104,7 +94,7 @@ namespace XSerializer
                     Formatting = formatting
                 };
 
-                serializer.Serialize(xmlWriter, instance, options);
+                serializer.SerializeObject(xmlWriter, instance, options);
             }
             finally
             {
@@ -115,10 +105,10 @@ namespace XSerializer
             }
         }
 
-        public static void Serialize<T>(
-            this IXmlSerializerInternal<T> serializer,
+        public static void SerializeObject(
+            this IXmlSerializerInternal serializer,
             TextWriter writer,
-            T instance,
+            object instance,
             Formatting formatting,
             ISerializeOptions options)
         {
@@ -127,18 +117,7 @@ namespace XSerializer
                 Formatting = formatting
             };
 
-            serializer.Serialize(xmlWriter, instance, options);
-        }
-
-        public static T Deserialize<T>(this IXmlSerializerInternal<T> serializer, string xml)
-        {
-            using (var stringReader = new StringReader(xml))
-            {
-                using (var xmlReader = new XmlTextReader(stringReader))
-                {
-                    return serializer.Deserialize(xmlReader);
-                }
-            }
+            serializer.SerializeObject(xmlWriter, instance, options);
         }
 
         public static object DeserializeObject(this IXmlSerializerInternal serializer, string xml)
@@ -152,22 +131,10 @@ namespace XSerializer
             }
         }
 
-        public static T Deserialize<T>(this IXmlSerializerInternal<T> serializer, Stream stream)
-        {
-            var xmlReader = new XmlTextReader(stream);
-            return serializer.Deserialize(xmlReader);
-        }
-
         public static object DeserializeObject(this IXmlSerializerInternal serializer, Stream stream)
         {
             var xmlReader = new XmlTextReader(stream);
             return serializer.DeserializeObject(xmlReader);
-        }
-
-        public static T Deserialize<T>(this IXmlSerializerInternal<T> serializer, TextReader reader)
-        {
-            var xmlReader = new XmlTextReader(reader);
-            return serializer.Deserialize(xmlReader);
         }
 
         public static object DeserializeObject(this IXmlSerializerInternal serializer, TextReader reader)
@@ -199,7 +166,7 @@ namespace XSerializer
 
         internal static bool IsReadWriteProperty(this PropertyInfo property)
         {
-            var isReadWriteProperty = property.CanCallGetter() && property.CanCallSetter();
+            var isReadWriteProperty = property.HasPublicGetter() && property.HasPublicSetter();
             return isReadWriteProperty;
         }
 
@@ -218,7 +185,221 @@ namespace XSerializer
                     (property.PropertyType.IsAssignableToGenericIEnumerable() && property.PropertyType.HasAddMethodOfType(property.PropertyType.GetGenericIEnumerableType().GetGenericArguments()[0]))
                     ||
                     (property.PropertyType.IsAssignableToNonGenericIEnumerable() && property.PropertyType.HasAddMethod())
+                    ||
+                    (property.PropertyType.IsReadOnlyCollection())
+                    ||
+                    (property.PropertyType.IsArray && property.PropertyType.GetArrayRank() == 1)
+                    ||
+                    (property.PropertyType.IsReadOnlyDictionary())
                 ); // TODO: add additional serializable types?
+        }
+
+        internal static object ConvertIfNecessary(this object instance, Type targetType)
+        {
+            if (instance == null)
+            {
+                return null;
+            }
+
+            var instanceType = instance.GetType();
+
+            if (targetType.IsAssignableFrom(instanceType))
+            {
+                return instance;
+            }
+
+            var convertFunc =
+                _convertFuncs.GetOrAdd(
+                    Tuple.Create(instanceType, targetType),
+                    tuple => CreateConvertFunc(tuple.Item1, tuple.Item2));
+
+            return convertFunc(instance);
+        }
+
+        private static Func<object, object> CreateConvertFunc(Type instanceType, Type targetType)
+        {
+            if (instanceType.IsGenericType && instanceType.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                if (targetType.IsArray)
+                {
+                    return CreateToArrayFunc(targetType.GetElementType());
+                }
+
+                if (targetType.IsReadOnlyCollection())
+                {
+                    var collectionType = targetType.GetReadOnlyCollectionType();
+                    return CreateAsReadOnlyFunc(collectionType.GetGenericArguments()[0]);
+                }
+            }
+
+            // Oh well, we were gonna throw anyway. Just let it happen...
+            return x => x;
+        }
+
+        private static Func<object, object> CreateToArrayFunc(Type itemType)
+        {
+            var toArrayMethod =
+                typeof(Enumerable)
+                    .GetMethod("ToArray", BindingFlags.Static | BindingFlags.Public)
+                    .MakeGenericMethod(itemType);
+
+            var sourceParameter = Expression.Parameter(typeof(object), "source");
+
+            var lambda =
+                Expression.Lambda<Func<object, object>>(
+                    Expression.Call(
+                        toArrayMethod,
+                        Expression.Convert(sourceParameter, typeof(IEnumerable<>).MakeGenericType(itemType))),
+                    sourceParameter);
+
+            return lambda.Compile();
+        }
+
+        private static Func<object, object> CreateAsReadOnlyFunc(Type itemType)
+        {
+            var listType = typeof (List<>).MakeGenericType(itemType);
+
+            var asReadOnlyMethod = listType.GetMethod("AsReadOnly", BindingFlags.Instance | BindingFlags.Public);
+
+            var instanceParameter = Expression.Parameter(typeof(object), "instance");
+
+            var lambda =
+                Expression.Lambda<Func<object, object>>(
+                    Expression.Call(
+                        Expression.Convert(instanceParameter, listType),
+                        asReadOnlyMethod),
+                    instanceParameter);
+
+            return lambda.Compile();
+        }
+
+        internal static bool IsReadOnlyCollection(this Type type)
+        {
+            var openGenerics = GetOpenGenerics(type);
+
+            foreach (var openGeneric in openGenerics)
+            {
+                if (openGeneric == typeof(ReadOnlyCollection<>))
+                {
+                    return true;
+                }
+
+                switch (openGeneric.AssemblyQualifiedName)
+                {
+                    case IReadOnlyCollection:
+                    case IReadOnlyList:
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static Type GetReadOnlyCollectionType(this Type type)
+        {
+            if (IsReadOnlyCollectionType(type))
+            {
+                return type;
+            }
+
+            var interfaceType = type.GetInterfaces().FirstOrDefault(IsReadOnlyCollectionType);
+
+            if (interfaceType != null)
+            {
+                return interfaceType;
+            }
+
+            do
+            {
+                type = type.BaseType;
+
+                if (type == null)
+                {
+                    return null;
+                }
+
+                if (IsReadOnlyCollectionType(type))
+                {
+                    return type;
+                }
+            } while (true);
+        }
+
+        private static bool IsReadOnlyCollectionType(Type i)
+        {
+            if (i.IsGenericType)
+            {
+                var genericTypeDefinition = i.GetGenericTypeDefinition();
+
+                if (_readOnlyCollections.Any(readOnlyCollectionType => genericTypeDefinition == readOnlyCollectionType))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static bool IsReadOnlyDictionary(this Type type)
+        {
+            var openGenerics = GetOpenGenerics(type);
+
+            foreach (var openGeneric in openGenerics)
+            {
+                switch (openGeneric.AssemblyQualifiedName)
+                {
+                    case IReadOnlyDictionary:
+                    case ReadOnlyDictionary:
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        internal static Type GetIReadOnlyDictionaryInterface(this Type type)
+        {
+            var iReadOnlyDictionaryType = Type.GetType(IReadOnlyDictionary);
+
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == iReadOnlyDictionaryType)
+            {
+                return type;
+            }
+
+            return
+                type.GetInterfaces()
+                    .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == iReadOnlyDictionaryType);
+        }
+
+        private static IEnumerable<Type> GetOpenGenerics(Type type)
+        {
+            if (type.IsGenericType)
+            {
+                yield return type.GetGenericTypeDefinition();
+            }
+
+            foreach (var interfaceType in type.GetInterfaces())
+            {
+                if (interfaceType.IsGenericType)
+                {
+                    yield return interfaceType;
+                }
+            }
+
+            while (true)
+            {
+                type = type.BaseType;
+
+                if (type == null)
+                {
+                    yield break;
+                }
+
+                if (type.IsGenericType)
+                {
+                    yield return type.GetGenericTypeDefinition();
+                }
+            }
         }
 
         private static bool IsConditionalProperty(PropertyInfo property, IEnumerable<ParameterInfo> constructorParameters)
@@ -249,8 +430,8 @@ namespace XSerializer
 
         internal static bool IsReadOnlyProperty(this PropertyInfo property)
         {
-            var canCallGetter = property.CanCallGetter();
-            var canCallSetter = property.CanCallSetter();
+            var canCallGetter = property.HasPublicGetter();
+            var canCallSetter = property.HasPublicSetter();
 
             return canCallGetter && !canCallSetter;
         }
@@ -347,16 +528,28 @@ namespace XSerializer
             return type.GetInterfaces().First(i => i.IsGenericIEnumerable());
         }
 
-        internal static bool CanCallGetter(this PropertyInfo property)
+        private static bool HasPublicGetter(this PropertyInfo property)
         {
-            var canCallGetter = property.CanRead && property.GetGetMethod() != null;
-            return canCallGetter;
+            if (!property.CanRead)
+            {
+                return false;
+            }
+
+            var getMethod = property.GetGetMethod();
+
+            return getMethod != null && getMethod.IsPublic;
         }
 
-        internal static bool CanCallSetter(this PropertyInfo property)
+        private static bool HasPublicSetter(this PropertyInfo property)
         {
-            var canCallSetter = property.CanWrite && property.GetSetMethod() != null;
-            return canCallSetter;
+            if (!property.CanWrite)
+            {
+                return false;
+            }
+
+            var setMethod = property.GetSetMethod();
+
+            return setMethod != null && setMethod.IsPublic;
         }
 
         internal static bool ReadIfNeeded(this XmlReader reader, bool shouldRead)
