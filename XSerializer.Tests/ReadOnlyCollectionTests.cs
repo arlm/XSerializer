@@ -8,7 +8,7 @@ namespace XSerializer.Tests
     public class ReadOnlyCollectionTests
     {
         [Test]
-        public void Smoke()
+        public void CanRoundTripReadWriteProperties()
         {
             var foo = new Foo1
             {
@@ -18,29 +18,63 @@ namespace XSerializer.Tests
                 Corges = GetReadOnlyDictionary(),
                 Graults = GetReadOnlyCollection()
             };
+
             var serializer = new XmlSerializer<Foo1>(x => x.Indent());
 
-            //var foo = new Foo2(
-            //    GetReadOnlyCollection(),
-            //    GetReadOnlyCollection(),
-            //    GetReadOnlyDictionary(),
-            //    GetReadOnlyDictionary(),
-            //    GetReadOnlyCollection());
-            //var serializer = new XmlSerializer<Foo2>(x => x.Indent());
+            var xml = serializer.Serialize(foo);
 
-            //var foo = new Foo3(
-            //    GetReadOnlyCollection(),
-            //    GetReadOnlyCollection(),
-            //    GetReadOnlyDictionary(),
-            //    GetReadOnlyDictionary(),
-            //    GetReadOnlyCollection());
-            //var serializer = new XmlSerializer<Foo3>(x => x.Indent());
+            var roundTrip = serializer.Deserialize(xml);
 
-            //var foo = new Foo4(
-            //    GetReadOnlyCollection(),
-            //    GetReadOnlyCollection(),
-            //    GetReadOnlyCollection());
-            //var serializer = new XmlSerializer<Foo4>(x => x.Indent());
+            Assert.That(roundTrip, Has.PropertiesEqualTo(foo));
+        }
+
+        [Test]
+        public void CanRoundTripReadOnlyPropertiesWithMatchingConstructorParameters()
+        {
+            var foo = new Foo2(
+                GetReadOnlyCollection(),
+                GetReadOnlyCollection(),
+                GetReadOnlyDictionary(),
+                GetReadOnlyDictionary(),
+                GetReadOnlyCollection());
+
+            var serializer = new XmlSerializer<Foo2>(x => x.Indent());
+
+            var xml = serializer.Serialize(foo);
+
+            var roundTrip = serializer.Deserialize(xml);
+
+            Assert.That(roundTrip, Has.PropertiesEqualTo(foo));
+        }
+
+        [Test]
+        public void CanRoundTripReadOnlyPropertiesWhoseTypesCanBeAssignedToConstructorParameters()
+        {
+            var foo = new Foo3(
+                GetReadOnlyCollection(),
+                GetReadOnlyCollection(),
+                GetReadOnlyDictionary(),
+                GetReadOnlyDictionary(),
+                GetReadOnlyCollection());
+
+            var serializer = new XmlSerializer<Foo3>(x => x.Indent());
+
+            var xml = serializer.Serialize(foo);
+
+            var roundTrip = serializer.Deserialize(xml);
+
+            Assert.That(roundTrip, Has.PropertiesEqualTo(foo));
+        }
+
+        [Test]
+        public void CanRoundTripReadOnlyPropertiesWithConstructorParametersOfTypeIListOfT()
+        {
+            var foo = new Foo4(
+                GetReadOnlyCollection(),
+                GetReadOnlyCollection(),
+                GetReadOnlyCollection());
+
+            var serializer = new XmlSerializer<Foo4>(x => x.Indent());
 
             var xml = serializer.Serialize(foo);
 
