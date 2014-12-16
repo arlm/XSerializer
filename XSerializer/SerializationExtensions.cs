@@ -65,7 +65,7 @@ namespace XSerializer
 
             using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
             {
-                using (var xmlWriter = new SerializationXmlTextWriter(stringWriter))
+                using (var xmlWriter = new SerializationXmlTextWriter(stringWriter, options))
                 {
                     xmlWriter.Formatting = formatting;
                     serializer.SerializeObject(xmlWriter, instance, options);
@@ -89,7 +89,7 @@ namespace XSerializer
             {
                 streamWriter = new StreamWriter(stream, encoding ?? Encoding.UTF8);
 
-                var xmlWriter = new SerializationXmlTextWriter(streamWriter)
+                var xmlWriter = new SerializationXmlTextWriter(streamWriter, options)
                 {
                     Formatting = formatting
                 };
@@ -112,7 +112,7 @@ namespace XSerializer
             Formatting formatting,
             ISerializeOptions options)
         {
-            var xmlWriter = new SerializationXmlTextWriter(writer)
+            var xmlWriter = new SerializationXmlTextWriter(writer, options)
             {
                 Formatting = formatting
             };
