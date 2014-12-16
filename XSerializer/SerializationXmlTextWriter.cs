@@ -1,21 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Linq;
 using System.Xml;
 
 namespace XSerializer
 {
     internal class SerializationXmlTextWriter : XmlTextWriter
     {
+        private readonly ISerializeOptions _options;
         private readonly Stack<string> _defaultNamespaceStack = new Stack<string>(); 
 
         private bool _hasWrittenStartDocument;
         private bool _hasWritternDefaultDocumentNamespaces;
 
-        public SerializationXmlTextWriter(TextWriter writer)
+        public SerializationXmlTextWriter(TextWriter writer, ISerializeOptions options)
             : base(writer)
         {
+            _options = options;
         }
 
         public override void WriteStartDocument()
@@ -41,9 +43,25 @@ namespace XSerializer
             if (!_hasWritternDefaultDocumentNamespaces)
             {
                 _hasWritternDefaultDocumentNamespaces = true;
-                WriteAttributeString("xmlns", "xsd", null, "http://www.w3.org/2001/XMLSchema");
-                WriteAttributeString("xmlns", "xsi", null, "http://www.w3.org/2001/XMLSchema-instance");
+
+                if (_options.Namespaces.Count == 0)
+                {
+                    WriteXmlnsAttributeString("xsd", "http://www.w3.org/2001/XMLSchema");
+                    WriteXmlnsAttributeString("xsi", "http://www.w3.org/2001/XMLSchema-instance");
+                }
+                else
+                {
+                    foreach (var name in _options.Namespaces.ToArray().Where(name => !name.IsEmpty))
+                    {
+                        WriteXmlnsAttributeString(name.Name, name.Namespace);
+                    }
+                }
             }
+        }
+
+        private void WriteXmlnsAttributeString(string localName, string ns)
+        {
+            WriteAttributeString("xmlns", localName, null, ns);
         }
 
         public IDisposable WriteDefaultNamespace(string defaultNamespace)

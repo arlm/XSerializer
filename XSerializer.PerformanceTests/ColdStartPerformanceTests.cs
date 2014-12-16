@@ -62,6 +62,8 @@ namespace XSerializer.Tests.Performance
 
             xmlSerializerStopwatch.Stop();
 
+            ISerializeOptions options = new TestSerializeOptions();
+
             var customSerializerStopwatch = Stopwatch.StartNew();
 
             var customSerializer = CustomSerializer.GetSerializer(typeof(ColdStartContainerWithInterface), TestXmlSerializerOptions.Empty);
@@ -69,7 +71,7 @@ namespace XSerializer.Tests.Performance
 
             using (var stringWriter = new StringWriter(customSerializerStringBuilder))
             {
-                using (var writer = new SerializationXmlTextWriter(stringWriter))
+                using (var writer = new SerializationXmlTextWriter(stringWriter, options))
                 {
                     customSerializer.SerializeObject(writer, containerWithInterface, new TestSerializeOptions(true));
                 }

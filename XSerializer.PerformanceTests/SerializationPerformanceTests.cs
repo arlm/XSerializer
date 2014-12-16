@@ -58,6 +58,8 @@ namespace XSerializer.Tests.Performance
 
             xmlSerializerStopwatch.Stop();
 
+            ISerializeOptions options = new TestSerializeOptions();
+
             var customSerializerStopwatch = Stopwatch.StartNew();
 
             for (int i = 0; i < Iterations; i++)
@@ -65,7 +67,7 @@ namespace XSerializer.Tests.Performance
                 var sb = new StringBuilder();
                 using (var stringWriter = new StringWriter(sb))
                 {
-                    using (var writer = new SerializationXmlTextWriter(stringWriter))
+                    using (var writer = new SerializationXmlTextWriter(stringWriter, options))
                     {
                         customSerializer.SerializeObject(writer, _containerWithInterface, new TestSerializeOptions());
                     }
