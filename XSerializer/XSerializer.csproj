@@ -47,11 +47,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Encryption\ClearTextEncryptionProvider.cs" />
     <Compile Include="CustomSerializer.cs" />
     <Compile Include="DictionarySerializer.cs" />
     <Compile Include="DynamicMethodFactory.cs" />
     <Compile Include="DynamicSerializer.cs" />
+    <Compile Include="Encryption\EncryptionProvider.cs" />
     <Compile Include="EnumTypeValueConverter.cs" />
+    <Compile Include="Encryption\IEncryptionProvider.cs" />
     <Compile Include="IValueConverter.cs" />
     <Compile Include="IXmlSerializer.cs" />
     <Compile Include="ValueTypes.cs" />
