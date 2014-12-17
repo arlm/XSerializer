@@ -53,7 +53,6 @@
     <Compile Include="DefaultDocumentNamespaceTests.cs" />
     <Compile Include="Encryption\Base64EncryptionProvider.cs" />
     <Compile Include="Encryption\EncryptionTests.cs" />
-    <Compile Include="Encryption\UnitTestEncryptionProviderProvider.cs" />
     <Compile Include="GuidTests.cs" />
     <Compile Include="NilTests.cs" />
     <Compile Include="OptionsExtensions.cs" />

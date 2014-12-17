@@ -53,6 +53,7 @@
     <Compile Include="DynamicSerializer.cs" />
     <Compile Include="Encryption\EncryptAttribute.cs" />
     <Compile Include="Encryption\EncryptionProvider.cs" />
+    <Compile Include="Encryption\EncryptionProviderAttribute.cs" />
     <Compile Include="Encryption\EncryptionProviderExtensions.cs" />
     <Compile Include="Encryption\IEncryptionProviderProvider.cs" />
     <Compile Include="EnumTypeValueConverter.cs" />
