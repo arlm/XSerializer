@@ -28,9 +28,9 @@ namespace XSerializer.Tests.Encryption
         #region ByXmlStructure
 
         [TestCaseSource("_byXmlStructureTestCases")]
-        public void ByXmlStructure(object objectToSerialize, Func<XElement, object> getTargetNodeValue, object expectedTargetNodeValue, Func<object, object> getTargetValue, Type[] extraTypes)
+        public void ByXmlStructure(object objectToSerialize, Func<object, object> getTargetValue, Func<XElement, object> getTargetNodeValue, object expectedTargetNodeValue, Type[] extraTypes)
         {
-            PerformTest(objectToSerialize, getTargetNodeValue, expectedTargetNodeValue, getTargetValue, extraTypes);
+            PerformTest(objectToSerialize, getTargetValue, getTargetNodeValue, expectedTargetNodeValue, extraTypes);
         }
 
         // ReSharper disable PossibleNullReferenceException
@@ -39,37 +39,37 @@ namespace XSerializer.Tests.Encryption
             GetTestCaseData(
                 "XmlElement",
                 new XmlElementExample { Value = 123 },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "MTIz",
-                x => x.Value),
+                "MTIz"),
 
             GetTestCaseData(
                 "XmlAttribute",
                 new XmlAttributeExample { Value = 123 },
+                x => x.Value,
                 root => root.Attribute("Value").Value,
-                "MTIz",
-                x => x.Value),
+                "MTIz"),
 
             GetTestCaseData(
                 "XmlText",
                 new Container<XmlTextExample> { Item = new XmlTextExample { Value = 123 } },
+                x => x.Item.Value,
                 root => root.Element("Item").Value,
-                "MTIz",
-                x => x.Item.Value),
+                "MTIz"),
 
             GetTestCaseData(
                 "XmlArray + XmlArrayItem",
                 new XmlArrayAndItemExample { Items = new[] { 123 }},
+                x => x.Items[0],
                 root => root.Element("Items").Element("Item").Value,
-                "MTIz",
-                x => x.Items[0]),
+                "MTIz"),
 
             GetTestCaseData(
                 "XmlElement decorating array property",
                 new XmlElementOnArrayPropertyExample { Items = new[] { 123 }},
+                x => x.Items[0],
                 root => root.Element("Item").Value,
-                "MTIz",
-                x => x.Items[0]),
+                "MTIz")
         };
         // ReSharper restore PossibleNullReferenceException
 
@@ -114,9 +114,9 @@ namespace XSerializer.Tests.Encryption
         #region ByType
 
         [TestCaseSource("_byTypeTestCases")]
-        public void ByType(object objectToSerialize, Func<XElement, object> getTargetNodeValue, object expectedTargetNodeValue, Func<object, object> getTargetValue, Type[] extraTypes)
+        public void ByType(object objectToSerialize, Func<object, object> getTargetValue, Func<XElement, object> getTargetNodeValue, object expectedTargetNodeValue, Type[] extraTypes)
         {
-            PerformTest(objectToSerialize, getTargetNodeValue, expectedTargetNodeValue, getTargetValue, extraTypes);
+            PerformTest(objectToSerialize, getTargetValue, getTargetNodeValue, expectedTargetNodeValue, extraTypes);
         }
 
         private static readonly Guid _exampleGuid = Guid.Parse("e3287204-92ab-4a54-a148-f554007beddd");
@@ -127,131 +127,129 @@ namespace XSerializer.Tests.Encryption
             GetTestCaseData(
                 "string",
                 new TypeExample<string> { Value = "123" },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "MTIz",
-                x => x.Value),
+                "MTIz"),
 
             GetTestCaseData(
                 "int",
                 new TypeExample<int> { Value = 123 },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "MTIz",
-                x => x.Value),
+                "MTIz"),
 
             GetTestCaseData(
                 "Nullable int",
                 new TypeExample<int?> { Value = 123 },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "MTIz",
-                x => x.Value),
+                "MTIz"),
 
             GetTestCaseData(
                 "bool",
                 new TypeExample<bool> { Value = true },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "dHJ1ZQ==",
-                x => x.Value),
+                "dHJ1ZQ=="),
 
             GetTestCaseData(
                 "Nullable bool",
                 new TypeExample<bool?> { Value = true },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "dHJ1ZQ==",
-                x => x.Value),
+                "dHJ1ZQ=="),
 
             GetTestCaseData(
                 "double",
                 new TypeExample<double> { Value = 123.45 },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "MTIzLjQ1",
-                x => x.Value),
+                "MTIzLjQ1"),
 
             GetTestCaseData(
                 "Nullable double",
                 new TypeExample<double?> { Value = 123.45 },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "MTIzLjQ1",
-                x => x.Value),
+                "MTIzLjQ1"),
 
             GetTestCaseData(
                 "decimal",
                 new TypeExample<decimal> { Value = 123.45M },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "MTIzLjQ1",
-                x => x.Value),
+                "MTIzLjQ1"),
 
             GetTestCaseData(
                 "Nullable decimal",
                 new TypeExample<decimal?> { Value = 123.45M },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "MTIzLjQ1",
-                x => x.Value),
+                "MTIzLjQ1"),
 
             GetTestCaseData(
-                "enum",
+                "enum (specific)",
                 new TypeExample<TestEnum> { Value = TestEnum.Second },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "U2Vjb25k",
-                x => x.Value),
+                "U2Vjb25k"),
 
             GetTestCaseData(
-                "Nullable enum",
+                "Nullable enum (specific)",
                 new TypeExample<TestEnum?> { Value = TestEnum.Second },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "U2Vjb25k",
-                x => x.Value),
+                "U2Vjb25k"),
 
             GetTestCaseData(
                 "DateTime",
                 new TypeExample<DateTime> { Value = new DateTime(2000, 1, 1) },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "MjAwMC0wMS0wMVQwMDowMDowMC4wMDAwMDAw",
-                x => x.Value),
+                "MjAwMC0wMS0wMVQwMDowMDowMC4wMDAwMDAw"),
 
             GetTestCaseData(
                 "Nullable DateTime",
                 new TypeExample<DateTime?> { Value = new DateTime(2000, 1, 1) },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "MjAwMC0wMS0wMVQwMDowMDowMC4wMDAwMDAw",
-                x => x.Value),
+                "MjAwMC0wMS0wMVQwMDowMDowMC4wMDAwMDAw"),
 
             GetTestCaseData(
                 "Guid",
                 new TypeExample<Guid> { Value = _exampleGuid },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "ZTMyODcyMDQtOTJhYi00YTU0LWExNDgtZjU1NDAwN2JlZGRk",
-                x => x.Value),
+                "ZTMyODcyMDQtOTJhYi00YTU0LWExNDgtZjU1NDAwN2JlZGRk"),
 
             GetTestCaseData(
                 "Nullable Guid",
                 new TypeExample<Guid?> { Value = _exampleGuid },
+                x => x.Value,
                 root => root.Element("Value").Value,
-                "ZTMyODcyMDQtOTJhYi00YTU0LWExNDgtZjU1NDAwN2JlZGRk",
-                x => x.Value),
+                "ZTMyODcyMDQtOTJhYi00YTU0LWExNDgtZjU1NDAwN2JlZGRk"),
 
             GetTestCaseData(
                 "Enum (non-specific)",
                 new TypeExample<Enum> { Value = TestEnum.Second },
+                x => x.Value,
                 root => root.Element("Value").Value,
                 "VGVzdEVudW0uU2Vjb25k",
-                x => x.Value,
                 typeof(TestEnum)),
 
             GetTestCaseData(
                 "Type",
                 new TypeExample<Type> { Value = typeof(string) },
-                root => root.Element("Value").Value,
-                "U3lzdGVtLlN0cmluZw==",
                 x => x.Value,
-                typeof(TestEnum)),
+                root => root.Element("Value").Value,
+                "U3lzdGVtLlN0cmluZw=="),
 
             GetTestCaseData(
                 "Uri",
                 new TypeExample<Uri> { Value = new Uri("http://google.com/") },
-                root => root.Element("Value").Value,
-                "aHR0cDovL2dvb2dsZS5jb20v",
                 x => x.Value,
-                typeof(TestEnum)),
+                root => root.Element("Value").Value,
+                "aHR0cDovL2dvb2dsZS5jb20v")
         };
 
         public class TypeExample<T>
@@ -267,12 +265,7 @@ namespace XSerializer.Tests.Encryption
 
         #endregion
 
-        private static void PerformTest(
-            object objectToSerialize,
-            Func<XElement, object> getTargetNodeValue,
-            object expectedTargetNodeValue,
-            Func<object, object> getTargetValue,
-            Type[] extraTypes)
+        private static void PerformTest(object objectToSerialize, Func<object, object> getTargetValue, Func<XElement, object> getTargetNodeValue, object expectedTargetNodeValue, Type[] extraTypes)
         {
             var serializer = XmlSerializer.Create(objectToSerialize.GetType(), extraTypes);
 
@@ -293,17 +286,17 @@ namespace XSerializer.Tests.Encryption
         private static TestCaseData GetTestCaseData<TToSerialize, TTargetValue>(
             string name,
             TToSerialize objectToSerialize,
+            Func<TToSerialize, TTargetValue> getTargetValue,
             Func<XElement, object> getTargetNodeValue,
             object expectedTargetNodeValue,
-            Func<TToSerialize, TTargetValue> getTargetValue,
             params Type[] extraTypes)
         {
             var testCaseData =
                 new TestCaseData(
                     objectToSerialize,
+                    (Func<object, object>)(target => getTargetValue((TToSerialize)target)),
                     getTargetNodeValue,
                     expectedTargetNodeValue,
-                    (Func<object, object>)(target => getTargetValue((TToSerialize)target)),
                     extraTypes);
 
             return testCaseData.SetName(name);
