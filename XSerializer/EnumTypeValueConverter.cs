@@ -32,13 +32,13 @@ namespace XSerializer
                 return null;
             }
 
-            var enumTypeName = value.Substring(0, value.LastIndexOf('.'));
-            var enumValue = value.Substring(value.LastIndexOf('.') + 1);
-
             if (_encryptAttribute != null)
             {
-                enumValue = EncryptionProvider.Current.Decrypt(enumValue, options.ShouldEncrypt);
+                value = EncryptionProvider.Current.Decrypt(value, options.ShouldEncrypt);
             }
+
+            var enumTypeName = value.Substring(0, value.LastIndexOf('.'));
+            var enumValue = value.Substring(value.LastIndexOf('.') + 1);
 
             var enumType = _enumExtraTypes.Single(t => t.Name == enumTypeName);
             return Enum.Parse(enumType, enumValue);
@@ -53,14 +53,19 @@ namespace XSerializer
                 return null;
             }
 
-            var enumString =
+            var enumStringValue =
                 _redactAttribute != null
                     ? _redactAttribute.Redact(enumValue, options.ShouldRedact)
-                    : _encryptAttribute != null
-                        ? EncryptionProvider.Current.Encrypt(value.ToString(), options.ShouldEncrypt)
-                        : value.ToString();
+                    : value.ToString();
 
-            return value.GetType().Name + "." + enumString;
+            var combinedValue = value.GetType().Name + "." + enumStringValue;
+
+            if (_encryptAttribute != null)
+            {
+                combinedValue = EncryptionProvider.Current.Encrypt(combinedValue, options.ShouldEncrypt);
+            }
+
+            return combinedValue;
         }
     }
 }
