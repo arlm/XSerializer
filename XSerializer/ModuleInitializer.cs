@@ -11,67 +11,83 @@ namespace XSerializer
     {
         public static void Run() // Future devs: Do not change the signature of this method
         {
-            AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += AppDomainOnReflectionOnlyAssemblyResolve;
+            var iEncryptionProviderName = typeof(IEncryptionProvider).AssemblyQualifiedName;
 
-            var iEncryptionProviderAssemblyQualifiedName = typeof(IEncryptionProvider).AssemblyQualifiedName;
-
-            var files =
-                Directory.EnumerateFiles(AppDomain.CurrentDomain.BaseDirectory, "*.dll")
-                .Concat(Directory.EnumerateFiles(AppDomain.CurrentDomain.BaseDirectory, "*.exe"));
-
-            var encryptionProviders = new List<string>();
-
-            foreach (var file in files)
+            if (iEncryptionProviderName == null)
             {
-                try
-                {
-                    var assembly = Assembly.ReflectionOnlyLoadFrom(file);
-
-                    if (assembly.FullName == typeof(ModuleInitializer).Assembly.FullName)
-                    {
-                        continue;
-                    }
-
-                    encryptionProviders.AddRange(
-                        assembly.GetTypes()
-                            .Where(t =>
-                                t.IsClass
-                                && !t.IsAbstract
-                                && t.IsPublic
-                                && t.GetInterfaces().Any(i => i.AssemblyQualifiedName == iEncryptionProviderAssemblyQualifiedName)
-                                && t.GetConstructor(Type.EmptyTypes) != null
-                                && t.AssemblyQualifiedName != null)
-                            .Select(t => t.AssemblyQualifiedName));
-                }
-                catch
-                {
-                }
+                return;
             }
 
-            if (encryptionProviders.Count == 1)
-            {
-                IEncryptionProvider encryptionProvider = null;
+            IEnumerable<string> files;
 
-                try
+            try
+            {
+                files =
+                    Directory.EnumerateFiles(AppDomain.CurrentDomain.BaseDirectory, "*.dll")
+                    .Concat(Directory.EnumerateFiles(AppDomain.CurrentDomain.BaseDirectory, "*.exe"));
+            }
+            catch
+            {
+                return;
+            }
+
+            try
+            {
+                AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += AppDomainOnReflectionOnlyAssemblyResolve;
+
+                var encryptionProviderTypes = new List<string>();
+
+                foreach (var file in files)
                 {
-                    var encryptionProviderType = Type.GetType(encryptionProviders[0]);
+                    try
+                    {
+                        var assembly = Assembly.ReflectionOnlyLoadFrom(file);
+
+                        if (assembly.FullName == typeof(ModuleInitializer).Assembly.FullName)
+                        {
+                            continue;
+                        }
+
+                        encryptionProviderTypes.AddRange(
+                            assembly.GetTypes()
+                                .Where(t =>
+                                    t.IsClass
+                                    && !t.IsAbstract
+                                    && t.IsPublic
+                                    && t.AssemblyQualifiedName != null
+                                    && t.GetInterfaces().Any(i => i.AssemblyQualifiedName == iEncryptionProviderName)
+                                    && t.GetConstructor(Type.EmptyTypes) != null)
+                                .Select(t => t.AssemblyQualifiedName));
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                if (encryptionProviderTypes.Count == 1)
+                {
+                    IEncryptionProvider encryptionProvider = null;
+
+                    var encryptionProviderType = Type.GetType(encryptionProviderTypes[0]);
 
                     if (encryptionProviderType != null)
                     {
                         encryptionProvider = (IEncryptionProvider)Activator.CreateInstance(encryptionProviderType);
                     }
-                }
-                catch
-                {
-                }
 
-                if (encryptionProvider != null)
-                {
-                    EncryptionProvider.Current = encryptionProvider;
+                    if (encryptionProvider != null)
+                    {
+                        EncryptionProvider.Current = encryptionProvider;
+                    }
                 }
             }
-
-            AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve -= AppDomainOnReflectionOnlyAssemblyResolve;
+            catch
+            {
+            }
+            finally
+            {
+                AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve -= AppDomainOnReflectionOnlyAssemblyResolve;
+            }
         }
 
         private static Assembly AppDomainOnReflectionOnlyAssemblyResolve(object sender, ResolveEventArgs args)
