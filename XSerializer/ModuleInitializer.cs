@@ -11,9 +11,9 @@ namespace XSerializer
     {
         public static void Run() // Future devs: Do not change the signature of this method
         {
-            var iEncryptionProviderName = typeof(IEncryptionProvider).AssemblyQualifiedName;
+            var iEncryptionProviderProviderName = typeof(IEncryptionProviderProvider).AssemblyQualifiedName;
 
-            if (iEncryptionProviderName == null)
+            if (iEncryptionProviderProviderName == null)
             {
                 return;
             }
@@ -55,7 +55,7 @@ namespace XSerializer
                                     && !t.IsAbstract
                                     && t.IsPublic
                                     && t.AssemblyQualifiedName != null
-                                    && t.GetInterfaces().Any(i => i.AssemblyQualifiedName == iEncryptionProviderName)
+                                    && t.GetInterfaces().Any(i => i.AssemblyQualifiedName == iEncryptionProviderProviderName)
                                     && t.GetConstructor(Type.EmptyTypes) != null)
                                 .Select(t => t.AssemblyQualifiedName));
                     }
@@ -66,18 +66,18 @@ namespace XSerializer
 
                 if (encryptionProviderTypes.Count == 1)
                 {
-                    IEncryptionProvider encryptionProvider = null;
+                    IEncryptionProviderProvider encryptionProviderProvider = null;
 
                     var encryptionProviderType = Type.GetType(encryptionProviderTypes[0]);
 
                     if (encryptionProviderType != null)
                     {
-                        encryptionProvider = (IEncryptionProvider)Activator.CreateInstance(encryptionProviderType);
+                        encryptionProviderProvider = (IEncryptionProviderProvider)Activator.CreateInstance(encryptionProviderType);
                     }
 
-                    if (encryptionProvider != null)
+                    if (encryptionProviderProvider != null)
                     {
-                        EncryptionProvider.Current = encryptionProvider;
+                        EncryptionProvider.Current = encryptionProviderProvider.GetEncryptionProvider();
                     }
                 }
             }

@@ -54,6 +54,7 @@
     <Compile Include="Encryption\EncryptAttribute.cs" />
     <Compile Include="Encryption\EncryptionProvider.cs" />
     <Compile Include="Encryption\EncryptionProviderExtensions.cs" />
+    <Compile Include="Encryption\IEncryptionProviderProvider.cs" />
     <Compile Include="EnumTypeValueConverter.cs" />
     <Compile Include="Encryption\IEncryptionProvider.cs" />
     <Compile Include="IValueConverter.cs" />
