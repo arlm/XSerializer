@@ -56,6 +56,8 @@ namespace XSerializer.Tests.Performance
 
             xmlSerializerStopwatch.Stop();
 
+            var options = new TestSerializeOptions();
+
             var customSerializerStopwatch = Stopwatch.StartNew();
 
             for (int i = 0; i < Iterations; i++)
@@ -64,7 +66,7 @@ namespace XSerializer.Tests.Performance
                 {
                     using (var reader = new XmlTextReader(stringReader))
                     {
-                        customSerializer.DeserializeObject(reader);
+                        customSerializer.DeserializeObject(reader, options);
                     }
                 }
             }

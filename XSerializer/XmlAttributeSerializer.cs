@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Xml;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -8,13 +9,13 @@ namespace XSerializer
         private readonly string _attributeName;
         private readonly IValueConverter _valueConverter;
 
-        public XmlAttributeSerializer(Type type, string attributeName, RedactAttribute redactAttribute, IXmlSerializerOptions options)
+        public XmlAttributeSerializer(Type type, string attributeName, RedactAttribute redactAttribute, EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             _attributeName = attributeName;
 
-            if (!ValueTypes.TryGetValueConverter(type, redactAttribute, options.ExtraTypes, out _valueConverter))
+            if (!ValueTypes.TryGetValueConverter(type, redactAttribute, encryptAttribute, options.ExtraTypes, out _valueConverter))
             {
-                _valueConverter = SimpleTypeValueConverter.Create(type, redactAttribute);
+                _valueConverter = SimpleTypeValueConverter.Create(type, redactAttribute, encryptAttribute);
             }
         }
 
@@ -26,11 +27,11 @@ namespace XSerializer
             }
         }
 
-        public object DeserializeObject(XmlReader reader)
+        public object DeserializeObject(XmlReader reader, ISerializeOptions options)
         {
             if (reader.MoveToAttribute(_attributeName))
             {
-                var value = _valueConverter.ParseString(reader.Value);
+                var value = _valueConverter.ParseString(reader.Value, options);
                 reader.MoveToElement();
                 return value;
             }

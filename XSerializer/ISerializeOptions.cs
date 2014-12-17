@@ -7,6 +7,7 @@ namespace XSerializer
         XmlSerializerNamespaces Namespaces { get; }
         bool ShouldAlwaysEmitTypes { get; }
         bool ShouldRedact { get; }
+        bool ShouldEncrypt { get; }
         bool ShouldEmitNil { get; }
     }
 }

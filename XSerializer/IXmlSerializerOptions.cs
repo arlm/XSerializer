@@ -1,4 +1,5 @@
 ﻿using System;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -8,6 +9,7 @@ namespace XSerializer
         Type[] ExtraTypes { get; }
         string RootElementName { get; }
         RedactAttribute RedactAttribute { get; }
+        EncryptAttribute EncryptAttribute { get; }
         bool TreatEmptyElementAsString { get; }
         bool ShouldAlwaysEmitNil { get; }
     }

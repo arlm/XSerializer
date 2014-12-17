@@ -294,7 +294,7 @@ namespace XSerializer
 
                 if (instanceType.IsPrimitiveLike() || instanceType.IsNullablePrimitiveLike())
                 {
-                    var xmlTextSerializer = new XmlTextSerializer(instanceType, _options.RedactAttribute, _options.ExtraTypes);
+                    var xmlTextSerializer = new XmlTextSerializer(instanceType, _options.RedactAttribute, _options.EncryptAttribute, _options.ExtraTypes);
                     xmlTextSerializer.SerializeObject(writer, instance, options);
                 }
                 else
@@ -309,7 +309,7 @@ namespace XSerializer
             }
         }
 
-        public object DeserializeObject(XmlReader reader)
+        public object DeserializeObject(XmlReader reader, ISerializeOptions options)
         {
             var helper = NullHelper.Instance;
 
@@ -349,7 +349,7 @@ namespace XSerializer
 
                                 while (reader.MoveToNextAttribute())
                                 {
-                                    helper.StageAttributeValue();
+                                    helper.StageAttributeValue(options);
                                 }
 
                                 helper.FlushAttributeValues();
@@ -368,7 +368,7 @@ namespace XSerializer
                         }
                         else
                         {
-                            helper.SetElementPropertyValue(out shouldIssueRead);
+                            helper.SetElementPropertyValue(options, out shouldIssueRead);
                         }
                         break;
                     case XmlNodeType.Text:
@@ -381,7 +381,7 @@ namespace XSerializer
                         }
                         else
                         {
-                            helper.SetTextNodePropertyValue();
+                            helper.SetTextNodePropertyValue(options);
                         }
                         break;
                     case XmlNodeType.EndElement:
@@ -500,9 +500,9 @@ namespace XSerializer
 
         private interface IHelper
         {
-            void SetElementPropertyValue(out bool shouldIssueRead);
-            void SetTextNodePropertyValue();
-            void StageAttributeValue();
+            void SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead);
+            void SetTextNodePropertyValue(ISerializeOptions options);
+            void StageAttributeValue(ISerializeOptions options);
             void FlushAttributeValues();
             object GetInstance();
         }
@@ -515,17 +515,17 @@ namespace XSerializer
             {
             }
 
-            void IHelper.SetElementPropertyValue(out bool shouldIssueRead)
+            void IHelper.SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead)
             {
                 throw NotInitializedException();
             }
 
-            void IHelper.SetTextNodePropertyValue()
+            void IHelper.SetTextNodePropertyValue(ISerializeOptions options)
             {
                 throw NotInitializedException();
             }
 
-            void IHelper.StageAttributeValue()
+            void IHelper.StageAttributeValue(ISerializeOptions options)
             {
                 throw NotInitializedException();
             }
@@ -570,12 +570,12 @@ namespace XSerializer
                 _instance = createInstance();
             }
 
-            public void SetElementPropertyValue(out bool shouldIssueRead)
+            public void SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead)
             {
                 SerializableProperty property;
                 if (_caseSensitiveSerializableProperties.TryGetValue(_reader.Name, out property))
                 {
-                    property.ReadValue(_reader, _instance);
+                    property.ReadValue(_reader, _instance, options);
                     shouldIssueRead = !property.ReadsPastLastElement;
                 }
                 else
@@ -584,20 +584,20 @@ namespace XSerializer
                 }
             }
 
-            public void SetTextNodePropertyValue()
+            public void SetTextNodePropertyValue(ISerializeOptions options)
             {
                 if (_textNodeProperty != null)
                 {
-                    _textNodeProperty.ReadValue(_reader, _instance);
+                    _textNodeProperty.ReadValue(_reader, _instance, options);
                 }
             }
 
-            public void StageAttributeValue()
+            public void StageAttributeValue(ISerializeOptions options)
             {
                 SerializableProperty property;
                 if (_attributeProperties.TryGetValue(_reader.Name, out property))
                 {
-                    _setPropertyActions.Add(() => property.ReadValue(_reader, _instance));
+                    _setPropertyActions.Add(() => property.ReadValue(_reader, _instance, options));
                 }
             }
 
@@ -643,12 +643,12 @@ namespace XSerializer
                 _reader = reader;
             }
 
-            public void SetElementPropertyValue(out bool shouldIssueRead)
+            public void SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead)
             {
                 SerializableProperty property;
                 if (_caseSensitiveSerializableProperties.TryGetValue(_reader.Name, out property))
                 {
-                    var value = property.ReadValue(_reader);
+                    var value = property.ReadValue(_reader, options);
 
                     if (_accumulatedValues.ContainsKey(property.Name.ToLower()))
                     {
@@ -686,17 +686,17 @@ namespace XSerializer
                 throw new InvalidOperationException();
             }
 
-            public void SetTextNodePropertyValue()
+            public void SetTextNodePropertyValue(ISerializeOptions options)
             {
                 if (_textNodeProperty != null)
                 {
-                    var value = _textNodeProperty.ReadValue(_reader);
+                    var value = _textNodeProperty.ReadValue(_reader, options);
 
                     _accumulatedValues[_textNodeProperty.Name.ToLower()] = value;
                 }
             }
 
-            public void StageAttributeValue()
+            public void StageAttributeValue(ISerializeOptions options)
             {
                 SerializableProperty property;
                 if (_attributeProperties.TryGetValue(_reader.Name, out property))
@@ -704,7 +704,7 @@ namespace XSerializer
                     _setPropertyActions.Add(
                         () =>
                         {
-                            var value = property.ReadValue(_reader);
+                            var value = property.ReadValue(_reader, options);
 
                             _accumulatedValues[property.Name.ToLower()] = value;
                         });

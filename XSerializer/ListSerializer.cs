@@ -121,7 +121,7 @@ namespace XSerializer
             }
         }
 
-        public object DeserializeObject(XmlReader reader)
+        public object DeserializeObject(XmlReader reader, ISerializeOptions options)
         {
             object collection = null;
 
@@ -184,7 +184,7 @@ namespace XSerializer
 
                         if (reader.Name == _itemElementName)
                         {
-                            var item = DeserializeItem(reader, _itemSerializer, hasInstanceBeenCreated, out shouldIssueRead);
+                            var item = DeserializeItem(reader, _itemSerializer, hasInstanceBeenCreated, options, out shouldIssueRead);
 
                             if (collection != null)
                             {
@@ -220,14 +220,14 @@ namespace XSerializer
             throw new InvalidOperationException("Deserialization error: attempted to return a deserialized instance before it was created.");
         }
 
-        private static object DeserializeItem(XmlReader reader, IXmlSerializerInternal serializer, bool hasInstanceBeenCreated, out bool shouldIssueRead)
+        private static object DeserializeItem(XmlReader reader, IXmlSerializerInternal serializer, bool hasInstanceBeenCreated, ISerializeOptions options, out bool shouldIssueRead)
         {
             if (!hasInstanceBeenCreated)
             {
                 throw new InvalidOperationException("Deserialization error: attempted to deserialize an item before creating its list.");
             }
 
-            var deserialized = serializer.DeserializeObject(reader);
+            var deserialized = serializer.DeserializeObject(reader, options);
 
             shouldIssueRead = true;
 

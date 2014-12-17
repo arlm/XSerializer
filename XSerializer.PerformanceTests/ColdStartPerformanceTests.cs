@@ -81,7 +81,7 @@ namespace XSerializer.Tests.Performance
             {
                 using (var reader = new XmlTextReader(stringReader))
                 {
-                    customSerializer.DeserializeObject(reader);
+                    customSerializer.DeserializeObject(reader, options);
                 }
             }
 

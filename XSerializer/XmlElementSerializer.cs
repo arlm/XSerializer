@@ -19,9 +19,9 @@ namespace XSerializer
             _elementName = options.RootElementName;
             _alwaysEmitNil = options.ShouldAlwaysEmitNil;
 
-            if (!ValueTypes.TryGetValueConverter(typeof(T), options.RedactAttribute, options.ExtraTypes, out _valueConverter))
+            if (!ValueTypes.TryGetValueConverter(typeof(T), options.RedactAttribute, options.EncryptAttribute, options.ExtraTypes, out _valueConverter))
             {
-                _valueConverter = SimpleTypeValueConverter.Create(typeof(T), options.RedactAttribute);
+                _valueConverter = SimpleTypeValueConverter.Create(typeof(T), options.RedactAttribute, options.EncryptAttribute);
             }
         }
 
@@ -48,7 +48,7 @@ namespace XSerializer
             writer.WriteEndElement();
         }
 
-        public object DeserializeObject(XmlReader reader)
+        public object DeserializeObject(XmlReader reader, ISerializeOptions options)
         {
             if (ValueTypes.IsRegistered(typeof(T)))
             {
@@ -64,7 +64,7 @@ namespace XSerializer
             }
 
             var value = reader.ReadString();
-            return _valueConverter.ParseString(value);
+            return _valueConverter.ParseString(value, options);
         }
     }
 }

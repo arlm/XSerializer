@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using System.Xml.Serialization;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -11,6 +12,7 @@ namespace XSerializer
         private string _rootElementName;
         private bool _shouldAlwaysEmitTypes;
         private bool _shouldRedact;
+        private bool _shouldEncrypt;
         private Type[] _extraTypes;
         private bool _treatEmptyElementAsString;
         private Encoding _encoding;
@@ -25,6 +27,7 @@ namespace XSerializer
             string rootElementName = null,
             bool shouldAlwaysEmitTypes = false,
             bool shouldRedact = true,
+            bool shouldEncrypt = true,
             bool treatEmptyElementAsString = false,
             bool emitNil = false)
         {
@@ -35,6 +38,7 @@ namespace XSerializer
             _rootElementName = rootElementName;
             _shouldAlwaysEmitTypes = shouldAlwaysEmitTypes;
             _shouldRedact = shouldRedact;
+            _shouldEncrypt = shouldEncrypt;
             _extraTypes = null;
             _treatEmptyElementAsString = treatEmptyElementAsString;
             _emitNil = emitNil;
@@ -47,8 +51,10 @@ namespace XSerializer
         string IXmlSerializerOptions.RootElementName { get { return _rootElementName; } }
         bool ISerializeOptions.ShouldAlwaysEmitTypes { get { return _shouldAlwaysEmitTypes; } }
         bool ISerializeOptions.ShouldRedact { get { return _shouldRedact; } }
+        bool ISerializeOptions.ShouldEncrypt { get { return _shouldEncrypt; } }
         Type[] IXmlSerializerOptions.ExtraTypes { get { return _extraTypes; } }
         RedactAttribute IXmlSerializerOptions.RedactAttribute { get { return null; } }
+        EncryptAttribute IXmlSerializerOptions.EncryptAttribute { get { return null; } }
         bool IXmlSerializerOptions.TreatEmptyElementAsString { get { return _treatEmptyElementAsString; } }
 
         bool IXmlSerializerOptions.ShouldAlwaysEmitNil
@@ -102,6 +108,12 @@ namespace XSerializer
         public XmlSerializationOptions DisableRedact()
         {
             _shouldRedact = false;
+            return this;
+        }
+
+        public XmlSerializationOptions DisableEncryption()
+        {
+            _shouldEncrypt = false;
             return this;
         }
 

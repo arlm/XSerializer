@@ -54,7 +54,7 @@ namespace XSerializer
             serializer.SerializeObject(writer, instance, options);
         }
 
-        public object DeserializeObject(XmlReader reader)
+        public object DeserializeObject(XmlReader reader, ISerializeOptions options)
         {
             var isNil = reader.IsNil();
 
@@ -70,11 +70,11 @@ namespace XSerializer
             if (type != null)
             {
                 var serializer = XmlSerializerFactory.Instance.GetSerializer(type, _options.WithRootElementName(reader.Name));
-                deserializedObject = serializer.DeserializeObject(reader);
+                deserializedObject = serializer.DeserializeObject(reader, options);
             }
             else
             {
-                deserializedObject = DeserializeToDynamic(reader);
+                deserializedObject = DeserializeToDynamic(reader, options);
             }
 
             return
@@ -128,7 +128,7 @@ namespace XSerializer
             }
         }
 
-        private dynamic DeserializeToDynamic(XmlReader reader)
+        private dynamic DeserializeToDynamic(XmlReader reader, ISerializeOptions options)
         {
             object instance = null;
             var hasInstanceBeenCreated = false;
@@ -155,11 +155,11 @@ namespace XSerializer
                         }
                         else
                         {
-                            SetElementPropertyValue(reader, hasInstanceBeenCreated, (ExpandoObject)instance);
+                            SetElementPropertyValue(reader, hasInstanceBeenCreated, options, (ExpandoObject)instance);
                         }
                         break;
                     case XmlNodeType.Text:
-                        var stringValue = (string)new XmlTextSerializer(typeof(string), _options.RedactAttribute, _options.ExtraTypes).DeserializeObject(reader);
+                        var stringValue = (string)new XmlTextSerializer(typeof(string), _options.RedactAttribute, _options.EncryptAttribute, _options.ExtraTypes).DeserializeObject(reader, options);
                         hasInstanceBeenCreated = true;
 
                         bool boolValue;
@@ -224,11 +224,11 @@ namespace XSerializer
             throw new InvalidOperationException("Deserialization error: reached the end of the document without returning a value.");
         }
 
-        private void SetElementPropertyValue(XmlReader reader, bool hasInstanceBeenCreated, IDictionary<string, object> expando)
+        private void SetElementPropertyValue(XmlReader reader, bool hasInstanceBeenCreated, ISerializeOptions options, IDictionary<string, object> expando)
         {
             var propertyName = reader.Name;
             var serializer = GetSerializer<object>(_options.WithRootElementName(reader.Name));
-            var value = serializer.DeserializeObject(reader);
+            var value = serializer.DeserializeObject(reader, options);
             expando[propertyName] = value;
         }
 
@@ -256,9 +256,9 @@ namespace XSerializer
                 _serializer.SerializeExpandoObject(writer, (ExpandoObject)instance, options);
             }
 
-            public object DeserializeObject(XmlReader reader)
+            public object DeserializeObject(XmlReader reader, ISerializeOptions options)
             {
-                return (ExpandoObject) _serializer.DeserializeToDynamic(reader);
+                return (ExpandoObject) _serializer.DeserializeToDynamic(reader, options);
             }
         }
     }

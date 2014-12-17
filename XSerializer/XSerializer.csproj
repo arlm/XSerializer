@@ -52,7 +52,9 @@
     <Compile Include="DictionarySerializer.cs" />
     <Compile Include="DynamicMethodFactory.cs" />
     <Compile Include="DynamicSerializer.cs" />
+    <Compile Include="Encryption\EncryptAttribute.cs" />
     <Compile Include="Encryption\EncryptionProvider.cs" />
+    <Compile Include="Encryption\EncryptionProviderExtensions.cs" />
     <Compile Include="EnumTypeValueConverter.cs" />
     <Compile Include="Encryption\IEncryptionProvider.cs" />
     <Compile Include="IValueConverter.cs" />

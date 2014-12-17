@@ -120,27 +120,27 @@ namespace XSerializer
             serializer.SerializeObject(xmlWriter, instance, options);
         }
 
-        public static object DeserializeObject(this IXmlSerializerInternal serializer, string xml)
+        public static object DeserializeObject(this IXmlSerializerInternal serializer, string xml, ISerializeOptions options)
         {
             using (var stringReader = new StringReader(xml))
             {
                 using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    return serializer.DeserializeObject(xmlReader);
+                    return serializer.DeserializeObject(xmlReader, options);
                 }
             }
         }
 
-        public static object DeserializeObject(this IXmlSerializerInternal serializer, Stream stream)
+        public static object DeserializeObject(this IXmlSerializerInternal serializer, Stream stream, ISerializeOptions options)
         {
             var xmlReader = new XmlTextReader(stream);
-            return serializer.DeserializeObject(xmlReader);
+            return serializer.DeserializeObject(xmlReader, options);
         }
 
-        public static object DeserializeObject(this IXmlSerializerInternal serializer, TextReader reader)
+        public static object DeserializeObject(this IXmlSerializerInternal serializer, TextReader reader, ISerializeOptions options)
         {
             var xmlReader = new XmlTextReader(reader);
-            return serializer.DeserializeObject(xmlReader);
+            return serializer.DeserializeObject(xmlReader, options);
         }
 
         internal static bool HasDefaultConstructor(this Type type)

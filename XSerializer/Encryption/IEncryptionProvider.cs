@@ -13,10 +13,10 @@
         string Encrypt(string plainText);
 
         /// <summary>
-        /// Decrypts the specified cyper text.
+        /// Decrypts the specified cipher text.
         /// </summary>
-        /// <param name="cyperText">The cyper text.</param>
+        /// <param name="cipherText">The cipher text.</param>
         /// <returns>The decrypted text.</returns>
-        string Decrypt(string cyperText);
+        string Decrypt(string cipherText);
     }
 }

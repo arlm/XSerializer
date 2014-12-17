@@ -1,16 +1,19 @@
 using System;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
     internal class UriTypeValueConverter : IValueConverter
     {
-        private static readonly Lazy<IValueConverter> _default = new Lazy<IValueConverter>(() => new UriTypeValueConverter(null));
+        private static readonly Lazy<IValueConverter> _default = new Lazy<IValueConverter>(() => new UriTypeValueConverter(null, null));
 
         private readonly RedactAttribute _redactAttribute;
+        private readonly EncryptAttribute _encryptAttribute;
 
-        public UriTypeValueConverter(RedactAttribute redactAttribute)
+        public UriTypeValueConverter(RedactAttribute redactAttribute, EncryptAttribute encryptAttribute)
         {
             _redactAttribute = redactAttribute;
+            _encryptAttribute = encryptAttribute;
         }
 
         public static IValueConverter Default
@@ -18,14 +21,18 @@ namespace XSerializer
             get { return _default.Value; }
         }
 
-        public object ParseString(string value)
+        public object ParseString(string value, ISerializeOptions options)
         {
             if (value == null)
             {
                 return null;
             }
 
-            return new Uri(value);
+            return
+                new Uri(
+                    _encryptAttribute != null
+                        ? EncryptionProvider.Current.Decrypt(value, options.ShouldEncrypt)
+                        : value);
         }
 
         public string GetString(object value, ISerializeOptions options)
@@ -38,9 +45,11 @@ namespace XSerializer
             }
 
             var uriString =
-                _redactAttribute == null
-                    ? uri.ToString()
-                    : _redactAttribute.Redact(uri, options.ShouldRedact);
+                _redactAttribute != null
+                    ? _redactAttribute.Redact(uri, options.ShouldRedact)
+                    : _encryptAttribute != null
+                        ? EncryptionProvider.Current.Encrypt(uri.ToString(), options.ShouldEncrypt)
+                        : uri.ToString();
 
             return uriString;
         }

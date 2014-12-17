@@ -139,7 +139,7 @@ namespace XSerializer
 
         public T Deserialize(string xml)
         {
-            return (T)_serializer.DeserializeObject(xml).ConvertIfNecessary(typeof(T));
+            return (T)_serializer.DeserializeObject(xml, _serializeOptions).ConvertIfNecessary(typeof(T));
         }
 
         object IXmlSerializer.Deserialize(string xml)
@@ -149,7 +149,7 @@ namespace XSerializer
 
         public T Deserialize(Stream stream)
         {
-            return (T)_serializer.DeserializeObject(stream);
+            return (T)_serializer.DeserializeObject(stream, _serializeOptions).ConvertIfNecessary(typeof(T));
         }
 
         object IXmlSerializer.Deserialize(Stream stream)
@@ -159,7 +159,7 @@ namespace XSerializer
 
         public T Deserialize(TextReader reader)
         {
-            return (T)_serializer.DeserializeObject(reader);
+            return (T)_serializer.DeserializeObject(reader, _serializeOptions).ConvertIfNecessary(typeof(T));
         }
 
         object IXmlSerializer.Deserialize(TextReader reader)

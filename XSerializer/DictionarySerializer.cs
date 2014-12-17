@@ -113,7 +113,7 @@ namespace XSerializer
             }
         }
 
-        public object DeserializeObject(XmlReader reader)
+        public object DeserializeObject(XmlReader reader, ISerializeOptions options)
         {
             object dictionary = null;
 
@@ -162,11 +162,11 @@ namespace XSerializer
                         {
                             if (reader.Name == "Key")
                             {
-                                currentKey = DeserializeKeyOrValue(reader, _keySerializer, out shouldIssueRead);
+                                currentKey = DeserializeKeyOrValue(reader, _keySerializer, options, out shouldIssueRead);
                             }
                             else if (reader.Name == "Value")
                             {
-                                currentValue = DeserializeKeyOrValue(reader, _valueSerializer, out shouldIssueRead);
+                                currentValue = DeserializeKeyOrValue(reader, _valueSerializer, options, out shouldIssueRead);
                             }
                         }
 
@@ -191,9 +191,9 @@ namespace XSerializer
             throw new InvalidOperationException("Deserialization error: reached the end of the document without returning a value.");
         }
 
-        private static object DeserializeKeyOrValue(XmlReader reader, IXmlSerializerInternal serializer, out bool shouldIssueRead)
+        private static object DeserializeKeyOrValue(XmlReader reader, IXmlSerializerInternal serializer, ISerializeOptions options, out bool shouldIssueRead)
         {
-            var deserialized = serializer.DeserializeObject(reader);
+            var deserialized = serializer.DeserializeObject(reader, options);
 
             shouldIssueRead = true;
 

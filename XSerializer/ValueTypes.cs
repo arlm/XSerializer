@@ -1,19 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
     internal static class ValueTypes
     {
-        private static readonly Dictionary<Type, Func<RedactAttribute, Type[], IValueConverter>> _factories = new Dictionary<Type, Func<RedactAttribute, Type[], IValueConverter>>();
+        private static readonly Dictionary<Type, Func<RedactAttribute, EncryptAttribute, Type[], IValueConverter>> _factories = new Dictionary<Type, Func<RedactAttribute, EncryptAttribute, Type[], IValueConverter>>();
         private static readonly Dictionary<Type, Func<bool, object, string>> _redactFuncs = new Dictionary<Type, Func<bool, object, string>>();
 
         static ValueTypes()
         {
-            _factories.Add(typeof(Enum), (redactAttribute, extraTypes) => new EnumTypeValueConverter(redactAttribute, extraTypes));
-            _factories.Add(typeof(Type), (redactAttribute, extraTypes) => new TypeTypeValueConverter(redactAttribute));
-            _factories.Add(typeof(Uri), (redactAttribute, extraTypes) => new UriTypeValueConverter(redactAttribute));
+            _factories.Add(typeof(Enum), (redactAttribute, encryptAttribute, extraTypes) => new EnumTypeValueConverter(redactAttribute, encryptAttribute, extraTypes));
+            _factories.Add(typeof(Type), (redactAttribute, encryptAttribute, extraTypes) => new TypeTypeValueConverter(redactAttribute, encryptAttribute));
+            _factories.Add(typeof(Uri), (redactAttribute, encryptAttribute, extraTypes) => new UriTypeValueConverter(redactAttribute, encryptAttribute));
 
             _redactFuncs.Add(typeof(Enum), GetRedactFunc(EnumTypeValueConverter.Default));
             _redactFuncs.Add(typeof(Type), GetRedactFunc(TypeTypeValueConverter.Default));
@@ -25,13 +26,13 @@ namespace XSerializer
             }
         }
 
-        public static bool TryGetValueConverter(Type type, RedactAttribute redactAttribute, Type[] extraTypes, out IValueConverter valueConverter)
+        public static bool TryGetValueConverter(Type type, RedactAttribute redactAttribute, EncryptAttribute encryptAttribute, Type[] extraTypes, out IValueConverter valueConverter)
         {
-            Func<RedactAttribute, Type[], IValueConverter> factory;
+            Func<RedactAttribute, EncryptAttribute, Type[], IValueConverter> factory;
 
             if (_factories.TryGetValue(type, out factory))
             {
-                valueConverter = factory(redactAttribute, extraTypes);
+                valueConverter = factory(redactAttribute, encryptAttribute, extraTypes);
                 return true;
             }
 
