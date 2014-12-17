@@ -125,6 +125,13 @@ namespace XSerializer.Tests.Encryption
         private static readonly TestCaseData[] _byTypeTestCases =
         {
             GetTestCaseData(
+                "string",
+                new TypeExample<string> { Value = "123" },
+                root => root.Element("Value").Value,
+                "MTIz",
+                x => x.Value),
+
+            GetTestCaseData(
                 "int",
                 new TypeExample<int> { Value = 123 },
                 root => root.Element("Value").Value,
@@ -152,49 +159,77 @@ namespace XSerializer.Tests.Encryption
                 "dHJ1ZQ==",
                 x => x.Value),
 
-                GetTestCaseData(
+            GetTestCaseData(
+                "double",
+                new TypeExample<double> { Value = 123.45 },
+                root => root.Element("Value").Value,
+                "MTIzLjQ1",
+                x => x.Value),
+
+            GetTestCaseData(
+                "Nullable double",
+                new TypeExample<double?> { Value = 123.45 },
+                root => root.Element("Value").Value,
+                "MTIzLjQ1",
+                x => x.Value),
+
+            GetTestCaseData(
+                "decimal",
+                new TypeExample<decimal> { Value = 123.45M },
+                root => root.Element("Value").Value,
+                "MTIzLjQ1",
+                x => x.Value),
+
+            GetTestCaseData(
+                "Nullable decimal",
+                new TypeExample<decimal?> { Value = 123.45M },
+                root => root.Element("Value").Value,
+                "MTIzLjQ1",
+                x => x.Value),
+
+            GetTestCaseData(
                 "enum",
                 new TypeExample<TestEnum> { Value = TestEnum.Second },
                 root => root.Element("Value").Value,
                 "U2Vjb25k",
                 x => x.Value),
 
-                GetTestCaseData(
+            GetTestCaseData(
                 "Nullable enum",
                 new TypeExample<TestEnum?> { Value = TestEnum.Second },
                 root => root.Element("Value").Value,
                 "U2Vjb25k",
                 x => x.Value),
 
-                GetTestCaseData(
+            GetTestCaseData(
                 "DateTime",
                 new TypeExample<DateTime> { Value = new DateTime(2000, 1, 1) },
                 root => root.Element("Value").Value,
                 "MjAwMC0wMS0wMVQwMDowMDowMC4wMDAwMDAw",
                 x => x.Value),
 
-                GetTestCaseData(
+            GetTestCaseData(
                 "Nullable DateTime",
                 new TypeExample<DateTime?> { Value = new DateTime(2000, 1, 1) },
                 root => root.Element("Value").Value,
                 "MjAwMC0wMS0wMVQwMDowMDowMC4wMDAwMDAw",
                 x => x.Value),
 
-                GetTestCaseData(
+            GetTestCaseData(
                 "Guid",
                 new TypeExample<Guid> { Value = _exampleGuid },
                 root => root.Element("Value").Value,
                 "ZTMyODcyMDQtOTJhYi00YTU0LWExNDgtZjU1NDAwN2JlZGRk",
                 x => x.Value),
 
-                GetTestCaseData(
+            GetTestCaseData(
                 "Nullable Guid",
                 new TypeExample<Guid?> { Value = _exampleGuid },
                 root => root.Element("Value").Value,
                 "ZTMyODcyMDQtOTJhYi00YTU0LWExNDgtZjU1NDAwN2JlZGRk",
                 x => x.Value),
 
-                GetTestCaseData(
+            GetTestCaseData(
                 "Enum (non-specific)",
                 new TypeExample<Enum> { Value = TestEnum.Second },
                 root => root.Element("Value").Value,
@@ -202,7 +237,7 @@ namespace XSerializer.Tests.Encryption
                 x => x.Value,
                 typeof(TestEnum)),
 
-                GetTestCaseData(
+            GetTestCaseData(
                 "Type",
                 new TypeExample<Type> { Value = typeof(string) },
                 root => root.Element("Value").Value,
@@ -210,7 +245,7 @@ namespace XSerializer.Tests.Encryption
                 x => x.Value,
                 typeof(TestEnum)),
 
-                GetTestCaseData(
+            GetTestCaseData(
                 "Uri",
                 new TypeExample<Uri> { Value = new Uri("http://google.com/") },
                 root => root.Element("Value").Value,
