@@ -159,11 +159,9 @@ namespace XSerializer
                     (EncryptionProviderAttribute)Attribute.GetCustomAttribute(type, typeof(EncryptionProviderAttribute));
 
                 var priority =
-                    encryptionProviderAttribute != null // If EncryptionProviderAttribute was specified...
-                        ? encryptionProviderAttribute.Priority // ...use its priority.
-                        : type.GetInterfaces().Any(i => i.AssemblyQualifiedName == _iEncryptionProviderProviderName)
-                            ? -1 // IEncryptionProviderProvider has a higher default priority...
-                            : -2; // ...than IEncryptionProvider.
+                    encryptionProviderAttribute != null
+                        ? encryptionProviderAttribute.Priority
+                        : -1;
 
                 return new PrioritizedType
                 {
@@ -184,7 +182,7 @@ namespace XSerializer
                 return candidateTypes[0];
             }
 
-            // Check for special case where only one type implements IEncryptionProviderProvider,
+            // Check for the case where only one type implements IEncryptionProviderProvider,
             // and all others only implement IEncryptionProvider. In this case, because
             // IEncryptionProviderProvider has higher priority, use that single type.
             var data =
