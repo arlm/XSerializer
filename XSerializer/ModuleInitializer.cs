@@ -1,20 +1,40 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using XSerializer.Encryption;
 
 namespace XSerializer
 {
     public static class ModuleInitializer // Future devs: Do not change the name of this class
     {
+        private const string _eventLogSource = ".NET Runtime";
+        private const string _eventLogName = "Application";
+
         private static readonly string _iEncryptionProviderName = typeof(IEncryptionProvider).AssemblyQualifiedName;
         private static readonly string _iEncryptionProviderProviderName = typeof(IEncryptionProviderProvider).AssemblyQualifiedName;
 
         public static void Run() // Future devs: Do not change the signature of this method
         {
+            CheckEventLogSource();
             SetCurrentEncryptionProvider();
+        }
+
+        private static void CheckEventLogSource()
+        {
+            try
+            {
+                if (!EventLog.SourceExists(_eventLogSource))
+                {
+                    EventLog.CreateEventSource(_eventLogSource, _eventLogName);
+                }
+            }
+            catch
+            {
+            }
         }
 
         private static void SetCurrentEncryptionProvider()
@@ -40,7 +60,7 @@ namespace XSerializer
 
                     if (candidateType == null)
                     {
-                        WriteToEventLog(candidateTypes);
+                        WriteEventLogWarning(candidateTypes);
                         continue;
                     }
 
@@ -189,9 +209,29 @@ namespace XSerializer
             return null;
         }
 
-        private static void WriteToEventLog(IList<Type> duplicatePriorityTypes)
+        private static void WriteEventLogWarning(IEnumerable<Type> duplicatePriorityTypes)
         {
-            // TODO: Implement
+            try
+            {
+                var eventLog = new EventLog(_eventLogName)
+                {
+                    Source = _eventLogSource,
+                    MachineName = Environment.MachineName
+                };
+
+                const string separator = "\r\n        ";
+
+                var message =
+                    string.Format(
+                        "XSerializer module initialization warning:\r\n    More than one implementation of either IEncryptionProvider or IEncryptionProviderProvider was discovered with the same priority.\r\n    The types were:{0}{1}",
+                        separator,
+                        string.Join(separator, duplicatePriorityTypes.Select(t => t.FullName)));
+
+                eventLog.WriteEntry(message, EventLogEntryType.Warning);
+            }
+            catch
+            {
+            }
         }
 
         private static IEncryptionProvider GetEncryptionProvider(Type candidateType)
