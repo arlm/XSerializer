@@ -30,19 +30,21 @@ namespace XSerializer
 
                 var prioritizedGroupsOfCandidateTypes =
                     GetAssemblyFiles()
-                        .SelectMany(GetCandidateTypes)
+                        .SelectMany(LoadCandidateTypes)
                         .GroupBy(x => x.Priority, item => item.Type)
                         .OrderByDescending(g => g.Key);
 
                 foreach (var candidateTypes in prioritizedGroupsOfCandidateTypes.Select(g => g.ToList()))
                 {
-                    if (candidateTypes.Count != 1)
+                    var candidateType = ChooseCandidateType(candidateTypes);
+
+                    if (candidateType == null)
                     {
                         WriteToEventLog(candidateTypes);
                         continue;
                     }
 
-                    var encryptionProvider = GetEncryptionProvider(candidateTypes[0]);
+                    var encryptionProvider = GetEncryptionProvider(candidateType);
 
                     if (encryptionProvider != null)
                     {
@@ -76,7 +78,7 @@ namespace XSerializer
             }
         }
 
-        private static IEnumerable<PrioritizedType> GetCandidateTypes(string assemblyFile)
+        private static IEnumerable<PrioritizedType> LoadCandidateTypes(string assemblyFile)
         {
             try
             {
@@ -155,7 +157,39 @@ namespace XSerializer
             }
         }
 
-        private static void WriteToEventLog(List<Type> duplicatePriorityTypes)
+        private static Type ChooseCandidateType(IList<Type> candidateTypes)
+        {
+            if (candidateTypes.Count == 1)
+            {
+                return candidateTypes[0];
+            }
+
+            // Check for special case where only one type implements IEncryptionProviderProvider,
+            // and all others only implement IEncryptionProvider. In this case, because
+            // IEncryptionProviderProvider has higher priority, use that single type.
+            var data =
+                candidateTypes.Select(type =>
+                {
+                    var interfaces = type.GetInterfaces();
+
+                    return new
+                    {
+                        Type = type,
+                        IsProvider = interfaces.Any(i => i.AssemblyQualifiedName == _iEncryptionProviderName),
+                        IsProviderProvider = interfaces.Any(i => i.AssemblyQualifiedName == _iEncryptionProviderProviderName)
+                    };
+                }).ToArray();
+
+            if ((data.Count(x => x.IsProviderProvider) == 1)
+                && (data.Count(x => x.IsProvider && !x.IsProviderProvider) == (data.Length - 1)))
+            {
+                return data.Single(x => x.IsProviderProvider).Type;
+            }
+
+            return null;
+        }
+
+        private static void WriteToEventLog(IList<Type> duplicatePriorityTypes)
         {
             // TODO: Implement
         }
