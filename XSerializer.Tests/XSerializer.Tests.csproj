@@ -32,10 +32,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
-  </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyOriginatorKeyFile>XSerializer.Tests.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="nunit.framework">
@@ -54,6 +51,7 @@
     <Compile Include="AttributeTests.cs" />
     <Compile Include="BclXmlSerializerExtensions.cs" />
     <Compile Include="DefaultDocumentNamespaceTests.cs" />
+    <Compile Include="Encryption\Base64EncryptionProvider.cs" />
     <Compile Include="Encryption\EncryptionTests.cs" />
     <Compile Include="GuidTests.cs" />
     <Compile Include="NilTests.cs" />
@@ -97,7 +95,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="XSerializer.Tests.snk" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\XSerializer\XSerializer.csproj">

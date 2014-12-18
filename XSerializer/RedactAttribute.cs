@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace XSerializer
 {
-    public class RedactAttribute : Attribute
+    public sealed class RedactAttribute : Attribute
     {
         private static readonly Regex Numbers = new Regex(@"\d", RegexOptions.Compiled);
         private static readonly Regex AllNumbers = new Regex(@"[-.0-9]", RegexOptions.Compiled);

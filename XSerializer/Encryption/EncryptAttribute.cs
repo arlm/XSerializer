@@ -8,7 +8,7 @@ namespace XSerializer.Encryption
     /// to do so.
     /// </summary>
     [AttributeUsage(AttributeTargets.Property)] 
-    public class EncryptAttribute : Attribute
+    public sealed class EncryptAttribute : Attribute
     {
     }
 }

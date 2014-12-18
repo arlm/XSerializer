@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using NUnit.Framework;
@@ -10,21 +9,6 @@ namespace XSerializer.Tests.Encryption
     [TestFixture]
     public class EncryptionTests
     {
-        private IEncryptionProvider _previousEncryptionProvider;
-
-        [TestFixtureSetUp]
-        public void Setup()
-        {
-            _previousEncryptionProvider = EncryptionProvider.Current;
-            EncryptionProvider.Current = new TestEncryptionProvider();
-        }
-
-        [TestFixtureTearDown]
-        public void TearDown()
-        {
-            EncryptionProvider.Current = _previousEncryptionProvider;
-        }
-
         #region ByXmlStructure
 
         [TestCaseSource("_byXmlStructureTestCases")]
@@ -305,19 +289,6 @@ namespace XSerializer.Tests.Encryption
         public class Container<T>
         {
             public T Item { get; set; }
-        }
-
-        private class TestEncryptionProvider : IEncryptionProvider
-        {
-            public string Encrypt(string plainText)
-            {
-                return Convert.ToBase64String(Encoding.UTF8.GetBytes(plainText));
-            }
-
-            public string Decrypt(string cipherText)
-            {
-                return Encoding.UTF8.GetString(Convert.FromBase64String(cipherText));
-            }
         }
     }
 }
