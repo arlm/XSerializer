@@ -22,7 +22,7 @@
         /// </summary>
         public static IEncryptionProvider Current
         {
-            get { return _current; }
+            internal get { return _current; }
             set { _current = value ?? DefaultEncryptionProvider; }
         }
     }
