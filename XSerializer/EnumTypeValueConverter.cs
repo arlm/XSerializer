@@ -34,7 +34,7 @@ namespace XSerializer
 
             if (_encryptAttribute != null)
             {
-                value = EncryptionProvider.Current.Decrypt(value, options.ShouldEncrypt);
+                value = EncryptionMechanism.Current.Decrypt(value, options.ShouldEncrypt);
             }
 
             var enumTypeName = value.Substring(0, value.LastIndexOf('.'));
@@ -62,7 +62,7 @@ namespace XSerializer
 
             if (_encryptAttribute != null)
             {
-                combinedValue = EncryptionProvider.Current.Encrypt(combinedValue, options.ShouldEncrypt);
+                combinedValue = EncryptionMechanism.Current.Encrypt(combinedValue, options.ShouldEncrypt);
             }
 
             return combinedValue;

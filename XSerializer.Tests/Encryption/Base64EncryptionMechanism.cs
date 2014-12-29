@@ -4,7 +4,7 @@ using XSerializer.Encryption;
 
 namespace XSerializer.Tests.Encryption
 {
-    public class Base64EncryptionProvider : IEncryptionProvider
+    public class Base64EncryptionMechanism : IEncryptionMechanism
     {
         public string Encrypt(string plainText)
         {

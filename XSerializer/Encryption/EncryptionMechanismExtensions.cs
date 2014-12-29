@@ -1,8 +1,8 @@
 namespace XSerializer.Encryption
 {
-    public static class EncryptionProviderExtensions
+    public static class EncryptionMechanismExtensions
     {
-        public static string Encrypt(this IEncryptionProvider source, string plainText, bool encryptionEnabled)
+        public static string Encrypt(this IEncryptionMechanism source, string plainText, bool encryptionEnabled)
         {
             return
                 encryptionEnabled
@@ -10,7 +10,7 @@ namespace XSerializer.Encryption
                     : plainText;
         }
 
-        public static string Decrypt(this IEncryptionProvider source, string cipherText, bool encryptionEnabled)
+        public static string Decrypt(this IEncryptionMechanism source, string cipherText, bool encryptionEnabled)
         {
             return
                 encryptionEnabled

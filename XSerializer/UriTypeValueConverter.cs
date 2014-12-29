@@ -31,7 +31,7 @@ namespace XSerializer
             return
                 new Uri(
                     _encryptAttribute != null
-                        ? EncryptionProvider.Current.Decrypt(value, options.ShouldEncrypt)
+                        ? EncryptionMechanism.Current.Decrypt(value, options.ShouldEncrypt)
                         : value);
         }
 
@@ -48,7 +48,7 @@ namespace XSerializer
                 _redactAttribute != null
                     ? _redactAttribute.Redact(uri, options.ShouldRedact)
                     : _encryptAttribute != null
-                        ? EncryptionProvider.Current.Encrypt(uri.ToString(), options.ShouldEncrypt)
+                        ? EncryptionMechanism.Current.Encrypt(uri.ToString(), options.ShouldEncrypt)
                         : uri.ToString();
 
             return uriString;

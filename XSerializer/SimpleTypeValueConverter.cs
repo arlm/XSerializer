@@ -26,8 +26,8 @@ namespace XSerializer
 
                 if (encryptAttribute != null)
                 {
-                    _parseString = (value, options) => parseString(EncryptionProvider.Current.Decrypt(value, options.ShouldEncrypt), options);
-                    _getString = (value, options) => EncryptionProvider.Current.Encrypt(getString(value, options), options.ShouldEncrypt);
+                    _parseString = (value, options) => parseString(EncryptionMechanism.Current.Decrypt(value, options.ShouldEncrypt), options);
+                    _getString = (value, options) => EncryptionMechanism.Current.Encrypt(getString(value, options), options.ShouldEncrypt);
                 }
                 else
                 {

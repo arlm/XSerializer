@@ -3,7 +3,7 @@
     /// <summary>
     /// Defines an interface for encrypting and decrypting text.
     /// </summary>
-    public interface IEncryptionProvider
+    public interface IEncryptionMechanism
     {
         /// <summary>
         /// Encrypts the specified plain text.

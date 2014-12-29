@@ -14,13 +14,13 @@ namespace XSerializer
         private const string _eventLogSource = ".NET Runtime";
         private const string _eventLogName = "Application";
 
-        private static readonly string _iEncryptionProviderName = typeof(IEncryptionProvider).AssemblyQualifiedName;
-        private static readonly string _iEncryptionProviderProviderName = typeof(IEncryptionProviderProvider).AssemblyQualifiedName;
+        private static readonly string _iEncryptionMechanismName = typeof(IEncryptionMechanism).AssemblyQualifiedName;
+        private static readonly string _iEncryptionMechanismFactoryName = typeof(IEncryptionMechanismFactory).AssemblyQualifiedName;
 
         public static void Run() // Future devs: Do not change the signature of this method
         {
             CheckEventLogSource();
-            SetCurrentEncryptionProvider();
+            SetCurrentEncryptionMechanism();
         }
 
         private static void CheckEventLogSource()
@@ -37,9 +37,9 @@ namespace XSerializer
             }
         }
 
-        private static void SetCurrentEncryptionProvider()
+        private static void SetCurrentEncryptionMechanism()
         {
-            if (_iEncryptionProviderName == null || _iEncryptionProviderProviderName == null)
+            if (_iEncryptionMechanismName == null || _iEncryptionMechanismFactoryName == null)
             {
                 return;
             }
@@ -64,11 +64,11 @@ namespace XSerializer
                         continue;
                     }
 
-                    var encryptionProvider = GetEncryptionProvider(candidateType);
+                    var encryptionMechanism = GetEncryptionMechanism(candidateType);
 
-                    if (encryptionProvider != null)
+                    if (encryptionMechanism != null)
                     {
-                        EncryptionProvider.Current = encryptionProvider;
+                        EncryptionMechanism.Current = encryptionMechanism;
                         return;
                     }
                 }
@@ -117,8 +117,8 @@ namespace XSerializer
                             && t.IsPublic
                             && t.AssemblyQualifiedName != null
                             && t.GetInterfaces().Any(i =>
-                                i.AssemblyQualifiedName == _iEncryptionProviderProviderName
-                                || i.AssemblyQualifiedName == _iEncryptionProviderName)
+                                i.AssemblyQualifiedName == _iEncryptionMechanismFactoryName
+                                || i.AssemblyQualifiedName == _iEncryptionMechanismName)
                             && t.HasDefaultishConstructor())
                         .Select(t => GetPrioritizedType(t.AssemblyQualifiedName))
                         .Where(x => x != null);
@@ -155,12 +155,12 @@ namespace XSerializer
                     return null;
                 }
 
-                var encryptionProviderAttribute =
-                    (EncryptionProviderAttribute)Attribute.GetCustomAttribute(type, typeof(EncryptionProviderAttribute));
+                var encryptionMechanismAttribute =
+                    (EncryptionMechanismAttribute)Attribute.GetCustomAttribute(type, typeof(EncryptionMechanismAttribute));
 
                 var priority =
-                    encryptionProviderAttribute != null
-                        ? encryptionProviderAttribute.Priority
+                    encryptionMechanismAttribute != null
+                        ? encryptionMechanismAttribute.Priority
                         : -1;
 
                 return new PrioritizedType
@@ -182,9 +182,9 @@ namespace XSerializer
                 return candidateTypes[0];
             }
 
-            // Check for the case where only one type implements IEncryptionProviderProvider,
-            // and all others only implement IEncryptionProvider. In this case, because
-            // IEncryptionProviderProvider has higher priority, use that single type.
+            // Check for the case where only one type implements IEncryptionMechanismFactory,
+            // and all others only implement IEncryptionMechanism. In this case, because
+            // IEncryptionMechanismFactory has higher priority, use that single type.
             var data =
                 candidateTypes.Select(type =>
                 {
@@ -193,15 +193,15 @@ namespace XSerializer
                     return new
                     {
                         Type = type,
-                        IsProvider = interfaces.Any(i => i.AssemblyQualifiedName == _iEncryptionProviderName),
-                        IsProviderProvider = interfaces.Any(i => i.AssemblyQualifiedName == _iEncryptionProviderProviderName)
+                        IsMechanism = interfaces.Any(i => i.AssemblyQualifiedName == _iEncryptionMechanismName),
+                        IsMechanismFactory = interfaces.Any(i => i.AssemblyQualifiedName == _iEncryptionMechanismFactoryName)
                     };
                 }).ToArray();
 
-            if ((data.Count(x => x.IsProviderProvider) == 1)
-                && (data.Count(x => x.IsProvider && !x.IsProviderProvider) == (data.Length - 1)))
+            if ((data.Count(x => x.IsMechanismFactory) == 1)
+                && (data.Count(x => x.IsMechanism && !x.IsMechanismFactory) == (data.Length - 1)))
             {
-                return data.Single(x => x.IsProviderProvider).Type;
+                return data.Single(x => x.IsMechanismFactory).Type;
             }
 
             return null;
@@ -221,7 +221,7 @@ namespace XSerializer
 
                 var message =
                     string.Format(
-                        "XSerializer module initialization warning:\r\n    More than one implementation of either IEncryptionProvider or IEncryptionProviderProvider was discovered with the same priority.\r\n    The types were:{0}{1}",
+                        "XSerializer module initialization warning:\r\n    More than one implementation of either IEncryptionMechanism or IEncryptionMechanismFactory was discovered with the same priority.\r\n    The types were:{0}{1}",
                         separator,
                         string.Join(separator, duplicatePriorityTypes.Select(t => t.FullName)));
 
@@ -232,7 +232,7 @@ namespace XSerializer
             }
         }
 
-        private static IEncryptionProvider GetEncryptionProvider(Type candidateType)
+        private static IEncryptionMechanism GetEncryptionMechanism(Type candidateType)
         {
             try
             {
@@ -254,16 +254,16 @@ namespace XSerializer
                     instance = Activator.CreateInstance(candidateType, args);
                 }
 
-                var encryptionProviderProvider = instance as IEncryptionProviderProvider;
-                if (encryptionProviderProvider != null)
+                var encryptionMechanismFactory = instance as IEncryptionMechanismFactory;
+                if (encryptionMechanismFactory != null)
                 {
-                    return encryptionProviderProvider.GetEncryptionProvider();
+                    return encryptionMechanismFactory.GetEncryptionMechanism();
                 }
 
-                var encryptionProvider = instance as IEncryptionProvider;
-                if (encryptionProvider != null)
+                var encryptionMechanism = instance as IEncryptionMechanism;
+                if (encryptionMechanism != null)
                 {
-                    return encryptionProvider;
+                    return encryptionMechanism;
                 }
 
                 // How did we even get here? Answer me that, Mr. Compiler!

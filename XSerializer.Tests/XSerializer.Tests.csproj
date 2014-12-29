@@ -51,7 +51,7 @@
     <Compile Include="AttributeTests.cs" />
     <Compile Include="BclXmlSerializerExtensions.cs" />
     <Compile Include="DefaultDocumentNamespaceTests.cs" />
-    <Compile Include="Encryption\Base64EncryptionProvider.cs" />
+    <Compile Include="Encryption\Base64EncryptionMechanism.cs" />
     <Compile Include="Encryption\EncryptionTests.cs" />
     <Compile Include="GuidTests.cs" />
     <Compile Include="NilTests.cs" />

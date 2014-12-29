@@ -46,18 +46,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Encryption\ClearTextEncryptionProvider.cs" />
+    <Compile Include="Encryption\ClearTextEncryptionMechanism.cs" />
     <Compile Include="CustomSerializer.cs" />
     <Compile Include="DictionarySerializer.cs" />
     <Compile Include="DynamicMethodFactory.cs" />
     <Compile Include="DynamicSerializer.cs" />
     <Compile Include="Encryption\EncryptAttribute.cs" />
-    <Compile Include="Encryption\EncryptionProvider.cs" />
-    <Compile Include="Encryption\EncryptionProviderAttribute.cs" />
-    <Compile Include="Encryption\EncryptionProviderExtensions.cs" />
-    <Compile Include="Encryption\IEncryptionProviderProvider.cs" />
+    <Compile Include="Encryption\EncryptionMechanism.cs" />
+    <Compile Include="Encryption\EncryptionMechanismAttribute.cs" />
+    <Compile Include="Encryption\EncryptionMechanismExtensions.cs" />
+    <Compile Include="Encryption\IEncryptionMechanismFactory.cs" />
     <Compile Include="EnumTypeValueConverter.cs" />
-    <Compile Include="Encryption\IEncryptionProvider.cs" />
+    <Compile Include="Encryption\IEncryptionMechanism.cs" />
     <Compile Include="IValueConverter.cs" />
     <Compile Include="IXmlSerializer.cs" />
     <Compile Include="ModuleInitializer.cs" />

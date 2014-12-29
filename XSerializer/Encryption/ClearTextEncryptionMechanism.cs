@@ -1,11 +1,11 @@
 ﻿namespace XSerializer.Encryption
 {
     /// <summary>
-    /// An implementation of <see cref="IEncryptionProvider"/> that does
+    /// An implementation of <see cref="IEncryptionMechanism"/> that does
     /// nothing. The <see cref="Encrypt"/> and <see cref="Decrypt"/>
     /// methods both return the value of their parameter.
     /// </summary>
-    public class ClearTextEncryptionProvider : IEncryptionProvider
+    public class ClearTextEncryptionMechanism : IEncryptionMechanism
     {
         /// <summary>
         /// Returns the value of <paramref name="text"/>.
