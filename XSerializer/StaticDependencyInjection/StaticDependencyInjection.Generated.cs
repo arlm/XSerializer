@@ -51,7 +51,7 @@ namespace XSerializer.StaticDependencyInjection
 
         /// <summary>
         /// Return a collection of metadata objects that correspond to the attributes.
-        /// Use the <see cref="Extensions.AsAttributeType{TAttribute}"/> extension method
+        /// Use the <see cref="Extensions.AsAttributes{TAttribute}"/> extension method
         /// to convert applicable CustomAttributeData objects to the desired attribyte type.
         /// </summary>
         /// <param name="assemblyAttributeDataCollection">
@@ -83,10 +83,12 @@ namespace XSerializer.StaticDependencyInjection
         /// <paramref name="importAction"/> parameter callback.
         /// </typeparam>
         /// <param name="importAction">
-        /// A callback function to invoke when an implementation of <typeparamref name="TTargetType"/> is created.
+        /// A callback function to invoke when an implementation of
+        ///  <typeparamref name="TTargetType"/> is created.
         /// </param>
         /// <param name="importName">
-        /// The name of this import operation. If not null, exported classes without a matching name are excluded.
+        /// The name of this import operation. If not null, exported classes without 
+        /// a matching name are excluded.
         /// </param>
         /// <param name="options">
         /// The import options to use. If null or not provided, the value returned by 
@@ -172,15 +174,21 @@ namespace XSerializer.StaticDependencyInjection
         /// The import options to use. If null or not provided, the value returned by 
         /// <see cref="GetDefaultImportOptions"/> is returned.
         /// </param>
+        /// <param name="exportComparer">
+        /// A comparer to be used when more than one ExportInfo has the same priority.
+        /// If null or not provided, a comparer based on the assembly qualified name of
+        /// the target class is used.
+        /// </param>
         protected void ImportFirst<TTargetType>(
             Action<TTargetType> importAction,
             string importName = null,
-            ImportOptions options = null)
+            ImportOptions options = null,
+            IComparer<ExportInfo> exportComparer = null)
             where TTargetType : class
         {
             ImportFirstType(
                 importAction,
-                GetInstances<TTargetType>(importName, options));
+                GetInstances<TTargetType>(importName, options, exportComparer));
         }
 
         /// <summary>
@@ -217,17 +225,23 @@ namespace XSerializer.StaticDependencyInjection
         /// The import options to use. If null or not provided, the value returned by 
         /// <see cref="GetDefaultImportOptions"/> is returned.
         /// </param>
+        /// <param name="exportComparer">
+        /// A comparer to be used when more than one ExportInfo has the same priority.
+        /// If null or not provided, a comparer based on the assembly qualified name of
+        /// the target class is used.
+        /// </param>
         protected void ImportFirst<TTargetType, TFactoryType>(
             Action<TTargetType> importAction,
             Func<TFactoryType, TTargetType> getTarget,
             string importName = null,
-            ImportOptions options = null)
+            ImportOptions options = null,
+            IComparer<ExportInfo> exportComparer = null)
             where TTargetType : class
             where TFactoryType : class
         {
             ImportFirstType(
                 importAction,
-                GetInstances(getTarget, importName, options));
+                GetInstances(getTarget, importName, options, exportComparer));
         }
 
         /// <summary>
@@ -252,13 +266,19 @@ namespace XSerializer.StaticDependencyInjection
         /// The import options to use. If null or not provided, the value returned by 
         /// <see cref="GetDefaultImportOptions"/> is returned.
         /// </param>
+        /// <param name="exportComparer">
+        /// A comparer to be used when more than one ExportInfo has the same priority.
+        /// If null or not provided, a comparer based on the assembly qualified name of
+        /// the target class is used.
+        /// </param>
         protected void ImportMultiple<TTargetType>(
             Action<IEnumerable<TTargetType>> importAction,
             string importName = null,
-            ImportOptions options = null)
+            ImportOptions options = null,
+            IComparer<ExportInfo> exportComparer = null)
             where TTargetType : class
         {
-            importAction(GetInstances<TTargetType>(importName, options).ToList());
+            importAction(GetInstances<TTargetType>(importName, options, exportComparer).ToList());
         }
 
         /// <summary>
@@ -297,25 +317,40 @@ namespace XSerializer.StaticDependencyInjection
         /// The import options to use. If null or not provided, the value returned by 
         /// <see cref="GetDefaultImportOptions"/> is returned.
         /// </param>
+        /// <param name="exportComparer">
+        /// A comparer to be used when more than one ExportInfo has the same priority.
+        /// If null or not provided, a comparer based on the assembly qualified name of
+        /// the target class is used.
+        /// </param>
         protected void ImportMultiple<TTargetType, TFactoryType>(
             Action<IEnumerable<TTargetType>> importAction,
             Func<TFactoryType, TTargetType> getTarget,
             string importName = null,
-            ImportOptions options = null)
+            ImportOptions options = null,
+            IComparer<ExportInfo> exportComparer = null)
             where TTargetType : class
             where TFactoryType : class
         {
-            importAction(GetInstances(getTarget, importName, options).ToList());
+            importAction(GetInstances(getTarget, importName, options, exportComparer).ToList());
         }
 
-        private IEnumerable<TTargetType> GetInstances<TTargetType>(string importName, ImportOptions options) where TTargetType : class
+        private IEnumerable<TTargetType> GetInstances<TTargetType>(
+            string importName,
+            ImportOptions options,
+            IComparer<ExportInfo> exportComparer)
+            where TTargetType : class
         {
             return GetInstances(
                 GetImportInfo<TTargetType>(importName, options),
-                CreateInstance<TTargetType>);
+                CreateInstance<TTargetType>,
+                exportComparer);
         }
 
-        private IEnumerable<TTargetType> GetInstances<TTargetType, TFactoryType>(Func<TFactoryType, TTargetType> getTarget, string importName, ImportOptions options)
+        private IEnumerable<TTargetType> GetInstances<TTargetType, TFactoryType>(
+            Func<TFactoryType, TTargetType> getTarget,
+            string importName,
+            ImportOptions options,
+            IComparer<ExportInfo> exportComparer)
             where TTargetType : class
             where TFactoryType : class
         {
@@ -324,7 +359,8 @@ namespace XSerializer.StaticDependencyInjection
                     importName,
                     options,
                     typeof(TFactoryType)),
-                type => CreateInstance(type, getTarget));
+                type => CreateInstance(type, getTarget),
+                exportComparer);
         }
 
         private ImportInfo GetImportInfo<TTargetType>(
@@ -342,7 +378,8 @@ namespace XSerializer.StaticDependencyInjection
 
         private void ImportSingleType<TTargetType>(
             Action<TTargetType> importAction,
-            ImportInfo import, Func<Type, TTargetType> createInstance)
+            ImportInfo import,
+            Func<Type, TTargetType> createInstance)
             where TTargetType : class
         {
             var candidateTypeNames = GetCandidateTypeNames(import);
@@ -374,13 +411,17 @@ namespace XSerializer.StaticDependencyInjection
 
         private IEnumerable<TTargetType> GetInstances<TTargetType>(
             ImportInfo import,
-            Func<Type, TTargetType> createInstance)
+            Func<Type, TTargetType> createInstance,
+            IComparer<ExportInfo> exportComparer)
             where TTargetType : class
         {
             var candidateTypeNames = GetCandidateTypeNames(import);
 
             var prioritizedGroupsOfCandidateTypes =
-                GetPrioritizedGroupsOfCandidateTypes(candidateTypeNames, import);
+                GetPrioritizedGroupsOfCandidateTypes(
+                    candidateTypeNames,
+                    import,
+                    exportComparer);
 
             return (
                 from candidateTypes in prioritizedGroupsOfCandidateTypes
@@ -459,8 +500,13 @@ namespace XSerializer.StaticDependencyInjection
 
         private IEnumerable<IList<Type>> GetPrioritizedGroupsOfCandidateTypes(
             IEnumerable<string> candidateTypeNames,
-            ImportInfo import)
+            ImportInfo import,
+            IComparer<ExportInfo> exportComparer = null)
         {
+            exportComparer =
+                exportComparer
+                    ?? new TargetClassAssemblyQualifiedNameComparer();
+
             Func<Type, bool> isPreferredType;
 
             if (import.FactoryType == null)
@@ -487,7 +533,7 @@ namespace XSerializer.StaticDependencyInjection
                     .OrderByDescending(g => g.Key)
                     .Select(g =>
                         g.OrderByDescending(export => isPreferredType(export.TargetClass))
-                            .ThenBy(export => export.TargetClass.AssemblyQualifiedName)
+                            .ThenBy(export => export, exportComparer)
                             .ToList())
                     .ToList();
 
@@ -534,6 +580,17 @@ namespace XSerializer.StaticDependencyInjection
                     .Select(group => group.Select(g => g.TargetClass).ToList()).ToList();
         }
 
+        private class TargetClassAssemblyQualifiedNameComparer : IComparer<ExportInfo>
+        {
+            public int Compare(ExportInfo lhs, ExportInfo rhs)
+            {
+                var lhsString = lhs.TargetClass.AssemblyQualifiedName ?? lhs.TargetClass.ToString();
+                var rhsString = rhs.TargetClass.AssemblyQualifiedName ?? rhs.TargetClass.ToString();
+
+                return lhsString.CompareTo(rhsString);
+            }
+        }
+
         private static bool AreCompatible(ImportInfo import, ExportInfo export)
         {
             if (!import.Options.IncludeNamedExportsFromUnnamedImports
@@ -543,7 +600,7 @@ namespace XSerializer.StaticDependencyInjection
                 return false;
             }
 
-            return (export.Name == import.Name || import.Name == null);
+            return export.Name == import.Name || import.Name == null;
         }
 
         private IEnumerable<ExportInfo> LoadExportInfosFromAssemblyAttributes(
@@ -874,18 +931,21 @@ namespace XSerializer.StaticDependencyInjection
     /// </summary>
     internal class ExportInfo
     {
-        private const int _defaultPriority = -1;
+        /// <summary>
+        /// The default priority for an instance of <see cref="ExportInfo"/> if not specified.
+        /// </summary>
+        public const int DefaultPriority = -1;
 
         private readonly Type _targetClass;
         private readonly int _priority;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExportInfo"/> class with
-        /// a priority of negative one.
+        /// a priority with the value of <see cref="DefaultPriority"/>.
         /// </summary>
         /// <param name="targetClass">The class to be exported.</param>
-        internal ExportInfo(Type targetClass)
-            : this(targetClass, _defaultPriority)
+        public ExportInfo(Type targetClass)
+            : this(targetClass, DefaultPriority)
         {
         }
 
@@ -896,8 +956,13 @@ namespace XSerializer.StaticDependencyInjection
         /// <param name="priority">
         /// The priority of the export, relative to the priority of other exports.
         /// </param>
-        internal ExportInfo(Type targetClass, int priority)
+        public ExportInfo(Type targetClass, int priority)
         {
+            if (targetClass == null)
+            {
+                throw new ArgumentNullException("targetClass");
+            }
+
             if (targetClass.Assembly.ReflectionOnly)
             {
                 targetClass = Type.GetType(targetClass.AssemblyQualifiedName);
@@ -910,32 +975,32 @@ namespace XSerializer.StaticDependencyInjection
         /// <summary>
         /// Gets the class to be exported.
         /// </summary>
-        internal Type TargetClass { get { return _targetClass; } }
+        public Type TargetClass { get { return _targetClass; } }
 
         /// <summary>
         /// Gets the priority of the export, relative to the priority of other exports.
         /// The default value, if not specified in the constructor is negative one.
         /// This value is used during import operations to sort the discovered classes.
         /// </summary>
-        internal int Priority { get { return _priority; } }
+        public int Priority { get { return _priority; } }
 
         /// <summary>
         /// Gets or sets the name of the export. This value is compared against the
         /// name parameter in various import operations.
         /// </summary>
-        internal string Name { get; set; }
+        public string Name { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the type indicated by
         /// <see cref="TargetClass"/> should be excluded from consideration during an
         /// import operation.
         /// </summary>
-        internal bool Disabled { get; set; }
+        public bool Disabled { get; set; }
     }
 
     internal static class Extensions
     {
-        internal static IEnumerable<TAttribute> AsAttributeType<TAttribute>(
+        internal static IEnumerable<TAttribute> AsAttributes<TAttribute>(
             this IEnumerable<CustomAttributeData> attributeDataCollection)
             where TAttribute : Attribute
         {
