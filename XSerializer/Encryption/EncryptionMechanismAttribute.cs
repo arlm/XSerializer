@@ -20,7 +20,7 @@ namespace XSerializer.Encryption
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EncryptionMechanismAttribute"/> class.
-        /// This constructor should not be used when this attribute decorates an assembly.
+        /// This constructor should only be used when this attribute decorates a class.
         /// </summary>
         public EncryptionMechanismAttribute()
             : this(0)
@@ -29,7 +29,7 @@ namespace XSerializer.Encryption
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EncryptionMechanismAttribute"/> class.
-        /// This constructor should not be used when this attribute decorates an assembly.
+        /// This constructor should only be used when this attribute decorates a class.
         /// </summary>
         /// <param name="priority">The priority of the class.</param>
         public EncryptionMechanismAttribute(int priority)
@@ -39,6 +39,7 @@ namespace XSerializer.Encryption
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EncryptionMechanismAttribute"/> class.
+        /// This constructor should only be used when this attribute decorates an assembly.
         /// </summary>
         /// <param name="classType">
         /// The type of the class to export. If this attribute decorates a class, then
@@ -51,6 +52,7 @@ namespace XSerializer.Encryption
 
         /// <summary>
         /// Initializes a new instance of the <see cref="EncryptionMechanismAttribute"/> class.
+        /// This constructor should only be used when this attribute decorates an assembly.
         /// </summary>
         /// <param name="classType">
         /// The type of the class to export. If this attribute decorates a class, then
@@ -64,8 +66,7 @@ namespace XSerializer.Encryption
         }
 
         /// <summary>
-        /// Gets the type of class to export. If this attribute decorates a class
-        /// (as opposed to an assembly), this value is ignored.
+        /// Gets the type of class to export. Only used when this attribute decorates an assembly.
         /// </summary>
         public Type ClassType { get { return _classType; } }
 
