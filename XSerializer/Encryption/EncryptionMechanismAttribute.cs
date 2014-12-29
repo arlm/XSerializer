@@ -80,5 +80,15 @@ namespace XSerializer.Encryption
         /// for to be used as the encryption mechanism for the current app domain.
         /// </summary>
         public bool Disabled { get; set; }
+
+        /// <summary>
+        /// Gets a value indicating whether this instance is valid as an assembly attribute.
+        /// Returns true if <see cref="ClassType"/> is not null and describes a class (e.g.
+        /// not an interface or enum). Else, false.
+        /// </summary>
+        internal bool IsValidForAssemblyAttribute
+        {
+            get { return ClassType != null && ClassType.IsClass; }
+        }
     }
 }

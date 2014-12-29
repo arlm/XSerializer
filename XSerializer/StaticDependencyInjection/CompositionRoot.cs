@@ -36,7 +36,7 @@ namespace XSerializer.StaticDependencyInjection
         {
             return
                 assemblyAttributeDataCollection.AsAttributeType<EncryptionMechanismAttribute>()
-                    .Where(attribute => attribute.ClassType != null && attribute.ClassType.IsClass)
+                    .Where(attribute => attribute.IsValidForAssemblyAttribute)
                     .Select(attribute =>
                         new ExportInfo(attribute.ClassType, attribute.Priority)
                         {
