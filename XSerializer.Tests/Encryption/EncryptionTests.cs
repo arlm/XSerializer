@@ -8,7 +8,7 @@ namespace XSerializer.Tests.Encryption
 {
     [TestFixture]
     public class EncryptionTests
-    {
+    {   
         #region ByXmlStructure
 
         [TestCaseSource("_byXmlStructureTestCases")]
@@ -251,9 +251,10 @@ namespace XSerializer.Tests.Encryption
 
         private static void PerformTest(object objectToSerialize, Func<object, object> getTargetValue, Func<XElement, object> getTargetNodeValue, object expectedTargetNodeValue, Type[] extraTypes)
         {
-            var serializer = XmlSerializer.Create(objectToSerialize.GetType(), extraTypes);
+            var serializer = XmlSerializer.Create(objectToSerialize.GetType(), options => options.Indent(), extraTypes);
 
             var xml = serializer.Serialize(objectToSerialize);
+            Console.WriteLine(xml);
 
             var roundTrip = serializer.Deserialize(xml);
 
