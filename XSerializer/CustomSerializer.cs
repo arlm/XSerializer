@@ -299,7 +299,19 @@ namespace XSerializer
                 }
                 else
                 {
-                    foreach (var property in _serializablePropertiesMap[instanceType])
+                    SerializableProperty[] properties;
+
+                    while (!_serializablePropertiesMap.TryGetValue(instanceType, out properties))
+                    {
+                        instanceType = instanceType.BaseType;
+
+                        if (instanceType == null)
+                        {
+                            throw new InvalidOperationException("Unable to find serializable properties for type " + instance.GetType());
+                        }
+                    }
+
+                    foreach (var property in properties)
                     {
                         property.WriteValue(writer, instance, options);
                     }
@@ -493,8 +505,20 @@ namespace XSerializer
 
             public IHelper CreateHelper(Type type, XmlReader reader)
             {
-                var createHelper = _createHelperFuncs[type].Value;
-                return createHelper(reader);
+                var temp = type;
+                Lazy<Func<XmlReader, IHelper>> createHelper;
+
+                while (!_createHelperFuncs.TryGetValue(temp, out createHelper))
+                {
+                    temp = temp.BaseType;
+
+                    if (temp == null)
+                    {
+                        throw new InvalidOperationException("Unable to find serializable properties for type " + type);
+                    }
+                }
+
+                return createHelper.Value(reader);
             }
         }
 
