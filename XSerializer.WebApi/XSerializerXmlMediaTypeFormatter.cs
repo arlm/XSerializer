@@ -151,7 +151,7 @@ namespace XSerializer.WebApi
         {
             var encoding = SelectCharacterEncoding(content != null ? content.Headers : null);
 
-            using (var writer = new StreamWriter(writeStream, encoding))
+            using (var writer = new StreamWriter(writeStream, encoding, 1024, true))
             {
                 var serializer = XmlSerializer.Create(type, new XmlSerializationOptions(encoding: encoding, shouldIndent: Indent));
                 serializer.Serialize(writer, value);
