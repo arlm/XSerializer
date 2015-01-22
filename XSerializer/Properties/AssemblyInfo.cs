@@ -33,8 +33,8 @@ using System.Runtime.InteropServices;
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.26")]
-[assembly: AssemblyInformationalVersion("0.1.26")]
+[assembly: AssemblyFileVersion("0.1.27")]
+[assembly: AssemblyInformationalVersion("0.1.27")]
 
 [assembly: InternalsVisibleTo("XSerializer.Tests")]
 [assembly: InternalsVisibleTo("XSerializer.PerformanceTests")]
