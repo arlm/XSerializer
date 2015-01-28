@@ -31,7 +31,7 @@ namespace XSerializer
             return
                 Type.GetType(
                     _encryptAttribute != null
-                        ? EncryptionMechanism.Current.Decrypt(value, options.ShouldEncrypt)
+                        ? options.GetEncryptionMechanism().Decrypt(value, options.ShouldEncrypt)
                         : value);
         }
 
@@ -48,7 +48,7 @@ namespace XSerializer
                 _redactAttribute != null
                     ? _redactAttribute.Redact(type, options.ShouldRedact)
                     : _encryptAttribute != null
-                        ? EncryptionMechanism.Current.Encrypt(GetStringValue(type), options.ShouldEncrypt)
+                        ? options.GetEncryptionMechanism().Encrypt(GetStringValue(type), options.ShouldEncrypt)
                         : GetStringValue(type);
 
             return typeString;

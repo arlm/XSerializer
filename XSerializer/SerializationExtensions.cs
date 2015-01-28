@@ -13,6 +13,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -141,6 +142,11 @@ namespace XSerializer
         {
             var xmlReader = new XmlTextReader(reader);
             return serializer.DeserializeObject(xmlReader, options);
+        }
+
+        internal static IEncryptionMechanism GetEncryptionMechanism(this ISerializeOptions options)
+        {
+            return options.EncryptionMechanism ?? XmlSerializer.DefaultEncryptionMechanism;
         }
 
         internal static bool HasDefaultConstructor(this Type type)
