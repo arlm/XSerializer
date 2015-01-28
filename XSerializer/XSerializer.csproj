@@ -14,6 +14,7 @@
     <TargetFrameworkProfile />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
+    <UseInjectModuleInitializer Condition="'$(UseInjectModuleInitializer)' == ''">true</UseInjectModuleInitializer>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -38,6 +39,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -60,10 +62,10 @@
     <Compile Include="Encryption\IEncryptionMechanism.cs" />
     <Compile Include="IValueConverter.cs" />
     <Compile Include="IXmlSerializer.cs" />
-    <Compile Include="StaticDependencyInjection\CompositionRoot.cs" />
-    <Compile Include="StaticDependencyInjection\ExportAttributes.cs" />
-    <Compile Include="StaticDependencyInjection\ModuleInitializer.cs" />
-    <Compile Include="StaticDependencyInjection\StaticDependencyInjection.Generated.cs" />
+    <Compile Include="Rock.StaticDependencyInjection\CompositionRoot.cs" />
+    <Compile Include="Rock.StaticDependencyInjection\ExportAttribute.cs" />
+    <Compile Include="Rock.StaticDependencyInjection\ModuleInitializer.cs" />
+    <Compile Include="Rock.StaticDependencyInjection\StaticDependencyInjection.Generated.cs" />
     <Compile Include="ValueTypes.cs" />
     <Compile Include="TypeTypeValueConverter.cs" />
     <Compile Include="UriTypeValueConverter.cs" />
@@ -97,8 +99,8 @@
     </PropertyGroup>
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
   </Target>
-  <Target Name="InjectModuleInitializer" AfterTargets="AfterBuild">
-    <Exec Command="..\packages\Rock.StaticDependencyInjection.1.0.0-alpha07\tools\InjectModuleInitializer.exe &quot;$(TargetPath)&quot;" />
+  <Target Name="InjectModuleInitializer" AfterTargets="AfterBuild" Condition="'$(UseInjectModuleInitializer)' == 'true'">
+    <Exec Command="..\packages\Rock.StaticDependencyInjection.1.1.0\tools\InjectModuleInitializer.exe &quot;$(TargetPath)&quot;" />
   </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
