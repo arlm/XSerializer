@@ -93,6 +93,7 @@
     <Compile Include="XmlSerializerOfTypeTypeTests.cs" />
     <Compile Include="XmlToObject.cs" />
     <Compile Include="XsdTypeTests.cs" />
+    <Compile Include="XSerializerXmlReaderWriterTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
