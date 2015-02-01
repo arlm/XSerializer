@@ -67,7 +67,7 @@ namespace XSerializer.Tests.Performance
                 var sb = new StringBuilder();
                 using (var stringWriter = new StringWriter(sb))
                 {
-                    using (var writer = new SerializationXmlTextWriter(stringWriter, options))
+                    using (var writer = new XSerializerXmlTextWriter(stringWriter, options))
                     {
                         customSerializer.SerializeObject(writer, _containerWithInterface, new TestSerializeOptions());
                     }

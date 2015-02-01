@@ -81,12 +81,12 @@ namespace XSerializer
 
         public bool ReadsPastLastElement { get { return _readsPastLastElement(); } }
 
-        public void ReadValue(XmlReader reader, object instance, ISerializeOptions options)
+        public void ReadValue(XSerializerXmlReader reader, object instance, ISerializeOptions options)
         {
             SetValue(instance, ReadValue(reader, options));
         }
 
-        public object ReadValue(XmlReader reader, ISerializeOptions options)
+        public object ReadValue(XSerializerXmlReader reader, ISerializeOptions options)
         {
             return _serializer.Value.DeserializeObject(reader, options);
         }
@@ -101,7 +101,7 @@ namespace XSerializer
             _setValueFunc(instance, value);
         }
 
-        public void WriteValue(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
+        public void WriteValue(XSerializerXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             if (_shouldSerializeFunc(instance))
             {

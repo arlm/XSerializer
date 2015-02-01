@@ -265,7 +265,7 @@ namespace XSerializer
             return type.Name;
         }
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
+        public void SerializeObject(XSerializerXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             if (instance == null && !options.ShouldEmitNil)
             {
@@ -321,7 +321,7 @@ namespace XSerializer
             }
         }
 
-        public object DeserializeObject(XmlReader reader, ISerializeOptions options)
+        public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
         {
             var helper = NullHelper.Instance;
 
@@ -410,7 +410,7 @@ namespace XSerializer
 
         private class HelperFactory
         {
-            private readonly IDictionary<Type, Lazy<Func<XmlReader, IHelper>>> _createHelperFuncs;
+            private readonly IDictionary<Type, Lazy<Func<XSerializerXmlReader, IHelper>>> _createHelperFuncs;
 
             public HelperFactory(Dictionary<Type, SerializableProperty[]> serializablePropertiesMap)
             {
@@ -419,10 +419,10 @@ namespace XSerializer
                         .Where(item => typeof(T).IsAssignableFrom(item.Key))
                         .ToDictionary(
                             item => item.Key,
-                            item => new Lazy<Func<XmlReader, IHelper>>(() => GetCreateHelperFunc(item.Key, item.Value)));
+                            item => new Lazy<Func<XSerializerXmlReader, IHelper>>(() => GetCreateHelperFunc(item.Key, item.Value)));
             }
 
-            private static Func<XmlReader, IHelper> GetCreateHelperFunc(Type type, ICollection<SerializableProperty> serializableProperties)
+            private static Func<XSerializerXmlReader, IHelper> GetCreateHelperFunc(Type type, ICollection<SerializableProperty> serializableProperties)
             {
                 if (type.IsAbstract)
                 {
@@ -503,10 +503,10 @@ namespace XSerializer
                         && property.PropertyType.IsReadOnlyDictionary());
             }
 
-            public IHelper CreateHelper(Type type, XmlReader reader)
+            public IHelper CreateHelper(Type type, XSerializerXmlReader reader)
             {
                 var temp = type;
-                Lazy<Func<XmlReader, IHelper>> createHelper;
+                Lazy<Func<XSerializerXmlReader, IHelper>> createHelper;
 
                 while (!_createHelperFuncs.TryGetValue(temp, out createHelper))
                 {
@@ -574,7 +574,7 @@ namespace XSerializer
         {
             private readonly List<Action> _setPropertyActions = new List<Action>();
 
-            private readonly XmlReader _reader;
+            private readonly XSerializerXmlReader _reader;
             private readonly T _instance;
             private readonly Dictionary<string, SerializableProperty> _caseSensitiveSerializableProperties;
             private readonly SerializableProperty _textNodeProperty;
@@ -585,7 +585,7 @@ namespace XSerializer
                 Dictionary<string, SerializableProperty> caseSensitiveSerializableProperties,
                 SerializableProperty textNodeProperty,
                 IDictionary<string, SerializableProperty> attributeProperties,
-                XmlReader reader)
+                XSerializerXmlReader reader)
             {
                 _reader = reader;
                 _caseSensitiveSerializableProperties = caseSensitiveSerializableProperties;
@@ -649,7 +649,7 @@ namespace XSerializer
             private readonly IDictionary<string, SerializableProperty> _attributeProperties;
             private readonly IDictionary<string, SerializableProperty> _caseSensitiveSerializableProperties;
 
-            private readonly XmlReader _reader;
+            private readonly XSerializerXmlReader _reader;
 
             public NonDefaultConstructorHelper(
                 IEnumerable<ConstructorWrapper> constructors,
@@ -657,7 +657,7 @@ namespace XSerializer
                 SerializableProperty textNodeProperty,
                 IDictionary<string, SerializableProperty> attributeProperties,
                 IDictionary<string, SerializableProperty> caseSensitiveSerializableProperties,
-                XmlReader reader)
+                XSerializerXmlReader reader)
             {
                 _constructors = constructors;
                 _serializableProperties = serializableProperties;

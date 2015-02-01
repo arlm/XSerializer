@@ -19,7 +19,7 @@ namespace XSerializer
             }
         }
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object value, ISerializeOptions options)
+        public void SerializeObject(XSerializerXmlTextWriter writer, object value, ISerializeOptions options)
         {
             if (value != null)
             {
@@ -27,7 +27,7 @@ namespace XSerializer
             }
         }
 
-        public object DeserializeObject(XmlReader reader, ISerializeOptions options)
+        public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
         {
             if (reader.MoveToAttribute(_attributeName))
             {

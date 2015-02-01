@@ -1,10 +1,8 @@
 ﻿namespace XSerializer
 {
-    using System.Xml;
-
     internal interface IXmlSerializerInternal
     {
-        void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options);
-        object DeserializeObject(XmlReader reader, ISerializeOptions options);
+        void SerializeObject(XSerializerXmlTextWriter writer, object instance, ISerializeOptions options);
+        object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options);
     }
 }

@@ -66,7 +66,7 @@ namespace XSerializer
 
             using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
             {
-                using (var xmlWriter = new SerializationXmlTextWriter(stringWriter, options))
+                using (var xmlWriter = new XSerializerXmlTextWriter(stringWriter, options))
                 {
                     xmlWriter.Formatting = formatting;
                     serializer.SerializeObject(xmlWriter, instance, options);
@@ -90,7 +90,7 @@ namespace XSerializer
             {
                 streamWriter = new StreamWriter(stream, encoding ?? Encoding.UTF8);
 
-                var xmlWriter = new SerializationXmlTextWriter(streamWriter, options)
+                var xmlWriter = new XSerializerXmlTextWriter(streamWriter, options)
                 {
                     Formatting = formatting
                 };
@@ -113,7 +113,7 @@ namespace XSerializer
             Formatting formatting,
             ISerializeOptions options)
         {
-            var xmlWriter = new SerializationXmlTextWriter(writer, options)
+            var xmlWriter = new XSerializerXmlTextWriter(writer, options)
             {
                 Formatting = formatting
             };
@@ -127,7 +127,10 @@ namespace XSerializer
             {
                 using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    return serializer.DeserializeObject(xmlReader, options);
+                    using (var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism()))
+                    {
+                        return serializer.DeserializeObject(reader, options);
+                    }
                 }
             }
         }
@@ -135,13 +138,15 @@ namespace XSerializer
         public static object DeserializeObject(this IXmlSerializerInternal serializer, Stream stream, ISerializeOptions options)
         {
             var xmlReader = new XmlTextReader(stream);
-            return serializer.DeserializeObject(xmlReader, options);
+            var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism());
+            return serializer.DeserializeObject(reader, options);
         }
 
-        public static object DeserializeObject(this IXmlSerializerInternal serializer, TextReader reader, ISerializeOptions options)
+        public static object DeserializeObject(this IXmlSerializerInternal serializer, TextReader textReader, ISerializeOptions options)
         {
-            var xmlReader = new XmlTextReader(reader);
-            return serializer.DeserializeObject(xmlReader, options);
+            var xmlReader = new XmlTextReader(textReader);
+            var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism());
+            return serializer.DeserializeObject(reader, options);
         }
 
         internal static IEncryptionMechanism GetEncryptionMechanism(this ISerializeOptions options)
@@ -558,7 +563,7 @@ namespace XSerializer
             return setMethod != null && setMethod.IsPublic;
         }
 
-        internal static bool ReadIfNeeded(this XmlReader reader, bool shouldRead)
+        internal static bool ReadIfNeeded(this XSerializerXmlReader reader, bool shouldRead)
         {
             if (shouldRead)
             {
@@ -568,7 +573,7 @@ namespace XSerializer
             return true;
         }
 
-        internal static bool IsNil(this XmlReader reader)
+        internal static bool IsNil(this XSerializerXmlReader reader)
         {
             var nilFound = false;
 
@@ -675,7 +680,7 @@ namespace XSerializer
             return type.Name;
         }
 
-        public static Type GetXsdType<T>(this XmlReader reader, Type[] extraTypes)
+        public static Type GetXsdType<T>(this XSerializerXmlReader reader, Type[] extraTypes)
         {
             string typeName = null;
 

@@ -88,7 +88,7 @@ namespace XSerializer
                 });
         }
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
+        public void SerializeObject(XSerializerXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             if (instance == null && !options.ShouldEmitNil)
             {
@@ -121,7 +121,7 @@ namespace XSerializer
             }
         }
 
-        public object DeserializeObject(XmlReader reader, ISerializeOptions options)
+        public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
         {
             object collection = null;
 
@@ -220,7 +220,7 @@ namespace XSerializer
             throw new InvalidOperationException("Deserialization error: attempted to return a deserialized instance before it was created.");
         }
 
-        private static object DeserializeItem(XmlReader reader, IXmlSerializerInternal serializer, bool hasInstanceBeenCreated, ISerializeOptions options, out bool shouldIssueRead)
+        private static object DeserializeItem(XSerializerXmlReader reader, IXmlSerializerInternal serializer, bool hasInstanceBeenCreated, ISerializeOptions options, out bool shouldIssueRead)
         {
             if (!hasInstanceBeenCreated)
             {

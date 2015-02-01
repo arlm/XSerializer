@@ -16,7 +16,7 @@ namespace XSerializer
             }
         }
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object value, ISerializeOptions options)
+        public void SerializeObject(XSerializerXmlTextWriter writer, object value, ISerializeOptions options)
         {
             if (value != null)
             {
@@ -24,7 +24,7 @@ namespace XSerializer
             }
         }
 
-        public object DeserializeObject(XmlReader reader, ISerializeOptions options)
+        public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
         {
             return _valueConverter.ParseString(reader.Value, options);
         }

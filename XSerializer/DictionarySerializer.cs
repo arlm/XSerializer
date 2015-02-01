@@ -72,7 +72,7 @@ namespace XSerializer
 
         protected abstract object FinalizeCollectionIntoReadOnlyDictionary(object collection);
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
+        public void SerializeObject(XSerializerXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             if (instance == null && !options.ShouldEmitNil)
             {
@@ -113,7 +113,7 @@ namespace XSerializer
             }
         }
 
-        public object DeserializeObject(XmlReader reader, ISerializeOptions options)
+        public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
         {
             object dictionary = null;
 
@@ -191,7 +191,7 @@ namespace XSerializer
             throw new InvalidOperationException("Deserialization error: reached the end of the document without returning a value.");
         }
 
-        private static object DeserializeKeyOrValue(XmlReader reader, IXmlSerializerInternal serializer, ISerializeOptions options, out bool shouldIssueRead)
+        private static object DeserializeKeyOrValue(XSerializerXmlReader reader, IXmlSerializerInternal serializer, ISerializeOptions options, out bool shouldIssueRead)
         {
             var deserialized = serializer.DeserializeObject(reader, options);
 

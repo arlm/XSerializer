@@ -31,7 +31,7 @@ namespace XSerializer
             _options = options;
         }
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
+        public void SerializeObject(XSerializerXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             var expando = instance as ExpandoObject;
             if (expando != null || instance == null)
@@ -54,7 +54,7 @@ namespace XSerializer
             serializer.SerializeObject(writer, instance, options);
         }
 
-        public object DeserializeObject(XmlReader reader, ISerializeOptions options)
+        public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
         {
             var isNil = reader.IsNil();
 
@@ -83,7 +83,7 @@ namespace XSerializer
                     : deserializedObject;
         }
 
-        private void SerializeExpandoObject(SerializationXmlTextWriter writer, IDictionary<string, object> expando, ISerializeOptions options)
+        private void SerializeExpandoObject(XSerializerXmlTextWriter writer, IDictionary<string, object> expando, ISerializeOptions options)
         {
             if (expando == null && !options.ShouldEmitNil)
             {
@@ -128,7 +128,7 @@ namespace XSerializer
             }
         }
 
-        private dynamic DeserializeToDynamic(XmlReader reader, ISerializeOptions options)
+        private dynamic DeserializeToDynamic(XSerializerXmlReader reader, ISerializeOptions options)
         {
             object instance = null;
             var hasInstanceBeenCreated = false;
@@ -224,7 +224,7 @@ namespace XSerializer
             throw new InvalidOperationException("Deserialization error: reached the end of the document without returning a value.");
         }
 
-        private void SetElementPropertyValue(XmlReader reader, bool hasInstanceBeenCreated, ISerializeOptions options, IDictionary<string, object> expando)
+        private void SetElementPropertyValue(XSerializerXmlReader reader, bool hasInstanceBeenCreated, ISerializeOptions options, IDictionary<string, object> expando)
         {
             var propertyName = reader.Name;
             var serializer = GetSerializer<object>(_options.WithRootElementName(reader.Name));
@@ -251,12 +251,12 @@ namespace XSerializer
                 _serializer = serializer;
             }
 
-            public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
+            public void SerializeObject(XSerializerXmlTextWriter writer, object instance, ISerializeOptions options)
             {
                 _serializer.SerializeExpandoObject(writer, (ExpandoObject)instance, options);
             }
 
-            public object DeserializeObject(XmlReader reader, ISerializeOptions options)
+            public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
             {
                 return (ExpandoObject) _serializer.DeserializeToDynamic(reader, options);
             }

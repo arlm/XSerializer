@@ -25,7 +25,7 @@ namespace XSerializer
             }
         }
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object value, ISerializeOptions options)
+        public void SerializeObject(XSerializerXmlTextWriter writer, object value, ISerializeOptions options)
         {
             var wasEmptyWriter = writer.IsEmpty;
             writer.WriteStartDocument();
@@ -40,7 +40,7 @@ namespace XSerializer
             }
         }
 
-        private void WriteElement(SerializationXmlTextWriter writer, Action<SerializationXmlTextWriter> writeValueAction)
+        private void WriteElement(XSerializerXmlTextWriter writer, Action<XSerializerXmlTextWriter> writeValueAction)
         {
             writer.WriteStartElement(_elementName);
             writer.WriteDefaultDocumentNamespaces();
@@ -48,7 +48,7 @@ namespace XSerializer
             writer.WriteEndElement();
         }
 
-        public object DeserializeObject(XmlReader reader, ISerializeOptions options)
+        public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
         {
             if (ValueTypes.IsRegistered(typeof(T)))
             {

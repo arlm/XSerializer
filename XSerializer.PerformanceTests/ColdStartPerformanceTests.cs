@@ -71,7 +71,7 @@ namespace XSerializer.Tests.Performance
 
             using (var stringWriter = new StringWriter(customSerializerStringBuilder))
             {
-                using (var writer = new SerializationXmlTextWriter(stringWriter, options))
+                using (var writer = new XSerializerXmlTextWriter(stringWriter, options))
                 {
                     customSerializer.SerializeObject(writer, containerWithInterface, new TestSerializeOptions(true));
                 }
@@ -79,9 +79,12 @@ namespace XSerializer.Tests.Performance
 
             using (var stringReader = new StringReader(customSerializerStringBuilder.ToString()))
             {
-                using (var reader = new XmlTextReader(stringReader))
+                using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    customSerializer.DeserializeObject(reader, options);
+                    using (var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism()))
+                    {
+                        customSerializer.DeserializeObject(reader, options);
+                    }
                 }
             }
 
