@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using NUnit.Framework;
@@ -284,7 +285,60 @@ namespace XSerializer.Tests.Encryption
                 x => x.Value,
                 root => root.Element("Value").Value,
                 "PEl0ZW0+PEtleT4xMjM8L0tleT48VmFsdWU+YWJjPC9WYWx1ZT48L0l0ZW0+PEl0ZW0+PEtleT43ODk8L0tleT48VmFsdWU+eHl6PC9WYWx1ZT48L0l0ZW0+"),
+
+            GetTestCaseData(
+                "Dynamic With ExpandoObject Input",
+                new TypeExample<dynamic> { Value = GetExampleExpandoObject() },
+                x => x.Value,
+                root => root.Element("Value").Value,
+                "PEZvbz4xMjM8L0Zvbz48QmFyPmFiYzwvQmFyPjxCYXo+dHJ1ZTwvQmF6Pg=="),
+
+            GetTestCaseData(
+                "Dynamic With Anonymous Object Input",
+                new TypeExample<dynamic> { Value = new { Foo = 123, Bar = "abc", Baz = true } },
+                x => x.Value is ExpandoObject ? x.Value : ToExpandoObject(x.Value),
+                root => root.Element("Value").Value,
+                "PEZvbz4xMjM8L0Zvbz48QmFyPmFiYzwvQmFyPjxCYXo+dHJ1ZTwvQmF6Pg=="),
+
+            GetTestCaseData(
+                "Dynamic With Concrete Object Input",
+                new TypeExample<dynamic> { Value = new Bar { Baz = 123, Qux = true } },
+                x => x.Value,
+                root => root.Element("Value").Value,
+                "PEJhej4xMjM8L0Jhej48UXV4PnRydWU8L1F1eD4=",
+                typeof(Bar)),
+
+            GetTestCaseData(
+                "ExpandoObject",
+                new TypeExample<ExpandoObject> { Value = GetExampleExpandoObject() },
+                x => x.Value,
+                root => root.Element("Value").Value,
+                "PEZvbz4xMjM8L0Zvbz48QmFyPmFiYzwvQmFyPjxCYXo+dHJ1ZTwvQmF6Pg=="),
         };
+
+        private static ExpandoObject GetExampleExpandoObject()
+        {
+            var expandoObject = new ExpandoObject();
+            dynamic d = expandoObject;
+
+            d.Foo = 123;
+            d.Bar = "abc";
+            d.Baz = true;
+
+            return expandoObject;
+        }
+
+        private static object ToExpandoObject(object anonymousObject)
+        {
+            IDictionary<string, object> expndoObject = new ExpandoObject();
+
+            foreach (var property in anonymousObject.GetType().GetProperties())
+            {
+                expndoObject[property.Name] = property.GetValue(anonymousObject);
+            }
+
+            return expndoObject;
+        }
 
         public class TypeExample<T>
         {
@@ -306,6 +360,16 @@ namespace XSerializer.Tests.Encryption
             {
                 if (ReferenceEquals(null, obj)) return false;
                 if (ReferenceEquals(this, obj)) return true;
+
+                var expando = (IDictionary<string, object>)(obj as ExpandoObject);
+                if (expando != null)
+                {
+                    object value;
+                    return
+                        (expando.TryGetValue("Baz", out value) && value is int && (int)value == Baz)
+                        && (expando.TryGetValue("Qux", out value) && value is bool && (bool)value == Qux);
+                }
+
                 if (obj.GetType() != this.GetType()) return false;
                 return Equals((Bar)obj);
             }
@@ -514,7 +578,7 @@ namespace XSerializer.Tests.Encryption
 
         private static void PerformTest(object objectToSerialize, Func<object, object> getTargetValue, Func<XElement, object> getTargetNodeValue, object expectedTargetNodeValue, Type[] extraTypes)
         {
-            var serializer = XmlSerializer.Create(objectToSerialize.GetType(), options => options.Indent(), extraTypes);
+            var serializer = XmlSerializer.Create(objectToSerialize.GetType(), options => options.Indent().AlwaysEmitTypes(), extraTypes);
 
             var xml = serializer.Serialize(objectToSerialize);
             Console.WriteLine(xml);

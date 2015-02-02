@@ -106,6 +106,8 @@ namespace XSerializer
                     return;
                 }
 
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute);
+
                 foreach (var property in expando)
                 {
                     if (property.Value == null)
@@ -117,14 +119,19 @@ namespace XSerializer
 
                     if (property.Value is ExpandoObject)
                     {
-                        serializer = DynamicSerializer.GetSerializer<ExpandoObject>(_encryptAttribute, _options.WithRootElementName(property.Key));
+                        serializer = DynamicSerializer.GetSerializer<ExpandoObject>(null, _options.WithRootElementName(property.Key));
                     }
                     else
                     {
-                        serializer = CustomSerializer.GetSerializer(property.Value.GetType(), _encryptAttribute, _options.WithRootElementName(property.Key));
+                        serializer = CustomSerializer.GetSerializer(property.Value.GetType(), null, _options.WithRootElementName(property.Key));
                     }
 
                     serializer.SerializeObject(writer, property.Value, options);
+                }
+
+                if (setIsEncryptionEnabledBackToFalse)
+                {
+                    writer.IsEncryptionEnabled = false;
                 }
 
                 writer.WriteEndElement();
@@ -136,13 +143,33 @@ namespace XSerializer
             object instance = null;
             var hasInstanceBeenCreated = false;
 
+            var setIsDecryptionEnabledBackToFalse = false;
+
+            Func<bool> isAtRootElement;
+            {
+                var hasOpenedRootElement = false;
+
+                isAtRootElement = () =>
+                {
+                    if (!hasOpenedRootElement && reader.Name == _options.RootElementName)
+                    {
+                        hasOpenedRootElement = true;
+                        return true;
+                    }
+
+                    return false;
+                };
+            }
+
             do
             {
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                        if (reader.Name == _options.RootElementName)
+                        if (isAtRootElement())
                         {
+                            setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
+
                             instance = new ExpandoObject();
                             hasInstanceBeenCreated = true;
 
@@ -151,6 +178,11 @@ namespace XSerializer
                                 if (_options.TreatEmptyElementAsString)
                                 {
                                     instance = "";
+                                }
+
+                                if (setIsDecryptionEnabledBackToFalse)
+                                {
+                                    reader.IsDecryptionEnabled = true;
                                 }
 
                                 return instance;
@@ -162,7 +194,7 @@ namespace XSerializer
                         }
                         break;
                     case XmlNodeType.Text:
-                        var stringValue = (string)new XmlTextSerializer(typeof(string), _options.RedactAttribute, _encryptAttribute, _options.ExtraTypes).DeserializeObject(reader, options);
+                        var stringValue = (string)new XmlTextSerializer(typeof(string), _options.RedactAttribute, null, _options.ExtraTypes).DeserializeObject(reader, options);
                         hasInstanceBeenCreated = true;
 
                         bool boolValue;
@@ -216,6 +248,11 @@ namespace XSerializer
                                 {
                                     instance = "";
                                 }
+                            }
+
+                            if (setIsDecryptionEnabledBackToFalse)
+                            {
+                                reader.IsDecryptionEnabled = true;
                             }
 
                             return CheckAndReturn(hasInstanceBeenCreated, instance);
