@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using NUnit.Framework;
@@ -276,6 +277,13 @@ namespace XSerializer.Tests.Encryption
                 x => x.Value,
                 root => root.Element("Value").Value + "|" + root.Element("Value").Attribute("Qux").Value + "|" + root.Element("Value").Attribute("Corge").Value,
                 "PEJhcj4xMjM8L0Jhcj48QmF6PnRydWU8L0Jhej4=|MTIz|dHJ1ZQ=="),
+
+            GetTestCaseData(
+                "Dictionary",
+                new TypeExample<Dictionary<int, string>> { Value = new Dictionary<int, string> { { 123, "abc"}, { 789, "xyz" } } },
+                x => x.Value,
+                root => root.Element("Value").Value,
+                "PEl0ZW0+PEtleT4xMjM8L0tleT48VmFsdWU+YWJjPC9WYWx1ZT48L0l0ZW0+PEl0ZW0+PEtleT43ODk8L0tleT48VmFsdWU+eHl6PC9WYWx1ZT48L0l0ZW0+"),
         };
 
         public class TypeExample<T>

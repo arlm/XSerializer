@@ -94,6 +94,8 @@ namespace XSerializer
                     return;
                 }
 
+                var setToFalse = writer.MaybeSetIsEncryptionEnabled(_encryptAttribute);
+
                 foreach (var item in GetDictionaryEntries(instance))
                 {
                     writer.WriteStartElement("Item");
@@ -111,6 +113,11 @@ namespace XSerializer
                     writer.WriteEndElement();
                 }
 
+                if (setToFalse)
+                {
+                    writer.IsEncryptionEnabled = false;
+                }
+
                 writer.WriteEndElement();
             }
         }
@@ -126,6 +133,24 @@ namespace XSerializer
             object currentValue = null;
             bool shouldIssueRead;
 
+            var setToFalse = false;
+
+            Func<bool> isAtRootElement;
+            {
+                var hasOpenedRootElement = false;
+                
+                isAtRootElement = () =>
+                {
+                    if (!hasOpenedRootElement && reader.Name == _options.RootElementName)
+                    {
+                        hasOpenedRootElement = true;
+                        return true;
+                    }
+
+                    return false;
+                };
+            }
+
             do
             {
                 shouldIssueRead = true;
@@ -133,7 +158,7 @@ namespace XSerializer
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                        if (reader.Name == _options.RootElementName)
+                        if (isAtRootElement())
                         {
                             if (reader.IsNil())
                             {
@@ -147,11 +172,18 @@ namespace XSerializer
                             }
                             else
                             {
+                                setToFalse = reader.MaybeSetIsDecryptionEnabled(_encryptAttribute);
+
                                 dictionary = _createDictionary();
                                 hasInstanceBeenCreated = true;
 
                                 if (reader.IsEmptyElement)
                                 {
+                                    if (setToFalse)
+                                    {
+                                        reader.IsDecryptionEnabled = false;
+                                    }
+
                                     return _finalizeDictionary(dictionary);
                                 }
                             }
@@ -183,6 +215,11 @@ namespace XSerializer
                         }
                         else if (reader.Name == _options.RootElementName)
                         {
+                            if (setToFalse)
+                            {
+                                reader.IsDecryptionEnabled = false;
+                            }
+
                             return CheckAndReturn(hasInstanceBeenCreated, _finalizeDictionary(dictionary));
                         }
 
