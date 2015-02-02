@@ -10,7 +10,57 @@ namespace XSerializer.Tests.Encryption
 {
     [TestFixture]
     public class EncryptionTests
-    {   
+    {
+        [Test]
+        public void AListPropertyDecoratedWithXmlElementAndEncryptCannotExistWithOtherNonXmlAttributeProperties()
+        {
+            Assert.That(() => new XmlSerializer<Invalid>(), Throws.InvalidOperationException);
+        }
+
+        [Test]
+        public void AListPropertyDecoratedWithXmlElementAndEncryptCanExistWithOtherXmlAttributeProperties()
+        {
+            var serializer = new XmlSerializer<Valid>();
+
+            var instance = new Valid
+            {
+                CleartextAttribute = 123,
+                CiphertextAttribute = 789,
+                Items = new List<int> { 4, 5, 6 }
+            };
+
+            var xml = serializer.Serialize(instance);
+
+            var roundTrip = serializer.Deserialize(xml);
+
+            Assert.That(roundTrip.CleartextAttribute, Is.EqualTo(instance.CleartextAttribute));
+            Assert.That(roundTrip.CiphertextAttribute, Is.EqualTo(instance.CiphertextAttribute));
+            Assert.That(roundTrip.Items, Is.EqualTo(instance.Items));
+        }
+
+        public class Invalid
+        {
+            [XmlElement("Item")]
+            [Encrypt]
+            public List<int> Items { get; set; }
+
+            public int Wtf { get; set; }
+        }
+
+        public class Valid
+        {
+            [XmlElement("Item")]
+            [Encrypt]
+            public List<int> Items { get; set; }
+
+            [XmlAttribute]
+            public int CleartextAttribute { get; set; }
+
+            [XmlAttribute]
+            [Encrypt]
+            public int CiphertextAttribute { get; set; }
+        }
+
         #region ByXmlStructure
 
         [TestCaseSource("_byXmlStructureTestCases")]
@@ -47,15 +97,15 @@ namespace XSerializer.Tests.Encryption
                 "XmlArray + XmlArrayItem",
                 new XmlArrayAndItemExample { Items = new[] { 123 }},
                 x => x.Items[0],
-                root => root.Element("Items").Element("Item").Value,
-                "MTIz"),
+                root => root.Element("Items").Value,
+                "PEl0ZW0+MTIzPC9JdGVtPg=="),
 
             GetTestCaseData(
                 "XmlElement decorating array property",
                 new XmlElementOnArrayPropertyExample { Items = new[] { 123 }},
                 x => x.Items[0],
-                root => root.Element("Item").Value,
-                "MTIz")
+                root => root.Value,
+                "PEl0ZW0+MTIzPC9JdGVtPg==")
         };
         // ReSharper restore PossibleNullReferenceException
 

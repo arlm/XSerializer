@@ -159,7 +159,7 @@ namespace XSerializer
         /// <paramref name="writer"/> to true. Returns true if the value was changed to true, false 
         /// if it was not changed to true.
         /// </summary>
-        internal static bool MaybeSetIsEncryptionEnabledToTrue(this XSerializerXmlTextWriter writer, EncryptAttribute encryptAttribute)
+        internal static bool MaybeSetIsEncryptionEnabledToTrue(this XSerializerXmlTextWriter writer, EncryptAttribute encryptAttribute) // TODO: Also take into account the top-level ShouldEncrypt property
         {
             if (encryptAttribute != null && !writer.IsEncryptionEnabled)
             {
@@ -176,7 +176,7 @@ namespace XSerializer
         /// if it was not changed to true.
         /// </summary>
         internal static bool MaybeSetIsDecryptionEnabledToTrue(this XSerializerXmlReader reader,
-            EncryptAttribute encryptAttribute)
+            EncryptAttribute encryptAttribute) // TODO: Also take into account the top-level ShouldEncrypt property
         {
             if (encryptAttribute != null && !reader.IsDecryptionEnabled)
             {

@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Xml;
 using System.Xml.Serialization;
 using XSerializer.Encryption;
 
@@ -19,10 +18,18 @@ namespace XSerializer
         private readonly Action<object, object> _setValueFunc;
         private readonly Func<object, bool> _shouldSerializeFunc;
 
+        private readonly EncryptAttribute _encryptAttribute;
+        private readonly bool _isListDecoratedWithXmlElement;
+
         private Func<bool> _readsPastLastElement;
 
         public SerializableProperty(PropertyInfo propertyInfo, IXmlSerializerOptions options)
         {
+            _encryptAttribute = (EncryptAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(EncryptAttribute));
+            _isListDecoratedWithXmlElement =
+                typeof(IEnumerable).IsAssignableFrom(propertyInfo.PropertyType)
+                && Attribute.GetCustomAttributes(propertyInfo, typeof(XmlElementAttribute)).Any();
+
             _getValueFunc = DynamicMethodFactory.CreateFunc<object>(propertyInfo.GetGetMethod());
 
             if (!propertyInfo.DeclaringType.IsAnonymous()
@@ -110,6 +117,16 @@ namespace XSerializer
             }
         }
 
+        public EncryptAttribute EncryptAttribute
+        {
+            get { return _encryptAttribute; }
+        }
+
+        public bool IsListDecoratedWithXmlElement
+        {
+            get { return _isListDecoratedWithXmlElement; }
+        }
+
         private Func<IXmlSerializerInternal> GetCreateSerializerFunc(PropertyInfo propertyInfo, IXmlSerializerOptions options)
         {
             var redactAttribute = (RedactAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(RedactAttribute));
@@ -118,15 +135,13 @@ namespace XSerializer
                 redactAttribute = options.RedactAttribute;
             }
 
-            var encryptAttribute = (EncryptAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(EncryptAttribute));
-
             var attributeAttribute = (XmlAttributeAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlAttributeAttribute));
             if (attributeAttribute != null)
             {
                 var attributeName = !string.IsNullOrWhiteSpace(attributeAttribute.AttributeName) ? attributeAttribute.AttributeName : propertyInfo.Name;
                 NodeType = NodeType.Attribute;
                 Name = attributeName;
-                return () => new XmlAttributeSerializer(propertyInfo.PropertyType, attributeName, redactAttribute, encryptAttribute, options);
+                return () => new XmlAttributeSerializer(propertyInfo.PropertyType, attributeName, redactAttribute, _encryptAttribute, options);
             }
 
             var textAttribute = (XmlTextAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlTextAttribute));
@@ -134,7 +149,7 @@ namespace XSerializer
             {
                 NodeType = NodeType.Text;
                 Name = propertyInfo.Name;
-                return () => new XmlTextSerializer(propertyInfo.PropertyType, redactAttribute, encryptAttribute, options.ExtraTypes);
+                return () => new XmlTextSerializer(propertyInfo.PropertyType, redactAttribute, _encryptAttribute, options.ExtraTypes);
             }
 
             if (redactAttribute != null)
@@ -181,14 +196,14 @@ namespace XSerializer
                 }
 
                 NodeType = NodeType.Element;
-                return () => ListSerializer.GetSerializer(propertyInfo.PropertyType, encryptAttribute, options.WithRootElementName(rootElementName), itemElementName);
+                return () => ListSerializer.GetSerializer(propertyInfo.PropertyType, _encryptAttribute, options.WithRootElementName(rootElementName), itemElementName);
             }
 
             rootElementName = GetElementName(elementAttribute, x => x.ElementName, propertyInfo.Name);
 
             NodeType = NodeType.Element;
             Name = rootElementName;
-            return () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo.PropertyType, encryptAttribute, options.WithRootElementName(rootElementName));
+            return () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo.PropertyType, _encryptAttribute, options.WithRootElementName(rootElementName));
         }
 
         private static bool IsListProperty(PropertyInfo propertyInfo)

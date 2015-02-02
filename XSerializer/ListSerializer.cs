@@ -112,9 +112,16 @@ namespace XSerializer
             }
             else
             {
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute);
+
                 foreach (var item in (IEnumerable)instance)
                 {
                     _itemSerializer.SerializeObject(writer, item, options);
+                }
+
+                if (setIsEncryptionEnabledBackToFalse)
+                {
+                    writer.IsEncryptionEnabled = false;
                 }
             }
 
@@ -132,8 +139,12 @@ namespace XSerializer
 
             bool shouldIssueRead;
 
+            var setIsDecryptionEnabledBackToFalse = false;
+
             if (_options.RootElementName == null)
             {
+                setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
+
                 collection = _createCollection();
                 hasInstanceBeenCreated = true;
             }
@@ -161,11 +172,18 @@ namespace XSerializer
                                 }
                                 else
                                 {
+                                    setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
+
                                     collection = _createCollection();
                                     hasInstanceBeenCreated = true;
 
                                     if (reader.IsEmptyElement)
                                     {
+                                        if (setIsDecryptionEnabledBackToFalse)
+                                        {
+                                            reader.IsDecryptionEnabled = false;
+                                        }
+
                                         return collection;
                                     }
                                 }
@@ -178,6 +196,11 @@ namespace XSerializer
                             // If there's no root element, and we encounter another element, we're done - get out!
                             if (reader.Name != _itemElementName)
                             {
+                                if (setIsDecryptionEnabledBackToFalse)
+                                {
+                                    reader.IsDecryptionEnabled = false;
+                                }
+
                                 return
                                     collection == null
                                         ? null
@@ -200,6 +223,11 @@ namespace XSerializer
                         {
                             if (reader.Name == _options.RootElementName)
                             {
+                                if (setIsDecryptionEnabledBackToFalse)
+                                {
+                                    reader.IsDecryptionEnabled = false;
+                                }
+
                                 return
                                     collection == null
                                         ? null
@@ -210,6 +238,11 @@ namespace XSerializer
                         {
                             if (reader.Name != _itemElementName)
                             {
+                                if (setIsDecryptionEnabledBackToFalse)
+                                {
+                                    reader.IsDecryptionEnabled = false;
+                                }
+
                                 return
                                     collection == null
                                         ? null

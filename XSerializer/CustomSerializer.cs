@@ -58,6 +58,7 @@ namespace XSerializer
         private readonly HelperFactory _helperFactory;
 
         private readonly Dictionary<Type, SerializableProperty[]> _serializablePropertiesMap = new Dictionary<Type, SerializableProperty[]>();
+        private readonly Dictionary<Type, SerializableProperty> _encryptedXmlElementListProperties = new Dictionary<Type, SerializableProperty>();
 
         public CustomSerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
@@ -86,11 +87,48 @@ namespace XSerializer
                 types.Distinct().ToDictionary(
                     t => t,
                     t =>
-                        t.GetProperties()
-                            .Where(p => p.IsSerializable(t.GetConstructors().SelectMany(c => c.GetParameters())))
-                            .Select(p => new SerializableProperty(p, _options))
-                            .OrderBy(p => p.NodeType)
-                            .ToArray());
+                    {
+                        var serializableProperties =
+                            t.GetProperties()
+                                .Where(p => p.IsSerializable(t.GetConstructors().SelectMany(c => c.GetParameters())))
+                                .Select(p => new SerializableProperty(p, _options))
+                                .OrderBy(p => p.NodeType)
+                                .ToArray();
+
+                        // Cannot support:
+                        // 1) Multiple XmlElement List Properties
+                        // 2) When the XmlElement List Property is encrypted, Any Non-XmlAttribute Properties
+
+                        if (serializableProperties.Count(p => p.IsListDecoratedWithXmlElement) > 1)
+                        {
+                            throw new InvalidOperationException("More than one list property is decorated with [XmlElement] attribute.");
+                        }
+
+                        var encryptedXmlElementListProperty =
+                            serializableProperties.SingleOrDefault(
+                                p => p.IsListDecoratedWithXmlElement && p.EncryptAttribute != null);
+
+                        if (encryptedXmlElementListProperty != null)
+                        {
+                            if (serializableProperties
+                                .Where(p => p != encryptedXmlElementListProperty)
+                                .Any(p => p.NodeType != NodeType.Attribute))
+                            {
+                                throw
+                                    new InvalidOperationException(
+                                        "A list property decorated with [XmlElement] and [Encrypt] attributes exists"
+                                        + " *and* one or more properties exist without [XmlAttribute] attribute.");
+                            }
+
+                            _encryptedXmlElementListProperties.Add(t, encryptedXmlElementListProperty);
+                        }
+                        else
+                        {
+                            _encryptedXmlElementListProperties.Add(t, null);
+                        }
+
+                        return serializableProperties;
+                    });
 
             _helperFactory = new HelperFactory(_serializablePropertiesMap);
         }
@@ -386,6 +424,24 @@ namespace XSerializer
                                 if (reader.IsEmptyElement)
                                 {
                                     return helper.GetInstance(setIsDecryptionEnabledBackToFalse);
+                                }
+
+                                SerializableProperty property;
+                                var t = type;
+
+                                do
+                                {
+                                    if (_encryptedXmlElementListProperties.TryGetValue(t, out property))
+                                    {
+                                        break;
+                                    }
+                                } while ((t = t.BaseType) != null);
+
+                                if (property != null && reader.MaybeSetIsDecryptionEnabledToTrue(property.EncryptAttribute))
+                                {
+                                    reader.Read();
+                                    helper.SetElementPropertyValue(options, out shouldIssueRead);
+                                    reader.IsDecryptionEnabled = false;
                                 }
                             }
                             else if (reader.IsEmptyElement)
