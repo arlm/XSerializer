@@ -94,7 +94,7 @@ namespace XSerializer
                     return;
                 }
 
-                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute);
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute, options);
 
                 foreach (var item in GetDictionaryEntries(instance))
                 {
@@ -172,7 +172,7 @@ namespace XSerializer
                             }
                             else
                             {
-                                setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
+                                setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute, options);
 
                                 dictionary = _createDictionary();
                                 hasInstanceBeenCreated = true;

@@ -106,7 +106,7 @@ namespace XSerializer
                     return;
                 }
 
-                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute);
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute, options);
 
                 foreach (var property in expando)
                 {
@@ -168,7 +168,7 @@ namespace XSerializer
                     case XmlNodeType.Element:
                         if (isAtRootElement())
                         {
-                            setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
+                            setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute, options);
 
                             instance = new ExpandoObject();
                             hasInstanceBeenCreated = true;

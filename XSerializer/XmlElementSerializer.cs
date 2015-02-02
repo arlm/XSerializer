@@ -35,20 +35,20 @@ namespace XSerializer
 
             if (value != null)
             {
-                WriteElement(writer, w => w.WriteValue(_valueConverter.GetString(value, options)));
+                WriteElement(writer, w => w.WriteValue(_valueConverter.GetString(value, options)), options);
             }
             else if (_alwaysEmitNil || options.ShouldEmitNil || wasEmptyWriter)
             {
-                WriteElement(writer, w => w.WriteNilAttribute());
+                WriteElement(writer, w => w.WriteNilAttribute(), options);
             }
         }
 
-        private void WriteElement(XSerializerXmlTextWriter writer, Action<XSerializerXmlTextWriter> writeValueAction)
+        private void WriteElement(XSerializerXmlTextWriter writer, Action<XSerializerXmlTextWriter> writeValueAction, ISerializeOptions options)
         {
             writer.WriteStartElement(_elementName);
             writer.WriteDefaultDocumentNamespaces();
 
-            var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute);
+            var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute, options);
 
             writeValueAction(writer);
 
@@ -75,7 +75,7 @@ namespace XSerializer
                 return default(T);
             }
 
-            var setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
+            var setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute, options);
 
             var value = reader.ReadString();
 

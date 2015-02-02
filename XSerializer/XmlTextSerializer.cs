@@ -21,7 +21,7 @@ namespace XSerializer
         {
             if (value != null)
             {
-                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute);
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute, options);
 
                 writer.WriteValue(_valueConverter.GetString(value, options));
 
@@ -34,7 +34,7 @@ namespace XSerializer
 
         public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
         {
-            var setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
+            var setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute, options);
 
             var value = _valueConverter.ParseString(reader.Value, options);
 

@@ -334,7 +334,7 @@ namespace XSerializer
                     writer.WriteAttributeString("xsi", "type", null, instance.GetType().GetXsdType());
                 }
 
-                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute);
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute, options);
 
                 if (instanceType.IsPrimitiveLike() || instanceType.IsNullablePrimitiveLike())
                 {
@@ -408,7 +408,7 @@ namespace XSerializer
                                     type = typeof(T);
                                 }
 
-                                setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
+                                setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute, options);
 
                                 helper = _helperFactory.CreateHelper(type, reader);
 
@@ -437,7 +437,7 @@ namespace XSerializer
                                     }
                                 } while ((t = t.BaseType) != null);
 
-                                if (property != null && reader.MaybeSetIsDecryptionEnabledToTrue(property.EncryptAttribute))
+                                if (property != null && reader.MaybeSetIsDecryptionEnabledToTrue(property.EncryptAttribute, options))
                                 {
                                     reader.Read();
                                     helper.SetElementPropertyValue(options, out shouldIssueRead);

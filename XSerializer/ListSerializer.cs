@@ -112,7 +112,7 @@ namespace XSerializer
             }
             else
             {
-                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute);
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute, options);
 
                 foreach (var item in (IEnumerable)instance)
                 {
@@ -143,7 +143,7 @@ namespace XSerializer
 
             if (_options.RootElementName == null)
             {
-                setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
+                setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute, options);
 
                 collection = _createCollection();
                 hasInstanceBeenCreated = true;
@@ -172,7 +172,7 @@ namespace XSerializer
                                 }
                                 else
                                 {
-                                    setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
+                                    setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute, options);
 
                                     collection = _createCollection();
                                     hasInstanceBeenCreated = true;

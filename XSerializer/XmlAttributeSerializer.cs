@@ -26,7 +26,7 @@ namespace XSerializer
             {
                 writer.WriteStartAttribute(_attributeName); // TODO: include namespaces
 
-                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute);
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute, options);
 
                 writer.WriteString(_valueConverter.GetString(value, options));
 
@@ -43,7 +43,7 @@ namespace XSerializer
         {
             if (reader.MoveToAttribute(_attributeName))
             {
-                var setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
+                var setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute, options);
 
                 var value = _valueConverter.ParseString(reader.Value, options);
 
