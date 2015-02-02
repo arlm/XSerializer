@@ -302,11 +302,10 @@ namespace XSerializer.Tests.Encryption
 
             GetTestCaseData(
                 "Dynamic With Concrete Object Input",
-                new TypeExample<dynamic> { Value = new Bar { Baz = 123, Qux = true } },
+                new TypeExample<dynamic> { Value = new Example { Foo = 123, Bar = "abc", Baz = true } },
                 x => x.Value,
                 root => root.Element("Value").Value,
-                "PEJhej4xMjM8L0Jhej48UXV4PnRydWU8L1F1eD4=",
-                typeof(Bar)),
+                "PEZvbz4xMjM8L0Zvbz48QmFyPmFiYzwvQmFyPjxCYXo+dHJ1ZTwvQmF6Pg=="),
 
             GetTestCaseData(
                 "ExpandoObject",
@@ -569,6 +568,37 @@ namespace XSerializer.Tests.Encryption
                     hashCode = (hashCode * 397) ^ Baz.GetHashCode();
                     hashCode = (hashCode * 397) ^ Qux;
                     hashCode = (hashCode * 397) ^ Corge.GetHashCode();
+                    return hashCode;
+                }
+            }
+        }
+
+        public class Example
+        {
+            public int Foo { get; set; }
+            public string Bar { get; set; }
+            public bool Baz { get; set; }
+
+            protected bool Equals(Example other)
+            {
+                return Foo == other.Foo && string.Equals(Bar, other.Bar) && Baz.Equals(other.Baz);
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((Example)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    var hashCode = Foo;
+                    hashCode = (hashCode * 397) ^ (Bar != null ? Bar.GetHashCode() : 0);
+                    hashCode = (hashCode * 397) ^ Baz.GetHashCode();
                     return hashCode;
                 }
             }
