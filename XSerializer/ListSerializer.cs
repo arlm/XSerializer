@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -12,6 +13,7 @@ namespace XSerializer
     {
         private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
 
+        private readonly EncryptAttribute _encryptAttribute;
         private readonly IXmlSerializerOptions _options;
         private readonly string _itemElementName;
 
@@ -19,11 +21,12 @@ namespace XSerializer
 
         private readonly Func<object> _createCollection;
 
-        protected ListSerializer(IXmlSerializerOptions options, string itemElementName)                                                             // ReSharper disable DoNotCallOverridableMethodsInConstructor
+        protected ListSerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options, string itemElementName)                                                             // ReSharper disable DoNotCallOverridableMethodsInConstructor
         {
+            _encryptAttribute = encryptAttribute;
             _options = options;
             _itemElementName = string.IsNullOrEmpty(itemElementName) ? DefaultItemElementName : itemElementName;
-            _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, _options.WithRootElementName(_itemElementName).AlwaysEmitNil());
+            _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, encryptAttribute, _options.WithRootElementName(_itemElementName).AlwaysEmitNil());
 
             if (CollectionType.IsArray)
             {
@@ -67,21 +70,21 @@ namespace XSerializer
 
         protected abstract void AddItemToCollection(object collection, object item);
 
-        public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options, string itemElementName)
+        public static IXmlSerializerInternal GetSerializer(Type type, EncryptAttribute encryptAttribute, IXmlSerializerOptions options, string itemElementName)
         {
             return _serializerCache.GetOrAdd(
-                XmlSerializerFactory.Instance.CreateKey(type, options.WithRootElementName(options.RootElementName + "<>" + itemElementName)),
+                XmlSerializerFactory.Instance.CreateKey(type, encryptAttribute, options.WithRootElementName(options.RootElementName + "<>" + itemElementName)),
                 _ =>
                 {
                     if (type.IsAssignableToGenericIEnumerable())
                     {
                         var itemType = type.GetGenericIEnumerableType().GetGenericArguments()[0];
-                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(ListSerializer<,>).MakeGenericType(type, itemType), options, itemElementName);
+                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(ListSerializer<,>).MakeGenericType(type, itemType), encryptAttribute, options, itemElementName);
                     }
                         
                     if (type.IsAssignableToNonGenericIEnumerable())
                     {
-                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(ListSerializer<>).MakeGenericType(type), options, itemElementName);
+                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(ListSerializer<>).MakeGenericType(type), encryptAttribute, options, itemElementName);
                     }
 
                     throw new InvalidOperationException(string.Format("Cannot create a ListSerializer of type '{0}'.", type.FullName));
@@ -250,8 +253,8 @@ namespace XSerializer
     {
         private readonly Action<object, object> _addItemToCollection;
 
-        public ListSerializer(IXmlSerializerOptions options, string itemElementName)
-            : base(options, itemElementName)
+        public ListSerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options, string itemElementName)
+            : base(encryptAttribute, options, itemElementName)
         {
             if (typeof(IList).IsAssignableFrom(typeof(TEnumerable)))
             {
@@ -332,8 +335,8 @@ namespace XSerializer
     {
         private readonly Action<object, object> _addItemToCollection;
 
-        public ListSerializer(IXmlSerializerOptions options, string itemElementName)
-            : base(options, itemElementName)
+        public ListSerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options, string itemElementName)
+            : base(encryptAttribute, options, itemElementName)
         {
             if (typeof(IList).IsAssignableFrom(typeof(TEnumerable)))
             {

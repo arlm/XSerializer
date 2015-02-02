@@ -16,6 +16,7 @@ namespace XSerializer
         private Type[] _extraTypes;
         private bool _treatEmptyElementAsString;
         private Encoding _encoding;
+        private bool _shouldEncryptRootObject;
         private bool _shouldIndent;
         private bool _emitNil;
         private IEncryptionMechanism _encryptionMechanism;
@@ -23,6 +24,7 @@ namespace XSerializer
         public XmlSerializationOptions(
             XmlSerializerNamespaces namespaces = null,
             Encoding encoding = null,
+            bool shouldEncryptRootObject = false,
             string defaultNamespace = null,
             bool shouldIndent = false,
             string rootElementName = null,
@@ -35,6 +37,7 @@ namespace XSerializer
         {
             _namespaces = namespaces ?? new XmlSerializerNamespaces();
             _encoding = encoding ?? Encoding.UTF8;
+            _shouldEncryptRootObject = shouldEncryptRootObject;
             _defaultNamespace = defaultNamespace;
             _shouldIndent = shouldIndent;
             _rootElementName = rootElementName;
@@ -48,6 +51,7 @@ namespace XSerializer
         }
 
         internal Encoding Encoding { get { return _encoding; } }
+        internal bool ShouldEncryptRootObject { get { return _shouldEncryptRootObject; } }
         string IXmlSerializerOptions.DefaultNamespace { get { return _defaultNamespace; } }
         XmlSerializerNamespaces ISerializeOptions.Namespaces { get { return _namespaces; } }
         internal bool ShouldIndent { get { return _shouldIndent; } }
@@ -57,7 +61,6 @@ namespace XSerializer
         bool ISerializeOptions.ShouldEncrypt { get { return _shouldEncrypt; } }
         Type[] IXmlSerializerOptions.ExtraTypes { get { return _extraTypes; } }
         RedactAttribute IXmlSerializerOptions.RedactAttribute { get { return null; } }
-        EncryptAttribute IXmlSerializerOptions.EncryptAttribute { get { return null; } }
         bool IXmlSerializerOptions.TreatEmptyElementAsString { get { return _treatEmptyElementAsString; } }
 
         bool IXmlSerializerOptions.ShouldAlwaysEmitNil
@@ -83,6 +86,12 @@ namespace XSerializer
         public XmlSerializationOptions WithEncoding(Encoding encoding)
         {
             _encoding = encoding;
+            return this;
+        }
+
+        public XmlSerializationOptions EncryptRootObject()
+        {
+            _shouldEncryptRootObject = true;
             return this;
         }
 

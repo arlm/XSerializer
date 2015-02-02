@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Serialization;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -16,15 +17,15 @@ namespace XSerializer
     {
         private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
 
-        public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options)
+        public static IXmlSerializerInternal GetSerializer(Type type, EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             return _serializerCache.GetOrAdd(
-                XmlSerializerFactory.Instance.CreateKey(type, options),
+                XmlSerializerFactory.Instance.CreateKey(type, encryptAttribute, options),
                 _ =>
                 {
                     try
                     {
-                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(CustomSerializer<>).MakeGenericType(type), options);
+                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(CustomSerializer<>).MakeGenericType(type), encryptAttribute, options);
                     }
                     catch (TargetInvocationException ex) // True exception gets masked due to reflection. Preserve stacktrace and rethrow
                     {
@@ -51,16 +52,19 @@ namespace XSerializer
 
     internal class CustomSerializer<T> : CustomSerializer, IXmlSerializerInternal
     {
+        private readonly EncryptAttribute _encryptAttribute;
         private readonly IXmlSerializerOptions _options;
 
         private readonly HelperFactory _helperFactory;
 
         private readonly Dictionary<Type, SerializableProperty[]> _serializablePropertiesMap = new Dictionary<Type, SerializableProperty[]>();
 
-        public CustomSerializer(IXmlSerializerOptions options)
+        public CustomSerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             var type = typeof(T);
             AssertValidHeirarchy(type);
+
+            _encryptAttribute = encryptAttribute;
 
             _options = options.WithAdditionalExtraTypes(
                 type.GetCustomAttributes(typeof(XmlIncludeAttribute), true)
@@ -294,7 +298,7 @@ namespace XSerializer
 
                 if (instanceType.IsPrimitiveLike() || instanceType.IsNullablePrimitiveLike())
                 {
-                    var xmlTextSerializer = new XmlTextSerializer(instanceType, _options.RedactAttribute, _options.EncryptAttribute, _options.ExtraTypes);
+                    var xmlTextSerializer = new XmlTextSerializer(instanceType, _options.RedactAttribute, _encryptAttribute, _options.ExtraTypes);
                     xmlTextSerializer.SerializeObject(writer, instance, options);
                 }
                 else

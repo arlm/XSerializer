@@ -1,19 +1,16 @@
 using System;
-using XSerializer.Encryption;
 
 namespace XSerializer
 {
     internal class UriTypeValueConverter : IValueConverter
     {
-        private static readonly Lazy<IValueConverter> _default = new Lazy<IValueConverter>(() => new UriTypeValueConverter(null, null));
+        private static readonly Lazy<IValueConverter> _default = new Lazy<IValueConverter>(() => new UriTypeValueConverter(null));
 
         private readonly RedactAttribute _redactAttribute;
-        private readonly EncryptAttribute _encryptAttribute;
 
-        public UriTypeValueConverter(RedactAttribute redactAttribute, EncryptAttribute encryptAttribute)
+        public UriTypeValueConverter(RedactAttribute redactAttribute)
         {
             _redactAttribute = redactAttribute;
-            _encryptAttribute = encryptAttribute;
         }
 
         public static IValueConverter Default
@@ -28,11 +25,7 @@ namespace XSerializer
                 return null;
             }
 
-            return
-                new Uri(
-                    _encryptAttribute != null
-                        ? options.GetEncryptionMechanism().Decrypt(value, options.ShouldEncrypt)
-                        : value);
+            return new Uri(value);
         }
 
         public string GetString(object value, ISerializeOptions options)
@@ -47,9 +40,7 @@ namespace XSerializer
             var uriString =
                 _redactAttribute != null
                     ? _redactAttribute.Redact(uri, options.ShouldRedact)
-                    : _encryptAttribute != null
-                        ? options.GetEncryptionMechanism().Encrypt(uri.ToString(), options.ShouldEncrypt)
-                        : uri.ToString();
+                    : uri.ToString();
 
             return uriString;
         }

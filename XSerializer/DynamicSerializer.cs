@@ -2,16 +2,18 @@
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Xml;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
     internal class DynamicSerializer : IXmlSerializerInternal
     {
+        private readonly EncryptAttribute _encryptAttribute;
         private readonly IXmlSerializerOptions _options;
 
-        public static IXmlSerializerInternal GetSerializer<T>(IXmlSerializerOptions options)
+        public static IXmlSerializerInternal GetSerializer<T>(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
-            var serializer = new DynamicSerializer(options);
+            var serializer = new DynamicSerializer(encryptAttribute, options);
 
             if (typeof(T) == typeof(object))
             {
@@ -26,8 +28,9 @@ namespace XSerializer
             throw new InvalidOperationException("The only valid generic arguments for DynamicSerializer.GetSerializer<T> are object, dynamic, and ExpandoObject");
         }
 
-        public DynamicSerializer(IXmlSerializerOptions options)
+        public DynamicSerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
+            _encryptAttribute = encryptAttribute;
             _options = options;
         }
 
@@ -44,11 +47,11 @@ namespace XSerializer
 
             if (!options.ShouldAlwaysEmitTypes || instance.IsAnonymous())
             {
-                serializer = CustomSerializer.GetSerializer(instance.GetType(), _options);
+                serializer = CustomSerializer.GetSerializer(instance.GetType(), _encryptAttribute, _options);
             }
             else
             {
-                serializer = CustomSerializer.GetSerializer(typeof(object), _options.WithAdditionalExtraTypes(instance.GetType()));
+                serializer = CustomSerializer.GetSerializer(typeof(object), _encryptAttribute, _options.WithAdditionalExtraTypes(instance.GetType()));
             }
 
             serializer.SerializeObject(writer, instance, options);
@@ -69,7 +72,7 @@ namespace XSerializer
 
             if (type != null)
             {
-                var serializer = XmlSerializerFactory.Instance.GetSerializer(type, _options.WithRootElementName(reader.Name));
+                var serializer = XmlSerializerFactory.Instance.GetSerializer(type, _encryptAttribute, _options.WithRootElementName(reader.Name));
                 deserializedObject = serializer.DeserializeObject(reader, options);
             }
             else
@@ -114,11 +117,11 @@ namespace XSerializer
 
                     if (property.Value is ExpandoObject)
                     {
-                        serializer = DynamicSerializer.GetSerializer<ExpandoObject>(_options.WithRootElementName(property.Key));
+                        serializer = DynamicSerializer.GetSerializer<ExpandoObject>(_encryptAttribute, _options.WithRootElementName(property.Key));
                     }
                     else
                     {
-                        serializer = CustomSerializer.GetSerializer(property.Value.GetType(), _options.WithRootElementName(property.Key));
+                        serializer = CustomSerializer.GetSerializer(property.Value.GetType(), _encryptAttribute, _options.WithRootElementName(property.Key));
                     }
 
                     serializer.SerializeObject(writer, property.Value, options);
@@ -159,7 +162,7 @@ namespace XSerializer
                         }
                         break;
                     case XmlNodeType.Text:
-                        var stringValue = (string)new XmlTextSerializer(typeof(string), _options.RedactAttribute, _options.EncryptAttribute, _options.ExtraTypes).DeserializeObject(reader, options);
+                        var stringValue = (string)new XmlTextSerializer(typeof(string), _options.RedactAttribute, _encryptAttribute, _options.ExtraTypes).DeserializeObject(reader, options);
                         hasInstanceBeenCreated = true;
 
                         bool boolValue;
@@ -227,7 +230,7 @@ namespace XSerializer
         private void SetElementPropertyValue(XSerializerXmlReader reader, bool hasInstanceBeenCreated, ISerializeOptions options, IDictionary<string, object> expando)
         {
             var propertyName = reader.Name;
-            var serializer = GetSerializer<object>(_options.WithRootElementName(reader.Name));
+            var serializer = GetSerializer<object>(_encryptAttribute, _options.WithRootElementName(reader.Name));
             var value = serializer.DeserializeObject(reader, options);
             expando[propertyName] = value;
         }

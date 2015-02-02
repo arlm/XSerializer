@@ -106,7 +106,12 @@ namespace XSerializer
 
             options.SetExtraTypes(extraTypes);
 
-            _serializer = XmlSerializerFactory.Instance.GetSerializer<T>(options);
+            EncryptAttribute encryptAttributeOrNull =
+                options.ShouldEncryptRootObject
+                    ? new EncryptAttribute()
+                    : null;
+
+            _serializer = XmlSerializerFactory.Instance.GetSerializer<T>(encryptAttributeOrNull, options);
             _encoding = options.Encoding ?? Encoding.UTF8;
             _formatting = options.ShouldIndent ? Formatting.Indented : Formatting.None;
             _serializeOptions = options;

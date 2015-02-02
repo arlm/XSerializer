@@ -154,6 +154,39 @@ namespace XSerializer
             return options.EncryptionMechanism ?? XmlSerializer.DefaultEncryptionMechanism;
         }
 
+        /// <summary>
+        /// Maybe sets the <see cref="XSerializerXmlTextWriter.IsEncryptionEnabled"/> property of 
+        /// <paramref name="writer"/> to true. Returns true if the value was changed to true, false 
+        /// if it was not changed to true.
+        /// </summary>
+        internal static bool MaybeSetIsEncryptionEnabled(this XSerializerXmlTextWriter writer, EncryptAttribute encryptAttribute)
+        {
+            if (encryptAttribute != null && !writer.IsEncryptionEnabled)
+            {
+                writer.IsEncryptionEnabled = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Maybe sets the <see cref="XSerializerXmlTextWriter.IsEncryptionEnabled"/> property of 
+        /// <paramref name="reader"/> to true. Returns true if the value was changed to true, false 
+        /// if it was not changed to true.
+        /// </summary>
+        internal static bool MaybeSetIsDecryptionEnabled(this XSerializerXmlReader reader,
+            EncryptAttribute encryptAttribute)
+        {
+            if (encryptAttribute != null && !reader.IsDecryptionEnabled)
+            {
+                reader.IsDecryptionEnabled = true;
+                return true;
+            }
+
+            return false;
+        }
+
         internal static bool HasDefaultConstructor(this Type type)
         {
             return type.GetConstructor(Type.EmptyTypes) != null;

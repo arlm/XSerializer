@@ -119,10 +119,6 @@ namespace XSerializer
             }
 
             var encryptAttribute = (EncryptAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(EncryptAttribute));
-            if (encryptAttribute == null)
-            {
-                encryptAttribute = options.EncryptAttribute;
-            }
 
             var attributeAttribute = (XmlAttributeAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlAttributeAttribute));
             if (attributeAttribute != null)
@@ -144,11 +140,6 @@ namespace XSerializer
             if (redactAttribute != null)
             {
                 options = options.WithRedactAttribute(redactAttribute);
-            }
-            
-            if (encryptAttribute != null)
-            {
-                options = options.WithEncryptAttribute(encryptAttribute);
             }
             
             var elementAttribute = (XmlElementAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlElementAttribute), false);
@@ -190,14 +181,14 @@ namespace XSerializer
                 }
 
                 NodeType = NodeType.Element;
-                return () => ListSerializer.GetSerializer(propertyInfo.PropertyType, options.WithRootElementName(rootElementName), itemElementName);
+                return () => ListSerializer.GetSerializer(propertyInfo.PropertyType, encryptAttribute, options.WithRootElementName(rootElementName), itemElementName);
             }
 
             rootElementName = GetElementName(elementAttribute, x => x.ElementName, propertyInfo.Name);
 
             NodeType = NodeType.Element;
             Name = rootElementName;
-            return () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo.PropertyType, options.WithRootElementName(rootElementName));
+            return () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo.PropertyType, encryptAttribute, options.WithRootElementName(rootElementName));
         }
 
         private static bool IsListProperty(PropertyInfo propertyInfo)

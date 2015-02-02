@@ -1,19 +1,16 @@
 using System;
-using XSerializer.Encryption;
 
 namespace XSerializer
 {
     internal class TypeTypeValueConverter : IValueConverter
     {
-        private static readonly Lazy<IValueConverter> _default = new Lazy<IValueConverter>(() => new TypeTypeValueConverter(null, null));
+        private static readonly Lazy<IValueConverter> _default = new Lazy<IValueConverter>(() => new TypeTypeValueConverter(null));
 
         private readonly RedactAttribute _redactAttribute;
-        private readonly EncryptAttribute _encryptAttribute;
 
-        public TypeTypeValueConverter(RedactAttribute redactAttribute, EncryptAttribute encryptAttribute)
+        public TypeTypeValueConverter(RedactAttribute redactAttribute)
         {
             _redactAttribute = redactAttribute;
-            _encryptAttribute = encryptAttribute;
         }
 
         public static IValueConverter Default
@@ -28,11 +25,7 @@ namespace XSerializer
                 return null;
             }
 
-            return
-                Type.GetType(
-                    _encryptAttribute != null
-                        ? options.GetEncryptionMechanism().Decrypt(value, options.ShouldEncrypt)
-                        : value);
+            return Type.GetType(value);
         }
 
         public string GetString(object value, ISerializeOptions options)
@@ -47,9 +40,7 @@ namespace XSerializer
             var typeString =
                 _redactAttribute != null
                     ? _redactAttribute.Redact(type, options.ShouldRedact)
-                    : _encryptAttribute != null
-                        ? options.GetEncryptionMechanism().Encrypt(GetStringValue(type), options.ShouldEncrypt)
-                        : GetStringValue(type);
+                    : GetStringValue(type);
 
             return typeString;
         }

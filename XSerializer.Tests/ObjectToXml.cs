@@ -27,7 +27,7 @@ namespace XSerializer.Tests
 
         protected virtual IXmlSerializerInternal GetSerializer(Type type)
         {
-            return CustomSerializer.GetSerializer(type, TestXmlSerializerOptions.Empty);
+            return CustomSerializer.GetSerializer(type, null, TestXmlSerializerOptions.Empty);
         }
 
         protected virtual bool AlwaysEmitTypes

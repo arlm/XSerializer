@@ -14,7 +14,7 @@ namespace XSerializer.Tests.Performance
         public void Benchmark()
         {
             new System.Xml.Serialization.XmlSerializer(typeof(JitPreparation), null, null, null, null);
-            CustomSerializer.GetSerializer(typeof(JitPreparation), TestXmlSerializerOptions.Empty);
+            CustomSerializer.GetSerializer(typeof(JitPreparation), null, TestXmlSerializerOptions.Empty);
 
             var containerWithAbstract =
                 new ColdStartContainerWithAbstract
@@ -66,7 +66,7 @@ namespace XSerializer.Tests.Performance
 
             var customSerializerStopwatch = Stopwatch.StartNew();
 
-            var customSerializer = CustomSerializer.GetSerializer(typeof(ColdStartContainerWithInterface), TestXmlSerializerOptions.Empty);
+            var customSerializer = CustomSerializer.GetSerializer(typeof(ColdStartContainerWithInterface), null, TestXmlSerializerOptions.Empty);
             var customSerializerStringBuilder = new StringBuilder();
 
             using (var stringWriter = new StringWriter(customSerializerStringBuilder))

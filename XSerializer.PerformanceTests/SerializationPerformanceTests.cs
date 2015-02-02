@@ -40,7 +40,7 @@ namespace XSerializer.Tests.Performance
             const int Iterations = 100000;
 
             var xmlSerializer = new System.Xml.Serialization.XmlSerializer(typeof(ContainerWithAbstract), null, null, null, null);
-            var customSerializer = CustomSerializer.GetSerializer(typeof(ContainerWithInterface), TestXmlSerializerOptions.Empty);
+            var customSerializer = CustomSerializer.GetSerializer(typeof(ContainerWithInterface), null, TestXmlSerializerOptions.Empty);
 
             var xmlSerializerStopwatch = Stopwatch.StartNew();
 

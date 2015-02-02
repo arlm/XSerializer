@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Globalization;
-using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -12,7 +11,7 @@ namespace XSerializer
         private readonly Func<string, ISerializeOptions, object> _parseString;
         private readonly Func<object, ISerializeOptions, string> _getString;
 
-        private SimpleTypeValueConverter(Type type, RedactAttribute redactAttribute, EncryptAttribute encryptAttribute)
+        private SimpleTypeValueConverter(Type type, RedactAttribute redactAttribute)
         {
             if (redactAttribute != null)
             {
@@ -21,27 +20,16 @@ namespace XSerializer
             }
             else
             {
-                var parseString = GetNonRedactedGetParseStringFunc(type);
-                var getString = GetNonRedactedGetStringFunc(type);
-
-                if (encryptAttribute != null)
-                {
-                    _parseString = (value, options) => parseString(options.GetEncryptionMechanism().Decrypt(value, options.ShouldEncrypt), options);
-                    _getString = (value, options) => options.GetEncryptionMechanism().Encrypt(getString(value, options), options.ShouldEncrypt);
-                }
-                else
-                {
-                    _parseString = parseString;
-                    _getString = getString;
-                }
+                _parseString = GetNonRedactedGetParseStringFunc(type);
+                _getString = GetNonRedactedGetStringFunc(type);
             }
         }
 
-        public static SimpleTypeValueConverter Create(Type type, RedactAttribute redactAttribute, EncryptAttribute encryptAttribute)
+        public static SimpleTypeValueConverter Create(Type type, RedactAttribute redactAttribute)
         {
             return _map.GetOrAdd(
-                CreateKey(type, redactAttribute, encryptAttribute),
-                _ => new SimpleTypeValueConverter(type, redactAttribute, encryptAttribute));
+                CreateKey(type, redactAttribute),
+                _ => new SimpleTypeValueConverter(type, redactAttribute));
         }
 
         public object ParseString(string value, ISerializeOptions options)
@@ -248,7 +236,7 @@ namespace XSerializer
             return value == null ? null : GetStringFromDateTime(value, options);
         }
 
-        private static int CreateKey(Type type, RedactAttribute redactAttribute, EncryptAttribute encryptAttribute)
+        private static int CreateKey(Type type, RedactAttribute redactAttribute)
         {
             unchecked
             {
@@ -257,11 +245,6 @@ namespace XSerializer
                 if (redactAttribute != null)
                 {
                     key = (key * 397) ^ redactAttribute.GetHashCode();
-                }
-
-                if (encryptAttribute != null)
-                {
-                    key = (key * 397) ^ encryptAttribute.GetHashCode();
                 }
 
                 return key;

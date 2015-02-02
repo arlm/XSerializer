@@ -1,22 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using XSerializer.Encryption;
 
 namespace XSerializer
 {
     internal class EnumTypeValueConverter : IValueConverter
     {
-        private static readonly Lazy<IValueConverter> _default = new Lazy<IValueConverter>(() => new EnumTypeValueConverter(null, null, Enumerable.Empty<Type>()));
+        private static readonly Lazy<IValueConverter> _default = new Lazy<IValueConverter>(() => new EnumTypeValueConverter(null, Enumerable.Empty<Type>()));
 
         private readonly RedactAttribute _redactAttribute;
-        private readonly EncryptAttribute _encryptAttribute;
         private readonly IEnumerable<Type> _enumExtraTypes;
 
-        public EnumTypeValueConverter(RedactAttribute redactAttribute, EncryptAttribute encryptAttribute, IEnumerable<Type> extraTypes)
+        public EnumTypeValueConverter(RedactAttribute redactAttribute, IEnumerable<Type> extraTypes)
         {
             _redactAttribute = redactAttribute;
-            _encryptAttribute = encryptAttribute;
             _enumExtraTypes = extraTypes.Where(t => t.IsEnum).ToList();
         }
 
@@ -30,11 +27,6 @@ namespace XSerializer
             if (string.IsNullOrEmpty(value))
             {
                 return null;
-            }
-
-            if (_encryptAttribute != null)
-            {
-                value = options.GetEncryptionMechanism().Decrypt(value, options.ShouldEncrypt);
             }
 
             var enumTypeName = value.Substring(0, value.LastIndexOf('.'));
@@ -59,11 +51,6 @@ namespace XSerializer
                     : value.ToString();
 
             var combinedValue = value.GetType().Name + "." + enumStringValue;
-
-            if (_encryptAttribute != null)
-            {
-                combinedValue = options.GetEncryptionMechanism().Encrypt(combinedValue, options.ShouldEncrypt);
-            }
 
             return combinedValue;
         }

@@ -30,6 +30,7 @@ namespace XSerializer.Tests
             var customSerializer = 
                 (IXmlSerializerInternal)Activator.CreateInstance(
                     typeof(CustomSerializer<>).MakeGenericType(instance.GetType()),
+                    null,
                     new TestXmlSerializerOptions
                     {
                         DefaultNamespace = defaultNamespace,
@@ -83,6 +84,7 @@ namespace XSerializer.Tests
             var customSerializer =
                 (IXmlSerializerInternal)Activator.CreateInstance(
                     typeof(CustomSerializer<>).MakeGenericType(instanceWithInterface.GetType()),
+                    null,
                     new TestXmlSerializerOptions
                     {
                         DefaultNamespace = defaultNamespace,

@@ -4,8 +4,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Xml;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -13,6 +13,7 @@ namespace XSerializer
     {
         private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
 
+        protected readonly EncryptAttribute _encryptAttribute;
         private readonly IXmlSerializerOptions _options;
 
         private readonly IXmlSerializerInternal _keySerializer;
@@ -21,13 +22,14 @@ namespace XSerializer
         private readonly Func<object> _createDictionary;
         private readonly Func<object, object> _finalizeDictionary = x => x;
 
-        protected DictionarySerializer(IXmlSerializerOptions options)
+        protected DictionarySerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             // ReSharper disable DoNotCallOverridableMethodsInConstructor
 
+            _encryptAttribute = encryptAttribute;
             _options = options;
-            _keySerializer = XmlSerializerFactory.Instance.GetSerializer(KeyType, _options.WithRootElementName("Key").WithRedactAttribute(null));
-            _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(ValueType, _options.WithRootElementName("Value"));
+            _keySerializer = XmlSerializerFactory.Instance.GetSerializer(KeyType, encryptAttribute, _options.WithRootElementName("Key").WithRedactAttribute(null));
+            _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(ValueType, encryptAttribute, _options.WithRootElementName("Value"));
 
             if (DictionaryType.IsReadOnlyDictionary())
             {
@@ -210,10 +212,10 @@ namespace XSerializer
             return instance;
         }
 
-        public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options)
+        public static IXmlSerializerInternal GetSerializer(Type type, EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             return _serializerCache.GetOrAdd(
-                XmlSerializerFactory.Instance.CreateKey(type, options),
+                XmlSerializerFactory.Instance.CreateKey(type, encryptAttribute, options),
                 _ =>
                 {
                     Func<Type, IXmlSerializerInternal> createDictionarySerializer =
@@ -222,7 +224,7 @@ namespace XSerializer
                             var genericArguments = genericDictionaryInterface.GetGenericArguments();
                             var keyType = genericArguments[0];
                             var valueType = genericArguments[1];
-                            return (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), options);
+                            return (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), encryptAttribute, options);
                         };
 
                     if (type.IsAssignableToGenericIDictionary())
@@ -232,7 +234,7 @@ namespace XSerializer
 
                     if (type.IsAssignableToNonGenericIDictionary())
                     {
-                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), options);
+                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), encryptAttribute, options);
                     }
 
                     if (type.IsReadOnlyDictionary())
@@ -248,8 +250,8 @@ namespace XSerializer
     internal class DictionarySerializer<TDictionary> : DictionarySerializer
         where TDictionary : IDictionary
     {
-        public DictionarySerializer(IXmlSerializerOptions options)
-            : base(options)
+        public DictionarySerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
+            : base(encryptAttribute, options)
         {
         }
 
@@ -313,8 +315,8 @@ namespace XSerializer
     {
         private readonly Lazy<Func<object, object>> _finalizeCollectionIntoReadOnlyDictionary;
         
-        public DictionarySerializer(IXmlSerializerOptions options)
-            : base(options)
+        public DictionarySerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
+            : base(encryptAttribute, options)
         {
             _finalizeCollectionIntoReadOnlyDictionary = new Lazy<Func<object, object>>(
                 () =>

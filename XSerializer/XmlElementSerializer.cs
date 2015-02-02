@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Xml;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -7,9 +8,10 @@ namespace XSerializer
     {
         private readonly string _elementName;
         private readonly bool _alwaysEmitNil;
+        private readonly EncryptAttribute _encryptAttribute;
         private readonly IValueConverter _valueConverter;
 
-        public XmlElementSerializer(IXmlSerializerOptions options)
+        public XmlElementSerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             if (!typeof(T).IsPrimitiveLike() && !typeof(T).IsNullablePrimitiveLike() && !ValueTypes.IsRegistered(typeof(T)))
             {
@@ -18,10 +20,11 @@ namespace XSerializer
 
             _elementName = options.RootElementName;
             _alwaysEmitNil = options.ShouldAlwaysEmitNil;
+            _encryptAttribute = encryptAttribute;
 
-            if (!ValueTypes.TryGetValueConverter(typeof(T), options.RedactAttribute, options.EncryptAttribute, options.ExtraTypes, out _valueConverter))
+            if (!ValueTypes.TryGetValueConverter(typeof(T), options.RedactAttribute, options.ExtraTypes, out _valueConverter))
             {
-                _valueConverter = SimpleTypeValueConverter.Create(typeof(T), options.RedactAttribute, options.EncryptAttribute);
+                _valueConverter = SimpleTypeValueConverter.Create(typeof(T), options.RedactAttribute);
             }
         }
 
@@ -44,7 +47,16 @@ namespace XSerializer
         {
             writer.WriteStartElement(_elementName);
             writer.WriteDefaultDocumentNamespaces();
+
+            var setToFalse = writer.MaybeSetIsEncryptionEnabled(_encryptAttribute);
+
             writeValueAction(writer);
+
+            if (setToFalse)
+            {
+                writer.IsEncryptionEnabled = false;
+            }
+
             writer.WriteEndElement();
         }
 
@@ -63,7 +75,15 @@ namespace XSerializer
                 return default(T);
             }
 
+            var setToFalse = reader.MaybeSetIsDecryptionEnabled(_encryptAttribute);
+
             var value = reader.ReadString();
+
+            if (setToFalse)
+            {
+                reader.IsDecryptionEnabled = false;
+            }
+
             return _valueConverter.ParseString(value, options);
         }
     }

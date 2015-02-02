@@ -10,10 +10,10 @@ namespace XSerializer
         private static readonly Regex Letters = new Regex(@"[a-zA-Z]", RegexOptions.Compiled);
 
         private static readonly Lazy<IValueConverter> _booleanConverter =
-            new Lazy<IValueConverter>(() => SimpleTypeValueConverter.Create(typeof(bool), null, null));
+            new Lazy<IValueConverter>(() => SimpleTypeValueConverter.Create(typeof(bool), null));
 
         private static readonly Lazy<IValueConverter> _dateTimeConverter =
-            new Lazy<IValueConverter>(() => SimpleTypeValueConverter.Create(typeof(DateTime), null, null));
+            new Lazy<IValueConverter>(() => SimpleTypeValueConverter.Create(typeof(DateTime), null));
 
         /// <summary>
         /// Redacts the clear-text.
