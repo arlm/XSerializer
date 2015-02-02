@@ -233,7 +233,49 @@ namespace XSerializer.Tests.Encryption
                 new TypeExample<Uri> { Value = new Uri("http://google.com/") },
                 x => x.Value,
                 root => root.Element("Value").Value,
-                "aHR0cDovL2dvb2dsZS5jb20v")
+                "aHR0cDovL2dvb2dsZS5jb20v"),
+
+            GetTestCaseData(
+                "Complex Object With Elements",
+                new TypeExample<Bar> { Value = new Bar { Baz = 123, Qux = true } },
+                x => x.Value,
+                root => root.Element("Value").Value,
+                "PEJhej4xMjM8L0Jhej48UXV4PnRydWU8L1F1eD4="),
+
+            GetTestCaseData(
+                "Complex Object With Elements And Non-Default Constructor",
+                new TypeExample<BarImmutable> { Value = new BarImmutable(123, true) },
+                x => x.Value,
+                root => root.Element("Value").Value,
+                "PEJhej4xMjM8L0Jhej48UXV4PnRydWU8L1F1eD4="),
+
+            GetTestCaseData(
+                "Complex Object With Attributes",
+                new TypeExample<Baz> { Value = new Baz { Qux = 123, Corge = true } },
+                x => x.Value,
+                root => root.Element("Value").Attribute("Qux").Value + "|" + root.Element("Value").Attribute("Corge").Value,
+                "MTIz|dHJ1ZQ=="),
+
+            GetTestCaseData(
+                "Complex Object With Attributes And Non-Default Constructor",
+                new TypeExample<BazImmutable> { Value = new BazImmutable(123, true) },
+                x => x.Value,
+                root => root.Element("Value").Attribute("Qux").Value + "|" + root.Element("Value").Attribute("Corge").Value,
+                "MTIz|dHJ1ZQ=="),
+
+            GetTestCaseData(
+                "Complex Object With Elements And Attributes",
+                new TypeExample<Foo> { Value = new Foo { Bar = 123, Baz = true, Qux = 123, Corge = true } },
+                x => x.Value,
+                root => root.Element("Value").Value + "|" + root.Element("Value").Attribute("Qux").Value + "|" + root.Element("Value").Attribute("Corge").Value,
+                "PEJhcj4xMjM8L0Jhcj48QmF6PnRydWU8L0Jhej4=|MTIz|dHJ1ZQ=="),
+
+            GetTestCaseData(
+                "Complex Object With Elements And Attributes And Non-Default Constructor",
+                new TypeExample<FooImmutable> { Value = new FooImmutable(123, true, 123, true) },
+                x => x.Value,
+                root => root.Element("Value").Value + "|" + root.Element("Value").Attribute("Qux").Value + "|" + root.Element("Value").Attribute("Corge").Value,
+                "PEJhcj4xMjM8L0Jhcj48QmF6PnRydWU8L0Jhej4=|MTIz|dHJ1ZQ=="),
         };
 
         public class TypeExample<T>
@@ -245,6 +287,219 @@ namespace XSerializer.Tests.Encryption
         public enum TestEnum
         {
             First, Second, Third
+        }
+
+        public class Bar
+        {
+            public int Baz { get; set; }
+            public bool Qux { get; set; }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((Bar)obj);
+            }
+
+            protected bool Equals(Bar other)
+            {
+                return Baz == other.Baz && Qux.Equals(other.Qux);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return (Baz * 397) ^ Qux.GetHashCode();
+                }
+            }
+        }
+
+        public class BarImmutable
+        {
+            private readonly int _baz;
+            private readonly bool _qux;
+
+            public BarImmutable(int baz, bool qux)
+            {
+                _baz = baz;
+                _qux = qux;
+            }
+
+            public int Baz { get { return _baz; } }
+            public bool Qux { get { return _qux; } }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((BarImmutable)obj);
+            }
+
+            protected bool Equals(BarImmutable other)
+            {
+                return Baz == other.Baz && Qux.Equals(other.Qux);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return (Baz * 397) ^ Qux.GetHashCode();
+                }
+            }
+        }
+
+        public class Baz
+        {
+            [XmlAttribute]
+            public int Qux { get; set; }
+            [XmlAttribute]
+            public bool Corge { get; set; }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((Baz)obj);
+            }
+
+            protected bool Equals(Baz other)
+            {
+                return Qux == other.Qux && Corge.Equals(other.Corge);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return (Qux * 397) ^ Corge.GetHashCode();
+                }
+            }
+        }
+
+        public class BazImmutable
+        {
+            private readonly int _qux;
+            private readonly bool _corge;
+
+            public BazImmutable(int qux, bool corge)
+            {
+                _qux = qux;
+                _corge = corge;
+            }
+
+            [XmlAttribute]
+            public int Qux { get { return _qux; } }
+            [XmlAttribute]
+            public bool Corge { get { return _corge; } }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((BazImmutable)obj);
+            }
+
+            protected bool Equals(BazImmutable other)
+            {
+                return Qux == other.Qux && Corge.Equals(other.Corge);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return (Qux * 397) ^ Corge.GetHashCode();
+                }
+            }
+        }
+
+        public class Foo
+        {
+            public double Bar { get; set; }
+            public bool Baz { get; set; }
+            [XmlAttribute]
+            public int Qux { get; set; }
+            [XmlAttribute]
+            public bool Corge { get; set; }
+
+            protected bool Equals(Foo other)
+            {
+                return Bar.Equals(other.Bar) && Baz.Equals(other.Baz) && Qux == other.Qux && Corge.Equals(other.Corge);
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((Foo)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    var hashCode = Bar.GetHashCode();
+                    hashCode = (hashCode * 397) ^ Baz.GetHashCode();
+                    hashCode = (hashCode * 397) ^ Qux;
+                    hashCode = (hashCode * 397) ^ Corge.GetHashCode();
+                    return hashCode;
+                }
+            }
+        }
+
+        public class FooImmutable
+        {
+            private readonly int _bar;
+            private readonly bool _baz;
+            private readonly int _qux;
+            private readonly bool _corge;
+
+            public FooImmutable(int bar, bool baz, int qux, bool corge)
+            {
+                _bar = bar;
+                _baz = baz;
+                _qux = qux;
+                _corge = corge;
+            }
+
+            public int Bar { get { return _bar; } }
+            public bool Baz { get { return _baz; } }
+            [XmlAttribute]
+            public int Qux { get { return _qux; } }
+            [XmlAttribute]
+            public bool Corge { get { return _corge; } }
+
+            protected bool Equals(FooImmutable other)
+            {
+                return Bar.Equals(other.Bar) && Baz.Equals(other.Baz) && Qux == other.Qux && Corge.Equals(other.Corge);
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (ReferenceEquals(null, obj)) return false;
+                if (ReferenceEquals(this, obj)) return true;
+                if (obj.GetType() != this.GetType()) return false;
+                return Equals((FooImmutable)obj);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    var hashCode = Bar.GetHashCode();
+                    hashCode = (hashCode * 397) ^ Baz.GetHashCode();
+                    hashCode = (hashCode * 397) ^ Qux;
+                    hashCode = (hashCode * 397) ^ Corge.GetHashCode();
+                    return hashCode;
+                }
+            }
         }
 
         #endregion

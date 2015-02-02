@@ -296,6 +296,8 @@ namespace XSerializer
                     writer.WriteAttributeString("xsi", "type", null, instance.GetType().GetXsdType());
                 }
 
+                var setToFalse = writer.MaybeSetIsEncryptionEnabled(_encryptAttribute);
+
                 if (instanceType.IsPrimitiveLike() || instanceType.IsNullablePrimitiveLike())
                 {
                     var xmlTextSerializer = new XmlTextSerializer(instanceType, _options.RedactAttribute, _encryptAttribute, _options.ExtraTypes);
@@ -321,6 +323,11 @@ namespace XSerializer
                     }
                 }
 
+                if (setToFalse)
+                {
+                    writer.IsEncryptionEnabled = false;
+                }
+
                 writer.WriteEndElement();
             }
         }
@@ -330,6 +337,8 @@ namespace XSerializer
             var helper = NullHelper.Instance;
 
             bool shouldIssueRead;
+
+            bool setToFalse = false;
 
             do
             {
@@ -361,6 +370,8 @@ namespace XSerializer
                                     type = typeof(T);
                                 }
 
+                                setToFalse = reader.MaybeSetIsDecryptionEnabled(_encryptAttribute);
+
                                 helper = _helperFactory.CreateHelper(type, reader);
 
                                 while (reader.MoveToNextAttribute())
@@ -374,7 +385,7 @@ namespace XSerializer
 
                                 if (reader.IsEmptyElement)
                                 {
-                                    return helper.GetInstance();
+                                    return helper.GetInstance(setToFalse);
                                 }
                             }
                             else if (reader.IsEmptyElement)
@@ -403,7 +414,7 @@ namespace XSerializer
                     case XmlNodeType.EndElement:
                         if (reader.Name == _options.RootElementName)
                         {
-                            return helper.GetInstance();
+                            return helper.GetInstance(setToFalse);
                         }
                         break;
                 }
@@ -532,7 +543,7 @@ namespace XSerializer
             void SetTextNodePropertyValue(ISerializeOptions options);
             void StageAttributeValue(ISerializeOptions options);
             void FlushAttributeValues();
-            object GetInstance();
+            object GetInstance(bool setIsDecryptionEnabledToFalse);
         }
 
         private class NullHelper : IHelper
@@ -563,7 +574,7 @@ namespace XSerializer
                 throw NotInitializedException();
             }
 
-            object IHelper.GetInstance()
+            object IHelper.GetInstance(bool setIsDecryptionEnabledToFalse)
             {
                 throw NotInitializedException();
             }
@@ -635,8 +646,13 @@ namespace XSerializer
                 _setPropertyActions.Clear();
             }
 
-            public object GetInstance()
+            public object GetInstance(bool setIsDecryptionEnabledToFalse)
             {
+                if (setIsDecryptionEnabledToFalse)
+                {
+                    _reader.IsDecryptionEnabled = false;
+                }
+
                 return _instance;
             }
         }
@@ -745,7 +761,7 @@ namespace XSerializer
                 _setPropertyActions.Clear();
             }
 
-            public object GetInstance()
+            public object GetInstance(bool setIsDecryptionEnabledToFalse)
             {
                 var constructor = _constructors.OrderByDescending(c => c.GetScore(_accumulatedValues)).First();
 
@@ -759,6 +775,11 @@ namespace XSerializer
                     {
                         property.SetValue(instance, value);
                     }
+                }
+
+                if (setIsDecryptionEnabledToFalse)
+                {
+                    _reader.IsDecryptionEnabled = false;
                 }
 
                 return instance;

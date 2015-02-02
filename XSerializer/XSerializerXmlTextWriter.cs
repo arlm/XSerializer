@@ -54,6 +54,7 @@ namespace XSerializer
                     }
                     else if (_isEncryptionEnabled && !value)
                     {
+                        DoClearTextFlushIfNecessary();
                         Flush();
                     }
 

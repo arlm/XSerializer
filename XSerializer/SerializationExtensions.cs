@@ -715,6 +715,8 @@ namespace XSerializer
 
         public static Type GetXsdType<T>(this XSerializerXmlReader reader, Type[] extraTypes)
         {
+            // TODO: Set IsDecryptionEnabled to false then back to its previous value
+
             string typeName = null;
 
             while (reader.MoveToNextAttribute())
