@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Xml;
 using XSerializer.Encryption;
 
 namespace XSerializer
@@ -26,12 +25,12 @@ namespace XSerializer
             if (value != null)
             {
                 writer.WriteStartAttribute(_attributeName); // TODO: include namespaces
-                
-                var setToFalse = writer.MaybeSetIsEncryptionEnabled(_encryptAttribute);
+
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute);
 
                 writer.WriteString(_valueConverter.GetString(value, options));
 
-                if (setToFalse)
+                if (setIsEncryptionEnabledBackToFalse)
                 {
                     writer.IsEncryptionEnabled = false;
                 }
@@ -44,11 +43,11 @@ namespace XSerializer
         {
             if (reader.MoveToAttribute(_attributeName))
             {
-                var setToFalse = reader.MaybeSetIsDecryptionEnabled(_encryptAttribute);
+                var setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
 
                 var value = _valueConverter.ParseString(reader.Value, options);
 
-                if (setToFalse)
+                if (setIsDecryptionEnabledBackToFalse)
                 {
                     reader.IsDecryptionEnabled = false;
                 }

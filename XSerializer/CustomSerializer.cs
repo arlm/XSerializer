@@ -296,7 +296,7 @@ namespace XSerializer
                     writer.WriteAttributeString("xsi", "type", null, instance.GetType().GetXsdType());
                 }
 
-                var setToFalse = writer.MaybeSetIsEncryptionEnabled(_encryptAttribute);
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute);
 
                 if (instanceType.IsPrimitiveLike() || instanceType.IsNullablePrimitiveLike())
                 {
@@ -323,7 +323,7 @@ namespace XSerializer
                     }
                 }
 
-                if (setToFalse)
+                if (setIsEncryptionEnabledBackToFalse)
                 {
                     writer.IsEncryptionEnabled = false;
                 }
@@ -338,7 +338,7 @@ namespace XSerializer
 
             bool shouldIssueRead;
 
-            bool setToFalse = false;
+            bool setIsDecryptionEnabledBackToFalse = false;
 
             do
             {
@@ -370,7 +370,7 @@ namespace XSerializer
                                     type = typeof(T);
                                 }
 
-                                setToFalse = reader.MaybeSetIsDecryptionEnabled(_encryptAttribute);
+                                setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
 
                                 helper = _helperFactory.CreateHelper(type, reader);
 
@@ -385,7 +385,7 @@ namespace XSerializer
 
                                 if (reader.IsEmptyElement)
                                 {
-                                    return helper.GetInstance(setToFalse);
+                                    return helper.GetInstance(setIsDecryptionEnabledBackToFalse);
                                 }
                             }
                             else if (reader.IsEmptyElement)
@@ -414,7 +414,7 @@ namespace XSerializer
                     case XmlNodeType.EndElement:
                         if (reader.Name == _options.RootElementName)
                         {
-                            return helper.GetInstance(setToFalse);
+                            return helper.GetInstance(setIsDecryptionEnabledBackToFalse);
                         }
                         break;
                 }
@@ -543,7 +543,7 @@ namespace XSerializer
             void SetTextNodePropertyValue(ISerializeOptions options);
             void StageAttributeValue(ISerializeOptions options);
             void FlushAttributeValues();
-            object GetInstance(bool setIsDecryptionEnabledToFalse);
+            object GetInstance(bool setIsDecryptionEnabledBackToFalse);
         }
 
         private class NullHelper : IHelper
@@ -574,7 +574,7 @@ namespace XSerializer
                 throw NotInitializedException();
             }
 
-            object IHelper.GetInstance(bool setIsDecryptionEnabledToFalse)
+            object IHelper.GetInstance(bool setIsDecryptionEnabledBackToFalse)
             {
                 throw NotInitializedException();
             }
@@ -646,9 +646,9 @@ namespace XSerializer
                 _setPropertyActions.Clear();
             }
 
-            public object GetInstance(bool setIsDecryptionEnabledToFalse)
+            public object GetInstance(bool setIsDecryptionEnabledBackToFalse)
             {
-                if (setIsDecryptionEnabledToFalse)
+                if (setIsDecryptionEnabledBackToFalse)
                 {
                     _reader.IsDecryptionEnabled = false;
                 }
@@ -761,7 +761,7 @@ namespace XSerializer
                 _setPropertyActions.Clear();
             }
 
-            public object GetInstance(bool setIsDecryptionEnabledToFalse)
+            public object GetInstance(bool setIsDecryptionEnabledBackToFalse)
             {
                 var constructor = _constructors.OrderByDescending(c => c.GetScore(_accumulatedValues)).First();
 
@@ -777,7 +777,7 @@ namespace XSerializer
                     }
                 }
 
-                if (setIsDecryptionEnabledToFalse)
+                if (setIsDecryptionEnabledBackToFalse)
                 {
                     _reader.IsDecryptionEnabled = false;
                 }

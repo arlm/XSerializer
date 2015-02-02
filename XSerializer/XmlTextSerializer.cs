@@ -22,11 +22,11 @@ namespace XSerializer
         {
             if (value != null)
             {
-                var setToFalse = writer.MaybeSetIsEncryptionEnabled(_encryptAttribute);
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute);
 
                 writer.WriteValue(_valueConverter.GetString(value, options));
 
-                if (setToFalse)
+                if (setIsEncryptionEnabledBackToFalse)
                 {
                     writer.IsEncryptionEnabled = false;
                 }
@@ -35,11 +35,11 @@ namespace XSerializer
 
         public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
         {
-            var setToFalse = reader.MaybeSetIsDecryptionEnabled(_encryptAttribute);
+            var setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
 
             var value = _valueConverter.ParseString(reader.Value, options);
 
-            if (setToFalse)
+            if (setIsDecryptionEnabledBackToFalse)
             {
                 reader.IsDecryptionEnabled = false;
             }

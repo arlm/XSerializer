@@ -48,11 +48,11 @@ namespace XSerializer
             writer.WriteStartElement(_elementName);
             writer.WriteDefaultDocumentNamespaces();
 
-            var setToFalse = writer.MaybeSetIsEncryptionEnabled(_encryptAttribute);
+            var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute);
 
             writeValueAction(writer);
 
-            if (setToFalse)
+            if (setIsEncryptionEnabledBackToFalse)
             {
                 writer.IsEncryptionEnabled = false;
             }
@@ -75,11 +75,11 @@ namespace XSerializer
                 return default(T);
             }
 
-            var setToFalse = reader.MaybeSetIsDecryptionEnabled(_encryptAttribute);
+            var setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
 
             var value = reader.ReadString();
 
-            if (setToFalse)
+            if (setIsDecryptionEnabledBackToFalse)
             {
                 reader.IsDecryptionEnabled = false;
             }

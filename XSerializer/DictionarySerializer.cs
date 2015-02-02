@@ -94,7 +94,7 @@ namespace XSerializer
                     return;
                 }
 
-                var setToFalse = writer.MaybeSetIsEncryptionEnabled(_encryptAttribute);
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute);
 
                 foreach (var item in GetDictionaryEntries(instance))
                 {
@@ -113,7 +113,7 @@ namespace XSerializer
                     writer.WriteEndElement();
                 }
 
-                if (setToFalse)
+                if (setIsEncryptionEnabledBackToFalse)
                 {
                     writer.IsEncryptionEnabled = false;
                 }
@@ -133,7 +133,7 @@ namespace XSerializer
             object currentValue = null;
             bool shouldIssueRead;
 
-            var setToFalse = false;
+            var setIsDecryptionEnabledBackToFalse = false;
 
             Func<bool> isAtRootElement;
             {
@@ -172,14 +172,14 @@ namespace XSerializer
                             }
                             else
                             {
-                                setToFalse = reader.MaybeSetIsDecryptionEnabled(_encryptAttribute);
+                                setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute);
 
                                 dictionary = _createDictionary();
                                 hasInstanceBeenCreated = true;
 
                                 if (reader.IsEmptyElement)
                                 {
-                                    if (setToFalse)
+                                    if (setIsDecryptionEnabledBackToFalse)
                                     {
                                         reader.IsDecryptionEnabled = false;
                                     }
@@ -215,7 +215,7 @@ namespace XSerializer
                         }
                         else if (reader.Name == _options.RootElementName)
                         {
-                            if (setToFalse)
+                            if (setIsDecryptionEnabledBackToFalse)
                             {
                                 reader.IsDecryptionEnabled = false;
                             }
