@@ -206,7 +206,7 @@ namespace XSerializer
 
                         break;
                     case XmlNodeType.EndElement:
-                        if (reader.Name == "Item")
+                        if (isInsideItemElement && reader.Name == "Item")
                         {
                             AddItemToDictionary(dictionary, currentKey, currentValue);
                             currentKey = null;
