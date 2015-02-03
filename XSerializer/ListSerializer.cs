@@ -26,7 +26,7 @@ namespace XSerializer
             _encryptAttribute = encryptAttribute;
             _options = options;
             _itemElementName = string.IsNullOrEmpty(itemElementName) ? DefaultItemElementName : itemElementName;
-            _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, encryptAttribute, _options.WithRootElementName(_itemElementName).AlwaysEmitNil());
+            _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, null, _options.WithRootElementName(_itemElementName).AlwaysEmitNil());
 
             if (CollectionType.IsArray)
             {

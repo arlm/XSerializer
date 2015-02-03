@@ -338,7 +338,7 @@ namespace XSerializer
 
                 if (instanceType.IsPrimitiveLike() || instanceType.IsNullablePrimitiveLike())
                 {
-                    var xmlTextSerializer = new XmlTextSerializer(instanceType, _options.RedactAttribute, _encryptAttribute, _options.ExtraTypes);
+                    var xmlTextSerializer = new XmlTextSerializer(instanceType, _options.RedactAttribute, null, _options.ExtraTypes);
                     xmlTextSerializer.SerializeObject(writer, instance, options);
                 }
                 else

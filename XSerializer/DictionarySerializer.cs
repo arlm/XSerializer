@@ -28,8 +28,8 @@ namespace XSerializer
 
             _encryptAttribute = encryptAttribute;
             _options = options;
-            _keySerializer = XmlSerializerFactory.Instance.GetSerializer(KeyType, encryptAttribute, _options.WithRootElementName("Key").WithRedactAttribute(null));
-            _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(ValueType, encryptAttribute, _options.WithRootElementName("Value"));
+            _keySerializer = XmlSerializerFactory.Instance.GetSerializer(KeyType, null, _options.WithRootElementName("Key").WithRedactAttribute(null));
+            _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(ValueType, null, _options.WithRootElementName("Value"));
 
             if (DictionaryType.IsReadOnlyDictionary())
             {
