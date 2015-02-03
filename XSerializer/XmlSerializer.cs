@@ -107,9 +107,10 @@ namespace XSerializer
             options.SetExtraTypes(extraTypes);
 
             EncryptAttribute encryptAttributeOrNull =
-                options.ShouldEncryptRootObject
+                ((EncryptAttribute)Attribute.GetCustomAttribute(typeof(T), typeof(EncryptAttribute)))
+                ?? (options.ShouldEncryptRootObject
                     ? new EncryptAttribute()
-                    : null;
+                    : null);
 
             _serializer = XmlSerializerFactory.Instance.GetSerializer<T>(encryptAttributeOrNull, options);
             _encoding = options.Encoding ?? Encoding.UTF8;

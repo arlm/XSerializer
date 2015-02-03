@@ -7,7 +7,7 @@ namespace XSerializer.Encryption
     /// depending on whether the current serialization operation is configured
     /// to do so.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Property)] 
+    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Class)]
     public sealed class EncryptAttribute : Attribute
     {
     }

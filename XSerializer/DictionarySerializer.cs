@@ -26,7 +26,11 @@ namespace XSerializer
         {
             // ReSharper disable DoNotCallOverridableMethodsInConstructor
 
-            _encryptAttribute = encryptAttribute;
+            _encryptAttribute =
+                encryptAttribute
+                ?? (EncryptAttribute)Attribute.GetCustomAttribute(KeyType, typeof(EncryptAttribute))
+                ?? (EncryptAttribute)Attribute.GetCustomAttribute(ValueType, typeof(EncryptAttribute));
+
             _options = options;
             _keySerializer = XmlSerializerFactory.Instance.GetSerializer(KeyType, null, _options.WithRootElementName("Key").WithRedactAttribute(null));
             _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(ValueType, null, _options.WithRootElementName("Value"));

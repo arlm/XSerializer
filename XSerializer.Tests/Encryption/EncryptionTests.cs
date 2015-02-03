@@ -12,6 +12,268 @@ namespace XSerializer.Tests.Encryption
     public class EncryptionTests
     {
         [Test]
+        public void CanEncryptAndDecryptEntireRootObjectViaOptions()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var serializer = new XmlSerializer<UnencryptedThing>(x => x.EncryptRootObject().WithEncryptionMechanism(encryptionMechanism));
+
+            var instance = new UnencryptedThing
+            {
+                Foo = 123,
+                Bar = true
+            };
+
+            var xml = serializer.Serialize(instance);
+
+            var doc = XDocument.Parse(xml);
+
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Value), Is.EqualTo("<Bar>true</Bar>"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Attribute("Foo").Value), Is.EqualTo("123"));
+
+            var roundTrip = serializer.Deserialize(xml);
+
+            Assert.That(roundTrip.Foo, Is.EqualTo(instance.Foo));
+            Assert.That(roundTrip.Bar, Is.EqualTo(instance.Bar));
+        }
+
+        [Test]
+        public void CanEncryptAndDecryptEntireRootObjectViaEncryptAttribute()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var serializer = new XmlSerializer<EncryptedThing>(x => x.WithEncryptionMechanism(encryptionMechanism));
+
+            var instance = new EncryptedThing
+            {
+                Foo = 123,
+                Bar = true
+            };
+
+            var xml = serializer.Serialize(instance);
+
+            var doc = XDocument.Parse(xml);
+
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Value), Is.EqualTo("<Bar>true</Bar>"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Attribute("Foo").Value), Is.EqualTo("123"));
+
+            var roundTrip = serializer.Deserialize(xml);
+
+            Assert.That(roundTrip.Foo, Is.EqualTo(instance.Foo));
+            Assert.That(roundTrip.Bar, Is.EqualTo(instance.Bar));
+        }
+
+        [Test]
+        public void EncryptsAndDecryptsPropertyWhenTheClassOfThePropertyTypeIsDecoratedWithEncryptAttribute()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var serializer = new XmlSerializer<Container<EncryptedThing>>(x => x.WithEncryptionMechanism(encryptionMechanism));
+
+            var instance = new Container<EncryptedThing>
+            {
+                Item = new EncryptedThing
+                {
+                    Foo = 123,
+                    Bar = true
+                }
+            };
+
+            var xml = serializer.Serialize(instance);
+
+            var doc = XDocument.Parse(xml);
+
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Element("Item").Value), Is.EqualTo("<Bar>true</Bar>"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Element("Item").Attribute("Foo").Value), Is.EqualTo("123"));
+
+            var roundTrip = serializer.Deserialize(xml);
+
+            Assert.That(roundTrip.Item.Foo, Is.EqualTo(instance.Item.Foo));
+            Assert.That(roundTrip.Item.Bar, Is.EqualTo(instance.Item.Bar));
+        }
+
+        [Test]
+        public void EncryptsAndDecryptsGenericListPropertyWhenTheListGenericArgumentClassIsDecoratedWithEncryptAttribute()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var serializer = new XmlSerializer<Container<List<EncryptedThing>>>(x => x.WithEncryptionMechanism(encryptionMechanism));
+
+            var instance = new Container<List<EncryptedThing>>
+            {
+                Item = new List<EncryptedThing>
+                {
+                    new EncryptedThing
+                    {
+                        Foo = 123,
+                        Bar = true
+                    },
+                    new EncryptedThing
+                    {
+                        Foo = 789,
+                        Bar = false
+                    },
+                }
+            };
+
+            var xml = serializer.Serialize(instance);
+
+            var doc = XDocument.Parse(xml);
+
+            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value);
+            const string expectedDecryptedItemElementValue =
+                @"<EncryptedThing Foo=""123""><Bar>true</Bar></EncryptedThing>"
+                + @"<EncryptedThing Foo=""789""><Bar>false</Bar></EncryptedThing>";
+
+            Assert.That(actualDecryptedItemElementValue, Is.EqualTo(expectedDecryptedItemElementValue));
+
+            var roundTrip = serializer.Deserialize(xml);
+
+            Assert.That(roundTrip.Item.Count, Is.EqualTo(2));
+            Assert.That(roundTrip.Item[0].Foo, Is.EqualTo(instance.Item[0].Foo));
+            Assert.That(roundTrip.Item[0].Bar, Is.EqualTo(instance.Item[0].Bar));
+            Assert.That(roundTrip.Item[1].Foo, Is.EqualTo(instance.Item[1].Foo));
+            Assert.That(roundTrip.Item[1].Bar, Is.EqualTo(instance.Item[1].Bar));
+        }
+
+        [Test]
+        public void EncryptsAndDecryptsGenericDictionaryPropertyWhenTheKeyClassIsDecoratedWithEncryptAttribute()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var serializer = new XmlSerializer<Container<Dictionary<EncryptedThing, int>>>(x => x.WithEncryptionMechanism(encryptionMechanism));
+
+            var instance = new Container<Dictionary<EncryptedThing, int>>
+            {
+                Item = new Dictionary<EncryptedThing, int>
+                {
+                    {
+                        new EncryptedThing
+                        {
+                            Foo = 123,
+                            Bar = true
+                        },
+                        1
+                    },
+                    {
+                        new EncryptedThing
+                        {
+                            Foo = 789,
+                            Bar = false
+                        },
+                        2
+                    },
+                }
+            };
+
+            var xml = serializer.Serialize(instance);
+
+            var doc = XDocument.Parse(xml);
+
+            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value);
+            const string expectedDecryptedItemElementValue =
+                @"<Item><Key Foo=""123""><Bar>true</Bar></Key><Value>1</Value></Item>"
+                + @"<Item><Key Foo=""789""><Bar>false</Bar></Key><Value>2</Value></Item>";
+
+            Assert.That(actualDecryptedItemElementValue, Is.EqualTo(expectedDecryptedItemElementValue));
+
+            var roundTrip = serializer.Deserialize(xml);
+
+            Assert.That(roundTrip.Item.Keys, Is.EquivalentTo(instance.Item.Keys));
+            
+            var key = new EncryptedThing { Foo = 123, Bar = true };
+            Assert.That(roundTrip.Item[key], Is.EqualTo(instance.Item[key]));
+
+            key = new EncryptedThing { Foo = 789, Bar = false };
+            Assert.That(roundTrip.Item[key], Is.EqualTo(instance.Item[key]));
+        }
+
+        [Test]
+        public void EncryptsAndDecryptsGenericDictionaryPropertyWhenTheValueClassIsDecoratedWithEncryptAttribute()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var serializer = new XmlSerializer<Container<Dictionary<int, EncryptedThing>>>(x => x.WithEncryptionMechanism(encryptionMechanism));
+
+            var instance = new Container<Dictionary<int, EncryptedThing>>
+            {
+                Item = new Dictionary<int, EncryptedThing>
+                {
+                    {
+                        1,
+                        new EncryptedThing
+                        {
+                            Foo = 123,
+                            Bar = true
+                        }
+                    },
+                    {
+                        2,
+                        new EncryptedThing
+                        {
+                            Foo = 789,
+                            Bar = false
+                        }
+                    },
+                }
+            };
+
+            var xml = serializer.Serialize(instance);
+
+            var doc = XDocument.Parse(xml);
+
+            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value);
+            const string expectedDecryptedItemElementValue =
+                @"<Item><Key>1</Key><Value Foo=""123""><Bar>true</Bar></Value></Item>"
+                + @"<Item><Key>2</Key><Value Foo=""789""><Bar>false</Bar></Value></Item>";
+
+            Assert.That(actualDecryptedItemElementValue, Is.EqualTo(expectedDecryptedItemElementValue));
+
+            var roundTrip = serializer.Deserialize(xml);
+
+            Assert.That(roundTrip.Item.Keys, Is.EquivalentTo(instance.Item.Keys));
+            Assert.That(roundTrip.Item[1], Is.EqualTo(instance.Item[1]));
+            Assert.That(roundTrip.Item[2], Is.EqualTo(instance.Item[2]));
+        }
+
+        [Encrypt]
+        public class EncryptedThing
+        {
+            [XmlAttribute]
+            public int Foo { get; set; }
+
+            public bool Bar { get; set; }
+
+            public override bool Equals(object obj)
+            {
+                var other = obj as EncryptedThing;
+
+                if (other == null)
+                {
+                    return false;
+                }
+
+                return Foo == other.Foo && Bar == other.Bar;
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return (Foo * 397) ^ Bar.GetHashCode();
+                }
+            }
+        }
+
+        public class UnencryptedThing
+        {
+            [XmlAttribute]
+            public int Foo { get; set; }
+
+            public bool Bar { get; set; }
+        }
+
+        [Test]
         public void AListPropertyDecoratedWithXmlElementAndEncryptCannotExistWithOtherNonXmlAttributeProperties()
         {
             Assert.That(() => new XmlSerializer<Invalid>(), Throws.InvalidOperationException);

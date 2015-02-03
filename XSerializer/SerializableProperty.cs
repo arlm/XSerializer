@@ -25,7 +25,9 @@ namespace XSerializer
 
         public SerializableProperty(PropertyInfo propertyInfo, IXmlSerializerOptions options)
         {
-            _encryptAttribute = (EncryptAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(EncryptAttribute));
+            _encryptAttribute =
+                (EncryptAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(EncryptAttribute))
+                ?? (EncryptAttribute)Attribute.GetCustomAttribute(propertyInfo.PropertyType, typeof(EncryptAttribute));
             _isListDecoratedWithXmlElement =
                 typeof(IEnumerable).IsAssignableFrom(propertyInfo.PropertyType)
                 && Attribute.GetCustomAttributes(propertyInfo, typeof(XmlElementAttribute)).Any();
