@@ -149,11 +149,6 @@ namespace XSerializer
             return serializer.DeserializeObject(reader, options);
         }
 
-        internal static IEncryptionMechanism GetEncryptionMechanism(this ISerializeOptions options)
-        {
-            return options.EncryptionMechanism ?? XmlSerializer.DefaultEncryptionMechanism;
-        }
-
         /// <summary>
         /// Maybe sets the <see cref="XSerializerXmlTextWriter.IsEncryptionEnabled"/> property of 
         /// <paramref name="writer"/> to true. Returns true if the value was changed to true, false 

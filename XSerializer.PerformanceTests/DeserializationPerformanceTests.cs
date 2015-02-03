@@ -2,8 +2,8 @@
 using System.Diagnostics;
 using System.IO;
 using System.Xml;
-using System.Xml.Serialization;
 using NUnit.Framework;
+using XSerializer.Encryption;
 
 namespace XSerializer.Tests.Performance
 {

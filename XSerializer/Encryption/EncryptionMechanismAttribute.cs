@@ -4,7 +4,7 @@ namespace XSerializer.Encryption
 {
     /// <summary>
     /// Indicates that a class should be used to set the value of
-    /// <see cref="EncryptionMechanism.Current"/>. In order to be used,
+    /// <see cref="EncryptionMechanism.Default"/>. In order to be used,
     /// a non-abstract class decorated by this attribute must implement either
     /// <see cref="IEncryptionMechanism"/> or <see cref="IEncryptionMechanismFactory"/>
     /// and provide either a public parameterless constructor or a constructor

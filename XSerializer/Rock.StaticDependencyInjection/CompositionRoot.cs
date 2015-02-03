@@ -11,7 +11,7 @@ namespace XSerializer.Rock.StaticDependencyInjection
         public override void Bootstrap()
         {
             ImportFirst<IEncryptionMechanism, IEncryptionMechanismFactory>(
-                mechanism => XmlSerializer.DefaultEncryptionMechanism = mechanism,
+                mechanism => EncryptionMechanism.Default = mechanism,
                 factory => factory.GetEncryptionMechanism());
         }
 

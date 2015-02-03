@@ -8,21 +8,12 @@ using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 using XSerializer.Encryption;
-using XSerializer.Rock.StaticDependencyInjection;
 
 namespace XSerializer
 {
     public static class XmlSerializer
     {
-        private static readonly ConcurrentDictionary<Type, Func<XmlSerializationOptions, Type[], IXmlSerializer>> _createXmlSerializerFuncs = new ConcurrentDictionary<Type, Func<XmlSerializationOptions, Type[], IXmlSerializer>>(); 
-
-        private static readonly Default<IEncryptionMechanism> _defaultEncryptionMechanism = new Default<IEncryptionMechanism>(() => new ClearTextEncryptionMechanism());
-
-        public static IEncryptionMechanism DefaultEncryptionMechanism
-        {
-            internal get { return _defaultEncryptionMechanism.Current; }
-            set { _defaultEncryptionMechanism.SetCurrent(value); }
-        }
+        private static readonly ConcurrentDictionary<Type, Func<XmlSerializationOptions, Type[], IXmlSerializer>> _createXmlSerializerFuncs = new ConcurrentDictionary<Type, Func<XmlSerializationOptions, Type[], IXmlSerializer>>();
 
         public static IXmlSerializer Create(Type type, params Type[] extraTypes)
         {

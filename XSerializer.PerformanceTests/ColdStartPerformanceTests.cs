@@ -5,6 +5,7 @@ using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 using NUnit.Framework;
+using XSerializer.Encryption;
 
 namespace XSerializer.Tests.Performance
 {
