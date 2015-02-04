@@ -182,7 +182,7 @@ namespace XSerializer
 
                                 if (setIsDecryptionEnabledBackToFalse)
                                 {
-                                    reader.IsDecryptionEnabled = true;
+                                    reader.IsDecryptionEnabled = false;
                                 }
 
                                 return instance;
@@ -252,7 +252,7 @@ namespace XSerializer
 
                             if (setIsDecryptionEnabledBackToFalse)
                             {
-                                reader.IsDecryptionEnabled = true;
+                                reader.IsDecryptionEnabled = false;
                             }
 
                             return CheckAndReturn(hasInstanceBeenCreated, instance);
@@ -267,7 +267,7 @@ namespace XSerializer
         private void SetElementPropertyValue(XSerializerXmlReader reader, bool hasInstanceBeenCreated, ISerializeOptions options, IDictionary<string, object> expando)
         {
             var propertyName = reader.Name;
-            var serializer = GetSerializer<object>(_encryptAttribute, _options.WithRootElementName(reader.Name));
+            var serializer = DynamicSerializer.GetSerializer<object>(null, _options.WithRootElementName(reader.Name));
             var value = serializer.DeserializeObject(reader, options);
             expando[propertyName] = value;
         }

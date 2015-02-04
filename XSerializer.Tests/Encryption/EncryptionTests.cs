@@ -376,6 +376,8 @@ namespace XSerializer.Tests.Encryption
             [Encrypt]
             [XmlElement]
             public int Value { get; set; }
+
+            public int Dummy { get; set; }
         }
 
         public class XmlAttributeExample
@@ -383,6 +385,8 @@ namespace XSerializer.Tests.Encryption
             [Encrypt]
             [XmlAttribute]
             public int Value { get; set; }
+
+            public int Dummy { get; set; }
         }
 
         public class XmlTextExample
@@ -398,6 +402,8 @@ namespace XSerializer.Tests.Encryption
             [XmlArray]
             [XmlArrayItem("Item")]
             public int[] Items { get; set; }
+
+            public int Dummy { get; set; }
         }
 
         public class XmlElementOnArrayPropertyExample
@@ -655,6 +661,8 @@ namespace XSerializer.Tests.Encryption
         {
             [Encrypt]
             public T Value { get; set; }
+
+            public int Dummy { get; set; }
         }
 
         public enum TestEnum
