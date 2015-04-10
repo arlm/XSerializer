@@ -15,6 +15,12 @@ namespace XSerializer
         private static readonly Lazy<IValueConverter> _dateTimeConverter =
             new Lazy<IValueConverter>(() => SimpleTypeValueConverter.Create(typeof(DateTime), null));
 
+        private static readonly Lazy<IValueConverter> _dateTimeOffsetConverter =
+            new Lazy<IValueConverter>(() => SimpleTypeValueConverter.Create(typeof(DateTimeOffset), null));
+
+        private static readonly Lazy<IValueConverter> _timeSpanConverter =
+            new Lazy<IValueConverter>(() => SimpleTypeValueConverter.Create(typeof(TimeSpan), null));
+
         /// <summary>
         /// Redacts the clear-text.
         /// </summary>
@@ -67,6 +73,42 @@ namespace XSerializer
             return redactEnabled
                 ? Numbers.Replace(_dateTimeConverter.Value.GetString(dateTimeValue, null), "1")
                 : _dateTimeConverter.Value.GetString(dateTimeValue, null);
+        }
+
+        /// <summary>
+        /// Redacts the string representation of <paramref name="dateTimeOffsetValue"/>.
+        /// </summary>
+        /// <param name="dateTimeOffsetValue">A <see cref="DateTimeOffset"/>.</param>
+        /// <param name="redactEnabled">Whether redaction is currently enabled.</param>
+        /// <returns>The redacted text.</returns>
+        public string Redact(DateTimeOffset? dateTimeOffsetValue, bool redactEnabled)
+        {
+            if (dateTimeOffsetValue == null)
+            {
+                return null;
+            }
+
+            return redactEnabled
+                ? Numbers.Replace(_dateTimeOffsetConverter.Value.GetString(dateTimeOffsetValue, null), "1")
+                : _dateTimeOffsetConverter.Value.GetString(dateTimeOffsetValue, null);
+        }
+
+        /// <summary>
+        /// Redacts the string representation of <paramref name="timeSpanValue"/>.
+        /// </summary>
+        /// <param name="timeSpanValue">A <see cref="TimeSpan"/>.</param>
+        /// <param name="redactEnabled">Whether redaction is currently enabled.</param>
+        /// <returns>The redacted text.</returns>
+        public string Redact(TimeSpan? timeSpanValue, bool redactEnabled)
+        {
+            if (timeSpanValue == null)
+            {
+                return null;
+            }
+
+            return redactEnabled
+                ? Numbers.Replace(_timeSpanConverter.Value.GetString(timeSpanValue, null), "1")
+                : _timeSpanConverter.Value.GetString(timeSpanValue, null);
         }
 
         /// <summary>

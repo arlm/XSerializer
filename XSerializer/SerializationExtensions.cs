@@ -593,7 +593,9 @@ namespace XSerializer
                 || type == typeof(string)
                 || type == typeof(decimal)
                 || type == typeof(DateTime)
-                || type == typeof(Guid);
+                || type == typeof(Guid)
+                || type == typeof(TimeSpan)
+                || type == typeof(DateTimeOffset);
         }
 
         internal static bool IsNullablePrimitiveLike(this Type type)
