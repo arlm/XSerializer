@@ -72,6 +72,26 @@ namespace XSerializer
                 return ParseStringForNullableDateTime;
             }
 
+            if (type == typeof(DateTimeOffset))
+            {
+                return ParseStringForDateTimeOffset;
+            }
+
+            if (type == typeof(DateTimeOffset?))
+            {
+                return ParseStringForNullableDateTimeOffset;
+            }
+
+            if (type == typeof(TimeSpan))
+            {
+                return ParseStringForTimeSpan;
+            }
+
+            if (type == typeof(TimeSpan?))
+            {
+                return ParseStringForNullableTimeSpan;
+            }
+
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 return (value, options) => Convert.ChangeType(value, type.GetGenericArguments()[0]);
@@ -95,6 +115,16 @@ namespace XSerializer
             if (type == typeof(DateTime) || type == typeof(DateTime?))
             {
                 return (value, options) => redactAttribute.Redact((DateTime?)value, options.ShouldRedact);
+            }
+
+            if (type == typeof(DateTimeOffset) || type == typeof(DateTimeOffset?))
+            {
+                return (value, options) => redactAttribute.Redact((DateTimeOffset?)value, options.ShouldRedact);
+            }
+
+            if (type == typeof(TimeSpan) || type == typeof(TimeSpan?))
+            {
+                return (value, options) => redactAttribute.Redact((TimeSpan?)value, options.ShouldRedact);
             }
 
             return (value, options) => redactAttribute.Redact(value, options.ShouldRedact);
@@ -124,6 +154,26 @@ namespace XSerializer
             if (type == typeof(DateTime?))
             {
                 return ParseStringForNullableDateTime;
+            }
+
+            if (type == typeof(DateTimeOffset))
+            {
+                return ParseStringForDateTimeOffset;
+            }
+
+            if (type == typeof(DateTimeOffset?))
+            {
+                return ParseStringForNullableDateTimeOffset;
+            }
+
+            if (type == typeof(TimeSpan))
+            {
+                return ParseStringForTimeSpan;
+            }
+
+            if (type == typeof(TimeSpan?))
+            {
+                return ParseStringForNullableTimeSpan;
             }
 
             if (type == typeof(Guid))
@@ -166,6 +216,26 @@ namespace XSerializer
                 return GetStringFromNullableDateTime;
             }
 
+            if (type == typeof(DateTimeOffset))
+            {
+                return GetStringFromDateTimeOffset;
+            }
+
+            if (type == typeof(DateTimeOffset?))
+            {
+                return GetStringFromNullableDateTimeOffset;
+            }
+
+            if (type == typeof(TimeSpan))
+            {
+                return GetStringFromTimeSpan;
+            }
+
+            if (type == typeof(TimeSpan?))
+            {
+                return GetStringFromNullableTimeSpan;
+            }
+
             return (value, options) => value.ToString();
         }
 
@@ -193,6 +263,52 @@ namespace XSerializer
                 value,
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.RoundtripKind);
+        }
+
+        private static object ParseStringForDateTimeOffset(string value)
+        {
+            if (value == null)
+            {
+                return new DateTimeOffset();
+            }
+
+            return DateTimeOffset.Parse(
+                value,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind);
+        }
+
+        private static object ParseStringForNullableDateTimeOffset(string value)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+
+            return DateTimeOffset.Parse(
+                value,
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind);
+        }
+
+        private static object ParseStringForTimeSpan(string value)
+        {
+            if (value == null)
+            {
+                return new TimeSpan();
+            }
+
+            return TimeSpan.Parse(value, CultureInfo.InvariantCulture);
+        }
+
+        private static object ParseStringForNullableTimeSpan(string value)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+
+            return TimeSpan.Parse(value, CultureInfo.InvariantCulture);
         }
 
         private static object ParseStringForGuid(string value, ISerializeOptions options)
@@ -234,6 +350,28 @@ namespace XSerializer
         private static string GetStringFromNullableDateTime(object value, ISerializeOptions options)
         {
             return value == null ? null : GetStringFromDateTime(value, options);
+        }
+
+        private static string GetStringFromDateTimeOffset(object value, ISerializeOptions options)
+        {
+            var dateTimeOffset = (DateTimeOffset)value;
+            return dateTimeOffset.ToString("O");
+        }
+
+        private static string GetStringFromNullableDateTimeOffset(object value, ISerializeOptions options)
+        {
+            return value == null ? null : GetStringFromDateTimeOffset(value, options);
+        }
+
+        private static string GetStringFromTimeSpan(object value, ISerializeOptions options)
+        {
+            var timeSpan = (TimeSpan)value;
+            return timeSpan.ToString("G");
+        }
+
+        private static string GetStringFromNullableTimeSpan(object value, ISerializeOptions options)
+        {
+            return value == null ? null : GetStringFromTimeSpan(value, options);
         }
 
         private static int CreateKey(Type type, RedactAttribute redactAttribute)

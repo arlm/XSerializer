@@ -50,6 +50,7 @@
     <Compile Include="ArrayTests.cs" />
     <Compile Include="AttributeTests.cs" />
     <Compile Include="BclXmlSerializerExtensions.cs" />
+    <Compile Include="DateTimeOffsetTests.cs" />
     <Compile Include="DefaultDocumentNamespaceTests.cs" />
     <Compile Include="Encryption\Base64EncryptionMechanism.cs" />
     <Compile Include="Encryption\EncryptionTests.cs" />
@@ -87,6 +88,7 @@
     <Compile Include="NUnit\Has.cs" />
     <Compile Include="TestSerializeOptions.cs" />
     <Compile Include="TestXmlSerializerOptions.cs" />
+    <Compile Include="TimeSpanTests.cs" />
     <Compile Include="XmlRootAttributeTests.cs" />
     <Compile Include="XmlSerializerFactoryTests.cs" />
     <Compile Include="XmlSerializerOfTypeUriTests.cs" />
