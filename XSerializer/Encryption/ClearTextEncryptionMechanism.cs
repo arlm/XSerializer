@@ -11,8 +11,9 @@
         /// Returns the value of <paramref name="text"/>.
         /// </summary>
         /// <param name="text">Some text.</param>
+        /// <param name="encryptKey">Ignored.</param>
         /// <returns>The value of <paramref name="text"/>.</returns>
-        public string Encrypt(string text)
+        public string Encrypt(string text, object encryptKey)
         {
             return text;
         }
@@ -21,8 +22,9 @@
         /// Returns the value of <paramref name="text"/>.
         /// </summary>
         /// <param name="text">Some text.</param>
+        /// <param name="encryptKey">Ignored.</param>
         /// <returns>The value of <paramref name="text"/>.</returns>
-        public string Decrypt(string text)
+        public string Decrypt(string text, object encryptKey)
         {
             return text;
         }

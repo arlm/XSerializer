@@ -16,7 +16,7 @@ namespace XSerializer.Tests.Encryption
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var serializer = new XmlSerializer<UnencryptedThing>(x => x.EncryptRootObject().WithEncryptionMechanism(encryptionMechanism));
+            var serializer = new XmlSerializer<UnencryptedThing>(x => x.EncryptRootObject().WithEncryption(encryptionMechanism, null));
 
             var instance = new UnencryptedThing
             {
@@ -28,8 +28,8 @@ namespace XSerializer.Tests.Encryption
 
             var doc = XDocument.Parse(xml);
 
-            Assert.That(encryptionMechanism.Decrypt(doc.Root.Value), Is.EqualTo("<Bar>true</Bar>"));
-            Assert.That(encryptionMechanism.Decrypt(doc.Root.Attribute("Foo").Value), Is.EqualTo("123"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Value, null), Is.EqualTo("<Bar>true</Bar>"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Attribute("Foo").Value, null), Is.EqualTo("123"));
 
             var roundTrip = serializer.Deserialize(xml);
 
@@ -42,7 +42,7 @@ namespace XSerializer.Tests.Encryption
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var serializer = new XmlSerializer<EncryptedThing>(x => x.WithEncryptionMechanism(encryptionMechanism));
+            var serializer = new XmlSerializer<EncryptedThing>(x => x.WithEncryption(encryptionMechanism, null));
 
             var instance = new EncryptedThing
             {
@@ -54,8 +54,8 @@ namespace XSerializer.Tests.Encryption
 
             var doc = XDocument.Parse(xml);
 
-            Assert.That(encryptionMechanism.Decrypt(doc.Root.Value), Is.EqualTo("<Bar>true</Bar>"));
-            Assert.That(encryptionMechanism.Decrypt(doc.Root.Attribute("Foo").Value), Is.EqualTo("123"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Value, null), Is.EqualTo("<Bar>true</Bar>"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Attribute("Foo").Value, null), Is.EqualTo("123"));
 
             var roundTrip = serializer.Deserialize(xml);
 
@@ -68,7 +68,7 @@ namespace XSerializer.Tests.Encryption
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var serializer = new XmlSerializer<Container<EncryptedThing>>(x => x.WithEncryptionMechanism(encryptionMechanism));
+            var serializer = new XmlSerializer<Container<EncryptedThing>>(x => x.WithEncryption(encryptionMechanism, null));
 
             var instance = new Container<EncryptedThing>
             {
@@ -83,8 +83,8 @@ namespace XSerializer.Tests.Encryption
 
             var doc = XDocument.Parse(xml);
 
-            Assert.That(encryptionMechanism.Decrypt(doc.Root.Element("Item").Value), Is.EqualTo("<Bar>true</Bar>"));
-            Assert.That(encryptionMechanism.Decrypt(doc.Root.Element("Item").Attribute("Foo").Value), Is.EqualTo("123"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Element("Item").Value, null), Is.EqualTo("<Bar>true</Bar>"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Element("Item").Attribute("Foo").Value, null), Is.EqualTo("123"));
 
             var roundTrip = serializer.Deserialize(xml);
 
@@ -97,7 +97,7 @@ namespace XSerializer.Tests.Encryption
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var serializer = new XmlSerializer<Container<List<EncryptedThing>>>(x => x.WithEncryptionMechanism(encryptionMechanism));
+            var serializer = new XmlSerializer<Container<List<EncryptedThing>>>(x => x.WithEncryption(encryptionMechanism, null));
 
             var instance = new Container<List<EncryptedThing>>
             {
@@ -120,7 +120,7 @@ namespace XSerializer.Tests.Encryption
 
             var doc = XDocument.Parse(xml);
 
-            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value);
+            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value, null);
             const string expectedDecryptedItemElementValue =
                 @"<EncryptedThing Foo=""123""><Bar>true</Bar></EncryptedThing>"
                 + @"<EncryptedThing Foo=""789""><Bar>false</Bar></EncryptedThing>";
@@ -141,7 +141,7 @@ namespace XSerializer.Tests.Encryption
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var serializer = new XmlSerializer<Container<Dictionary<EncryptedThing, int>>>(x => x.WithEncryptionMechanism(encryptionMechanism));
+            var serializer = new XmlSerializer<Container<Dictionary<EncryptedThing, int>>>(x => x.WithEncryption(encryptionMechanism, null));
 
             var instance = new Container<Dictionary<EncryptedThing, int>>
             {
@@ -170,7 +170,7 @@ namespace XSerializer.Tests.Encryption
 
             var doc = XDocument.Parse(xml);
 
-            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value);
+            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value, null);
             const string expectedDecryptedItemElementValue =
                 @"<Item><Key Foo=""123""><Bar>true</Bar></Key><Value>1</Value></Item>"
                 + @"<Item><Key Foo=""789""><Bar>false</Bar></Key><Value>2</Value></Item>";
@@ -193,7 +193,7 @@ namespace XSerializer.Tests.Encryption
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var serializer = new XmlSerializer<Container<Dictionary<int, EncryptedThing>>>(x => x.WithEncryptionMechanism(encryptionMechanism));
+            var serializer = new XmlSerializer<Container<Dictionary<int, EncryptedThing>>>(x => x.WithEncryption(encryptionMechanism, null));
 
             var instance = new Container<Dictionary<int, EncryptedThing>>
             {
@@ -222,7 +222,7 @@ namespace XSerializer.Tests.Encryption
 
             var doc = XDocument.Parse(xml);
 
-            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value);
+            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value, null);
             const string expectedDecryptedItemElementValue =
                 @"<Item><Key>1</Key><Value Foo=""123""><Bar>true</Bar></Value></Item>"
                 + @"<Item><Key>2</Key><Value Foo=""789""><Bar>false</Bar></Value></Item>";

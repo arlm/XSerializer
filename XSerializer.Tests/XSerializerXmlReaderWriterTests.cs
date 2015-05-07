@@ -52,7 +52,7 @@ namespace XSerializer.Tests
                 }
             }
 
-            Func<string, string> e = encryptionMechanism.Encrypt;
+            Func<string, string> e = x => encryptionMechanism.Encrypt(x, null);
 
             // reference xml:
             // <foo><bar baz="123"><qux>abc</qux></bar><rab zab="789"><xuq>xyz</xuq></rab></foo>
@@ -70,7 +70,7 @@ namespace XSerializer.Tests
             {
                 using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism))
+                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism, null))
                     {
                         reader.Read(); // None -> <foo>
                         reader.IsDecryptionEnabled = true;
@@ -153,7 +153,7 @@ namespace XSerializer.Tests
                 }
             }
 
-            Func<string, string> e = encryptionMechanism.Encrypt;
+            Func<string, string> e = x => encryptionMechanism.Encrypt(x, null);
 
             // reference xml:
             // <foo><bar baz="123"><qux>abc</qux></bar><rab zab="789"><xuq>xyz</xuq></rab></foo>
@@ -176,7 +176,7 @@ namespace XSerializer.Tests
             {
                 using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism))
+                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism, null))
                     {
                         reader.Read(); // None -> <foo>
 
@@ -260,7 +260,7 @@ namespace XSerializer.Tests
                 }
             }
 
-            Func<string, string> e = encryptionMechanism.Encrypt;
+            Func<string, string> e = x => encryptionMechanism.Encrypt(x, null);
 
             // reference xml:
             // <foo><bar baz="123"><qux>abc</qux></bar><rab zab="789"><xuq>xyz</xuq></rab></foo>
@@ -283,7 +283,7 @@ namespace XSerializer.Tests
             {
                 using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism))
+                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism, options.EncryptKey))
                     {
                         reader.Read(); // None -> <foo>
 
@@ -366,7 +366,7 @@ namespace XSerializer.Tests
                 }
             }
 
-            Func<string, string> e = encryptionMechanism.Encrypt;
+            Func<string, string> e = x => encryptionMechanism.Encrypt(x, null);
 
             // reference xml:
             // <foo><bar baz="123"><qux>abc</qux></bar><rab zab="789"><xuq>xyz</xuq></rab></foo>
@@ -389,7 +389,7 @@ namespace XSerializer.Tests
             {
                 using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism))
+                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism, options.EncryptKey))
                     {
                         reader.Read(); // None -> <foo>
 

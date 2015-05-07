@@ -14,23 +14,25 @@ namespace XSerializer
         private static readonly Regex _isStartElementRegex = new Regex(@"^\s*<", RegexOptions.Compiled);
 
         private readonly IEncryptionMechanism _encryptionMechanism;
+        private readonly object _encryptKey;
 
         private readonly XmlReader _primaryReader;
 
         private XmlReader _currentReader;
         private XSerializerXmlReader _surrogateReader;
 
-        private XSerializerXmlReader(string xml, IEncryptionMechanism encryptionMechanism)
-            : this(new XmlTextReader(new StringReader(xml)), encryptionMechanism)
+        private XSerializerXmlReader(string xml, IEncryptionMechanism encryptionMechanism, object encryptKey)
+            : this(new XmlTextReader(new StringReader(xml)), encryptionMechanism, encryptKey)
         {
         }
 
-        public XSerializerXmlReader(XmlReader reader, IEncryptionMechanism encryptionMechanism)
+        public XSerializerXmlReader(XmlReader reader, IEncryptionMechanism encryptionMechanism, object encryptKey)
         {
             _primaryReader = reader;
             _currentReader = reader;
 
             _encryptionMechanism = encryptionMechanism;
+            _encryptKey = encryptKey;
         }
 
         public bool IsDecryptionEnabled { get; set; }
@@ -68,7 +70,7 @@ namespace XSerializer
                 // top-level elements. To ensure valid xml, wrap the fragment in a dummy node.
                 var xml = _dummyNodeStartElement + Value + _dummyNodeEndElement;
 
-                _surrogateReader = new XSerializerXmlReader(xml, _encryptionMechanism);
+                _surrogateReader = new XSerializerXmlReader(xml, _encryptionMechanism, _encryptKey);
                 _currentReader = _surrogateReader;
 
                 _surrogateReader.Read(); // Advance to the opening dummy node
@@ -122,7 +124,7 @@ namespace XSerializer
 
             return
                 IsDecryptionEnabled
-                    ? _encryptionMechanism.Decrypt(value)
+                    ? _encryptionMechanism.Decrypt(value, _encryptKey)
                     : value;
         }
 

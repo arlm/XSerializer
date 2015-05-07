@@ -46,8 +46,8 @@ namespace XSerializer
         {
             var defaultValue =
                 type.IsValueType
-                ? Activator.CreateInstance(type)
-                : null;
+                    ? Activator.CreateInstance(type)
+                    : null;
 
             if (type.IsEnum ||
                 (type.IsGenericType
@@ -265,7 +265,7 @@ namespace XSerializer
                 DateTimeStyles.RoundtripKind);
         }
 
-        private static object ParseStringForDateTimeOffset(string value)
+        private static object ParseStringForDateTimeOffset(string value, ISerializeOptions options)
         {
             if (value == null)
             {
@@ -278,7 +278,7 @@ namespace XSerializer
                 DateTimeStyles.RoundtripKind);
         }
 
-        private static object ParseStringForNullableDateTimeOffset(string value)
+        private static object ParseStringForNullableDateTimeOffset(string value, ISerializeOptions options)
         {
             if (value == null)
             {
@@ -291,7 +291,7 @@ namespace XSerializer
                 DateTimeStyles.RoundtripKind);
         }
 
-        private static object ParseStringForTimeSpan(string value)
+        private static object ParseStringForTimeSpan(string value, ISerializeOptions options)
         {
             if (value == null)
             {
@@ -301,7 +301,7 @@ namespace XSerializer
             return TimeSpan.Parse(value, CultureInfo.InvariantCulture);
         }
 
-        private static object ParseStringForNullableTimeSpan(string value)
+        private static object ParseStringForNullableTimeSpan(string value, ISerializeOptions options)
         {
             if (value == null)
             {

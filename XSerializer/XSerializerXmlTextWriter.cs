@@ -23,7 +23,7 @@ namespace XSerializer
         private bool _hasWritternDefaultDocumentNamespaces;
 
         public XSerializerXmlTextWriter(TextWriter writer, ISerializeOptions options)
-            : this(new EncryptingTextWriter(writer, options.GetEncryptionMechanism()), options)
+            : this(new EncryptingTextWriter(writer, options.GetEncryptionMechanism(), options.EncryptKey), options)
         {
         }
 
@@ -229,11 +229,13 @@ namespace XSerializer
 
             private readonly TextWriter _writer;
             private readonly IEncryptionMechanism _encryptionMechanism;
+            private readonly object _encryptKey;
 
-            public EncryptingTextWriter(TextWriter writer, IEncryptionMechanism encryptionMechanism)
+            public EncryptingTextWriter(TextWriter writer, IEncryptionMechanism encryptionMechanism, object encryptKey)
             {
                 _writer = writer;
                 _encryptionMechanism = encryptionMechanism;
+                _encryptKey = encryptKey;
             }
 
             public bool IsEncryptionEnabled { get; set; }
@@ -270,7 +272,7 @@ namespace XSerializer
 
                 if (IsEncryptionEnabled)
                 {
-                    value = _encryptionMechanism.Encrypt(value);
+                    value = _encryptionMechanism.Encrypt(value, _encryptKey);
                 }
 
                 _writer.Write(value);

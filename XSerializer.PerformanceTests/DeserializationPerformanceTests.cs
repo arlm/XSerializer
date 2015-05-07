@@ -66,7 +66,7 @@ namespace XSerializer.Tests.Performance
                 {
                     using (var xmlReader = new XmlTextReader(stringReader))
                     {
-                        using (var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism()))
+                        using (var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey))
                         {
                             customSerializer.DeserializeObject(reader, options);
                         }

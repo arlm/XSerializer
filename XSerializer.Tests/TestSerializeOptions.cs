@@ -27,5 +27,6 @@ namespace XSerializer.Tests
         public bool ShouldEncrypt { get; private set; }
         public bool ShouldEmitNil { get; private set; }
         public IEncryptionMechanism EncryptionMechanism { get; set; }
+        public object EncryptKey { get; set; }
     }
 }

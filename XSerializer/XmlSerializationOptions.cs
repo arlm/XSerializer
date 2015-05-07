@@ -20,6 +20,7 @@ namespace XSerializer
         private bool _shouldIndent;
         private bool _emitNil;
         private IEncryptionMechanism _encryptionMechanism;
+        private object _encryptKey;
 
         public XmlSerializationOptions(
             XmlSerializerNamespaces namespaces = null,
@@ -33,7 +34,8 @@ namespace XSerializer
             bool shouldEncrypt = true,
             bool treatEmptyElementAsString = false,
             bool emitNil = false,
-            IEncryptionMechanism encryptionMechanism = null)
+            IEncryptionMechanism encryptionMechanism = null,
+            object encryptKey = null)
         {
             _namespaces = namespaces ?? new XmlSerializerNamespaces();
             _encoding = encoding ?? Encoding.UTF8;
@@ -48,6 +50,7 @@ namespace XSerializer
             _treatEmptyElementAsString = treatEmptyElementAsString;
             _emitNil = emitNil;
             _encryptionMechanism = encryptionMechanism;
+            _encryptKey = encryptKey;
         }
 
         internal Encoding Encoding { get { return _encoding; } }
@@ -71,6 +74,7 @@ namespace XSerializer
         bool ISerializeOptions.ShouldEmitNil { get { return _emitNil; } }
 
         IEncryptionMechanism ISerializeOptions.EncryptionMechanism { get { return _encryptionMechanism; } }
+        object ISerializeOptions.EncryptKey { get { return _encryptKey; } }
 
         internal void SetExtraTypes(Type[] extraTypes)
         {
@@ -143,9 +147,10 @@ namespace XSerializer
             return this;
         }
 
-        public XmlSerializationOptions WithEncryptionMechanism(IEncryptionMechanism encryptionMechanism)
+        public XmlSerializationOptions WithEncryption(IEncryptionMechanism encryptionMechanism, object encryptKey)
         {
             _encryptionMechanism = encryptionMechanism;
+            _encryptKey = encryptKey;
             return this;
         }
     }
