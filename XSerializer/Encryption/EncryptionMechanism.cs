@@ -1,6 +1,4 @@
-﻿using XSerializer.Rock.StaticDependencyInjection;
-
-namespace XSerializer.Encryption
+﻿namespace XSerializer.Encryption
 {
     /// <summary>
     /// Provides a means for an application to specify a default instance of
@@ -9,31 +7,36 @@ namespace XSerializer.Encryption
     /// </summary>
     public static class EncryptionMechanism
     {
-        private static readonly Default<IEncryptionMechanism> _defaultEncryptionMechanism = new Default<IEncryptionMechanism>(() => new ClearTextEncryptionMechanism());
+        private static IEncryptionMechanism _current = new ClearTextEncryptionMechanism();
 
         /// <summary>
-        /// Sets the default instance of <see cref="IEncryptionMechanism"/> to be used by
-        /// XSerializer when encrypting or decrypting data and an <see cref="IEncryptionMechanism"/>
-        /// is not otherwise specified. If this property is never set, it will have a value of type
-        /// <see cref="ClearTextEncryptionMechanism"/>. When set, if <paramref name="value"/> is
-        /// null, then an instance of <see cref="ClearTextEncryptionMechanism"/> will be used
-        /// instead.
+        /// Get or sets the current instance of <see cref="IEncryptionMechanism"/>.
+        /// This value is used by XSerializer when encrypting or decrypting data and 
+        /// an <see cref="IEncryptionMechanism"/> is not otherwise specified. The
+        /// default value is an instance of <see cref="ClearTextEncryptionMechanism"/>.
+        /// If set to null, an instance of <see cref="ClearTextEncryptionMechanism"/>
+        /// is set instead.
         /// </summary>
-        public static IEncryptionMechanism Default
+        /// <remarks>
+        /// Do not change the value of this property while an application is running.
+        /// Set it once at the "beginning" of the application, and never again.
+        /// </remarks>
+        public static IEncryptionMechanism Current
         {
-            set { _defaultEncryptionMechanism.SetCurrent(value); }
+            get { return _current; }
+            set { _current = value ?? new ClearTextEncryptionMechanism(); }
         }
 
         /// <summary>
         /// Gets the <see cref="IEncryptionMechanism"/> specified by the
         /// <see cref="ISerializeOptions.EncryptionMechanism"/> property of the
         /// <paramref name="options"/> parameter. If that value is null, then the value specified
-        /// by the static <see cref="Default"/> property of the <see cref="EncryptionMechanism"/>
+        /// by the static <see cref="Current"/> property of the <see cref="EncryptionMechanism"/>
         /// class is returned.
         /// </summary>
         internal static IEncryptionMechanism GetEncryptionMechanism(this ISerializeOptions options)
         {
-            return options.EncryptionMechanism ?? _defaultEncryptionMechanism.Current;
+            return options.EncryptionMechanism ?? _current;
         }
     }
 }
