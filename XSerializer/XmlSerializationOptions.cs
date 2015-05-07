@@ -147,9 +147,14 @@ namespace XSerializer
             return this;
         }
 
-        public XmlSerializationOptions WithEncryption(IEncryptionMechanism encryptionMechanism, object encryptKey)
+        public XmlSerializationOptions WithEncryptionMechanism(IEncryptionMechanism encryptionMechanism)
         {
             _encryptionMechanism = encryptionMechanism;
+            return this;
+        }
+
+        public XmlSerializationOptions WithEncryptKey(object encryptKey)
+        {
             _encryptKey = encryptKey;
             return this;
         }
