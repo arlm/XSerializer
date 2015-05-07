@@ -10,7 +10,7 @@ namespace XSerializer.Rock.StaticDependencyInjection
     {
         public override void Bootstrap()
         {
-            ImportFirst<IEncryptionMechanism, IEncryptionMechanismFactory>(
+            ImportSingle<IEncryptionMechanism, IEncryptionMechanismFactory>(
                 mechanism => EncryptionMechanism.Current = mechanism,
                 factory => factory.GetEncryptionMechanism());
         }
