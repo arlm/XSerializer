@@ -7,7 +7,7 @@
     /// </summary>
     public static class EncryptionMechanism
     {
-        private static IEncryptionMechanism _current = new ClearTextEncryptionMechanism();
+        private static IEncryptionMechanism _current = GetDefaultEncryptionMechanism();
 
         /// <summary>
         /// Get or sets the current instance of <see cref="IEncryptionMechanism"/>.
@@ -24,7 +24,7 @@
         public static IEncryptionMechanism Current
         {
             get { return _current; }
-            set { _current = value ?? new ClearTextEncryptionMechanism(); }
+            set { _current = value ?? GetDefaultEncryptionMechanism(); }
         }
 
         /// <summary>
@@ -87,6 +87,11 @@
         internal static IEncryptionMechanism GetEncryptionMechanism(this ISerializeOptions options)
         {
             return options.EncryptionMechanism ?? _current;
+        }
+
+        private static ClearTextEncryptionMechanism GetDefaultEncryptionMechanism()
+        {
+            return new ClearTextEncryptionMechanism();
         }
     }
 }
