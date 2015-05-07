@@ -56,7 +56,6 @@
     <Compile Include="Encryption\EncryptAttribute.cs" />
     <Compile Include="Encryption\EncryptionMechanism.cs" />
     <Compile Include="Encryption\EncryptionMechanismAttribute.cs" />
-    <Compile Include="Encryption\EncryptionMechanismExtensions.cs" />
     <Compile Include="Encryption\IEncryptionMechanismFactory.cs" />
     <Compile Include="EnumTypeValueConverter.cs" />
     <Compile Include="Encryption\IEncryptionMechanism.cs" />
