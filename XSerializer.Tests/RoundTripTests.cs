@@ -11,7 +11,7 @@ namespace XSerializer.Tests
         [TestCaseSource("SomeTests")]
         public void XmlToObjectToXmlToObject(string xml, Type type)
         {
-            var serializer = XmlSerializerFactory.Instance.GetSerializer(type, TestXmlSerializerOptions.Empty);
+            var serializer = XmlSerializerFactory.Instance.GetSerializer(type, null, TestXmlSerializerOptions.Empty);
             var instance = serializer.DeserializeObject(xml);
             var roundTripXml = serializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, new TestSerializeOptions());
             var roundTripInstance = serializer.DeserializeObject(roundTripXml);

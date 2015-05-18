@@ -1,4 +1,5 @@
 ﻿using System.Xml.Serialization;
+using XSerializer.Encryption;
 
 namespace XSerializer.Tests
 {
@@ -23,6 +24,9 @@ namespace XSerializer.Tests
         public XmlSerializerNamespaces Namespaces { get; set; }
         public bool ShouldAlwaysEmitTypes { get; set; }
         public bool ShouldRedact { get; private set; }
+        public bool ShouldEncrypt { get; private set; }
         public bool ShouldEmitNil { get; private set; }
+        public IEncryptionMechanism EncryptionMechanism { get; set; }
+        public object EncryptKey { get; set; }
     }
 }

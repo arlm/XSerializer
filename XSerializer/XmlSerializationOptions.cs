@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using System.Xml.Serialization;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -11,42 +12,56 @@ namespace XSerializer
         private string _rootElementName;
         private bool _shouldAlwaysEmitTypes;
         private bool _shouldRedact;
+        private bool _shouldEncrypt;
         private Type[] _extraTypes;
         private bool _treatEmptyElementAsString;
         private Encoding _encoding;
+        private bool _shouldEncryptRootObject;
         private bool _shouldIndent;
         private bool _emitNil;
+        private IEncryptionMechanism _encryptionMechanism;
+        private object _encryptKey;
 
         public XmlSerializationOptions(
             XmlSerializerNamespaces namespaces = null,
             Encoding encoding = null,
+            bool shouldEncryptRootObject = false,
             string defaultNamespace = null,
             bool shouldIndent = false,
             string rootElementName = null,
             bool shouldAlwaysEmitTypes = false,
             bool shouldRedact = true,
+            bool shouldEncrypt = true,
             bool treatEmptyElementAsString = false,
-            bool emitNil = false)
+            bool emitNil = false,
+            IEncryptionMechanism encryptionMechanism = null,
+            object encryptKey = null)
         {
             _namespaces = namespaces ?? new XmlSerializerNamespaces();
             _encoding = encoding ?? Encoding.UTF8;
+            _shouldEncryptRootObject = shouldEncryptRootObject;
             _defaultNamespace = defaultNamespace;
             _shouldIndent = shouldIndent;
             _rootElementName = rootElementName;
             _shouldAlwaysEmitTypes = shouldAlwaysEmitTypes;
             _shouldRedact = shouldRedact;
+            _shouldEncrypt = shouldEncrypt;
             _extraTypes = null;
             _treatEmptyElementAsString = treatEmptyElementAsString;
             _emitNil = emitNil;
+            _encryptionMechanism = encryptionMechanism;
+            _encryptKey = encryptKey;
         }
 
         internal Encoding Encoding { get { return _encoding; } }
+        internal bool ShouldEncryptRootObject { get { return _shouldEncryptRootObject; } }
         string IXmlSerializerOptions.DefaultNamespace { get { return _defaultNamespace; } }
         XmlSerializerNamespaces ISerializeOptions.Namespaces { get { return _namespaces; } }
         internal bool ShouldIndent { get { return _shouldIndent; } }
         string IXmlSerializerOptions.RootElementName { get { return _rootElementName; } }
         bool ISerializeOptions.ShouldAlwaysEmitTypes { get { return _shouldAlwaysEmitTypes; } }
         bool ISerializeOptions.ShouldRedact { get { return _shouldRedact; } }
+        bool ISerializeOptions.ShouldEncrypt { get { return _shouldEncrypt; } }
         Type[] IXmlSerializerOptions.ExtraTypes { get { return _extraTypes; } }
         RedactAttribute IXmlSerializerOptions.RedactAttribute { get { return null; } }
         bool IXmlSerializerOptions.TreatEmptyElementAsString { get { return _treatEmptyElementAsString; } }
@@ -57,6 +72,9 @@ namespace XSerializer
         }
 
         bool ISerializeOptions.ShouldEmitNil { get { return _emitNil; } }
+
+        IEncryptionMechanism ISerializeOptions.EncryptionMechanism { get { return _encryptionMechanism; } }
+        object ISerializeOptions.EncryptKey { get { return _encryptKey; } }
 
         internal void SetExtraTypes(Type[] extraTypes)
         {
@@ -72,6 +90,12 @@ namespace XSerializer
         public XmlSerializationOptions WithEncoding(Encoding encoding)
         {
             _encoding = encoding;
+            return this;
+        }
+
+        public XmlSerializationOptions EncryptRootObject()
+        {
+            _shouldEncryptRootObject = true;
             return this;
         }
 
@@ -105,6 +129,12 @@ namespace XSerializer
             return this;
         }
 
+        public XmlSerializationOptions DisableEncryption()
+        {
+            _shouldEncrypt = false;
+            return this;
+        }
+
         public XmlSerializationOptions ShouldTreatEmptyElementAsString()
         {
             _treatEmptyElementAsString = true;
@@ -114,6 +144,18 @@ namespace XSerializer
         public XmlSerializationOptions EmitNil()
         {
             _emitNil = true;
+            return this;
+        }
+
+        public XmlSerializationOptions WithEncryptionMechanism(IEncryptionMechanism encryptionMechanism)
+        {
+            _encryptionMechanism = encryptionMechanism;
+            return this;
+        }
+
+        public XmlSerializationOptions WithEncryptKey(object encryptKey)
+        {
+            _encryptKey = encryptKey;
             return this;
         }
     }

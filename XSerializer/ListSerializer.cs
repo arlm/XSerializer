@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Xml;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -12,6 +13,7 @@ namespace XSerializer
     {
         private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
 
+        private readonly EncryptAttribute _encryptAttribute;
         private readonly IXmlSerializerOptions _options;
         private readonly string _itemElementName;
 
@@ -19,11 +21,12 @@ namespace XSerializer
 
         private readonly Func<object> _createCollection;
 
-        protected ListSerializer(IXmlSerializerOptions options, string itemElementName)                                                             // ReSharper disable DoNotCallOverridableMethodsInConstructor
+        protected ListSerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options, string itemElementName)                                                             // ReSharper disable DoNotCallOverridableMethodsInConstructor
         {
+            _encryptAttribute = encryptAttribute ?? (EncryptAttribute)Attribute.GetCustomAttribute(ItemType, typeof(EncryptAttribute));
             _options = options;
             _itemElementName = string.IsNullOrEmpty(itemElementName) ? DefaultItemElementName : itemElementName;
-            _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, _options.WithRootElementName(_itemElementName).AlwaysEmitNil());
+            _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, null, _options.WithRootElementName(_itemElementName).AlwaysEmitNil());
 
             if (CollectionType.IsArray)
             {
@@ -67,28 +70,28 @@ namespace XSerializer
 
         protected abstract void AddItemToCollection(object collection, object item);
 
-        public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options, string itemElementName)
+        public static IXmlSerializerInternal GetSerializer(Type type, EncryptAttribute encryptAttribute, IXmlSerializerOptions options, string itemElementName)
         {
             return _serializerCache.GetOrAdd(
-                XmlSerializerFactory.Instance.CreateKey(type, options.WithRootElementName(options.RootElementName + "<>" + itemElementName)),
+                XmlSerializerFactory.Instance.CreateKey(type, encryptAttribute, options.WithRootElementName(options.RootElementName + "<>" + itemElementName)),
                 _ =>
                 {
                     if (type.IsAssignableToGenericIEnumerable())
                     {
                         var itemType = type.GetGenericIEnumerableType().GetGenericArguments()[0];
-                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(ListSerializer<,>).MakeGenericType(type, itemType), options, itemElementName);
+                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(ListSerializer<,>).MakeGenericType(type, itemType), encryptAttribute, options, itemElementName);
                     }
                         
                     if (type.IsAssignableToNonGenericIEnumerable())
                     {
-                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(ListSerializer<>).MakeGenericType(type), options, itemElementName);
+                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(ListSerializer<>).MakeGenericType(type), encryptAttribute, options, itemElementName);
                     }
 
                     throw new InvalidOperationException(string.Format("Cannot create a ListSerializer of type '{0}'.", type.FullName));
                 });
         }
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
+        public void SerializeObject(XSerializerXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             if (instance == null && !options.ShouldEmitNil)
             {
@@ -109,9 +112,16 @@ namespace XSerializer
             }
             else
             {
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute, options);
+
                 foreach (var item in (IEnumerable)instance)
                 {
                     _itemSerializer.SerializeObject(writer, item, options);
+                }
+
+                if (setIsEncryptionEnabledBackToFalse)
+                {
+                    writer.IsEncryptionEnabled = false;
                 }
             }
 
@@ -121,7 +131,7 @@ namespace XSerializer
             }
         }
 
-        public object DeserializeObject(XmlReader reader)
+        public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
         {
             object collection = null;
 
@@ -129,8 +139,12 @@ namespace XSerializer
 
             bool shouldIssueRead;
 
+            var setIsDecryptionEnabledBackToFalse = false;
+
             if (_options.RootElementName == null)
             {
+                setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute, options);
+
                 collection = _createCollection();
                 hasInstanceBeenCreated = true;
             }
@@ -158,11 +172,18 @@ namespace XSerializer
                                 }
                                 else
                                 {
+                                    setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute, options);
+
                                     collection = _createCollection();
                                     hasInstanceBeenCreated = true;
 
                                     if (reader.IsEmptyElement)
                                     {
+                                        if (setIsDecryptionEnabledBackToFalse)
+                                        {
+                                            reader.IsDecryptionEnabled = false;
+                                        }
+
                                         return collection;
                                     }
                                 }
@@ -175,6 +196,11 @@ namespace XSerializer
                             // If there's no root element, and we encounter another element, we're done - get out!
                             if (reader.Name != _itemElementName)
                             {
+                                if (setIsDecryptionEnabledBackToFalse)
+                                {
+                                    reader.IsDecryptionEnabled = false;
+                                }
+
                                 return
                                     collection == null
                                         ? null
@@ -184,7 +210,7 @@ namespace XSerializer
 
                         if (reader.Name == _itemElementName)
                         {
-                            var item = DeserializeItem(reader, _itemSerializer, hasInstanceBeenCreated, out shouldIssueRead);
+                            var item = DeserializeItem(reader, _itemSerializer, hasInstanceBeenCreated, options, out shouldIssueRead);
 
                             if (collection != null)
                             {
@@ -197,6 +223,11 @@ namespace XSerializer
                         {
                             if (reader.Name == _options.RootElementName)
                             {
+                                if (setIsDecryptionEnabledBackToFalse)
+                                {
+                                    reader.IsDecryptionEnabled = false;
+                                }
+
                                 return
                                     collection == null
                                         ? null
@@ -207,6 +238,11 @@ namespace XSerializer
                         {
                             if (reader.Name != _itemElementName)
                             {
+                                if (setIsDecryptionEnabledBackToFalse)
+                                {
+                                    reader.IsDecryptionEnabled = false;
+                                }
+
                                 return
                                     collection == null
                                         ? null
@@ -220,14 +256,14 @@ namespace XSerializer
             throw new InvalidOperationException("Deserialization error: attempted to return a deserialized instance before it was created.");
         }
 
-        private static object DeserializeItem(XmlReader reader, IXmlSerializerInternal serializer, bool hasInstanceBeenCreated, out bool shouldIssueRead)
+        private static object DeserializeItem(XSerializerXmlReader reader, IXmlSerializerInternal serializer, bool hasInstanceBeenCreated, ISerializeOptions options, out bool shouldIssueRead)
         {
             if (!hasInstanceBeenCreated)
             {
                 throw new InvalidOperationException("Deserialization error: attempted to deserialize an item before creating its list.");
             }
 
-            var deserialized = serializer.DeserializeObject(reader);
+            var deserialized = serializer.DeserializeObject(reader, options);
 
             shouldIssueRead = true;
 
@@ -250,8 +286,8 @@ namespace XSerializer
     {
         private readonly Action<object, object> _addItemToCollection;
 
-        public ListSerializer(IXmlSerializerOptions options, string itemElementName)
-            : base(options, itemElementName)
+        public ListSerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options, string itemElementName)
+            : base(encryptAttribute, options, itemElementName)
         {
             if (typeof(IList).IsAssignableFrom(typeof(TEnumerable)))
             {
@@ -332,8 +368,8 @@ namespace XSerializer
     {
         private readonly Action<object, object> _addItemToCollection;
 
-        public ListSerializer(IXmlSerializerOptions options, string itemElementName)
-            : base(options, itemElementName)
+        public ListSerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options, string itemElementName)
+            : base(encryptAttribute, options, itemElementName)
         {
             if (typeof(IList).IsAssignableFrom(typeof(TEnumerable)))
             {

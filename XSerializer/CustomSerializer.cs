@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Serialization;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -16,15 +17,15 @@ namespace XSerializer
     {
         private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
 
-        public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options)
+        public static IXmlSerializerInternal GetSerializer(Type type, EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             return _serializerCache.GetOrAdd(
-                XmlSerializerFactory.Instance.CreateKey(type, options),
+                XmlSerializerFactory.Instance.CreateKey(type, encryptAttribute, options),
                 _ =>
                 {
                     try
                     {
-                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(CustomSerializer<>).MakeGenericType(type), options);
+                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(CustomSerializer<>).MakeGenericType(type), encryptAttribute, options);
                     }
                     catch (TargetInvocationException ex) // True exception gets masked due to reflection. Preserve stacktrace and rethrow
                     {
@@ -51,16 +52,20 @@ namespace XSerializer
 
     internal class CustomSerializer<T> : CustomSerializer, IXmlSerializerInternal
     {
+        private readonly EncryptAttribute _encryptAttribute;
         private readonly IXmlSerializerOptions _options;
 
         private readonly HelperFactory _helperFactory;
 
         private readonly Dictionary<Type, SerializableProperty[]> _serializablePropertiesMap = new Dictionary<Type, SerializableProperty[]>();
+        private readonly Dictionary<Type, SerializableProperty> _encryptedXmlElementListProperties = new Dictionary<Type, SerializableProperty>();
 
-        public CustomSerializer(IXmlSerializerOptions options)
+        public CustomSerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             var type = typeof(T);
             AssertValidHeirarchy(type);
+
+            _encryptAttribute = encryptAttribute;
 
             _options = options.WithAdditionalExtraTypes(
                 type.GetCustomAttributes(typeof(XmlIncludeAttribute), true)
@@ -82,11 +87,48 @@ namespace XSerializer
                 types.Distinct().ToDictionary(
                     t => t,
                     t =>
-                        t.GetProperties()
-                            .Where(p => p.IsSerializable(t.GetConstructors().SelectMany(c => c.GetParameters())))
-                            .Select(p => new SerializableProperty(p, _options))
-                            .OrderBy(p => p.NodeType)
-                            .ToArray());
+                    {
+                        var serializableProperties =
+                            t.GetProperties()
+                                .Where(p => p.IsSerializable(t.GetConstructors().SelectMany(c => c.GetParameters())))
+                                .Select(p => new SerializableProperty(p, _options))
+                                .OrderBy(p => p.NodeType)
+                                .ToArray();
+
+                        // Cannot support:
+                        // 1) Multiple XmlElement List Properties
+                        // 2) When the XmlElement List Property is encrypted, Any Non-XmlAttribute Properties
+
+                        if (serializableProperties.Count(p => p.IsListDecoratedWithXmlElement) > 1)
+                        {
+                            throw new InvalidOperationException("More than one list property is decorated with [XmlElement] attribute.");
+                        }
+
+                        var encryptedXmlElementListProperty =
+                            serializableProperties.SingleOrDefault(
+                                p => p.IsListDecoratedWithXmlElement && p.EncryptAttribute != null);
+
+                        if (encryptedXmlElementListProperty != null)
+                        {
+                            if (serializableProperties
+                                .Where(p => p != encryptedXmlElementListProperty)
+                                .Any(p => p.NodeType != NodeType.Attribute))
+                            {
+                                throw
+                                    new InvalidOperationException(
+                                        "A list property decorated with [XmlElement] and [Encrypt] attributes exists"
+                                        + " *and* one or more properties exist without [XmlAttribute] attribute.");
+                            }
+
+                            _encryptedXmlElementListProperties.Add(t, encryptedXmlElementListProperty);
+                        }
+                        else
+                        {
+                            _encryptedXmlElementListProperties.Add(t, null);
+                        }
+
+                        return serializableProperties;
+                    });
 
             _helperFactory = new HelperFactory(_serializablePropertiesMap);
         }
@@ -265,7 +307,7 @@ namespace XSerializer
             return type.Name;
         }
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
+        public void SerializeObject(XSerializerXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             if (instance == null && !options.ShouldEmitNil)
             {
@@ -292,9 +334,11 @@ namespace XSerializer
                     writer.WriteAttributeString("xsi", "type", null, instance.GetType().GetXsdType());
                 }
 
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute, options);
+
                 if (instanceType.IsPrimitiveLike() || instanceType.IsNullablePrimitiveLike())
                 {
-                    var xmlTextSerializer = new XmlTextSerializer(instanceType, _options.RedactAttribute, _options.ExtraTypes);
+                    var xmlTextSerializer = new XmlTextSerializer(instanceType, _options.RedactAttribute, null, _options.ExtraTypes);
                     xmlTextSerializer.SerializeObject(writer, instance, options);
                 }
                 else
@@ -317,15 +361,22 @@ namespace XSerializer
                     }
                 }
 
+                if (setIsEncryptionEnabledBackToFalse)
+                {
+                    writer.IsEncryptionEnabled = false;
+                }
+
                 writer.WriteEndElement();
             }
         }
 
-        public object DeserializeObject(XmlReader reader)
+        public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
         {
             var helper = NullHelper.Instance;
 
             bool shouldIssueRead;
+
+            bool setIsDecryptionEnabledBackToFalse = false;
 
             do
             {
@@ -357,11 +408,13 @@ namespace XSerializer
                                     type = typeof(T);
                                 }
 
+                                setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute, options);
+
                                 helper = _helperFactory.CreateHelper(type, reader);
 
                                 while (reader.MoveToNextAttribute())
                                 {
-                                    helper.StageAttributeValue();
+                                    helper.StageAttributeValue(options);
                                 }
 
                                 helper.FlushAttributeValues();
@@ -370,7 +423,25 @@ namespace XSerializer
 
                                 if (reader.IsEmptyElement)
                                 {
-                                    return helper.GetInstance();
+                                    return helper.GetInstance(setIsDecryptionEnabledBackToFalse);
+                                }
+
+                                SerializableProperty property;
+                                var t = type;
+
+                                do
+                                {
+                                    if (_encryptedXmlElementListProperties.TryGetValue(t, out property))
+                                    {
+                                        break;
+                                    }
+                                } while ((t = t.BaseType) != null);
+
+                                if (property != null && reader.MaybeSetIsDecryptionEnabledToTrue(property.EncryptAttribute, options))
+                                {
+                                    reader.Read();
+                                    helper.SetElementPropertyValue(options, out shouldIssueRead);
+                                    reader.IsDecryptionEnabled = false;
                                 }
                             }
                             else if (reader.IsEmptyElement)
@@ -380,7 +451,7 @@ namespace XSerializer
                         }
                         else
                         {
-                            helper.SetElementPropertyValue(out shouldIssueRead);
+                            helper.SetElementPropertyValue(options, out shouldIssueRead);
                         }
                         break;
                     case XmlNodeType.Text:
@@ -393,13 +464,13 @@ namespace XSerializer
                         }
                         else
                         {
-                            helper.SetTextNodePropertyValue();
+                            helper.SetTextNodePropertyValue(options);
                         }
                         break;
                     case XmlNodeType.EndElement:
                         if (reader.Name == _options.RootElementName)
                         {
-                            return helper.GetInstance();
+                            return helper.GetInstance(setIsDecryptionEnabledBackToFalse);
                         }
                         break;
                 }
@@ -410,7 +481,7 @@ namespace XSerializer
 
         private class HelperFactory
         {
-            private readonly IDictionary<Type, Lazy<Func<XmlReader, IHelper>>> _createHelperFuncs;
+            private readonly IDictionary<Type, Lazy<Func<XSerializerXmlReader, IHelper>>> _createHelperFuncs;
 
             public HelperFactory(Dictionary<Type, SerializableProperty[]> serializablePropertiesMap)
             {
@@ -419,10 +490,10 @@ namespace XSerializer
                         .Where(item => typeof(T).IsAssignableFrom(item.Key))
                         .ToDictionary(
                             item => item.Key,
-                            item => new Lazy<Func<XmlReader, IHelper>>(() => GetCreateHelperFunc(item.Key, item.Value)));
+                            item => new Lazy<Func<XSerializerXmlReader, IHelper>>(() => GetCreateHelperFunc(item.Key, item.Value)));
             }
 
-            private static Func<XmlReader, IHelper> GetCreateHelperFunc(Type type, ICollection<SerializableProperty> serializableProperties)
+            private static Func<XSerializerXmlReader, IHelper> GetCreateHelperFunc(Type type, ICollection<SerializableProperty> serializableProperties)
             {
                 if (type.IsAbstract)
                 {
@@ -503,10 +574,10 @@ namespace XSerializer
                         && property.PropertyType.IsReadOnlyDictionary());
             }
 
-            public IHelper CreateHelper(Type type, XmlReader reader)
+            public IHelper CreateHelper(Type type, XSerializerXmlReader reader)
             {
                 var temp = type;
-                Lazy<Func<XmlReader, IHelper>> createHelper;
+                Lazy<Func<XSerializerXmlReader, IHelper>> createHelper;
 
                 while (!_createHelperFuncs.TryGetValue(temp, out createHelper))
                 {
@@ -524,11 +595,11 @@ namespace XSerializer
 
         private interface IHelper
         {
-            void SetElementPropertyValue(out bool shouldIssueRead);
-            void SetTextNodePropertyValue();
-            void StageAttributeValue();
+            void SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead);
+            void SetTextNodePropertyValue(ISerializeOptions options);
+            void StageAttributeValue(ISerializeOptions options);
             void FlushAttributeValues();
-            object GetInstance();
+            object GetInstance(bool setIsDecryptionEnabledBackToFalse);
         }
 
         private class NullHelper : IHelper
@@ -539,17 +610,17 @@ namespace XSerializer
             {
             }
 
-            void IHelper.SetElementPropertyValue(out bool shouldIssueRead)
+            void IHelper.SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead)
             {
                 throw NotInitializedException();
             }
 
-            void IHelper.SetTextNodePropertyValue()
+            void IHelper.SetTextNodePropertyValue(ISerializeOptions options)
             {
                 throw NotInitializedException();
             }
 
-            void IHelper.StageAttributeValue()
+            void IHelper.StageAttributeValue(ISerializeOptions options)
             {
                 throw NotInitializedException();
             }
@@ -559,7 +630,7 @@ namespace XSerializer
                 throw NotInitializedException();
             }
 
-            object IHelper.GetInstance()
+            object IHelper.GetInstance(bool setIsDecryptionEnabledBackToFalse)
             {
                 throw NotInitializedException();
             }
@@ -574,7 +645,7 @@ namespace XSerializer
         {
             private readonly List<Action> _setPropertyActions = new List<Action>();
 
-            private readonly XmlReader _reader;
+            private readonly XSerializerXmlReader _reader;
             private readonly T _instance;
             private readonly Dictionary<string, SerializableProperty> _caseSensitiveSerializableProperties;
             private readonly SerializableProperty _textNodeProperty;
@@ -585,7 +656,7 @@ namespace XSerializer
                 Dictionary<string, SerializableProperty> caseSensitiveSerializableProperties,
                 SerializableProperty textNodeProperty,
                 IDictionary<string, SerializableProperty> attributeProperties,
-                XmlReader reader)
+                XSerializerXmlReader reader)
             {
                 _reader = reader;
                 _caseSensitiveSerializableProperties = caseSensitiveSerializableProperties;
@@ -594,12 +665,12 @@ namespace XSerializer
                 _instance = createInstance();
             }
 
-            public void SetElementPropertyValue(out bool shouldIssueRead)
+            public void SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead)
             {
                 SerializableProperty property;
                 if (_caseSensitiveSerializableProperties.TryGetValue(_reader.Name, out property))
                 {
-                    property.ReadValue(_reader, _instance);
+                    property.ReadValue(_reader, _instance, options);
                     shouldIssueRead = !property.ReadsPastLastElement;
                 }
                 else
@@ -608,20 +679,20 @@ namespace XSerializer
                 }
             }
 
-            public void SetTextNodePropertyValue()
+            public void SetTextNodePropertyValue(ISerializeOptions options)
             {
                 if (_textNodeProperty != null)
                 {
-                    _textNodeProperty.ReadValue(_reader, _instance);
+                    _textNodeProperty.ReadValue(_reader, _instance, options);
                 }
             }
 
-            public void StageAttributeValue()
+            public void StageAttributeValue(ISerializeOptions options)
             {
                 SerializableProperty property;
                 if (_attributeProperties.TryGetValue(_reader.Name, out property))
                 {
-                    _setPropertyActions.Add(() => property.ReadValue(_reader, _instance));
+                    _setPropertyActions.Add(() => property.ReadValue(_reader, _instance, options));
                 }
             }
 
@@ -631,8 +702,13 @@ namespace XSerializer
                 _setPropertyActions.Clear();
             }
 
-            public object GetInstance()
+            public object GetInstance(bool setIsDecryptionEnabledBackToFalse)
             {
+                if (setIsDecryptionEnabledBackToFalse)
+                {
+                    _reader.IsDecryptionEnabled = false;
+                }
+
                 return _instance;
             }
         }
@@ -649,7 +725,7 @@ namespace XSerializer
             private readonly IDictionary<string, SerializableProperty> _attributeProperties;
             private readonly IDictionary<string, SerializableProperty> _caseSensitiveSerializableProperties;
 
-            private readonly XmlReader _reader;
+            private readonly XSerializerXmlReader _reader;
 
             public NonDefaultConstructorHelper(
                 IEnumerable<ConstructorWrapper> constructors,
@@ -657,7 +733,7 @@ namespace XSerializer
                 SerializableProperty textNodeProperty,
                 IDictionary<string, SerializableProperty> attributeProperties,
                 IDictionary<string, SerializableProperty> caseSensitiveSerializableProperties,
-                XmlReader reader)
+                XSerializerXmlReader reader)
             {
                 _constructors = constructors;
                 _serializableProperties = serializableProperties;
@@ -667,12 +743,12 @@ namespace XSerializer
                 _reader = reader;
             }
 
-            public void SetElementPropertyValue(out bool shouldIssueRead)
+            public void SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead)
             {
                 SerializableProperty property;
                 if (_caseSensitiveSerializableProperties.TryGetValue(_reader.Name, out property))
                 {
-                    var value = property.ReadValue(_reader);
+                    var value = property.ReadValue(_reader, options);
 
                     if (_accumulatedValues.ContainsKey(property.Name.ToLower()))
                     {
@@ -710,17 +786,17 @@ namespace XSerializer
                 throw new InvalidOperationException();
             }
 
-            public void SetTextNodePropertyValue()
+            public void SetTextNodePropertyValue(ISerializeOptions options)
             {
                 if (_textNodeProperty != null)
                 {
-                    var value = _textNodeProperty.ReadValue(_reader);
+                    var value = _textNodeProperty.ReadValue(_reader, options);
 
                     _accumulatedValues[_textNodeProperty.Name.ToLower()] = value;
                 }
             }
 
-            public void StageAttributeValue()
+            public void StageAttributeValue(ISerializeOptions options)
             {
                 SerializableProperty property;
                 if (_attributeProperties.TryGetValue(_reader.Name, out property))
@@ -728,7 +804,7 @@ namespace XSerializer
                     _setPropertyActions.Add(
                         () =>
                         {
-                            var value = property.ReadValue(_reader);
+                            var value = property.ReadValue(_reader, options);
 
                             _accumulatedValues[property.Name.ToLower()] = value;
                         });
@@ -741,7 +817,7 @@ namespace XSerializer
                 _setPropertyActions.Clear();
             }
 
-            public object GetInstance()
+            public object GetInstance(bool setIsDecryptionEnabledBackToFalse)
             {
                 var constructor = _constructors.OrderByDescending(c => c.GetScore(_accumulatedValues)).First();
 
@@ -755,6 +831,11 @@ namespace XSerializer
                     {
                         property.SetValue(instance, value);
                     }
+                }
+
+                if (setIsDecryptionEnabledBackToFalse)
+                {
+                    _reader.IsDecryptionEnabled = false;
                 }
 
                 return instance;

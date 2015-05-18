@@ -22,7 +22,7 @@ namespace XSerializer
             get { return _default.Value; }
         }
 
-        public object ParseString(string value)
+        public object ParseString(string value, ISerializeOptions options)
         {
             if (string.IsNullOrEmpty(value))
             {
@@ -45,12 +45,14 @@ namespace XSerializer
                 return null;
             }
 
-            var enumString =
+            var enumStringValue =
                 _redactAttribute != null
                     ? _redactAttribute.Redact(enumValue, options.ShouldRedact)
                     : value.ToString();
 
-            return value.GetType().Name + "." + enumString;
+            var combinedValue = value.GetType().Name + "." + enumStringValue;
+
+            return combinedValue;
         }
     }
 }

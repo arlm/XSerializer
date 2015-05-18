@@ -5,6 +5,7 @@ using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 using NUnit.Framework;
+using XSerializer.Encryption;
 
 namespace XSerializer.Tests.Performance
 {
@@ -14,7 +15,7 @@ namespace XSerializer.Tests.Performance
         public void Benchmark()
         {
             new System.Xml.Serialization.XmlSerializer(typeof(JitPreparation), null, null, null, null);
-            CustomSerializer.GetSerializer(typeof(JitPreparation), TestXmlSerializerOptions.Empty);
+            CustomSerializer.GetSerializer(typeof(JitPreparation), null, TestXmlSerializerOptions.Empty);
 
             var containerWithAbstract =
                 new ColdStartContainerWithAbstract
@@ -66,12 +67,12 @@ namespace XSerializer.Tests.Performance
 
             var customSerializerStopwatch = Stopwatch.StartNew();
 
-            var customSerializer = CustomSerializer.GetSerializer(typeof(ColdStartContainerWithInterface), TestXmlSerializerOptions.Empty);
+            var customSerializer = CustomSerializer.GetSerializer(typeof(ColdStartContainerWithInterface), null, TestXmlSerializerOptions.Empty);
             var customSerializerStringBuilder = new StringBuilder();
 
             using (var stringWriter = new StringWriter(customSerializerStringBuilder))
             {
-                using (var writer = new SerializationXmlTextWriter(stringWriter, options))
+                using (var writer = new XSerializerXmlTextWriter(stringWriter, options))
                 {
                     customSerializer.SerializeObject(writer, containerWithInterface, new TestSerializeOptions(true));
                 }
@@ -79,9 +80,12 @@ namespace XSerializer.Tests.Performance
 
             using (var stringReader = new StringReader(customSerializerStringBuilder.ToString()))
             {
-                using (var reader = new XmlTextReader(stringReader))
+                using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    customSerializer.DeserializeObject(reader);
+                    using (var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey))
+                    {
+                        customSerializer.DeserializeObject(reader, options);
+                    }
                 }
             }
 

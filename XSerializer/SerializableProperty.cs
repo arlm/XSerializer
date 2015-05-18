@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Xml;
 using System.Xml.Serialization;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -18,10 +18,20 @@ namespace XSerializer
         private readonly Action<object, object> _setValueFunc;
         private readonly Func<object, bool> _shouldSerializeFunc;
 
+        private readonly EncryptAttribute _encryptAttribute;
+        private readonly bool _isListDecoratedWithXmlElement;
+
         private Func<bool> _readsPastLastElement;
 
         public SerializableProperty(PropertyInfo propertyInfo, IXmlSerializerOptions options)
         {
+            _encryptAttribute =
+                (EncryptAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(EncryptAttribute))
+                ?? (EncryptAttribute)Attribute.GetCustomAttribute(propertyInfo.PropertyType, typeof(EncryptAttribute));
+            _isListDecoratedWithXmlElement =
+                typeof(IEnumerable).IsAssignableFrom(propertyInfo.PropertyType)
+                && Attribute.GetCustomAttributes(propertyInfo, typeof(XmlElementAttribute)).Any();
+
             _getValueFunc = DynamicMethodFactory.CreateFunc<object>(propertyInfo.GetGetMethod());
 
             if (!propertyInfo.DeclaringType.IsAnonymous()
@@ -80,14 +90,14 @@ namespace XSerializer
 
         public bool ReadsPastLastElement { get { return _readsPastLastElement(); } }
 
-        public void ReadValue(XmlReader reader, object instance)
+        public void ReadValue(XSerializerXmlReader reader, object instance, ISerializeOptions options)
         {
-            SetValue(instance, ReadValue(reader));
+            SetValue(instance, ReadValue(reader, options));
         }
 
-        public object ReadValue(XmlReader reader)
+        public object ReadValue(XSerializerXmlReader reader, ISerializeOptions options)
         {
-            return _serializer.Value.DeserializeObject(reader);
+            return _serializer.Value.DeserializeObject(reader, options);
         }
 
         public void SetValue(object instance, object value)
@@ -100,13 +110,23 @@ namespace XSerializer
             _setValueFunc(instance, value);
         }
 
-        public void WriteValue(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
+        public void WriteValue(XSerializerXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             if (_shouldSerializeFunc(instance))
             {
                 var value = _getValueFunc(instance);
                 _serializer.Value.SerializeObject(writer, value, options);
             }
+        }
+
+        public EncryptAttribute EncryptAttribute
+        {
+            get { return _encryptAttribute; }
+        }
+
+        public bool IsListDecoratedWithXmlElement
+        {
+            get { return _isListDecoratedWithXmlElement; }
         }
 
         private Func<IXmlSerializerInternal> GetCreateSerializerFunc(PropertyInfo propertyInfo, IXmlSerializerOptions options)
@@ -123,7 +143,7 @@ namespace XSerializer
                 var attributeName = !string.IsNullOrWhiteSpace(attributeAttribute.AttributeName) ? attributeAttribute.AttributeName : propertyInfo.Name;
                 NodeType = NodeType.Attribute;
                 Name = attributeName;
-                return () => new XmlAttributeSerializer(propertyInfo.PropertyType, attributeName, redactAttribute, options);
+                return () => new XmlAttributeSerializer(propertyInfo.PropertyType, attributeName, redactAttribute, _encryptAttribute, options);
             }
 
             var textAttribute = (XmlTextAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlTextAttribute));
@@ -131,7 +151,7 @@ namespace XSerializer
             {
                 NodeType = NodeType.Text;
                 Name = propertyInfo.Name;
-                return () => new XmlTextSerializer(propertyInfo.PropertyType, redactAttribute, options.ExtraTypes);
+                return () => new XmlTextSerializer(propertyInfo.PropertyType, redactAttribute, _encryptAttribute, options.ExtraTypes);
             }
 
             if (redactAttribute != null)
@@ -178,14 +198,14 @@ namespace XSerializer
                 }
 
                 NodeType = NodeType.Element;
-                return () => ListSerializer.GetSerializer(propertyInfo.PropertyType, options.WithRootElementName(rootElementName), itemElementName);
+                return () => ListSerializer.GetSerializer(propertyInfo.PropertyType, _encryptAttribute, options.WithRootElementName(rootElementName), itemElementName);
             }
 
             rootElementName = GetElementName(elementAttribute, x => x.ElementName, propertyInfo.Name);
 
             NodeType = NodeType.Element;
             Name = rootElementName;
-            return () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo.PropertyType, options.WithRootElementName(rootElementName));
+            return () => XmlSerializerFactory.Instance.GetSerializer(propertyInfo.PropertyType, _encryptAttribute, options.WithRootElementName(rootElementName));
         }
 
         private static bool IsListProperty(PropertyInfo propertyInfo)

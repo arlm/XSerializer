@@ -12,6 +12,9 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
+    <UseInjectModuleInitializer Condition="'$(UseInjectModuleInitializer)' == ''">true</UseInjectModuleInitializer>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -32,13 +35,14 @@
     <DocumentationFile>bin\Release\XSerializer.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>XSerializer.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -47,13 +51,23 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Encryption\ClearTextEncryptionMechanism.cs" />
     <Compile Include="CustomSerializer.cs" />
     <Compile Include="DictionarySerializer.cs" />
     <Compile Include="DynamicMethodFactory.cs" />
     <Compile Include="DynamicSerializer.cs" />
+    <Compile Include="Encryption\EncryptAttribute.cs" />
+    <Compile Include="Encryption\EncryptionMechanism.cs" />
+    <Compile Include="Encryption\EncryptionMechanismAttribute.cs" />
+    <Compile Include="Encryption\IEncryptionMechanismFactory.cs" />
     <Compile Include="EnumTypeValueConverter.cs" />
+    <Compile Include="Encryption\IEncryptionMechanism.cs" />
     <Compile Include="IValueConverter.cs" />
     <Compile Include="IXmlSerializer.cs" />
+    <Compile Include="Rock.StaticDependencyInjection\CompositionRoot.cs" />
+    <Compile Include="Rock.StaticDependencyInjection\ExportAttribute.cs" />
+    <Compile Include="Rock.StaticDependencyInjection\ModuleInitializer.cs" />
+    <Compile Include="Rock.StaticDependencyInjection\StaticDependencyInjection.Generated.cs" />
     <Compile Include="ValueTypes.cs" />
     <Compile Include="TypeTypeValueConverter.cs" />
     <Compile Include="UriTypeValueConverter.cs" />
@@ -67,7 +81,8 @@
     <Compile Include="SerializationExtensions.cs" />
     <Compile Include="IXmlSerializerInternal.cs" />
     <Compile Include="SerializableProperty.cs" />
-    <Compile Include="SerializationXmlTextWriter.cs" />
+    <Compile Include="XSerializerXmlReader.cs" />
+    <Compile Include="XSerializerXmlTextWriter.cs" />
     <Compile Include="SimpleTypeValueConverter.cs" />
     <Compile Include="XmlAttributeSerializer.cs" />
     <Compile Include="XmlSerializationOptions.cs" />
@@ -77,9 +92,20 @@
     <Compile Include="XmlTextSerializer.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
     <None Include="XSerializer.snk" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
+  </Target>
+  <Target Name="InjectModuleInitializer" AfterTargets="AfterBuild" Condition="'$(UseInjectModuleInitializer)' == 'true'">
+    <Exec Command="..\packages\Rock.StaticDependencyInjection.1.1.0\tools\InjectModuleInitializer.exe &quot;$(TargetPath)&quot;" />
+  </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

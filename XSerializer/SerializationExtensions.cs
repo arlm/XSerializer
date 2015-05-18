@@ -13,6 +13,7 @@ using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -65,7 +66,7 @@ namespace XSerializer
 
             using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
             {
-                using (var xmlWriter = new SerializationXmlTextWriter(stringWriter, options))
+                using (var xmlWriter = new XSerializerXmlTextWriter(stringWriter, options))
                 {
                     xmlWriter.Formatting = formatting;
                     serializer.SerializeObject(xmlWriter, instance, options);
@@ -89,7 +90,7 @@ namespace XSerializer
             {
                 streamWriter = new StreamWriter(stream, encoding ?? Encoding.UTF8);
 
-                var xmlWriter = new SerializationXmlTextWriter(streamWriter, options)
+                var xmlWriter = new XSerializerXmlTextWriter(streamWriter, options)
                 {
                     Formatting = formatting
                 };
@@ -112,7 +113,7 @@ namespace XSerializer
             Formatting formatting,
             ISerializeOptions options)
         {
-            var xmlWriter = new SerializationXmlTextWriter(writer, options)
+            var xmlWriter = new XSerializerXmlTextWriter(writer, options)
             {
                 Formatting = formatting
             };
@@ -120,27 +121,65 @@ namespace XSerializer
             serializer.SerializeObject(xmlWriter, instance, options);
         }
 
-        public static object DeserializeObject(this IXmlSerializerInternal serializer, string xml)
+        public static object DeserializeObject(this IXmlSerializerInternal serializer, string xml, ISerializeOptions options)
         {
             using (var stringReader = new StringReader(xml))
             {
                 using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    return serializer.DeserializeObject(xmlReader);
+                    using (var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey))
+                    {
+                        return serializer.DeserializeObject(reader, options);
+                    }
                 }
             }
         }
 
-        public static object DeserializeObject(this IXmlSerializerInternal serializer, Stream stream)
+        public static object DeserializeObject(this IXmlSerializerInternal serializer, Stream stream, ISerializeOptions options)
         {
             var xmlReader = new XmlTextReader(stream);
-            return serializer.DeserializeObject(xmlReader);
+            var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey);
+            return serializer.DeserializeObject(reader, options);
         }
 
-        public static object DeserializeObject(this IXmlSerializerInternal serializer, TextReader reader)
+        public static object DeserializeObject(this IXmlSerializerInternal serializer, TextReader textReader, ISerializeOptions options)
         {
-            var xmlReader = new XmlTextReader(reader);
-            return serializer.DeserializeObject(xmlReader);
+            var xmlReader = new XmlTextReader(textReader);
+            var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey);
+            return serializer.DeserializeObject(reader, options);
+        }
+
+        /// <summary>
+        /// Maybe sets the <see cref="XSerializerXmlTextWriter.IsEncryptionEnabled"/> property of 
+        /// <paramref name="writer"/> to true. Returns true if the value was changed to true, false 
+        /// if it was not changed to true.
+        /// </summary>
+        internal static bool MaybeSetIsEncryptionEnabledToTrue(this XSerializerXmlTextWriter writer, EncryptAttribute encryptAttribute, ISerializeOptions options)
+        {
+            if (options.ShouldEncrypt && encryptAttribute != null && !writer.IsEncryptionEnabled)
+            {
+                writer.IsEncryptionEnabled = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Maybe sets the <see cref="XSerializerXmlTextWriter.IsEncryptionEnabled"/> property of 
+        /// <paramref name="reader"/> to true. Returns true if the value was changed to true, false 
+        /// if it was not changed to true.
+        /// </summary>
+        internal static bool MaybeSetIsDecryptionEnabledToTrue(this XSerializerXmlReader reader,
+            EncryptAttribute encryptAttribute, ISerializeOptions options)
+        {
+            if (options.ShouldEncrypt && encryptAttribute != null && !reader.IsDecryptionEnabled)
+            {
+                reader.IsDecryptionEnabled = true;
+                return true;
+            }
+
+            return false;
         }
 
         internal static bool HasDefaultConstructor(this Type type)
@@ -552,7 +591,7 @@ namespace XSerializer
             return setMethod != null && setMethod.IsPublic;
         }
 
-        internal static bool ReadIfNeeded(this XmlReader reader, bool shouldRead)
+        internal static bool ReadIfNeeded(this XSerializerXmlReader reader, bool shouldRead)
         {
             if (shouldRead)
             {
@@ -562,7 +601,7 @@ namespace XSerializer
             return true;
         }
 
-        internal static bool IsNil(this XmlReader reader)
+        internal static bool IsNil(this XSerializerXmlReader reader)
         {
             var nilFound = false;
 
@@ -671,7 +710,7 @@ namespace XSerializer
             return type.Name;
         }
 
-        public static Type GetXsdType<T>(this XmlReader reader, Type[] extraTypes)
+        public static Type GetXsdType<T>(this XSerializerXmlReader reader, Type[] extraTypes)
         {
             string typeName = null;
 

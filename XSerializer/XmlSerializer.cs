@@ -7,12 +7,13 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
     public static class XmlSerializer
     {
-        private static readonly ConcurrentDictionary<Type, Func<XmlSerializationOptions, Type[], IXmlSerializer>> _createXmlSerializerFuncs = new ConcurrentDictionary<Type, Func<XmlSerializationOptions, Type[], IXmlSerializer>>(); 
+        private static readonly ConcurrentDictionary<Type, Func<XmlSerializationOptions, Type[], IXmlSerializer>> _createXmlSerializerFuncs = new ConcurrentDictionary<Type, Func<XmlSerializationOptions, Type[], IXmlSerializer>>();
 
         public static IXmlSerializer Create(Type type, params Type[] extraTypes)
         {
@@ -96,7 +97,13 @@ namespace XSerializer
 
             options.SetExtraTypes(extraTypes);
 
-            _serializer = XmlSerializerFactory.Instance.GetSerializer<T>(options);
+            EncryptAttribute encryptAttributeOrNull =
+                ((EncryptAttribute)Attribute.GetCustomAttribute(typeof(T), typeof(EncryptAttribute)))
+                ?? (options.ShouldEncryptRootObject
+                    ? new EncryptAttribute()
+                    : null);
+
+            _serializer = XmlSerializerFactory.Instance.GetSerializer<T>(encryptAttributeOrNull, options);
             _encoding = options.Encoding ?? Encoding.UTF8;
             _formatting = options.ShouldIndent ? Formatting.Indented : Formatting.None;
             _serializeOptions = options;
@@ -139,7 +146,7 @@ namespace XSerializer
 
         public T Deserialize(string xml)
         {
-            return (T)_serializer.DeserializeObject(xml).ConvertIfNecessary(typeof(T));
+            return (T)_serializer.DeserializeObject(xml, _serializeOptions).ConvertIfNecessary(typeof(T));
         }
 
         object IXmlSerializer.Deserialize(string xml)
@@ -149,7 +156,7 @@ namespace XSerializer
 
         public T Deserialize(Stream stream)
         {
-            return (T)_serializer.DeserializeObject(stream).ConvertIfNecessary(typeof(T));
+            return (T)_serializer.DeserializeObject(stream, _serializeOptions).ConvertIfNecessary(typeof(T));
         }
 
         object IXmlSerializer.Deserialize(Stream stream)
@@ -159,7 +166,7 @@ namespace XSerializer
 
         public T Deserialize(TextReader reader)
         {
-            return (T)_serializer.DeserializeObject(reader).ConvertIfNecessary(typeof(T));
+            return (T)_serializer.DeserializeObject(reader, _serializeOptions).ConvertIfNecessary(typeof(T));
         }
 
         object IXmlSerializer.Deserialize(TextReader reader)

@@ -12,7 +12,7 @@ namespace XSerializer.Tests
         [TestCaseSource("TestCaseData")]
         public void RoundTripsCorrectly(object instance, Type type)
         {
-            var customSerializer = CustomSerializer.GetSerializer(type, TestXmlSerializerOptions.Empty);
+            var customSerializer = CustomSerializer.GetSerializer(type, null, TestXmlSerializerOptions.Empty);
             var defaultSerializer = new System.Xml.Serialization.XmlSerializer(type);
 
             var customXml = customSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, new TestSerializeOptions(shouldAlwaysEmitTypes:AlwaysEmitTypes)).StripXsiXsdDeclarations();

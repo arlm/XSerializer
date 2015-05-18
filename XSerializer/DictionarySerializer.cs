@@ -4,8 +4,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using System.Xml;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -13,6 +13,7 @@ namespace XSerializer
     {
         private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
 
+        protected readonly EncryptAttribute _encryptAttribute;
         private readonly IXmlSerializerOptions _options;
 
         private readonly IXmlSerializerInternal _keySerializer;
@@ -21,13 +22,18 @@ namespace XSerializer
         private readonly Func<object> _createDictionary;
         private readonly Func<object, object> _finalizeDictionary = x => x;
 
-        protected DictionarySerializer(IXmlSerializerOptions options)
+        protected DictionarySerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             // ReSharper disable DoNotCallOverridableMethodsInConstructor
 
+            _encryptAttribute =
+                encryptAttribute
+                ?? (EncryptAttribute)Attribute.GetCustomAttribute(KeyType, typeof(EncryptAttribute))
+                ?? (EncryptAttribute)Attribute.GetCustomAttribute(ValueType, typeof(EncryptAttribute));
+
             _options = options;
-            _keySerializer = XmlSerializerFactory.Instance.GetSerializer(KeyType, _options.WithRootElementName("Key").WithRedactAttribute(null));
-            _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(ValueType, _options.WithRootElementName("Value"));
+            _keySerializer = XmlSerializerFactory.Instance.GetSerializer(KeyType, null, _options.WithRootElementName("Key").WithRedactAttribute(null));
+            _valueSerializer = XmlSerializerFactory.Instance.GetSerializer(ValueType, null, _options.WithRootElementName("Value"));
 
             if (DictionaryType.IsReadOnlyDictionary())
             {
@@ -72,7 +78,7 @@ namespace XSerializer
 
         protected abstract object FinalizeCollectionIntoReadOnlyDictionary(object collection);
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
+        public void SerializeObject(XSerializerXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             if (instance == null && !options.ShouldEmitNil)
             {
@@ -92,6 +98,8 @@ namespace XSerializer
                     return;
                 }
 
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute, options);
+
                 foreach (var item in GetDictionaryEntries(instance))
                 {
                     writer.WriteStartElement("Item");
@@ -109,11 +117,16 @@ namespace XSerializer
                     writer.WriteEndElement();
                 }
 
+                if (setIsEncryptionEnabledBackToFalse)
+                {
+                    writer.IsEncryptionEnabled = false;
+                }
+
                 writer.WriteEndElement();
             }
         }
 
-        public object DeserializeObject(XmlReader reader)
+        public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
         {
             object dictionary = null;
 
@@ -124,6 +137,24 @@ namespace XSerializer
             object currentValue = null;
             bool shouldIssueRead;
 
+            var setIsDecryptionEnabledBackToFalse = false;
+
+            Func<bool> isAtRootElement;
+            {
+                var hasOpenedRootElement = false;
+                
+                isAtRootElement = () =>
+                {
+                    if (!hasOpenedRootElement && reader.Name == _options.RootElementName)
+                    {
+                        hasOpenedRootElement = true;
+                        return true;
+                    }
+
+                    return false;
+                };
+            }
+
             do
             {
                 shouldIssueRead = true;
@@ -131,7 +162,7 @@ namespace XSerializer
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                        if (reader.Name == _options.RootElementName)
+                        if (isAtRootElement())
                         {
                             if (reader.IsNil())
                             {
@@ -145,11 +176,18 @@ namespace XSerializer
                             }
                             else
                             {
+                                setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute, options);
+
                                 dictionary = _createDictionary();
                                 hasInstanceBeenCreated = true;
 
                                 if (reader.IsEmptyElement)
                                 {
+                                    if (setIsDecryptionEnabledBackToFalse)
+                                    {
+                                        reader.IsDecryptionEnabled = false;
+                                    }
+
                                     return _finalizeDictionary(dictionary);
                                 }
                             }
@@ -162,17 +200,17 @@ namespace XSerializer
                         {
                             if (reader.Name == "Key")
                             {
-                                currentKey = DeserializeKeyOrValue(reader, _keySerializer, out shouldIssueRead);
+                                currentKey = DeserializeKeyOrValue(reader, _keySerializer, options, out shouldIssueRead);
                             }
                             else if (reader.Name == "Value")
                             {
-                                currentValue = DeserializeKeyOrValue(reader, _valueSerializer, out shouldIssueRead);
+                                currentValue = DeserializeKeyOrValue(reader, _valueSerializer, options, out shouldIssueRead);
                             }
                         }
 
                         break;
                     case XmlNodeType.EndElement:
-                        if (reader.Name == "Item")
+                        if (isInsideItemElement && reader.Name == "Item")
                         {
                             AddItemToDictionary(dictionary, currentKey, currentValue);
                             currentKey = null;
@@ -181,6 +219,11 @@ namespace XSerializer
                         }
                         else if (reader.Name == _options.RootElementName)
                         {
+                            if (setIsDecryptionEnabledBackToFalse)
+                            {
+                                reader.IsDecryptionEnabled = false;
+                            }
+
                             return CheckAndReturn(hasInstanceBeenCreated, _finalizeDictionary(dictionary));
                         }
 
@@ -191,9 +234,9 @@ namespace XSerializer
             throw new InvalidOperationException("Deserialization error: reached the end of the document without returning a value.");
         }
 
-        private static object DeserializeKeyOrValue(XmlReader reader, IXmlSerializerInternal serializer, out bool shouldIssueRead)
+        private static object DeserializeKeyOrValue(XSerializerXmlReader reader, IXmlSerializerInternal serializer, ISerializeOptions options, out bool shouldIssueRead)
         {
-            var deserialized = serializer.DeserializeObject(reader);
+            var deserialized = serializer.DeserializeObject(reader, options);
 
             shouldIssueRead = true;
 
@@ -210,10 +253,10 @@ namespace XSerializer
             return instance;
         }
 
-        public static IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options)
+        public static IXmlSerializerInternal GetSerializer(Type type, EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             return _serializerCache.GetOrAdd(
-                XmlSerializerFactory.Instance.CreateKey(type, options),
+                XmlSerializerFactory.Instance.CreateKey(type, encryptAttribute, options),
                 _ =>
                 {
                     Func<Type, IXmlSerializerInternal> createDictionarySerializer =
@@ -222,7 +265,7 @@ namespace XSerializer
                             var genericArguments = genericDictionaryInterface.GetGenericArguments();
                             var keyType = genericArguments[0];
                             var valueType = genericArguments[1];
-                            return (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), options);
+                            return (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<,,>).MakeGenericType(type, keyType, valueType), encryptAttribute, options);
                         };
 
                     if (type.IsAssignableToGenericIDictionary())
@@ -232,7 +275,7 @@ namespace XSerializer
 
                     if (type.IsAssignableToNonGenericIDictionary())
                     {
-                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), options);
+                        return (IXmlSerializerInternal)Activator.CreateInstance(typeof(DictionarySerializer<>).MakeGenericType(type), encryptAttribute, options);
                     }
 
                     if (type.IsReadOnlyDictionary())
@@ -248,8 +291,8 @@ namespace XSerializer
     internal class DictionarySerializer<TDictionary> : DictionarySerializer
         where TDictionary : IDictionary
     {
-        public DictionarySerializer(IXmlSerializerOptions options)
-            : base(options)
+        public DictionarySerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
+            : base(encryptAttribute, options)
         {
         }
 
@@ -313,8 +356,8 @@ namespace XSerializer
     {
         private readonly Lazy<Func<object, object>> _finalizeCollectionIntoReadOnlyDictionary;
         
-        public DictionarySerializer(IXmlSerializerOptions options)
-            : base(options)
+        public DictionarySerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
+            : base(encryptAttribute, options)
         {
             _finalizeCollectionIntoReadOnlyDictionary = new Lazy<Func<object, object>>(
                 () =>

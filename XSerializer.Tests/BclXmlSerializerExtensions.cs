@@ -17,7 +17,7 @@ namespace XSerializer.Tests
             var sb = new StringBuilder();
             using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
             {
-                using (var xmlWriter = new SerializationXmlTextWriter(stringWriter, options))
+                using (var xmlWriter = new XSerializerXmlTextWriter(stringWriter, options))
                 {
                     xmlWriter.Formatting = formatting;
                     serializer.Serialize(xmlWriter, instance, options.Namespaces);

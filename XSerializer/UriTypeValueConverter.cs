@@ -18,7 +18,7 @@ namespace XSerializer
             get { return _default.Value; }
         }
 
-        public object ParseString(string value)
+        public object ParseString(string value, ISerializeOptions options)
         {
             if (value == null)
             {
@@ -38,9 +38,9 @@ namespace XSerializer
             }
 
             var uriString =
-                _redactAttribute == null
-                    ? uri.ToString()
-                    : _redactAttribute.Redact(uri, options.ShouldRedact);
+                _redactAttribute != null
+                    ? _redactAttribute.Redact(uri, options.ShouldRedact)
+                    : uri.ToString();
 
             return uriString;
         }

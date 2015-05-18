@@ -2,8 +2,8 @@
 using System.Diagnostics;
 using System.IO;
 using System.Xml;
-using System.Xml.Serialization;
 using NUnit.Framework;
+using XSerializer.Encryption;
 
 namespace XSerializer.Tests.Performance
 {
@@ -39,7 +39,7 @@ namespace XSerializer.Tests.Performance
             const int Iterations = 50000;
 
             var xmlSerializer = new System.Xml.Serialization.XmlSerializer(typeof(ContainerWithAbstract), null, null, null, null);
-            var customSerializer = CustomSerializer.GetSerializer(typeof(ContainerWithInterface), TestXmlSerializerOptions.Empty);
+            var customSerializer = CustomSerializer.GetSerializer(typeof(ContainerWithInterface), null, TestXmlSerializerOptions.Empty);
 
             var xmlSerializerStopwatch = Stopwatch.StartNew();
 
@@ -56,15 +56,20 @@ namespace XSerializer.Tests.Performance
 
             xmlSerializerStopwatch.Stop();
 
+            var options = new TestSerializeOptions();
+
             var customSerializerStopwatch = Stopwatch.StartNew();
 
             for (int i = 0; i < Iterations; i++)
             {
                 using (var stringReader = new StringReader(_xmlWithInterface))
                 {
-                    using (var reader = new XmlTextReader(stringReader))
+                    using (var xmlReader = new XmlTextReader(stringReader))
                     {
-                        customSerializer.DeserializeObject(reader);
+                        using (var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey))
+                        {
+                            customSerializer.DeserializeObject(reader, options);
+                        }
                     }
                 }
             }

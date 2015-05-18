@@ -24,11 +24,11 @@ namespace XSerializer.Tests
 
             if (thrownException == null)
             {
-                Assert.That(() => CustomSerializer.GetSerializer(type, TestXmlSerializerOptions.Empty), Throws.Nothing, "Type: " + type.Name + Environment.NewLine);
+                Assert.That(() => CustomSerializer.GetSerializer(type, null, TestXmlSerializerOptions.Empty), Throws.Nothing, "Type: " + type.Name + Environment.NewLine);
             }
             else
             {
-                Assert.That(() => CustomSerializer.GetSerializer(type, TestXmlSerializerOptions.Empty), Throws.InstanceOf(thrownException.GetType()), "Type: " + type.Name + Environment.NewLine);
+                Assert.That(() => CustomSerializer.GetSerializer(type, null, TestXmlSerializerOptions.Empty), Throws.InstanceOf(thrownException.GetType()), "Type: " + type.Name + Environment.NewLine);
             }
         }
 

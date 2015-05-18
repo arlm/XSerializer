@@ -18,7 +18,7 @@ namespace XSerializer
             get { return _default.Value; }
         }
 
-        public object ParseString(string value)
+        public object ParseString(string value, ISerializeOptions options)
         {
             if (string.IsNullOrEmpty(value))
             {
@@ -38,9 +38,9 @@ namespace XSerializer
             }
 
             var typeString =
-                _redactAttribute == null
-                    ? GetStringValue(type)
-                    : _redactAttribute.Redact(type, options.ShouldRedact);
+                _redactAttribute != null
+                    ? _redactAttribute.Redact(type, options.ShouldRedact)
+                    : GetStringValue(type);
 
             return typeString;
         }

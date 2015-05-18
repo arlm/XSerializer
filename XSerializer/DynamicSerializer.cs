@@ -2,16 +2,18 @@
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Xml;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
     internal class DynamicSerializer : IXmlSerializerInternal
     {
+        private readonly EncryptAttribute _encryptAttribute;
         private readonly IXmlSerializerOptions _options;
 
-        public static IXmlSerializerInternal GetSerializer<T>(IXmlSerializerOptions options)
+        public static IXmlSerializerInternal GetSerializer<T>(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
-            var serializer = new DynamicSerializer(options);
+            var serializer = new DynamicSerializer(encryptAttribute, options);
 
             if (typeof(T) == typeof(object))
             {
@@ -26,12 +28,13 @@ namespace XSerializer
             throw new InvalidOperationException("The only valid generic arguments for DynamicSerializer.GetSerializer<T> are object, dynamic, and ExpandoObject");
         }
 
-        public DynamicSerializer(IXmlSerializerOptions options)
+        public DynamicSerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
+            _encryptAttribute = encryptAttribute;
             _options = options;
         }
 
-        public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
+        public void SerializeObject(XSerializerXmlTextWriter writer, object instance, ISerializeOptions options)
         {
             var expando = instance as ExpandoObject;
             if (expando != null || instance == null)
@@ -44,17 +47,17 @@ namespace XSerializer
 
             if (!options.ShouldAlwaysEmitTypes || instance.IsAnonymous())
             {
-                serializer = CustomSerializer.GetSerializer(instance.GetType(), _options);
+                serializer = CustomSerializer.GetSerializer(instance.GetType(), _encryptAttribute, _options);
             }
             else
             {
-                serializer = CustomSerializer.GetSerializer(typeof(object), _options.WithAdditionalExtraTypes(instance.GetType()));
+                serializer = CustomSerializer.GetSerializer(typeof(object), _encryptAttribute, _options.WithAdditionalExtraTypes(instance.GetType()));
             }
 
             serializer.SerializeObject(writer, instance, options);
         }
 
-        public object DeserializeObject(XmlReader reader)
+        public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
         {
             var isNil = reader.IsNil();
 
@@ -69,12 +72,12 @@ namespace XSerializer
 
             if (type != null)
             {
-                var serializer = XmlSerializerFactory.Instance.GetSerializer(type, _options.WithRootElementName(reader.Name));
-                deserializedObject = serializer.DeserializeObject(reader);
+                var serializer = XmlSerializerFactory.Instance.GetSerializer(type, _encryptAttribute, _options.WithRootElementName(reader.Name));
+                deserializedObject = serializer.DeserializeObject(reader, options);
             }
             else
             {
-                deserializedObject = DeserializeToDynamic(reader);
+                deserializedObject = DeserializeToDynamic(reader, options);
             }
 
             return
@@ -83,7 +86,7 @@ namespace XSerializer
                     : deserializedObject;
         }
 
-        private void SerializeExpandoObject(SerializationXmlTextWriter writer, IDictionary<string, object> expando, ISerializeOptions options)
+        private void SerializeExpandoObject(XSerializerXmlTextWriter writer, IDictionary<string, object> expando, ISerializeOptions options)
         {
             if (expando == null && !options.ShouldEmitNil)
             {
@@ -103,6 +106,8 @@ namespace XSerializer
                     return;
                 }
 
+                var setIsEncryptionEnabledBackToFalse = writer.MaybeSetIsEncryptionEnabledToTrue(_encryptAttribute, options);
+
                 foreach (var property in expando)
                 {
                     if (property.Value == null)
@@ -114,32 +119,57 @@ namespace XSerializer
 
                     if (property.Value is ExpandoObject)
                     {
-                        serializer = DynamicSerializer.GetSerializer<ExpandoObject>(_options.WithRootElementName(property.Key));
+                        serializer = DynamicSerializer.GetSerializer<ExpandoObject>(null, _options.WithRootElementName(property.Key));
                     }
                     else
                     {
-                        serializer = CustomSerializer.GetSerializer(property.Value.GetType(), _options.WithRootElementName(property.Key));
+                        serializer = CustomSerializer.GetSerializer(property.Value.GetType(), null, _options.WithRootElementName(property.Key));
                     }
 
                     serializer.SerializeObject(writer, property.Value, options);
+                }
+
+                if (setIsEncryptionEnabledBackToFalse)
+                {
+                    writer.IsEncryptionEnabled = false;
                 }
 
                 writer.WriteEndElement();
             }
         }
 
-        private dynamic DeserializeToDynamic(XmlReader reader)
+        private dynamic DeserializeToDynamic(XSerializerXmlReader reader, ISerializeOptions options)
         {
             object instance = null;
             var hasInstanceBeenCreated = false;
+
+            var setIsDecryptionEnabledBackToFalse = false;
+
+            Func<bool> isAtRootElement;
+            {
+                var hasOpenedRootElement = false;
+
+                isAtRootElement = () =>
+                {
+                    if (!hasOpenedRootElement && reader.Name == _options.RootElementName)
+                    {
+                        hasOpenedRootElement = true;
+                        return true;
+                    }
+
+                    return false;
+                };
+            }
 
             do
             {
                 switch (reader.NodeType)
                 {
                     case XmlNodeType.Element:
-                        if (reader.Name == _options.RootElementName)
+                        if (isAtRootElement())
                         {
+                            setIsDecryptionEnabledBackToFalse = reader.MaybeSetIsDecryptionEnabledToTrue(_encryptAttribute, options);
+
                             instance = new ExpandoObject();
                             hasInstanceBeenCreated = true;
 
@@ -150,16 +180,21 @@ namespace XSerializer
                                     instance = "";
                                 }
 
+                                if (setIsDecryptionEnabledBackToFalse)
+                                {
+                                    reader.IsDecryptionEnabled = false;
+                                }
+
                                 return instance;
                             }
                         }
                         else
                         {
-                            SetElementPropertyValue(reader, hasInstanceBeenCreated, (ExpandoObject)instance);
+                            SetElementPropertyValue(reader, hasInstanceBeenCreated, options, (ExpandoObject)instance);
                         }
                         break;
                     case XmlNodeType.Text:
-                        var stringValue = (string)new XmlTextSerializer(typeof(string), _options.RedactAttribute, _options.ExtraTypes).DeserializeObject(reader);
+                        var stringValue = (string)new XmlTextSerializer(typeof(string), _options.RedactAttribute, null, _options.ExtraTypes).DeserializeObject(reader, options);
                         hasInstanceBeenCreated = true;
 
                         bool boolValue;
@@ -215,6 +250,11 @@ namespace XSerializer
                                 }
                             }
 
+                            if (setIsDecryptionEnabledBackToFalse)
+                            {
+                                reader.IsDecryptionEnabled = false;
+                            }
+
                             return CheckAndReturn(hasInstanceBeenCreated, instance);
                         }
                         break;
@@ -224,11 +264,11 @@ namespace XSerializer
             throw new InvalidOperationException("Deserialization error: reached the end of the document without returning a value.");
         }
 
-        private void SetElementPropertyValue(XmlReader reader, bool hasInstanceBeenCreated, IDictionary<string, object> expando)
+        private void SetElementPropertyValue(XSerializerXmlReader reader, bool hasInstanceBeenCreated, ISerializeOptions options, IDictionary<string, object> expando)
         {
             var propertyName = reader.Name;
-            var serializer = GetSerializer<object>(_options.WithRootElementName(reader.Name));
-            var value = serializer.DeserializeObject(reader);
+            var serializer = DynamicSerializer.GetSerializer<object>(null, _options.WithRootElementName(reader.Name));
+            var value = serializer.DeserializeObject(reader, options);
             expando[propertyName] = value;
         }
 
@@ -251,14 +291,14 @@ namespace XSerializer
                 _serializer = serializer;
             }
 
-            public void SerializeObject(SerializationXmlTextWriter writer, object instance, ISerializeOptions options)
+            public void SerializeObject(XSerializerXmlTextWriter writer, object instance, ISerializeOptions options)
             {
                 _serializer.SerializeExpandoObject(writer, (ExpandoObject)instance, options);
             }
 
-            public object DeserializeObject(XmlReader reader)
+            public object DeserializeObject(XSerializerXmlReader reader, ISerializeOptions options)
             {
-                return (ExpandoObject) _serializer.DeserializeToDynamic(reader);
+                return (ExpandoObject) _serializer.DeserializeToDynamic(reader, options);
             }
         }
     }

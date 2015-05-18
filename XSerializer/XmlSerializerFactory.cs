@@ -3,12 +3,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
     internal class XmlSerializerFactory
     {
-        private readonly ConcurrentDictionary<Type, Func<IXmlSerializerOptions, IXmlSerializerInternal>> _getSerializerMap = new ConcurrentDictionary<Type, Func<IXmlSerializerOptions, IXmlSerializerInternal>>();
+        private readonly ConcurrentDictionary<Type, Func<EncryptAttribute, IXmlSerializerOptions, IXmlSerializerInternal>> _getSerializerMap = new ConcurrentDictionary<Type, Func<EncryptAttribute, IXmlSerializerOptions, IXmlSerializerInternal>>();
         private readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
 
         public static readonly XmlSerializerFactory Instance = new XmlSerializerFactory();
@@ -17,7 +18,7 @@ namespace XSerializer
         {
         }
 
-        public IXmlSerializerInternal GetSerializer(Type type, IXmlSerializerOptions options)
+        public IXmlSerializerInternal GetSerializer(Type type, EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             var getSerializer = _getSerializerMap.GetOrAdd(
                 type,
@@ -25,26 +26,26 @@ namespace XSerializer
                     {
                         var getSerializerMethod =
                             typeof(XmlSerializerFactory)
-                                .GetMethod("GetSerializer", new[] { typeof(IXmlSerializerOptions) })
+                                .GetMethod("GetSerializer", new[] { typeof(EncryptAttribute), typeof(IXmlSerializerOptions) })
                                 .MakeGenericMethod(type);
 
-                        return (Func<IXmlSerializerOptions, IXmlSerializerInternal>)Delegate.CreateDelegate(typeof(Func<IXmlSerializerOptions, IXmlSerializerInternal>), this, getSerializerMethod);
+                        return (Func<EncryptAttribute, IXmlSerializerOptions, IXmlSerializerInternal>)Delegate.CreateDelegate(typeof(Func<EncryptAttribute, IXmlSerializerOptions, IXmlSerializerInternal>), this, getSerializerMethod);
                     });
 
-            return getSerializer(options);
+            return getSerializer(encryptAttribute, options);
         }
 
-        public IXmlSerializerInternal GetSerializer<T>(IXmlSerializerOptions options)
+        public IXmlSerializerInternal GetSerializer<T>(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             return _serializerCache.GetOrAdd(
-                CreateKey(typeof(T), options),
+                CreateKey(typeof(T), encryptAttribute, options),
                 _ =>
                 {
                     var type = typeof(T);
 
                     if (type == typeof(object) || type == typeof(ExpandoObject))
                     {
-                        return DynamicSerializer.GetSerializer<T>(options);
+                        return DynamicSerializer.GetSerializer<T>(encryptAttribute, options);
                     }
 
                     IXmlSerializerInternal serializer;
@@ -53,26 +54,26 @@ namespace XSerializer
                         || type.IsNullablePrimitiveLike()
                         || ValueTypes.IsRegistered(type))
                     {
-                        serializer = new XmlElementSerializer<T>(options);
+                        serializer = new XmlElementSerializer<T>(encryptAttribute, options);
                     }
                     else if (type.IsAssignableToNonGenericIDictionary() || type.IsAssignableToGenericIDictionary() || type.IsReadOnlyDictionary())
                     {
-                        serializer = DictionarySerializer.GetSerializer(type, options);
+                        serializer = DictionarySerializer.GetSerializer(type, encryptAttribute, options);
                     }
                     else if (type.IsAssignableToNonGenericIEnumerable() || type.IsAssignableToGenericIEnumerable())
                     {
-                        serializer = ListSerializer.GetSerializer(type, options, null);
+                        serializer = ListSerializer.GetSerializer(type, encryptAttribute, options, null);
                     }
                     else
                     {
-                        serializer = CustomSerializer.GetSerializer(type, options);
+                        serializer = CustomSerializer.GetSerializer(type, encryptAttribute, options);
                     }
 
                     return serializer;
                 });
         }
 
-        internal int CreateKey(Type type, IXmlSerializerOptions options)
+        internal int CreateKey(Type type, EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             unchecked
             {
@@ -95,6 +96,8 @@ namespace XSerializer
                 {
                     key = (key * 397) ^ options.RedactAttribute.GetHashCode();
                 }
+
+                key = (key * 397) ^ (encryptAttribute != null).GetHashCode();
 
                 key = (key * 397) ^ options.TreatEmptyElementAsString.GetHashCode();
 
