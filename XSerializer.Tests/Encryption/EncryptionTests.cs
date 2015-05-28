@@ -24,7 +24,7 @@ namespace XSerializer.Tests.Encryption
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var serializer = new XmlSerializer<UnencryptedThing>(x => x.EncryptRootObject().WithEncryptionMechanism(encryptionMechanism).WithSerializationState(_serializationState));
+            var serializer = new XmlSerializer<UnencryptedThing>(x => x.EncryptRootObject().WithEncryptionMechanism(encryptionMechanism));
 
             var instance = new UnencryptedThing
             {
@@ -50,7 +50,7 @@ namespace XSerializer.Tests.Encryption
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var serializer = new XmlSerializer<EncryptedThing>(x => x.WithEncryptionMechanism(encryptionMechanism).WithSerializationState(_serializationState));
+            var serializer = new XmlSerializer<EncryptedThing>(x => x.WithEncryptionMechanism(encryptionMechanism));
 
             var instance = new EncryptedThing
             {
@@ -76,7 +76,7 @@ namespace XSerializer.Tests.Encryption
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var serializer = new XmlSerializer<Container<EncryptedThing>>(x => x.WithEncryptionMechanism(encryptionMechanism).WithSerializationState(_serializationState));
+            var serializer = new XmlSerializer<Container<EncryptedThing>>(x => x.WithEncryptionMechanism(encryptionMechanism));
 
             var instance = new Container<EncryptedThing>
             {
@@ -105,7 +105,7 @@ namespace XSerializer.Tests.Encryption
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var serializer = new XmlSerializer<Container<List<EncryptedThing>>>(x => x.WithEncryptionMechanism(encryptionMechanism).WithSerializationState(_serializationState));
+            var serializer = new XmlSerializer<Container<List<EncryptedThing>>>(x => x.WithEncryptionMechanism(encryptionMechanism));
 
             var instance = new Container<List<EncryptedThing>>
             {
@@ -149,7 +149,7 @@ namespace XSerializer.Tests.Encryption
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var serializer = new XmlSerializer<Container<Dictionary<EncryptedThing, int>>>(x => x.WithEncryptionMechanism(encryptionMechanism).WithSerializationState(_serializationState));
+            var serializer = new XmlSerializer<Container<Dictionary<EncryptedThing, int>>>(x => x.WithEncryptionMechanism(encryptionMechanism));
 
             var instance = new Container<Dictionary<EncryptedThing, int>>
             {
@@ -201,7 +201,7 @@ namespace XSerializer.Tests.Encryption
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var serializer = new XmlSerializer<Container<Dictionary<int, EncryptedThing>>>(x => x.WithEncryptionMechanism(encryptionMechanism).WithSerializationState(_serializationState));
+            var serializer = new XmlSerializer<Container<Dictionary<int, EncryptedThing>>>(x => x.WithEncryptionMechanism(encryptionMechanism));
 
             var instance = new Container<Dictionary<int, EncryptedThing>>
             {

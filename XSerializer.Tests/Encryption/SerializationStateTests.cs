@@ -92,8 +92,10 @@ namespace XSerializer.Tests.Encryption
             }
 
             [Test]
-            public void TheSameInstanceIsUsedForEachEncryptionOperation()
+            public void TheSameInstanceIsUsedForEachEncryptionOperationWithinASingleSerializationOperation()
             {
+                Assert.That(MyEncryptionMechanism.LastSerializationState, Is.Null);
+
                 var foo = new Foo
                 {
                     Bar = new Bar
@@ -109,29 +111,93 @@ namespace XSerializer.Tests.Encryption
                     Garply = "Hello, world!"
                 };
 
-                var serializationState = new SerializationState();
-                var serializer = new XmlSerializer<Foo>(x => x.WithSerializationState(serializationState).Indent());
+                var serializer = new XmlSerializer<Foo>(x => x.Indent());
 
                 var xml = serializer.Serialize(foo);
 
-                Assert.That(serializationState.GetRawValue(), Is.Not.Null);
-                Assert.That(serializationState.GetRawValue(), Is.InstanceOf<MyEncryptionMechanism.Counts>());
+                Assert.That(MyEncryptionMechanism.LastSerializationState, Is.Not.Null);
 
-                var counts = (MyEncryptionMechanism.Counts)serializationState.GetRawValue();
+                Assert.That(MyEncryptionMechanism.LastSerializationState.GetRawValue(), Is.Not.Null);
+                Assert.That(MyEncryptionMechanism.LastSerializationState.GetRawValue(), Is.InstanceOf<MyEncryptionMechanism.Counts>());
+
+                var counts = (MyEncryptionMechanism.Counts)MyEncryptionMechanism.LastSerializationState.GetRawValue();
 
                 Assert.That(counts.DecryptInvocationCount, Is.EqualTo(0));
                 Assert.That(counts.EncryptInvocationCount, Is.EqualTo(3));
 
+                MyEncryptionMechanism.LastSerializationState = null;
+
                 serializer.Deserialize(xml);
 
+                Assert.That(MyEncryptionMechanism.LastSerializationState, Is.Not.Null);
+
+                Assert.That(MyEncryptionMechanism.LastSerializationState.GetRawValue(), Is.Not.Null);
+                Assert.That(MyEncryptionMechanism.LastSerializationState.GetRawValue(), Is.InstanceOf<MyEncryptionMechanism.Counts>());
+
+                counts = (MyEncryptionMechanism.Counts)MyEncryptionMechanism.LastSerializationState.GetRawValue();
+
                 Assert.That(counts.DecryptInvocationCount, Is.EqualTo(3));
-                Assert.That(counts.EncryptInvocationCount, Is.EqualTo(3));
+                Assert.That(counts.EncryptInvocationCount, Is.EqualTo(0));
+
+                MyEncryptionMechanism.LastSerializationState = null;
+            }
+
+            [Test]
+            public void ADifferentInstanceIsUsedForEachSerializationOperation()
+            {
+                Assert.That(MyEncryptionMechanism.LastSerializationState, Is.Null);
+
+                var foo = new Foo
+                {
+                    Bar = new Bar
+                    {
+                        Grault = "abc",
+                        Qux = "xyz"
+                    },
+                    Baz = new Baz
+                    {
+                        Fred = "a1",
+                        Waldo = "b2"
+                    },
+                    Garply = "Hello, world!"
+                };
+
+                var serializer = new XmlSerializer<Foo>(x => x.Indent());
+
+                var xml = serializer.Serialize(foo);
+
+                var serializationState1 = MyEncryptionMechanism.LastSerializationState;
+
+                foo = serializer.Deserialize(xml);
+
+                var serializationState2 = MyEncryptionMechanism.LastSerializationState;
+
+                xml = serializer.Serialize(foo);
+
+                var serializationState3 = MyEncryptionMechanism.LastSerializationState;
+
+                serializer.Deserialize(xml);
+
+                var serializationState4 = MyEncryptionMechanism.LastSerializationState;
+
+                Assert.That(serializationState1, Is.Not.SameAs(serializationState2));
+                Assert.That(serializationState1, Is.Not.SameAs(serializationState3));
+                Assert.That(serializationState1, Is.Not.SameAs(serializationState4));
+                Assert.That(serializationState2, Is.Not.SameAs(serializationState3));
+                Assert.That(serializationState2, Is.Not.SameAs(serializationState4));
+                Assert.That(serializationState3, Is.Not.SameAs(serializationState4));
+
+                MyEncryptionMechanism.LastSerializationState = null;
             }
 
             private class MyEncryptionMechanism : IEncryptionMechanism
             {
+                public static SerializationState LastSerializationState;
+
                 public string Encrypt(string plainText, object encryptKey, SerializationState serializationState)
                 {
+                    LastSerializationState = serializationState;
+
                     var counts = serializationState.Get(() => new Counts());
 
                     counts.EncryptInvocationCount++;
@@ -141,6 +207,8 @@ namespace XSerializer.Tests.Encryption
 
                 public string Decrypt(string cipherText, object encryptKey, SerializationState serializationState)
                 {
+                    LastSerializationState = serializationState;
+
                     var counts = serializationState.Get(() => new Counts());
 
                     counts.DecryptInvocationCount++;
