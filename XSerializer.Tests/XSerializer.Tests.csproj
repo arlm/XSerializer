@@ -59,6 +59,8 @@
     <Compile Include="Encryption\Base64EncryptionMechanism.cs" />
     <Compile Include="Encryption\EncryptionTests.cs" />
     <Compile Include="DerivedTypeTests.cs" />
+    <Compile Include="Encryption\SerializationStateExtensions.cs" />
+    <Compile Include="Encryption\SerializationStateTests.cs" />
     <Compile Include="GuidTests.cs" />
     <Compile Include="NilTests.cs" />
     <Compile Include="OptionsExtensions.cs" />

@@ -68,6 +68,7 @@
     <Compile Include="Rock.StaticDependencyInjection\ExportAttribute.cs" />
     <Compile Include="Rock.StaticDependencyInjection\ModuleInitializer.cs" />
     <Compile Include="Rock.StaticDependencyInjection\StaticDependencyInjection.Generated.cs" />
+    <Compile Include="SerializationState.cs" />
     <Compile Include="ValueTypes.cs" />
     <Compile Include="TypeTypeValueConverter.cs" />
     <Compile Include="UriTypeValueConverter.cs" />

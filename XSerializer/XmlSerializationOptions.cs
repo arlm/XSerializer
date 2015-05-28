@@ -21,6 +21,7 @@ namespace XSerializer
         private bool _emitNil;
         private IEncryptionMechanism _encryptionMechanism;
         private object _encryptKey;
+        private SerializationState _serializationState;
 
         public XmlSerializationOptions(
             XmlSerializerNamespaces namespaces = null,
@@ -35,7 +36,8 @@ namespace XSerializer
             bool treatEmptyElementAsString = false,
             bool emitNil = false,
             IEncryptionMechanism encryptionMechanism = null,
-            object encryptKey = null)
+            object encryptKey = null,
+            SerializationState serializationState = null)
         {
             _namespaces = namespaces ?? new XmlSerializerNamespaces();
             _encoding = encoding ?? Encoding.UTF8;
@@ -51,6 +53,7 @@ namespace XSerializer
             _emitNil = emitNil;
             _encryptionMechanism = encryptionMechanism;
             _encryptKey = encryptKey;
+            _serializationState = serializationState ?? new SerializationState();
         }
 
         internal Encoding Encoding { get { return _encoding; } }
@@ -75,6 +78,7 @@ namespace XSerializer
 
         IEncryptionMechanism ISerializeOptions.EncryptionMechanism { get { return _encryptionMechanism; } }
         object ISerializeOptions.EncryptKey { get { return _encryptKey; } }
+        SerializationState ISerializeOptions.SerializationState { get { return _serializationState; } }
 
         internal void SetExtraTypes(Type[] extraTypes)
         {
@@ -156,6 +160,17 @@ namespace XSerializer
         public XmlSerializationOptions WithEncryptKey(object encryptKey)
         {
             _encryptKey = encryptKey;
+            return this;
+        }
+
+        public XmlSerializationOptions WithSerializationState(SerializationState serializationState)
+        {
+            if (serializationState == null)
+            {
+                throw new ArgumentNullException("serializationState");
+            }
+
+            _serializationState = serializationState;
             return this;
         }
     }

@@ -35,7 +35,7 @@
         /// <returns>The encrypted text.</returns>
         public static string Encrypt(string plainText)
         {
-            return Encrypt(plainText, null);
+            return Encrypt(plainText, null, null);
         }
 
         /// <summary>
@@ -49,7 +49,25 @@
         /// <returns>The encrypted text.</returns>
         public static string Encrypt(string plainText, object encryptKey)
         {
-            return Current.Encrypt(plainText, encryptKey);
+            return Encrypt(plainText, encryptKey, null);
+        }
+
+        /// <summary>
+        /// Encrypts the specified plain text using the <see cref="IEncryptionMechanism"/>
+        /// specified by the <see cref="Current"/> property.
+        /// </summary>
+        /// <param name="plainText">The plain text.</param>
+        /// <param name="encryptKey">
+        /// An object to used to look up invokation-specific encryption parameters.
+        /// </param>
+        /// <param name="serializationState">
+        /// An object that holds an arbitrary value that is passed to one or more
+        /// encrypt operations within a single serialization operation.
+        /// </param>
+        /// <returns>The encrypted text.</returns>
+        public static string Encrypt(string plainText, object encryptKey, SerializationState serializationState)
+        {
+            return Current.Encrypt(plainText, encryptKey, serializationState);
         }
 
         /// <summary>
@@ -60,7 +78,7 @@
         /// <returns>The decrypted text.</returns>
         public static string Decrypt(string cipherText)
         {
-            return Decrypt(cipherText, null);
+            return Decrypt(cipherText, null, null);
         }
 
         /// <summary>
@@ -74,7 +92,25 @@
         /// <returns>The decrypted text.</returns>
         public static string Decrypt(string cipherText, object encryptKey)
         {
-            return Current.Decrypt(cipherText, encryptKey);
+            return Decrypt(cipherText, encryptKey, null);
+        }
+
+        /// <summary>
+        /// Decrypts the specified cipher text using the <see cref="IEncryptionMechanism"/>
+        /// specified by the <see cref="Current"/> property.
+        /// </summary>
+        /// <param name="cipherText">The cipher text.</param>
+        /// <param name="encryptKey">
+        /// An object to used to look up invokation-specific encryption parameters.
+        /// </param>
+        /// <param name="serializationState">
+        /// An object that holds an arbitrary value that is passed to one or more
+        /// decrypt operations within a single serialization operation.
+        /// </param>
+        /// <returns>The decrypted text.</returns>
+        public static string Decrypt(string cipherText, object encryptKey, SerializationState serializationState)
+        {
+            return Current.Decrypt(cipherText, encryptKey, serializationState);
         }
 
         /// <summary>

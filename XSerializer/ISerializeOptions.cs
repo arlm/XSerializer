@@ -12,5 +12,6 @@ namespace XSerializer
         bool ShouldEmitNil { get; }
         IEncryptionMechanism EncryptionMechanism { get; }
         object EncryptKey { get; }
+        SerializationState SerializationState { get; }
     }
 }

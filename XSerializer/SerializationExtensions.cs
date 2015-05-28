@@ -127,7 +127,7 @@ namespace XSerializer
             {
                 using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    using (var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey))
+                    using (var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey, options.SerializationState))
                     {
                         return serializer.DeserializeObject(reader, options);
                     }
@@ -138,14 +138,14 @@ namespace XSerializer
         public static object DeserializeObject(this IXmlSerializerInternal serializer, Stream stream, ISerializeOptions options)
         {
             var xmlReader = new XmlTextReader(stream);
-            var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey);
+            var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey, options.SerializationState);
             return serializer.DeserializeObject(reader, options);
         }
 
         public static object DeserializeObject(this IXmlSerializerInternal serializer, TextReader textReader, ISerializeOptions options)
         {
             var xmlReader = new XmlTextReader(textReader);
-            var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey);
+            var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey, options.SerializationState);
             return serializer.DeserializeObject(reader, options);
         }
 
