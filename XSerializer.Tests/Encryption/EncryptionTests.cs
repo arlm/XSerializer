@@ -11,6 +11,14 @@ namespace XSerializer.Tests.Encryption
     [TestFixture]
     public class EncryptionTests
     {
+        private SerializationState _serializationState;
+
+        [SetUp]
+        public void Setup()
+        {
+            _serializationState = new SerializationState();
+        }
+
         [Test]
         public void CanEncryptAndDecryptEntireRootObjectViaOptions()
         {
@@ -28,8 +36,8 @@ namespace XSerializer.Tests.Encryption
 
             var doc = XDocument.Parse(xml);
 
-            Assert.That(encryptionMechanism.Decrypt(doc.Root.Value, null), Is.EqualTo("<Bar>true</Bar>"));
-            Assert.That(encryptionMechanism.Decrypt(doc.Root.Attribute("Foo").Value, null), Is.EqualTo("123"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Value, null, _serializationState), Is.EqualTo("<Bar>true</Bar>"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Attribute("Foo").Value, null, _serializationState), Is.EqualTo("123"));
 
             var roundTrip = serializer.Deserialize(xml);
 
@@ -54,8 +62,8 @@ namespace XSerializer.Tests.Encryption
 
             var doc = XDocument.Parse(xml);
 
-            Assert.That(encryptionMechanism.Decrypt(doc.Root.Value, null), Is.EqualTo("<Bar>true</Bar>"));
-            Assert.That(encryptionMechanism.Decrypt(doc.Root.Attribute("Foo").Value, null), Is.EqualTo("123"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Value, null, _serializationState), Is.EqualTo("<Bar>true</Bar>"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Attribute("Foo").Value, null, _serializationState), Is.EqualTo("123"));
 
             var roundTrip = serializer.Deserialize(xml);
 
@@ -83,8 +91,8 @@ namespace XSerializer.Tests.Encryption
 
             var doc = XDocument.Parse(xml);
 
-            Assert.That(encryptionMechanism.Decrypt(doc.Root.Element("Item").Value, null), Is.EqualTo("<Bar>true</Bar>"));
-            Assert.That(encryptionMechanism.Decrypt(doc.Root.Element("Item").Attribute("Foo").Value, null), Is.EqualTo("123"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Element("Item").Value, null, _serializationState), Is.EqualTo("<Bar>true</Bar>"));
+            Assert.That(encryptionMechanism.Decrypt(doc.Root.Element("Item").Attribute("Foo").Value, null, _serializationState), Is.EqualTo("123"));
 
             var roundTrip = serializer.Deserialize(xml);
 
@@ -120,7 +128,7 @@ namespace XSerializer.Tests.Encryption
 
             var doc = XDocument.Parse(xml);
 
-            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value, null);
+            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value, null, _serializationState);
             const string expectedDecryptedItemElementValue =
                 @"<EncryptedThing Foo=""123""><Bar>true</Bar></EncryptedThing>"
                 + @"<EncryptedThing Foo=""789""><Bar>false</Bar></EncryptedThing>";
@@ -170,7 +178,7 @@ namespace XSerializer.Tests.Encryption
 
             var doc = XDocument.Parse(xml);
 
-            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value, null);
+            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value, null, _serializationState);
             const string expectedDecryptedItemElementValue =
                 @"<Item><Key Foo=""123""><Bar>true</Bar></Key><Value>1</Value></Item>"
                 + @"<Item><Key Foo=""789""><Bar>false</Bar></Key><Value>2</Value></Item>";
@@ -222,7 +230,7 @@ namespace XSerializer.Tests.Encryption
 
             var doc = XDocument.Parse(xml);
 
-            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value, null);
+            var actualDecryptedItemElementValue = encryptionMechanism.Decrypt(doc.Root.Element("Item").Value, null, _serializationState);
             const string expectedDecryptedItemElementValue =
                 @"<Item><Key>1</Key><Value Foo=""123""><Bar>true</Bar></Value></Item>"
                 + @"<Item><Key>2</Key><Value Foo=""789""><Bar>false</Bar></Value></Item>";

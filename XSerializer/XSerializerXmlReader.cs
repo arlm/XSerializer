@@ -15,24 +15,26 @@ namespace XSerializer
 
         private readonly IEncryptionMechanism _encryptionMechanism;
         private readonly object _encryptKey;
+        private readonly SerializationState _serializationState;
 
         private readonly XmlReader _primaryReader;
 
         private XmlReader _currentReader;
         private XSerializerXmlReader _surrogateReader;
 
-        private XSerializerXmlReader(string xml, IEncryptionMechanism encryptionMechanism, object encryptKey)
-            : this(new XmlTextReader(new StringReader(xml)), encryptionMechanism, encryptKey)
+        private XSerializerXmlReader(string xml, IEncryptionMechanism encryptionMechanism, object encryptKey, SerializationState serializationState)
+            : this(new XmlTextReader(new StringReader(xml)), encryptionMechanism, encryptKey, serializationState)
         {
         }
 
-        public XSerializerXmlReader(XmlReader reader, IEncryptionMechanism encryptionMechanism, object encryptKey)
+        public XSerializerXmlReader(XmlReader reader, IEncryptionMechanism encryptionMechanism, object encryptKey, SerializationState serializationState)
         {
             _primaryReader = reader;
             _currentReader = reader;
 
             _encryptionMechanism = encryptionMechanism;
             _encryptKey = encryptKey;
+            _serializationState = serializationState;
         }
 
         public bool IsDecryptionEnabled { get; set; }
@@ -64,17 +66,23 @@ namespace XSerializer
             // assume that the text contains one or more encrypted child elements. In this
             // case, load the decrypted contents into a surrogate xml reader and use that
             // reader until it reads to its end. Then switch back to the primary reader.
-            if (IsDecryptionEnabled && NodeType == XmlNodeType.Text && _isStartElementRegex.IsMatch(Value))
+            if (IsDecryptionEnabled && NodeType == XmlNodeType.Text)
             {
-                // The xml fragment contained in the Value property may contain multiple
-                // top-level elements. To ensure valid xml, wrap the fragment in a dummy node.
-                var xml = _dummyNodeStartElement + Value + _dummyNodeEndElement;
+                var value = Value;
 
-                _surrogateReader = new XSerializerXmlReader(xml, _encryptionMechanism, _encryptKey);
-                _currentReader = _surrogateReader;
+                if (_isStartElementRegex.IsMatch(value))
+                {
+                    // The xml fragment contained in the Value property may contain multiple
+                    // top-level elements. To ensure valid xml, wrap the fragment in a dummy node.
+                    var xml = _dummyNodeStartElement + value + _dummyNodeEndElement;
 
-                _surrogateReader.Read(); // Advance to the opening dummy node
-                return _surrogateReader.Read(); // Advance to the first decrypted node.
+                    _surrogateReader = new XSerializerXmlReader(xml, _encryptionMechanism, _encryptKey,
+                        _serializationState);
+                    _currentReader = _surrogateReader;
+
+                    _surrogateReader.Read(); // Advance to the opening dummy node
+                    return _surrogateReader.Read(); // Advance to the first decrypted node.
+                }
             }
 
             return true;
@@ -124,7 +132,7 @@ namespace XSerializer
 
             return
                 IsDecryptionEnabled
-                    ? _encryptionMechanism.Decrypt(value, _encryptKey)
+                    ? _encryptionMechanism.Decrypt(value, _encryptKey, _serializationState)
                     : value;
         }
 

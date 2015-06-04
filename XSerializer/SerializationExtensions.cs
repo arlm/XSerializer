@@ -62,6 +62,8 @@ namespace XSerializer
             Formatting formatting,
             ISerializeOptions options)
         {
+            options = options.WithNewSerializationState();
+
             var sb = new StringBuilder();
 
             using (var stringWriter = new StringWriterWithEncoding(sb, encoding ?? Encoding.UTF8))
@@ -84,6 +86,8 @@ namespace XSerializer
             Formatting formatting,
             ISerializeOptions options)
         {
+            options = options.WithNewSerializationState();
+
             StreamWriter streamWriter = null;
 
             try
@@ -113,6 +117,8 @@ namespace XSerializer
             Formatting formatting,
             ISerializeOptions options)
         {
+            options = options.WithNewSerializationState();
+
             var xmlWriter = new XSerializerXmlTextWriter(writer, options)
             {
                 Formatting = formatting
@@ -123,11 +129,13 @@ namespace XSerializer
 
         public static object DeserializeObject(this IXmlSerializerInternal serializer, string xml, ISerializeOptions options)
         {
+            options = options.WithNewSerializationState();
+
             using (var stringReader = new StringReader(xml))
             {
                 using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    using (var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey))
+                    using (var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey, options.SerializationState))
                     {
                         return serializer.DeserializeObject(reader, options);
                     }
@@ -137,16 +145,47 @@ namespace XSerializer
 
         public static object DeserializeObject(this IXmlSerializerInternal serializer, Stream stream, ISerializeOptions options)
         {
+            options = options.WithNewSerializationState();
+
             var xmlReader = new XmlTextReader(stream);
-            var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey);
+            var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey, options.SerializationState);
             return serializer.DeserializeObject(reader, options);
         }
 
         public static object DeserializeObject(this IXmlSerializerInternal serializer, TextReader textReader, ISerializeOptions options)
         {
+            options = options.WithNewSerializationState();
+
             var xmlReader = new XmlTextReader(textReader);
-            var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey);
+            var reader = new XSerializerXmlReader(xmlReader, options.GetEncryptionMechanism(), options.EncryptKey, options.SerializationState);
             return serializer.DeserializeObject(reader, options);
+        }
+
+        private static ISerializeOptions WithNewSerializationState(this ISerializeOptions serializeOptions)
+        {
+            return new SerializeOptions
+            {
+                EncryptionMechanism = serializeOptions.EncryptionMechanism,
+                EncryptKey = serializeOptions.EncryptKey,
+                Namespaces = serializeOptions.Namespaces,
+                SerializationState = new SerializationState(),
+                ShouldAlwaysEmitTypes = serializeOptions.ShouldAlwaysEmitTypes,
+                ShouldEmitNil = serializeOptions.ShouldEmitNil,
+                ShouldEncrypt = serializeOptions.ShouldEncrypt,
+                ShouldRedact = serializeOptions.ShouldRedact
+            };
+        }
+
+        private class SerializeOptions : ISerializeOptions
+        {
+            public XmlSerializerNamespaces Namespaces { get; set; }
+            public bool ShouldAlwaysEmitTypes { get; set; }
+            public bool ShouldRedact { get; set; }
+            public bool ShouldEncrypt { get; set; }
+            public bool ShouldEmitNil { get; set; }
+            public IEncryptionMechanism EncryptionMechanism { get; set; }
+            public object EncryptKey { get; set; }
+            public SerializationState SerializationState { get; set; }
         }
 
         /// <summary>

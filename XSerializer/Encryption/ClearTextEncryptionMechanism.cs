@@ -12,8 +12,9 @@
         /// </summary>
         /// <param name="text">Some text.</param>
         /// <param name="encryptKey">Ignored.</param>
+        /// <param name="serializationState">Ignored.</param>
         /// <returns>The value of <paramref name="text"/>.</returns>
-        public string Encrypt(string text, object encryptKey)
+        public string Encrypt(string text, object encryptKey, SerializationState serializationState)
         {
             return text;
         }
@@ -23,8 +24,9 @@
         /// </summary>
         /// <param name="text">Some text.</param>
         /// <param name="encryptKey">Ignored.</param>
+        /// <param name="serializationState">Ignored.</param>
         /// <returns>The value of <paramref name="text"/>.</returns>
-        public string Decrypt(string text, object encryptKey)
+        public string Decrypt(string text, object encryptKey, SerializationState serializationState)
         {
             return text;
         }

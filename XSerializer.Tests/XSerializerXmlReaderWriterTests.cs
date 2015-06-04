@@ -14,7 +14,7 @@ namespace XSerializer.Tests
         {
             var sb = new StringBuilder();
             var encryptionMechanism = new Base64EncryptionMechanism();
-            var options = new TestSerializeOptions { EncryptionMechanism = encryptionMechanism };
+            var options = new TestSerializeOptions { EncryptionMechanism = encryptionMechanism, SerializationState = new SerializationState() };
 
             using (var stringWriter = new StringWriter(sb))
             {
@@ -52,7 +52,7 @@ namespace XSerializer.Tests
                 }
             }
 
-            Func<string, string> e = x => encryptionMechanism.Encrypt(x, null);
+            Func<string, string> e = x => encryptionMechanism.Encrypt(x, null, options.SerializationState);
 
             // reference xml:
             // <foo><bar baz="123"><qux>abc</qux></bar><rab zab="789"><xuq>xyz</xuq></rab></foo>
@@ -70,7 +70,7 @@ namespace XSerializer.Tests
             {
                 using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism, null))
+                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism, null, options.SerializationState))
                     {
                         reader.Read(); // None -> <foo>
                         reader.IsDecryptionEnabled = true;
@@ -113,7 +113,7 @@ namespace XSerializer.Tests
         {
             var sb = new StringBuilder();
             var encryptionMechanism = new Base64EncryptionMechanism();
-            var options = new TestSerializeOptions { EncryptionMechanism = encryptionMechanism };
+            var options = new TestSerializeOptions { EncryptionMechanism = encryptionMechanism, SerializationState = new SerializationState() };
 
             using (var stringWriter = new StringWriter(sb))
             {
@@ -153,7 +153,7 @@ namespace XSerializer.Tests
                 }
             }
 
-            Func<string, string> e = x => encryptionMechanism.Encrypt(x, null);
+            Func<string, string> e = x => encryptionMechanism.Encrypt(x, null, options.SerializationState);
 
             // reference xml:
             // <foo><bar baz="123"><qux>abc</qux></bar><rab zab="789"><xuq>xyz</xuq></rab></foo>
@@ -176,7 +176,7 @@ namespace XSerializer.Tests
             {
                 using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism, null))
+                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism, null, options.SerializationState))
                     {
                         reader.Read(); // None -> <foo>
 
@@ -220,7 +220,7 @@ namespace XSerializer.Tests
         {
             var sb = new StringBuilder();
             var encryptionMechanism = new Base64EncryptionMechanism();
-            var options = new TestSerializeOptions { EncryptionMechanism = encryptionMechanism };
+            var options = new TestSerializeOptions { EncryptionMechanism = encryptionMechanism, SerializationState = new SerializationState() };
 
             using (var stringWriter = new StringWriter(sb))
             {
@@ -260,7 +260,7 @@ namespace XSerializer.Tests
                 }
             }
 
-            Func<string, string> e = x => encryptionMechanism.Encrypt(x, null);
+            Func<string, string> e = x => encryptionMechanism.Encrypt(x, null, options.SerializationState);
 
             // reference xml:
             // <foo><bar baz="123"><qux>abc</qux></bar><rab zab="789"><xuq>xyz</xuq></rab></foo>
@@ -283,7 +283,7 @@ namespace XSerializer.Tests
             {
                 using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism, options.EncryptKey))
+                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism, options.EncryptKey, options.SerializationState))
                     {
                         reader.Read(); // None -> <foo>
 
@@ -326,7 +326,7 @@ namespace XSerializer.Tests
         {
             var sb = new StringBuilder();
             var encryptionMechanism = new Base64EncryptionMechanism();
-            var options = new TestSerializeOptions { EncryptionMechanism = encryptionMechanism };
+            var options = new TestSerializeOptions { EncryptionMechanism = encryptionMechanism, SerializationState = new SerializationState() };
 
             using (var stringWriter = new StringWriter(sb))
             {
@@ -366,7 +366,7 @@ namespace XSerializer.Tests
                 }
             }
 
-            Func<string, string> e = x => encryptionMechanism.Encrypt(x, null);
+            Func<string, string> e = x => encryptionMechanism.Encrypt(x, null, options.SerializationState);
 
             // reference xml:
             // <foo><bar baz="123"><qux>abc</qux></bar><rab zab="789"><xuq>xyz</xuq></rab></foo>
@@ -389,7 +389,7 @@ namespace XSerializer.Tests
             {
                 using (var xmlReader = new XmlTextReader(stringReader))
                 {
-                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism, options.EncryptKey))
+                    using (var reader = new XSerializerXmlReader(xmlReader, encryptionMechanism, options.EncryptKey, options.SerializationState))
                     {
                         reader.Read(); // None -> <foo>
 

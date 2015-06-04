@@ -64,28 +64,19 @@ namespace XSerializer
 
         public static Action<object, object> CreateAction(MethodInfo method)
         {
-            var parameter = method.GetParameters()[0];
+            var methodParameter = method.GetParameters()[0];
 
-            var dynamicMethod = new DynamicMethod(
-                method.Name + "_Invoker",
-                typeof(void),
-                new[] { typeof(object), typeof(object) },
-                typeof(DynamicMethodFactory));
+            var instanceParameter = Expression.Parameter(typeof(object), "instance");
+            var valueParameter = Expression.Parameter(typeof(object), "value");
 
-            var il = dynamicMethod.GetILGenerator();
+            var lambda = Expression.Lambda<Action<object, object>>(
+                Expression.Call(
+                    Expression.Convert(instanceParameter, method.DeclaringType),
+                    method,
+                    Expression.Convert(valueParameter, methodParameter.ParameterType)),
+                new[] { instanceParameter, valueParameter });
 
-            il.Emit(OpCodes.Ldarg, 0);
-            il.Emit(OpCodes.Ldarg, 1);
-
-            if (parameter.ParameterType.IsValueType)
-            {
-                il.Emit(OpCodes.Unbox_Any, parameter.ParameterType);
-            }
-
-            il.EmitCall(OpCodes.Callvirt, method, null);
-            il.Emit(OpCodes.Ret);
-
-            return (Action<object, object>)dynamicMethod.CreateDelegate(typeof(Action<object, object>));
+            return lambda.Compile();
         }
 
         public static Action<object, object, object> CreateTwoArgAction(MethodInfo method)

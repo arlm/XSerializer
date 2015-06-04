@@ -75,6 +75,7 @@ namespace XSerializer
 
         IEncryptionMechanism ISerializeOptions.EncryptionMechanism { get { return _encryptionMechanism; } }
         object ISerializeOptions.EncryptKey { get { return _encryptKey; } }
+        SerializationState ISerializeOptions.SerializationState { get { return null; } }
 
         internal void SetExtraTypes(Type[] extraTypes)
         {
