@@ -122,7 +122,7 @@
         /// </summary>
         internal static IEncryptionMechanism GetEncryptionMechanism(this ISerializeOptions options)
         {
-            return options.EncryptionMechanism ?? _current;
+            return options.EncryptionMechanism ?? Current;
         }
 
         private static ClearTextEncryptionMechanism GetDefaultEncryptionMechanism()
