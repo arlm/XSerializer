@@ -30,6 +30,7 @@ namespace XSerializer
                 ?? (EncryptAttribute)Attribute.GetCustomAttribute(propertyInfo.PropertyType, typeof(EncryptAttribute));
             _isListDecoratedWithXmlElement =
                 typeof(IEnumerable).IsAssignableFrom(propertyInfo.PropertyType)
+                && !(propertyInfo.PropertyType == typeof(string))
                 && Attribute.GetCustomAttributes(propertyInfo, typeof(XmlElementAttribute)).Any();
 
             _getValueFunc = DynamicMethodFactory.CreateFunc<object>(propertyInfo.GetGetMethod());
