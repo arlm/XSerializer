@@ -8,6 +8,25 @@ namespace XSerializer.Tests
 {
     public class AttributedPropertyTests
     {
+        [Test]
+        public void TwoXmlElementAttributedStringPropertiesArePossible()
+        {
+            var serializer = new XmlSerializer<TwoXmlElementAttributedStringProperties>();
+            var wtf = new TwoXmlElementAttributedStringProperties { Foo = "abc", Bar = "xyz" };
+            var xml = serializer.Serialize(wtf);
+            var wtf2 = serializer.Deserialize(xml);
+            Assert.That(wtf2, Has.PropertiesEqualTo(wtf));
+        }
+
+        public class TwoXmlElementAttributedStringProperties
+        {
+            [XmlElement("FOO")]
+            public string Foo { get; set; }
+
+            [XmlElement("BAR")]
+            public string Bar { get; set; }
+        }
+
         [TestCaseSource("TestCaseData")]
         public void CustomSerializerThrowsExceptionIfAndOnlyIfBclXmlSerializerDoes(Type type)
         {
