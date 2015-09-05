@@ -64,6 +64,7 @@
     <Compile Include="Encryption\IEncryptionMechanism.cs" />
     <Compile Include="IValueConverter.cs" />
     <Compile Include="IXSerializer.cs" />
+    <Compile Include="JsonSerializer.cs" />
     <Compile Include="Rock.StaticDependencyInjection\CompositionRoot.cs" />
     <Compile Include="Rock.StaticDependencyInjection\ExportAttribute.cs" />
     <Compile Include="Rock.StaticDependencyInjection\ModuleInitializer.cs" />
