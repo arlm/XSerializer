@@ -119,7 +119,7 @@ namespace XSerializer
             return _serializer.SerializeObject(instance, _encoding, _formatting, _serializeOptions);
         }
 
-        string IXmlSerializer.Serialize(object instance)
+        string IXSerializer.Serialize(object instance)
         {
             return Serialize((T)instance);
         }
@@ -129,7 +129,7 @@ namespace XSerializer
             _serializer.SerializeObject(stream, instance, _encoding, _formatting, _serializeOptions);
         }
 
-        void IXmlSerializer.Serialize(Stream stream, object instance)
+        void IXSerializer.Serialize(Stream stream, object instance)
         {
             Serialize(stream, (T)instance);
         }
@@ -139,7 +139,7 @@ namespace XSerializer
             _serializer.SerializeObject(writer, instance, _formatting, _serializeOptions);
         }
 
-        void IXmlSerializer.Serialize(TextWriter writer, object instance)
+        void IXSerializer.Serialize(TextWriter writer, object instance)
         {
             Serialize(writer, (T)instance);
         }
@@ -149,7 +149,7 @@ namespace XSerializer
             return (T)_serializer.DeserializeObject(xml, _serializeOptions).ConvertIfNecessary(typeof(T));
         }
 
-        object IXmlSerializer.Deserialize(string xml)
+        object IXSerializer.Deserialize(string xml)
         {
             return Deserialize(xml);
         }
@@ -159,7 +159,7 @@ namespace XSerializer
             return (T)_serializer.DeserializeObject(stream, _serializeOptions).ConvertIfNecessary(typeof(T));
         }
 
-        object IXmlSerializer.Deserialize(Stream stream)
+        object IXSerializer.Deserialize(Stream stream)
         {
             return Deserialize(stream);
         }
@@ -169,7 +169,7 @@ namespace XSerializer
             return (T)_serializer.DeserializeObject(reader, _serializeOptions).ConvertIfNecessary(typeof(T));
         }
 
-        object IXmlSerializer.Deserialize(TextReader reader)
+        object IXSerializer.Deserialize(TextReader reader)
         {
             return Deserialize(reader);
         }
