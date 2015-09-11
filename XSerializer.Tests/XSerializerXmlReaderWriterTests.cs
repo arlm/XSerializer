@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using NUnit.Framework;
+using XSerializer.Encryption;
 using XSerializer.Tests.Encryption;
 
 namespace XSerializer.Tests
@@ -13,7 +14,7 @@ namespace XSerializer.Tests
         public void CanEncryptAndDecryptAComplexElementValue()
         {
             var sb = new StringBuilder();
-            var encryptionMechanism = new Base64EncryptionMechanism();
+            IEncryptionMechanism encryptionMechanism = new Base64EncryptionMechanism();
             var options = new TestSerializeOptions { EncryptionMechanism = encryptionMechanism, SerializationState = new SerializationState() };
 
             using (var stringWriter = new StringWriter(sb))
@@ -112,7 +113,7 @@ namespace XSerializer.Tests
         public void CanEncryptAndDecryptMultipleComplexElementValuesEachWithAttributes()
         {
             var sb = new StringBuilder();
-            var encryptionMechanism = new Base64EncryptionMechanism();
+            IEncryptionMechanism encryptionMechanism = new Base64EncryptionMechanism();
             var options = new TestSerializeOptions { EncryptionMechanism = encryptionMechanism, SerializationState = new SerializationState() };
 
             using (var stringWriter = new StringWriter(sb))
@@ -219,7 +220,7 @@ namespace XSerializer.Tests
         public void CanEncryptAndDecryptIndividualAttributeValues()
         {
             var sb = new StringBuilder();
-            var encryptionMechanism = new Base64EncryptionMechanism();
+            IEncryptionMechanism encryptionMechanism = new Base64EncryptionMechanism();
             var options = new TestSerializeOptions { EncryptionMechanism = encryptionMechanism, SerializationState = new SerializationState() };
 
             using (var stringWriter = new StringWriter(sb))
@@ -325,7 +326,7 @@ namespace XSerializer.Tests
         public void CanEncryptAndDecryptIndividualElementValues()
         {
             var sb = new StringBuilder();
-            var encryptionMechanism = new Base64EncryptionMechanism();
+            IEncryptionMechanism encryptionMechanism = new Base64EncryptionMechanism();
             var options = new TestSerializeOptions { EncryptionMechanism = encryptionMechanism, SerializationState = new SerializationState() };
 
             using (var stringWriter = new StringWriter(sb))

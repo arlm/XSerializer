@@ -39,7 +39,7 @@ namespace XSerializer.Tests
         [TestCase("[\"foo\",\"bar\"]", JsonNodeType.OpenArray, JsonNodeType.String, JsonNodeType.ItemSeparator, JsonNodeType.String, JsonNodeType.CloseArray)]
         public void CanDecryptCurrentStringValueAndAccessDecryptedNodes(string plainTextJson, params JsonNodeType[] expectedNodeTypes)
         {
-            var cipherTextJson = "\"" + Convert.ToBase64String(Encoding.UTF8.GetBytes(plainTextJson)) + "\"";
+            var cipherTextJson = @"""" + Convert.ToBase64String(Encoding.UTF8.GetBytes(plainTextJson)) + @"""";
 
             var info = new JsonSerializeOperationInfo
             {

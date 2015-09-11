@@ -53,9 +53,9 @@ namespace XSerializer.Tests
             var json = serializer.Serialize(instance);
 
             var expected =
-                "\""
-                + encryptionMechanism.Encrypt(@"{""Baz"":{""Qux"":""abc"",""Garply"":true},""Corge"":123.45}", null, null)
-                + "\"";
+                @""""
+                + encryptionMechanism.Encrypt(@"{""Baz"":{""Qux"":""abc"",""Garply"":true},""Corge"":123.45}")
+                + @"""";
 
             Assert.That(json, Is.EqualTo(expected));
         }
@@ -82,9 +82,9 @@ namespace XSerializer.Tests
             var json = serializer.Serialize(instance);
 
             var expected =
-                "\""
-                + encryptionMechanism.Encrypt(@"{""Qux"":""abc"",""Garply"":true}", null, null)
-                + "\"";
+                @""""
+                + encryptionMechanism.Encrypt(@"{""Qux"":""abc"",""Garply"":true}")
+                + @"""";
 
             Assert.That(json, Is.EqualTo(expected));
         }
@@ -112,7 +112,7 @@ namespace XSerializer.Tests
 
             var expected =
                 @"{""Qux"":"""
-                + encryptionMechanism.Encrypt(@"""abc""", null, null)
+                + encryptionMechanism.Encrypt(@"""abc""")
                 + @""",""Garply"":true}";
 
             Assert.That(json, Is.EqualTo(expected));
@@ -149,13 +149,13 @@ namespace XSerializer.Tests
 
             var expected =
                 @"{""Grault"":"
-                    + "\""
-                    + encryptionMechanism.Encrypt(@"{""Qux"":""abc"",""Garply"":true}", null, null)
-                    + "\""
+                    + @""""
+                    + encryptionMechanism.Encrypt(@"{""Qux"":""abc"",""Garply"":true}")
+                    + @""""
                 + @",""Waldo"":"
-                    + "\""
-                    + encryptionMechanism.Encrypt(@"{""Qux"":""abc"",""Garply"":true}", null, null)
-                    + "\""
+                    + @""""
+                    + encryptionMechanism.Encrypt(@"{""Qux"":""abc"",""Garply"":true}")
+                    + @""""
                 + @"}";
 
             Assert.That(json, Is.EqualTo(expected));

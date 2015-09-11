@@ -242,6 +242,24 @@ namespace XSerializer
             return isSerializable;
         }
 
+        public static bool IsJsonSerializable(this PropertyInfo property, IEnumerable<ParameterInfo> constructorParameters)
+        {
+            if (property.DeclaringType.IsAnonymous())
+            {
+                return true;
+            }
+
+            if (Attribute.IsDefined(property, typeof(JsonIgnoreAttribute))
+                || Attribute.GetCustomAttributes(property).Any(attribute =>
+                    attribute.GetType().FullName == "Newtonsoft.Json.JsonIgnoreAttribute"))
+            {
+                return false;
+            }
+
+            var isSerializable = property.GetIndexParameters().Length == 0 && (property.IsReadWriteProperty() || property.IsSerializableReadOnlyProperty(constructorParameters));
+            return isSerializable;
+        }
+        
         internal static bool IsReadWriteProperty(this PropertyInfo property)
         {
             var isReadWriteProperty = property.HasPublicGetter() && property.HasPublicSetter();

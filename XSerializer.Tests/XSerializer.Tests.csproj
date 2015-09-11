@@ -54,9 +54,11 @@
     <Compile Include="ArrayTests.cs" />
     <Compile Include="AttributeTests.cs" />
     <Compile Include="BclXmlSerializerExtensions.cs" />
+    <Compile Include="BooleanJsonSerializerTests.cs" />
     <Compile Include="CustomJsonSerializerTests.cs" />
     <Compile Include="DateTimeOffsetTests.cs" />
     <Compile Include="DefaultDocumentNamespaceTests.cs" />
+    <Compile Include="DictionaryJsonSerializerTests.cs" />
     <Compile Include="DynamicJsonSerializerTests.cs" />
     <Compile Include="Encryption\Base64EncryptionMechanism.cs" />
     <Compile Include="Encryption\EncryptionTests.cs" />
@@ -67,7 +69,9 @@
     <Compile Include="JsonReaderTests.cs" />
     <Compile Include="JsonSerializerFactoryTests.cs" />
     <Compile Include="JsonWriterTests.cs" />
+    <Compile Include="ListJsonSerializerTests.cs" />
     <Compile Include="NilTests.cs" />
+    <Compile Include="NumberJsonSerializerTests.cs" />
     <Compile Include="OptionsExtensions.cs" />
     <Compile Include="PrimitiveArrayTests.cs" />
     <Compile Include="ConditionalSerializationTests.cs" />
@@ -93,6 +97,7 @@
     <Compile Include="SerializationTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SerializeToStreamTests.cs" />
+    <Compile Include="StringJsonSerializerTests.cs" />
     <Compile Include="StripXsiXsdExtension.cs" />
     <Compile Include="SerializerOfNestedGenericTypeTests.cs" />
     <Compile Include="TestClasses.cs" />

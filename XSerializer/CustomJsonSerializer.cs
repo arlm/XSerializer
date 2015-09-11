@@ -14,10 +14,10 @@ namespace XSerializer
 
         private CustomJsonSerializer(Type type, bool encrypt)
         {
-            _encrypt = encrypt;
+            _encrypt = encrypt || Attribute.GetCustomAttribute(type, typeof(EncryptAttribute)) != null;
 
             _serializableProperties = type.GetProperties()
-                .Where(p => p.IsSerializable(type.GetConstructors().SelectMany(c => c.GetParameters())))
+                .Where(p => p.IsJsonSerializable(type.GetConstructors().SelectMany(c => c.GetParameters())))
                 .Select(p => new SerializableJsonProperty(p, _encrypt || p.GetCustomAttributes(typeof(EncryptAttribute), false).Any()))
                 .ToArray();
         }

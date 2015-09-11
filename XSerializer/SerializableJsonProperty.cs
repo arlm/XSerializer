@@ -16,7 +16,7 @@ namespace XSerializer
 
         public void WriteValue(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
         {
-            var value = _propertyInfo.GetValue(instance, null);
+            var value = _propertyInfo.GetValue(instance, null); // TODO: Optimize this
             writer.WriteValue(_propertyInfo.Name);
             writer.WriteNameValueSeparator();
             _serializer.Value.SerializeObject(writer, value, info);
