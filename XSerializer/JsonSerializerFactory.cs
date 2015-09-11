@@ -20,8 +20,12 @@ namespace XSerializer
                 Tuple.Create(type, encryptAttribute != null),
                 _ =>
                 {
-                    // TODO: Implement
-                    return null;
+                    if (type == typeof(object))
+                    {
+                        return DynamicJsonSerializer.Instance;
+                    }
+
+                    throw new NotImplementedException();
                 });
         }
     }

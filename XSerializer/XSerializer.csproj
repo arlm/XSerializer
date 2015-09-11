@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DynamicJsonSerializer.cs" />
     <Compile Include="Encryption\ClearTextEncryptionMechanism.cs" />
     <Compile Include="CustomSerializer.cs" />
     <Compile Include="DictionarySerializer.cs" />
