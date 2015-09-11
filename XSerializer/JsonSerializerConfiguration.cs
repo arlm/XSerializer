@@ -8,7 +8,6 @@ namespace XSerializer
         public JsonSerializerConfiguration()
         {
             Encoding = Encoding.UTF8;
-            EncryptionMechanism = new ClearTextEncryptionMechanism();
         }
 
         public Encoding Encoding { get; set; }

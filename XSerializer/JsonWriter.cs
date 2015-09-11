@@ -30,7 +30,7 @@ namespace XSerializer
             get { return _encryptWrites; }
             set
             {
-                if (value != _encryptWrites)
+                if (value == _encryptWrites)
                 {
                     return;
                 }
@@ -45,14 +45,25 @@ namespace XSerializer
                 }
                 else
                 {
-                    // We're ending an encrypt session
-                    var encryptedValue = _info.EncryptionMechanism.Encrypt(
-                        _encryptingStringWriter.GetStringBuilder().ToString(),
-                        _info.EncryptKey,
-                        _info.SerializationState);
-
+                    var plainText = _encryptingStringWriter.GetStringBuilder().ToString();
                     _encryptingStringWriter = null;
-                    WriteValue(encryptedValue);
+
+                    // We're ending an encrypt session - encrypt if a mechanism exists.
+                    if (_info.EncryptionMechanism != null)
+                    {
+                        var encryptedValue =
+                            _info.EncryptionMechanism.Encrypt(
+                                plainText,
+                                _info.EncryptKey,
+                                _info.SerializationState);
+
+                        WriteValue(encryptedValue);
+                    }
+                    else
+                    {
+                        // No encryption mechanism exists - just write the plain text.
+                        Writer.Write(plainText);
+                    }
                 }
             }
         }

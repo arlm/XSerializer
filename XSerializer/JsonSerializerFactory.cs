@@ -1,12 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Dynamic;
-using System.Globalization;
-using System.Linq;
-using System.Xml;
-using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -14,18 +8,45 @@ namespace XSerializer
     {
         private static readonly ConcurrentDictionary<Tuple<Type, bool>, IJsonSerializerInternal> _cache = new ConcurrentDictionary<Tuple<Type, bool>, IJsonSerializerInternal>();
 
-        public static IJsonSerializerInternal GetSerializer(Type type, EncryptAttribute encryptAttribute)
+        public static IJsonSerializerInternal GetSerializer(Type type, bool encrypt)
         {
             return _cache.GetOrAdd(
-                Tuple.Create(type, encryptAttribute != null),
+                Tuple.Create(type, encrypt),
                 _ =>
                 {
                     if (type == typeof(object))
                     {
-                        return DynamicJsonSerializer.Instance;
+                        return DynamicJsonSerializer.Get(encrypt);
                     }
 
-                    throw new NotImplementedException();
+                    if (type == typeof(string))
+                    {
+                        return StringJsonSerializer.Get(encrypt);
+                    }
+
+                    if (type == typeof(double)) // TODO: handler more number types.
+                    {
+                        return NumberJsonSerializer.Get(encrypt);
+                    }
+
+                    if (type == typeof(bool))
+                    {
+                        return BooleanJsonSerializer.Get(encrypt);
+                    }
+
+                    if (type.IsAssignableToGenericIDictionaryOfStringToAnything())
+                    {
+                        return DictionaryJsonSerializer.Get(type, encrypt);
+                    }
+
+                    if (typeof(IEnumerable).IsAssignableFrom(type))
+                    {
+                        return ListJsonSerializer.Get(type, encrypt);
+                    }
+
+                    // TODO: Handle more types or possibly black-list some types or types of types.
+
+                    return CustomJsonSerializer.Get(type, encrypt);
                 });
         }
     }

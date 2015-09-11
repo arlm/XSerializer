@@ -549,6 +549,18 @@ namespace XSerializer
             return iDictionaryType.GetGenericArguments()[0] == typeof(object) || iDictionaryType.GetGenericArguments()[1] == typeof(object);
         }
 
+        internal static bool IsAssignableToGenericIDictionaryOfStringToAnything(this Type type)
+        {
+            if (type.IsAssignableToGenericIDictionary())
+            {
+                var dictionaryType = type.GetGenericIDictionaryType();
+                var args = dictionaryType.GetGenericArguments();
+                return args[0] == typeof(string);
+            }
+
+            return false;
+        }
+
         internal static bool IsAssignableToNonGenericIEnumerable(this Type type)
         {
             var isAssignableToIEnumerable = typeof(IEnumerable).IsAssignableFrom(type);

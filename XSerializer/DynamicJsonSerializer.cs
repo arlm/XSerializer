@@ -1,22 +1,26 @@
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq.Expressions;
 
 namespace XSerializer
 {
     internal sealed class DynamicJsonSerializer : IJsonSerializerInternal
     {
-        public static readonly DynamicJsonSerializer Instance = new DynamicJsonSerializer();
+        private static readonly Lazy<DynamicJsonSerializer> _clearText = new Lazy<DynamicJsonSerializer>(() => new DynamicJsonSerializer(false));
+        private static readonly Lazy<DynamicJsonSerializer> _encrypted = new Lazy<DynamicJsonSerializer>(() => new DynamicJsonSerializer(true));
+
+        private readonly ConcurrentDictionary<Tuple<Type, bool>, IJsonSerializerInternal> _serializerCache = new ConcurrentDictionary<Tuple<Type, bool>, IJsonSerializerInternal>();
         
-        private readonly ConcurrentDictionary<Type, Func<object, string>> _getKeyFuncCache = new ConcurrentDictionary<Type, Func<object, string>>();
-        private readonly ConcurrentDictionary<Type, Func<object, object>> _getValueFuncCache = new ConcurrentDictionary<Type, Func<object, object>>();
+        private readonly bool _encrypt;
 
-        private readonly ConcurrentDictionary<Type, Action<JsonWriter, object>> _writeInstanceActionCache = new ConcurrentDictionary<Type, Action<JsonWriter, object>>();
-
-        private DynamicJsonSerializer()
+        private DynamicJsonSerializer(bool encrypt)
         {
+            _encrypt = encrypt;
+        }
+
+        public static DynamicJsonSerializer Get(bool encrypt)
+        {
+            return encrypt ? _encrypted.Value : _clearText.Value;
         }
 
         public void SerializeObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
@@ -27,175 +31,48 @@ namespace XSerializer
             }
             else
             {
-                var writeInstance =
-                    _writeInstanceActionCache.GetOrAdd(
-                        instance.GetType(),
-                        type => GetWriteInstanceAction(type, info));
+                var toggler = new EncryptWritesToggler(writer);
 
-                writeInstance(writer, instance);
+                if (_encrypt)
+                {
+                    toggler.Toggle();
+                }
+
+                var serializer = _serializerCache.GetOrAdd(Tuple.Create(instance.GetType(), _encrypt), tuple => GetSerializer(tuple.Item1));
+                serializer.SerializeObject(writer, instance, info);
+
+                toggler.Revert();
             }
         }
 
-        private Action<JsonWriter, object> GetWriteInstanceAction(Type type, IJsonSerializeOperationInfo info)
+        private IJsonSerializerInternal GetSerializer(Type type)
         {
             if (type == typeof(string))
             {
-                return (writer, instance) => writer.WriteValue((string)instance);
+                return StringJsonSerializer.Get(_encrypt);
             }
             
             if (type == typeof(double))
             {
-                return (writer, instance) => writer.WriteValue((double)instance);
+                return NumberJsonSerializer.Get(_encrypt);
             }
             
             if (type == typeof(bool))
             {
-                return (writer, instance) => writer.WriteValue((bool)instance);
+                return BooleanJsonSerializer.Get(_encrypt);
             }
             
-            if (typeof(IDictionary<string, object>).IsAssignableFrom(type))
+            if (type.IsAssignableToGenericIDictionaryOfStringToAnything())
             {
-                return (writer, instance) =>
-                {
-                    writer.WriteOpenObject();
-
-                    var dictionary = (IDictionary<string, object>)instance;
-
-                    var first = true;
-
-                    foreach (var item in dictionary)
-                    {
-                        if (first)
-                        {
-                            first = false;
-                        }
-                        else
-                        {
-                            writer.WriteItemSeparator();
-                        }
-
-                        writer.WriteValue(item.Key);
-                        writer.WriteNameValueSeparator();
-                        SerializeObject(writer, item.Value, info);
-                    }
-
-                    writer.WriteCloseObject();
-                };
-            }
-            
-            if (IsAssignableToGenericIDictionaryOfStringToAnything(type))
-            {
-                return (writer, instance) =>
-                {
-                    writer.WriteOpenObject();
-
-                    var dictionary = (IEnumerable)instance;
-
-                    var first = true;
-
-                    Func<object, string> getKeyFunc = null;
-                    Func<object, object> getValueFunc = null;
-
-                    foreach (var item in dictionary)
-                    {
-                        var itemType = item.GetType();
-
-                        if (first)
-                        {
-                            first = false;
-                            getKeyFunc = _getKeyFuncCache.GetOrAdd(itemType, GetGetKeyFunc);
-                            getValueFunc = _getValueFuncCache.GetOrAdd(itemType, GetGetValueFunc);
-                        }
-                        else
-                        {
-                            writer.WriteItemSeparator();
-                        }
-
-                        writer.WriteValue(getKeyFunc(item));
-                        writer.WriteNameValueSeparator();
-                        SerializeObject(writer, getValueFunc(item), info);
-                    }
-
-                    writer.WriteCloseObject();
-                };
+                return DictionaryJsonSerializer.Get(type, _encrypt);
             }
             
             if (typeof(IEnumerable).IsAssignableFrom(type))
             {
-                return (writer, instance) =>
-                {
-                    writer.WriteOpenArray();
-
-                    var enumerable = (IEnumerable)instance;
-
-                    var first = true;
-
-                    foreach (var item in enumerable)
-                    {
-                        if (first)
-                        {
-                            first = false;
-                        }
-                        else
-                        {
-                            writer.WriteItemSeparator();
-                        }
-
-                        SerializeObject(writer, item, info);
-                    }
-
-                    writer.WriteCloseArray();
-                };
+                return ListJsonSerializer.Get(type, _encrypt);
             }
             
             throw new NotSupportedException(string.Format("The type, '{0}', is not supported.", type));
-        }
-
-        private static bool IsAssignableToGenericIDictionaryOfStringToAnything(Type type)
-        {
-            if (type.IsAssignableToGenericIDictionary())
-            {
-                var dictionaryType = type.GetGenericIDictionaryType();
-                var args = dictionaryType.GetGenericArguments();
-                return args[0] == typeof(string);
-            }
-
-            return false;
-        }
-
-        private static Func<object, string> GetGetKeyFunc(Type keyValuePairType)
-        {
-            var parameter = Expression.Parameter(typeof(object), "keyValuePair");
-
-            var propertyInfo = keyValuePairType.GetProperty("Key");
-
-            Expression body =
-                    Expression.Property(
-                        Expression.Convert(parameter, keyValuePairType),
-                        propertyInfo);
-
-            var lambda = Expression.Lambda<Func<object, string>>(body, new[] { parameter });
-            return lambda.Compile();
-        }
-
-        private static Func<object, object> GetGetValueFunc(Type keyValuePairType)
-        {
-            var parameter = Expression.Parameter(typeof(object), "keyValuePair");
-
-            var propertyInfo = keyValuePairType.GetProperty("Value");
-
-            Expression body =
-                Expression.Property(
-                    Expression.Convert(parameter, keyValuePairType),
-                    propertyInfo);
-
-            if (propertyInfo.PropertyType.IsValueType)
-            {
-                body = Expression.Convert(body, typeof(object));
-            }
-
-            var lambda = Expression.Lambda<Func<object, object>>(body, new[] { parameter });
-            return lambda.Compile();
         }
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)

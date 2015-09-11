@@ -54,6 +54,7 @@
     <Compile Include="ArrayTests.cs" />
     <Compile Include="AttributeTests.cs" />
     <Compile Include="BclXmlSerializerExtensions.cs" />
+    <Compile Include="CustomJsonSerializerTests.cs" />
     <Compile Include="DateTimeOffsetTests.cs" />
     <Compile Include="DefaultDocumentNamespaceTests.cs" />
     <Compile Include="DynamicJsonSerializerTests.cs" />
