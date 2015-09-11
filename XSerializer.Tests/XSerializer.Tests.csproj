@@ -64,6 +64,7 @@
     <Compile Include="GuidTests.cs" />
     <Compile Include="JsonReaderTests.cs" />
     <Compile Include="JsonSerializerFactoryTests.cs" />
+    <Compile Include="JsonWriterTests.cs" />
     <Compile Include="NilTests.cs" />
     <Compile Include="OptionsExtensions.cs" />
     <Compile Include="PrimitiveArrayTests.cs" />

@@ -7,10 +7,10 @@ namespace XSerializer
     {
         string Serialize(object instance);
         void Serialize(Stream stream, object instance);
-        void Serialize(TextWriter writer, object instance);
+        void Serialize(TextWriter textWriter, object instance);
         object Deserialize(string data);
         object Deserialize(Stream stream);
-        object Deserialize(TextReader reader);
+        object Deserialize(TextReader textReader);
     }
 
     [Obsolete]

@@ -60,7 +60,7 @@ namespace XSerializer
 
             using (var writer = new StringWriterWithEncoding(sb, _configuration.Encoding))
             {
-                _serializer.SerializeObject(writer, instance, GetJsonSerializeOperationInfo());
+                ((IXSerializer)this).Serialize(writer, instance);
             }
 
             return sb.ToString();
@@ -75,7 +75,7 @@ namespace XSerializer
         {
             using (var writer = new StreamWriter(stream, _configuration.Encoding))
             {
-                _serializer.SerializeObject(writer, instance, GetJsonSerializeOperationInfo());
+                ((IXSerializer)this).Serialize(writer, instance);
             }
         }
 
@@ -84,26 +84,26 @@ namespace XSerializer
             ((IXSerializer)this).Serialize(stream, instance);
         }
 
-        void IXSerializer.Serialize(TextWriter writer, object instance)
+        void IXSerializer.Serialize(TextWriter textWriter, object instance)
         {
-            _serializer.SerializeObject(writer, instance, GetJsonSerializeOperationInfo());
+            var info = GetJsonSerializeOperationInfo();
+
+            using (var writer = new JsonWriter(textWriter, info))
+            {
+                _serializer.SerializeObject(writer, instance, info);
+            }
         }
 
-        public void Serialize(TextWriter writer, T instance)
+        public void Serialize(TextWriter textWriter, T instance)
         {
-            ((IXSerializer)this).Serialize(writer, instance);
+            ((IXSerializer)this).Serialize(textWriter, instance);
         }
 
         object IXSerializer.Deserialize(string json)
         {
-            using (var stringReader = new StringReader(json))
+            using (var reader = new StringReader(json))
             {
-                var info = GetJsonSerializeOperationInfo();
-
-                using (var reader = new JsonReader(stringReader, info))
-                {
-                    return _serializer.DeserializeObject(reader, info);
-                }
+                return ((IXSerializer)this).Deserialize(reader);
             }
         }
 
@@ -114,14 +114,9 @@ namespace XSerializer
 
         object IXSerializer.Deserialize(Stream stream)
         {
-            using (var streamReader = new StreamReader(stream, _configuration.Encoding))
+            using (var reader = new StreamReader(stream, _configuration.Encoding))
             {
-                var info = GetJsonSerializeOperationInfo();
-
-                using (var reader = new JsonReader(streamReader, info))
-                {
-                    return _serializer.DeserializeObject(reader, info);
-                }
+                return ((IXSerializer)this).Deserialize(reader);
             }
         }
 
@@ -130,19 +125,19 @@ namespace XSerializer
             return (T)((IXSerializer)this).Deserialize(stream);
         }
 
-        object IXSerializer.Deserialize(TextReader reader)
+        object IXSerializer.Deserialize(TextReader textReader)
         {
             var info = GetJsonSerializeOperationInfo();
 
-            using (var jsonReader = new JsonReader(reader, info))
+            using (var reader = new JsonReader(textReader, info))
             {
-                return _serializer.DeserializeObject(jsonReader, info);
+                return _serializer.DeserializeObject(reader, info);
             }
         }
 
-        public T Deserialize(TextReader reader)
+        public T Deserialize(TextReader textReader)
         {
-            return (T)((IXSerializer)this).Deserialize(reader);
+            return (T)((IXSerializer)this).Deserialize(textReader);
         }
 
         private IJsonSerializeOperationInfo GetJsonSerializeOperationInfo()

@@ -6,7 +6,7 @@ using XSerializer.Tests.Encryption;
 
 namespace XSerializer.Tests
 {
-    public class JsonReaderTests
+    internal class JsonReaderTests
     {
         [TestCase("true", new[] { JsonNodeType.Boolean })]
         [TestCase("false", new[] { JsonNodeType.Boolean })]
