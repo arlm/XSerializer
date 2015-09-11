@@ -45,34 +45,34 @@ namespace XSerializer
             }
         }
 
-        private IJsonSerializerInternal GetSerializer(Type type)
+        private IJsonSerializerInternal GetSerializer(Type concreteType)
         {
-            if (type == typeof(string))
+            if (concreteType == typeof(string))
             {
                 return StringJsonSerializer.Get(_encrypt);
             }
             
-            if (type == typeof(double))
+            if (concreteType == typeof(double))
             {
                 return NumberJsonSerializer.Get(_encrypt);
             }
             
-            if (type == typeof(bool))
+            if (concreteType == typeof(bool))
             {
                 return BooleanJsonSerializer.Get(_encrypt);
             }
             
-            if (type.IsAssignableToGenericIDictionaryOfStringToAnything())
+            if (concreteType.IsAssignableToGenericIDictionaryOfStringToAnything())
             {
-                return DictionaryJsonSerializer.Get(type, _encrypt);
+                return DictionaryJsonSerializer.Get(concreteType, _encrypt);
             }
             
-            if (typeof(IEnumerable).IsAssignableFrom(type))
+            if (typeof(IEnumerable).IsAssignableFrom(concreteType))
             {
-                return ListJsonSerializer.Get(type, _encrypt);
+                return ListJsonSerializer.Get(concreteType, _encrypt);
             }
             
-            throw new NotSupportedException(string.Format("The type, '{0}', is not supported.", type));
+            return CustomJsonSerializer.Get(concreteType, _encrypt);
         }
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)

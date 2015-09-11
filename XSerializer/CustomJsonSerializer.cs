@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -17,7 +18,7 @@ namespace XSerializer
 
             _serializableProperties = type.GetProperties()
                 .Where(p => p.IsSerializable(type.GetConstructors().SelectMany(c => c.GetParameters())))
-                .Select(p => new SerializableJsonProperty(p, _encrypt))
+                .Select(p => new SerializableJsonProperty(p, _encrypt || p.GetCustomAttributes(typeof(EncryptAttribute), false).Any()))
                 .ToArray();
         }
 

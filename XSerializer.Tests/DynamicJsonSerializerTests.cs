@@ -54,5 +54,25 @@ namespace XSerializer.Tests
 
             Assert.That(json, Is.EqualTo("[123,true,false,null,{\"foo\":\"bar\"}]"));
         }
+
+        [Test]
+        public void CanSerializeCustomObject()
+        {
+            var instance = new CustomJsonSerializerTests.Bar
+            {
+                Baz = new CustomJsonSerializerTests.Baz
+                {
+                    Qux = "abc",
+                    Garply = true
+                },
+                Corge = 123.45
+            };
+
+            var serializer = new JsonSerializer<object>();
+
+            var json = serializer.Serialize(instance);
+
+            Assert.That(json, Is.EqualTo(@"{""Baz"":{""Qux"":""abc"",""Garply"":true},""Corge"":123.45}"));
+        }
     }
 }
