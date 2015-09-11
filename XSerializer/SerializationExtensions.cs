@@ -92,7 +92,7 @@ namespace XSerializer
 
             try
             {
-                streamWriter = new StreamWriter(stream, encoding ?? Encoding.UTF8);
+                streamWriter = new StreamWriter(stream, encoding ?? Encoding.UTF8); 
 
                 var xmlWriter = new XSerializerXmlTextWriter(streamWriter, options)
                 {
@@ -897,22 +897,6 @@ namespace XSerializer
                 var key = typeof(T).GetHashCode();
                 key = (key * 397) ^ typeName.GetHashCode();
                 return key;
-            }
-        }
-
-        private class StringWriterWithEncoding : StringWriter
-        {
-            private readonly Encoding _encoding;
-
-            public StringWriterWithEncoding(StringBuilder sb, Encoding encoding)
-                : base(sb)
-            {
-                _encoding = encoding;
-            }
-
-            public override Encoding Encoding
-            {
-                get { return _encoding; }
             }
         }
     }

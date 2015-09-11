@@ -62,6 +62,7 @@
     <Compile Include="Encryption\SerializationStateExtensions.cs" />
     <Compile Include="Encryption\SerializationStateTests.cs" />
     <Compile Include="GuidTests.cs" />
+    <Compile Include="JsonSerializerFactoryTests.cs" />
     <Compile Include="NilTests.cs" />
     <Compile Include="OptionsExtensions.cs" />
     <Compile Include="PrimitiveArrayTests.cs" />
