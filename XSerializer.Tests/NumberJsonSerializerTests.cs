@@ -52,6 +52,18 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void CanDeserializeWithWhitespace()
+        {
+            const string json = "  123.45  ";
+
+            var serializer = new JsonSerializer<double>();
+
+            var value = serializer.Deserialize(json);
+
+            Assert.That(value, Is.EqualTo(123.45));
+        }
+
+        [Test]
         public void CanDeserializeEncrypted()
         {
             var encryptionMechanism = new Base64EncryptionMechanism();

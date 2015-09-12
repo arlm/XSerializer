@@ -37,7 +37,7 @@ namespace XSerializer
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
         {
-            if (!reader.Read())
+            if (!reader.ReadContent())
             {
                 throw new XSerializerException("Reached end of stream while parsing boolean value.");
             }
@@ -49,7 +49,10 @@ namespace XSerializer
 
             if (reader.NodeType != JsonNodeType.Boolean)
             {
-                throw new XSerializerException(string.Format("Unexpected node type '{0}' encountered in '{1}.DeserializeObject' method.", reader.NodeType, typeof(BooleanJsonSerializer)));
+                throw new XSerializerException(string.Format(
+                    "Unexpected node type '{0}' encountered in '{1}.DeserializeObject' method.",
+                    reader.NodeType,
+                    typeof(BooleanJsonSerializer)));
             }
 
             return reader.Value;

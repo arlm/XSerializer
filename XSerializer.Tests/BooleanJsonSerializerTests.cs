@@ -43,6 +43,7 @@ namespace XSerializer.Tests
 
         [TestCase("true", true)]
         [TestCase("false", false)]
+        [TestCase("  true  ", true, TestName = "with whitespace")]
         public void CanDeserialize(string json, bool expected)
         {
             var serializer = new JsonSerializer<bool>();
