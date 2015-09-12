@@ -44,7 +44,22 @@ namespace XSerializer
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
         {
-            throw new NotImplementedException();
+            if (!reader.Read())
+            {
+                throw new XSerializerException("Reached end of stream while parsing string value.");
+            }
+
+            if (_encrypt)
+            {
+                reader.DecryptCurrentStringValue();
+            }
+
+            if (reader.NodeType != JsonNodeType.String)
+            {
+                throw new XSerializerException(string.Format("Unexpected node type '{0}' encountered in '{1}.DeserializeObject' method.", reader.NodeType, typeof(StringJsonSerializer)));
+            }
+
+            return reader.Value;
         }
     }
 }

@@ -55,6 +55,10 @@ namespace XSerializer
             // TODO: Something?
         }
 
+        /// <summary>
+        /// Reads the next node from the stream.
+        /// </summary>
+        /// <returns>true if the next node was read successfully; false if there are no more nodes to read.</returns>
         public bool Read()
         {
             var next = Reader.Peek();

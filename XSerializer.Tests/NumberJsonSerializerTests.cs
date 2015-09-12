@@ -38,5 +38,40 @@ namespace XSerializer.Tests
 
             Assert.That(json, Is.EqualTo(expected));
         }
+
+        [Test]
+        public void CanDeserialize()
+        {
+            const string json = "123.45";
+
+            var serializer = new JsonSerializer<double>();
+
+            var value = serializer.Deserialize(json);
+
+            Assert.That(value, Is.EqualTo(123.45));
+        }
+
+        [Test]
+        public void CanDeserializeEncrypted()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var configuration = new JsonSerializerConfiguration
+            {
+                EncryptionMechanism = encryptionMechanism,
+                EncryptionEnabled = true,
+                EncryptRootObject = true
+            };
+
+            var serializer = new JsonSerializer<double>(configuration);
+
+            var json = @""""
+                + encryptionMechanism.Encrypt("123.45")
+                + @"""";
+
+            var value = serializer.Deserialize(json);
+
+            Assert.That(value, Is.EqualTo(123.45));
+        }
     }
 }

@@ -37,7 +37,22 @@ namespace XSerializer
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
         {
-            throw new NotImplementedException();
+            if (!reader.Read())
+            {
+                throw new XSerializerException("Reached end of stream while parsing boolean value.");
+            }
+
+            if (_encrypt)
+            {
+                reader.DecryptCurrentStringValue();
+            }
+
+            if (reader.NodeType != JsonNodeType.Boolean)
+            {
+                throw new XSerializerException(string.Format("Unexpected node type '{0}' encountered in '{1}.DeserializeObject' method.", reader.NodeType, typeof(BooleanJsonSerializer)));
+            }
+
+            return reader.Value;
         }
     }
 }
