@@ -56,6 +56,26 @@ namespace XSerializer
         }
 
         /// <summary>
+        /// Reads the next non-whitespace node from the stream.
+        /// </summary>
+        /// <returns>true if the next node was read successfully; false if there are no more nodes to read.</returns>
+        public bool ReadContent()
+        {
+            while (true)
+            {
+                if (!Read())
+                {
+                    return false;
+                }
+
+                if (NodeType != JsonNodeType.Whitespace)
+                {
+                    return true;
+                }
+            }
+        }
+
+        /// <summary>
         /// Reads the next node from the stream.
         /// </summary>
         /// <returns>true if the next node was read successfully; false if there are no more nodes to read.</returns>
@@ -168,14 +188,14 @@ namespace XSerializer
 
             while (true)
             {
-                var peek = Reader.Read();
+                var read = Reader.Read();
 
-                if (peek == -1)
+                if (read == -1)
                 {
                     throw new XSerializerException("Reached end of input before closing quote was found for string.");
                 }
 
-                var c = (char)peek;
+                var c = (char)read;
 
                 switch (c)
                 {
