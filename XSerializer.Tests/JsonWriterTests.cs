@@ -19,7 +19,7 @@ namespace XSerializer.Tests
 
             var s = sb.ToString();
 
-            Assert.That(s, Is.EqualTo("\"Hello, world!\""));
+            Assert.That(s, Is.EqualTo(@"""Hello, world!"""));
         }
 
         [Test]
@@ -30,12 +30,14 @@ namespace XSerializer.Tests
             using (var stringWriter = new StringWriter(sb))
             {
                 var writer = new JsonWriter(stringWriter, new JsonSerializeOperationInfo());
-                writer.WriteValue("\"Ow.\"\r\n-My Pancreas");
+                writer.WriteValue(
+@"""Ow.""
+	-My Pancreas");
             }
 
             var s = sb.ToString();
 
-            Assert.That(s, Is.EqualTo("\"\\\"Ow.\\\"\\r\\n-My Pancreas\""));
+            Assert.That(s, Is.EqualTo(@"""\""Ow.\""\r\n\t-My Pancreas"""));
         }
 
         [Test]
@@ -238,7 +240,7 @@ namespace XSerializer.Tests
 
             var s = sb.ToString();
 
-            Assert.That(s, Is.EqualTo("{\"foo\":\"bar\",\"baz\":[1,2,3]}"));
+            Assert.That(s, Is.EqualTo(@"{""foo"":""bar"",""baz"":[1,2,3]}"));
         }
     }
 }

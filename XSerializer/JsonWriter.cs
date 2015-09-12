@@ -77,15 +77,7 @@ namespace XSerializer
             else
             {
                 Writer.Write('"');
-                Writer.Write(value
-                        .Replace("\\", "\\\\")
-                        .Replace("\"", "\\\"")
-                        .Replace("/", "\\/")
-                        .Replace("\b", "\\b")
-                        .Replace("\f", "\\f")
-                        .Replace("\n", "\\n")
-                        .Replace("\r", "\\r")
-                        .Replace("\t", "\\t"));
+                Writer.Write(Escape(value));
                 Writer.Write('"');
             }
         }
@@ -143,6 +135,90 @@ namespace XSerializer
         public void Dispose()
         {
             // TODO: Something?
+        }
+
+        private static string Escape(string value)
+        {
+            int flags = 0;
+
+            // ReSharper disable once ForCanBeConvertedToForeach
+            for (int i = 0; i < value.Length; i++)
+            {
+                switch (value[i])
+                {
+                    case '\\':
+                        flags |= 0x01;
+                        break;
+                    case '"':
+                        flags |= 0x02;
+                        break;
+                    case '/':
+                        flags |= 0x04;
+                        break;
+                    case '\b':
+                        flags |= 0x08;
+                        break;
+                    case '\f':
+                        flags |= 0x10;
+                        break;
+                    case '\n':
+                        flags |= 0x20;
+                        break;
+                    case '\r':
+                        flags |= 0x40;
+                        break;
+                    case '\t':
+                        flags |= 0x80;
+                        break;
+                }
+            }
+
+            if (flags == 0)
+            {
+                return value;
+            }
+
+            if ((flags & 0x01) == 0x01)
+            {
+                value = value.Replace(@"\", @"\\");
+            }
+
+            if ((flags & 0x02) == 0x02)
+            {
+                value = value.Replace(@"""", @"\""");
+            }
+
+            if ((flags & 0x04) == 0x04)
+            {
+                value = value.Replace("/", @"\/");
+            }
+
+            if ((flags & 0x08) == 0x08)
+            {
+                value = value.Replace("\b", @"\b");
+            }
+
+            if ((flags & 0x10) == 0x10)
+            {
+                value = value.Replace("\f", @"\f");
+            }
+
+            if ((flags & 0x20) == 0x20)
+            {
+                value = value.Replace("\n", @"\n");
+            }
+
+            if ((flags & 0x40) == 0x40)
+            {
+                value = value.Replace("\r", @"\r");
+            }
+
+            if ((flags & 0x80) == 0x80)
+            {
+                value = value.Replace("\t", @"\t");
+            }
+
+            return value;
         }
     }
 }
