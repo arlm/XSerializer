@@ -42,9 +42,11 @@ namespace XSerializer
                 throw new XSerializerException("Reached end of stream while parsing boolean value.");
             }
 
+            var toggler = new DecryptReadsToggler(reader);
+
             if (_encrypt)
             {
-                reader.DecryptCurrentStringValue();
+                toggler.Toggle();
             }
 
             if (reader.NodeType != JsonNodeType.Boolean)
@@ -55,7 +57,14 @@ namespace XSerializer
                     typeof(BooleanJsonSerializer)));
             }
 
-            return reader.Value;
+            try
+            {
+                return reader.Value;
+            }
+            finally
+            {
+                toggler.Revert();
+            }
         }
     }
 }

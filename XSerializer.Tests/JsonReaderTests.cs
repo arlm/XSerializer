@@ -49,11 +49,11 @@ namespace XSerializer.Tests
 
             var reader = new JsonReader(new StringReader(cipherTextJson), info);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.None));
-            
+
             reader.Read();
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.String));
 
-            reader.DecryptCurrentStringValue();
+            reader.DecryptReads = true;
 
             foreach (var expectedNodeType in expectedNodeTypes)
             {
@@ -61,7 +61,36 @@ namespace XSerializer.Tests
                 reader.Read();
             }
 
+            reader.DecryptReads = false;
+
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.None));
+        }
+
+        [Test]
+        public void ThrowsExceptionWhenSettingDecryptReadsToFalseBeforeEncryptedDataIsCompletelyConsumed()
+        {
+            var cipherTextJson = @"""" + Convert.ToBase64String(Encoding.UTF8.GetBytes(@"{""foo"":""bar""}")) + @"""";
+
+            var info = new JsonSerializeOperationInfo
+            {
+                EncryptionMechanism = new Base64EncryptionMechanism(),
+                EncryptionEnabled = true
+            };
+
+            var reader = new JsonReader(new StringReader(cipherTextJson), info);
+            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.None));
+
+            reader.Read();
+            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.String));
+
+            reader.DecryptReads = true;
+
+            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.OpenObject));
+
+            reader.Read();
+            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.String));
+
+            Assert.That(() => reader.DecryptReads = false, Throws.InvalidOperationException);
         }
 
         [Test]

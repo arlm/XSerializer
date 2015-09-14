@@ -10,6 +10,7 @@ namespace XSerializer
         private readonly IJsonSerializeOperationInfo _info;
 
         private StringReader _decryptedReader;
+        private bool _decryptReads;
 
         public JsonReader(TextReader reader, IJsonSerializeOperationInfo info)
         {
@@ -39,15 +40,38 @@ namespace XSerializer
             }
         }
 
-        public void DecryptCurrentStringValue()
+        public bool DecryptReads
         {
-            if (NodeType != JsonNodeType.String)
+            get { return _decryptReads; }
+            set
             {
-                throw new XSerializerException("Cannot decrypt non-string value.");
-            }
+                if (value == _decryptReads)
+                {
+                    return;
+                }
 
-            _decryptedReader = new StringReader(_info.EncryptionMechanism.Decrypt((string)Value, _info.EncryptKey, _info.SerializationState));
-            Read();
+                _decryptReads = value;
+
+                if (_decryptReads)
+                {
+                    if (NodeType != JsonNodeType.String)
+                    {
+                        throw new XSerializerException("Cannot decrypt non-string value.");
+                    }
+
+                    _decryptedReader = new StringReader(_info.EncryptionMechanism.Decrypt((string)Value, _info.EncryptKey, _info.SerializationState));
+                    Read();
+                }
+                else
+                {
+                    if (_decryptedReader.Peek() != -1)
+                    {
+                        throw new InvalidOperationException("Attempted to set DecryptReads to false before the encrypted stream has been consumed.");
+                    }
+
+                    _decryptedReader = null;
+                }
+            }
         }
 
         public void Dispose()

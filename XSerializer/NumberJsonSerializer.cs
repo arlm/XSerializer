@@ -42,9 +42,11 @@ namespace XSerializer
                 throw new XSerializerException("Reached end of stream while parsing number value.");
             }
 
+            var toggler = new DecryptReadsToggler(reader);
+
             if (_encrypt)
             {
-                reader.DecryptCurrentStringValue();
+                toggler.Toggle();
             }
 
             if (reader.NodeType != JsonNodeType.Number)
@@ -55,7 +57,14 @@ namespace XSerializer
                     typeof(NumberJsonSerializer)));
             }
 
-            return reader.Value;
+            try
+            {
+                return reader.Value;
+            }
+            finally
+            {
+                toggler.Revert();
+            }
         }
     }
 }

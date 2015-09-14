@@ -60,13 +60,32 @@ namespace XSerializer
     {
         /// <summary>
         /// Creates an instance of <see cref="Toggler{T}"/> that sets the <see cref="JsonWriter.EncryptWrites"/>
-        /// property of a <see cref="JsonWriter.EncryptWrites"/> to true when <see cref="Toggler{T}.Toggle"/>
+        /// property of a <see cref="JsonWriter"/> to true when <see cref="Toggler{T}.Toggle"/>
         /// is called.
         /// </summary>
         /// <param name="writer">The <see cref="JsonWriter"/> whose <see cref="JsonWriter.EncryptWrites"/>
         /// property is toggled.</param>
         public EncryptWritesToggler(JsonWriter writer)
             : base(x => writer.EncryptWrites = x, writer.EncryptWrites, true)
+        {
+        }
+    }
+
+    /// <summary>
+    /// A <see cref="Toggler{T}"/> that sets <see cref="JsonWriter.EncryptWrites"/> to true
+    /// when <see cref="Toggler{T}.Toggle"/> is called.
+    /// </summary>
+    internal class DecryptReadsToggler : Toggler<bool>
+    {
+        /// <summary>
+        /// Creates an instance of <see cref="Toggler{T}"/> that sets the <see cref="JsonReader.DecryptReads"/>
+        /// property of a <see cref="JsonReader"/> to true when <see cref="Toggler{T}.Toggle"/>
+        /// is called.
+        /// </summary>
+        /// <param name="reader">The <see cref="JsonReader"/> whose <see cref="JsonReader.DecryptReads"/>
+        /// property is toggled.</param>
+        public DecryptReadsToggler(JsonReader reader)
+            : base(x => reader.DecryptReads = x, reader.DecryptReads, true)
         {
         }
     }
