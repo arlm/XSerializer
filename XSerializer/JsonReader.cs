@@ -25,18 +25,7 @@ namespace XSerializer
         {
             get
             {
-                if (_decryptedReader == null)
-                {
-                    return _reader;
-                }
-
-                if (_decryptedReader.Peek() == -1)
-                {
-                    _decryptedReader = null;
-                    return _reader;
-                }
-
-                return _decryptedReader;
+                return _decryptedReader ?? _reader;
             }
         }
 
