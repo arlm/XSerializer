@@ -27,6 +27,20 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void CanDeserializeReadWriteProperties()
+        {
+            const string json = @"{""Baz"":{""Qux"":""abc"",""Garply"":true},""Corge"":123.45}";
+
+            var serializer = new JsonSerializer<Bar>();
+
+            var instance = serializer.Deserialize(json);
+
+            Assert.That(instance.Baz.Qux, Is.EqualTo("abc"));
+            Assert.That(instance.Baz.Garply, Is.EqualTo(true));
+            Assert.That(instance.Corge, Is.EqualTo(123.45));
+        }
+
+        [Test]
         public void CanSerializeWithEncryptRootObjectEnabled()
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
