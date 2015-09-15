@@ -125,6 +125,9 @@ namespace XSerializer.Tests
 
             var reader = new JsonReader(new StringReader(json), new JsonSerializeOperationInfo());
 
+            Assert.That(reader.ReadContent(), Is.True);
+            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.OpenObject));
+
             var enumerator = reader.ReadProperties().GetEnumerator();
 
             Assert.That(enumerator.MoveNext(), Is.True);
