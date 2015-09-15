@@ -41,6 +41,31 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void CanDeserializeEncryptedReadWriteProperties()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var json = @"{""Qux"":"""
+                + encryptionMechanism.Encrypt(@"""abc""")
+                + @""",""Garply"":"""
+                + encryptionMechanism.Encrypt("true")
+                + @"""}";
+
+            var configuration = new JsonSerializerConfiguration
+            {
+                EncryptionMechanism = encryptionMechanism,
+                EncryptionEnabled = true
+            };
+
+            var serializer = new JsonSerializer<Waldo>(configuration);
+
+            var instance = serializer.Deserialize(json);
+
+            Assert.That(instance.Qux, Is.EqualTo("abc"));
+            Assert.That(instance.Garply, Is.EqualTo(true));
+        }
+
+        [Test]
         public void CanSerializeWithEncryptRootObjectEnabled()
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
@@ -127,13 +152,15 @@ namespace XSerializer.Tests
             var expected =
                 @"{""Qux"":"""
                 + encryptionMechanism.Encrypt(@"""abc""")
-                + @""",""Garply"":true}";
+                + @""",""Garply"":"""
+                + encryptionMechanism.Encrypt("true")
+                + @"""}";
 
             Assert.That(json, Is.EqualTo(expected));
         }
 
         [Test]
-        public void DuplicatedEncryptAttributesHaveNoEffect()
+        public void DuplicatedEncryptAttributesHaveNoEffectOnSerialization()
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
@@ -198,6 +225,7 @@ namespace XSerializer.Tests
         {
             [Encrypt]
             public string Qux { get; set; }
+            [Encrypt]
             public bool Garply { get; set; }
         }
 
