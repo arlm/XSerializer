@@ -75,6 +75,18 @@ namespace XSerializer
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
         {
+            if (!reader.ReadContent())
+            {
+                throw new XSerializerException("Unexpected end of input while attempting to parse '{' character.");
+            }
+
+            var toggler = new DecryptReadsToggler(reader);
+
+            if (_encrypt)
+            {
+                toggler.Toggle();
+            }
+
             IHelper helper = GetHelper();
 
             foreach (var propertyName in reader.ReadProperties())
@@ -87,7 +99,14 @@ namespace XSerializer
                 }
             }
 
-            return helper.GetInstance();
+            try
+            {
+                return helper.GetInstance();
+            }
+            finally
+            {
+                toggler.Revert();
+            }
         }
 
         private static readonly ConcurrentDictionary<Type, Func<IHelper>> _createHelperCache = new ConcurrentDictionary<Type, Func<IHelper>>(); 

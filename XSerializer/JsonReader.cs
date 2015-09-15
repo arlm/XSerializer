@@ -99,11 +99,6 @@ namespace XSerializer
         /// <exception cref="XSerializerException">If the JSON object is malformed.</exception>
         public IEnumerable<string> ReadProperties()
         {
-            if (!ReadContent())
-            {
-                throw new XSerializerException("Unexpected end of input while attempting to parse '{' character.");
-            }
-
             if (NodeType != JsonNodeType.OpenObject)
             {
                 throw new XSerializerException("Unexpected node type found while attempting to parse '{' character: " + NodeType + ".");
@@ -332,7 +327,7 @@ namespace XSerializer
 
             while (true)
             {
-                var i = Reader.Peek();
+                var i = Reader.Peek(); // TODO: consider a peek-free implementation.
 
                 switch (i)
                 {

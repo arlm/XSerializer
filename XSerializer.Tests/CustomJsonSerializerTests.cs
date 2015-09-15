@@ -27,45 +27,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanDeserializeReadWriteProperties()
-        {
-            const string json = @"{""Baz"":{""Qux"":""abc"",""Garply"":true},""Corge"":123.45}";
-
-            var serializer = new JsonSerializer<Bar>();
-
-            var instance = serializer.Deserialize(json);
-
-            Assert.That(instance.Baz.Qux, Is.EqualTo("abc"));
-            Assert.That(instance.Baz.Garply, Is.EqualTo(true));
-            Assert.That(instance.Corge, Is.EqualTo(123.45));
-        }
-
-        [Test]
-        public void CanDeserializeEncryptedReadWriteProperties()
-        {
-            var encryptionMechanism = new Base64EncryptionMechanism();
-
-            var json = @"{""Qux"":"""
-                + encryptionMechanism.Encrypt(@"""abc""")
-                + @""",""Garply"":"""
-                + encryptionMechanism.Encrypt("true")
-                + @"""}";
-
-            var configuration = new JsonSerializerConfiguration
-            {
-                EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true
-            };
-
-            var serializer = new JsonSerializer<Waldo>(configuration);
-
-            var instance = serializer.Deserialize(json);
-
-            Assert.That(instance.Qux, Is.EqualTo("abc"));
-            Assert.That(instance.Garply, Is.EqualTo(true));
-        }
-
-        [Test]
         public void CanSerializeWithEncryptRootObjectEnabled()
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
@@ -200,6 +161,128 @@ namespace XSerializer.Tests
                 + @"}";
 
             Assert.That(json, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void CanDeserializeReadWriteProperties()
+        {
+            const string json = @"{""Baz"":{""Qux"":""abc"",""Garply"":true},""Corge"":123.45}";
+
+            var serializer = new JsonSerializer<Bar>();
+
+            var instance = serializer.Deserialize(json);
+
+            Assert.That(instance.Baz.Qux, Is.EqualTo("abc"));
+            Assert.That(instance.Baz.Garply, Is.EqualTo(true));
+            Assert.That(instance.Corge, Is.EqualTo(123.45));
+        }
+
+        [Test]
+        public void CanDeserializeWithEncryptRootObjectEnabled()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var json =
+                @""""
+                + encryptionMechanism.Encrypt(@"{""Baz"":{""Qux"":""abc"",""Garply"":true},""Corge"":123.45}")
+                + @"""";
+
+            var configuration = new JsonSerializerConfiguration
+            {
+                EncryptionMechanism = encryptionMechanism,
+                EncryptionEnabled = true,
+                EncryptRootObject = true
+            };
+
+            var serializer = new JsonSerializer<Bar>(configuration);
+
+            var result = serializer.Deserialize(json);
+
+            Assert.That(result.Baz.Garply, Is.EqualTo(true));
+            Assert.That(result.Baz.Qux, Is.EqualTo("abc"));
+            Assert.That(result.Corge, Is.EqualTo(123.45));
+        }
+
+        [Test]
+        public void AClassDecoratedWithTheEncryptAttributeIsDecrypted()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var json =
+                @""""
+                + encryptionMechanism.Encrypt(@"{""Qux"":""abc"",""Garply"":true}")
+                + @"""";
+
+            var configuration = new JsonSerializerConfiguration
+            {
+                EncryptionMechanism = encryptionMechanism,
+                EncryptionEnabled = true
+            };
+
+            var serializer = new JsonSerializer<Grault>(configuration);
+
+            var result = serializer.Deserialize(json);
+
+            Assert.That(result.Garply, Is.EqualTo(true));
+            Assert.That(result.Qux, Is.EqualTo("abc"));
+        }
+
+        [Test]
+        public void APropertyDecoratedWithTheEncryptAttributeIsDecrypted()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var json =
+                @"{""Qux"":"""
+                + encryptionMechanism.Encrypt(@"""abc""")
+                + @""",""Garply"":"""
+                + encryptionMechanism.Encrypt("true")
+                + @"""}";
+
+            var configuration = new JsonSerializerConfiguration
+            {
+                EncryptionMechanism = encryptionMechanism,
+                EncryptionEnabled = true
+            };
+
+            var serializer = new JsonSerializer<Waldo>(configuration);
+
+            var result = serializer.Deserialize(json);
+
+            Assert.That(result.Garply, Is.EqualTo(true));
+            Assert.That(result.Qux, Is.EqualTo("abc"));
+        }
+
+        [Test]
+        public void DuplicatedEncryptAttributesHaveNoEffectOnDeserialization()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var json =
+                @"{""Grault"":"
+                    + @""""
+                    + encryptionMechanism.Encrypt(@"{""Qux"":""abc"",""Garply"":true}")
+                    + @""""
+                + @",""Waldo"":"
+                    + @""""
+                    + encryptionMechanism.Encrypt(@"{""Qux"":""abc"",""Garply"":true}")
+                    + @""""
+                + @"}";
+
+            var configuration = new JsonSerializerConfiguration
+            {
+                EncryptionMechanism = encryptionMechanism,
+                EncryptionEnabled = true
+            };
+
+            var serializer = new JsonSerializer<Thud>(configuration);
+
+            var result = serializer.Deserialize(json);
+
+            Assert.That(result.Grault.Qux, Is.EqualTo("abc"));
+            Assert.That(result.Grault.Garply, Is.EqualTo(true));
+            Assert.That(result.Waldo.Qux, Is.EqualTo("abc"));
+            Assert.That(result.Waldo.Garply, Is.EqualTo(true));
         }
 
         public class Bar
