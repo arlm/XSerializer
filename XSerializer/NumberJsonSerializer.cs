@@ -1,38 +1,48 @@
 using System;
+using System.Collections.Concurrent;
 
 namespace XSerializer
 {
     internal sealed class NumberJsonSerializer : IJsonSerializerInternal
     {
-        private static readonly Lazy<NumberJsonSerializer> _clearText = new Lazy<NumberJsonSerializer>(() => new NumberJsonSerializer(false));
-        private static readonly Lazy<NumberJsonSerializer> _encrypted = new Lazy<NumberJsonSerializer>(() => new NumberJsonSerializer(true));
-        
-        private readonly bool _encrypt;
+        private static readonly ConcurrentDictionary<Tuple<Type, bool>, NumberJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool>, NumberJsonSerializer>();
 
-        private NumberJsonSerializer(bool encrypt)
+        private readonly bool _encrypt;
+        private readonly bool _nullable;
+        private readonly Action<JsonWriter, object> _write;
+        private readonly Func<string, object> _read;
+
+        private NumberJsonSerializer(Type type, bool encrypt)
         {
             _encrypt = encrypt;
+            _nullable = type.IsNullableType();
+            SetDelegates(type, out _write, out _read);
         }
 
-        public static NumberJsonSerializer Get(bool encrypt)
+        public static NumberJsonSerializer Get(Type type, bool encrypt)
         {
-            return encrypt ? _encrypted.Value : _clearText.Value;
+            return _cache.GetOrAdd(Tuple.Create(type, encrypt), t => new NumberJsonSerializer(t.Item1, t.Item2));
         }
 
         public void SerializeObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
         {
-            var d = (double)instance;
-
-            var toggler = new EncryptWritesToggler(writer);
-
-            if (_encrypt)
+            if (instance == null)
             {
-                toggler.Toggle();
+                writer.WriteNull();
             }
+            else
+            {
+                var toggler = new EncryptWritesToggler(writer);
 
-            writer.WriteValue(d);
+                if (_encrypt)
+                {
+                    toggler.Toggle();
+                }
 
-            toggler.Revert();
+                _write(writer, instance);
+
+                toggler.Revert();
+            }
         }
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
@@ -51,20 +61,96 @@ namespace XSerializer
 
             if (reader.NodeType != JsonNodeType.Number)
             {
-                throw new XSerializerException(string.Format(
-                    "Unexpected node type '{0}' encountered in '{1}.DeserializeObject' method.",
-                    reader.NodeType,
-                    typeof(NumberJsonSerializer)));
+                if (!_nullable || reader.NodeType != JsonNodeType.Null)
+                {
+                    throw new XSerializerException(string.Format(
+                        "Unexpected node type '{0}' encountered in '{1}.DeserializeObject' method.",
+                        reader.NodeType,
+                        typeof(NumberJsonSerializer)));
+                }
             }
 
             try
             {
-                return reader.Value;
+                return _read((string)reader.Value);
             }
             finally
             {
                 toggler.Revert();
             }
+        }
+
+        private static void SetDelegates(
+            Type type,
+            out Action<JsonWriter, object> writeAction,
+            out Func<string, object> readFunc)
+        {
+            Func<string, object> readFuncLocal;
+
+            if (type == typeof(double) || type == typeof(double?) || type == null)
+            {
+                writeAction = (writer, value) => writer.WriteValue((double)value);
+                readFuncLocal = value => double.Parse(value);
+            }
+            else if(type == typeof(int) || type == typeof(int?))
+            {
+                writeAction = (writer, value) => writer.WriteValue((int)value);
+                readFuncLocal = value => int.Parse(value);
+            }
+            else if(type == typeof(long) || type == typeof(long?))
+            {
+                writeAction = (writer, value) => writer.WriteValue((long)value);
+                readFuncLocal = value => long.Parse(value);
+            }
+            else if(type == typeof(uint) || type == typeof(uint?))
+            {
+                writeAction = (writer, value) => writer.WriteValue((uint)value);
+                readFuncLocal = value => uint.Parse(value);
+            }
+            else if(type == typeof(byte) || type == typeof(byte?))
+            {
+                writeAction = (writer, value) => writer.WriteValue((byte)value);
+                readFuncLocal = value => byte.Parse(value);
+            }
+            else if(type == typeof(sbyte) || type == typeof(sbyte?))
+            {
+                writeAction = (writer, value) => writer.WriteValue((sbyte)value);
+                readFuncLocal = value => sbyte.Parse(value);
+            }
+            else if(type == typeof(short) || type == typeof(short?))
+            {
+                writeAction = (writer, value) => writer.WriteValue((short)value);
+                readFuncLocal = value => short.Parse(value);
+            }
+            else if(type == typeof(ushort) || type == typeof(ushort?))
+            {
+                writeAction = (writer, value) => writer.WriteValue((ushort)value);
+                readFuncLocal = value => ushort.Parse(value);
+            }
+            else if(type == typeof(ulong) || type == typeof(ulong?))
+            {
+                writeAction = (writer, value) => writer.WriteValue((ulong)value);
+                readFuncLocal = value => ulong.Parse(value);
+            }
+            else if(type == typeof(float) || type == typeof(float?))
+            {
+                writeAction = (writer, value) => writer.WriteValue((float)value);
+                readFuncLocal = value => float.Parse(value);
+            }
+            else if (type == typeof(decimal) || type == typeof(decimal?))
+            {
+                writeAction = (writer, value) => writer.WriteValue((decimal)value);
+                readFuncLocal = value => decimal.Parse(value);
+            }
+            else
+            {
+                throw new ArgumentException("Unknown number type: " + type, "type");
+            }
+
+            readFunc =
+                !type.IsNullableType()
+                    ? readFuncLocal
+                    : value => value == null ? null : readFuncLocal(value);
         }
     }
 }

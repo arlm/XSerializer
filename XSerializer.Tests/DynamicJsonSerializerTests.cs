@@ -5,7 +5,7 @@ namespace XSerializer.Tests
 {
     public class DynamicJsonSerializerTests
     {
-        [TestCase("abc", "\"abc\"")]
+        [TestCase("abc", @"""abc""")]
         [TestCase(123.45, "123.45")]
         [TestCase(true, "true")]
         [TestCase(false, "false")]
@@ -28,7 +28,7 @@ namespace XSerializer.Tests
 
             var json = serializer.Serialize(dictionary);
 
-            Assert.That(json, Is.EqualTo("{\"foo\":\"bar\",\"baz\":null}"));
+            Assert.That(json, Is.EqualTo(@"{""foo"":""bar"",""baz"":null}"));
         }
 
         [Test]
@@ -40,7 +40,7 @@ namespace XSerializer.Tests
 
             var json = serializer.Serialize(dictionary);
 
-            Assert.That(json, Is.EqualTo("{\"foo\":\"bar\",\"baz\":null}"));
+            Assert.That(json, Is.EqualTo(@"{""foo"":""bar"",""baz"":null}"));
         }
 
         [Test]
@@ -52,7 +52,7 @@ namespace XSerializer.Tests
 
             var json = serializer.Serialize(dictionary);
 
-            Assert.That(json, Is.EqualTo("[123,true,false,null,{\"foo\":\"bar\"}]"));
+            Assert.That(json, Is.EqualTo(@"[123,true,false,null,{""foo"":""bar""}]"));
         }
 
         [Test]

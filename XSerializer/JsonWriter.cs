@@ -82,7 +82,58 @@ namespace XSerializer
             }
         }
 
+        public void WriteValue(DateTime value)
+        {
+            Writer.Write('"');
+            Writer.Write(value.ToString("O"));
+            Writer.Write('"');
+        }
+
+        public void WriteValue(DateTimeOffset value)
+        {
+            Writer.Write('"');
+            Writer.Write(value.ToString("O"));
+            Writer.Write('"');
+        }
+
+        public void WriteValue(Guid value)
+        {
+            Writer.Write('"');
+            Writer.Write(value.ToString("D"));
+            Writer.Write('"');
+        }
+
         public void WriteValue(double value)
+        {
+            Writer.Write(value);
+        }
+
+        public void WriteValue(float value)
+        {
+            Writer.Write(value);
+        }
+
+        public void WriteValue(decimal value)
+        {
+            Writer.Write(value);
+        }
+
+        public void WriteValue(int value)
+        {
+            Writer.Write(value);
+        }
+
+        public void WriteValue(long value)
+        {
+            Writer.Write(value);
+        }
+
+        public void WriteValue(uint value)
+        {
+            Writer.Write(value);
+        }
+
+        public void WriteValue(ulong value)
         {
             Writer.Write(value);
         }

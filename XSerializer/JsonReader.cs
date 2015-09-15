@@ -258,7 +258,7 @@ namespace XSerializer
             }
         }
 
-        private double ReadNumber(char c)
+        private string ReadNumber(char c)
         {
             var sb = new StringBuilder();
 
@@ -287,16 +287,7 @@ namespace XSerializer
                     case '9':
                         break;
                     default:
-                        var number = sb.ToString();
-
-                        try
-                        {
-                            return double.Parse(number);
-                        }
-                        catch (FormatException ex)
-                        {
-                            throw new XSerializerException(string.Format("Invalid number: '{0}'.", number), ex);
-                        }
+                        return sb.ToString();
                 }
 
                 sb.Append((char)Reader.Read());

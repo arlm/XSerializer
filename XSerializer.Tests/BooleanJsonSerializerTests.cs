@@ -18,6 +18,18 @@ namespace XSerializer.Tests
 
         [TestCase(true, "true")]
         [TestCase(false, "false")]
+        [TestCase(null, "null")]
+        public void CanSerializeNullable(bool? value, string expected)
+        {
+            var serializer = new JsonSerializer<bool?>();
+
+            var json = serializer.Serialize(value);
+
+            Assert.That(json, Is.EqualTo(expected));
+        }
+
+        [TestCase(true, "true")]
+        [TestCase(false, "false")]
         public void CanSerializeEncrypted(bool value, string expectedPlainText)
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
@@ -47,6 +59,18 @@ namespace XSerializer.Tests
         public void CanDeserialize(string json, bool expected)
         {
             var serializer = new JsonSerializer<bool>();
+
+            var value = serializer.Deserialize(json);
+
+            Assert.That(value, Is.EqualTo(expected));
+        }
+
+        [TestCase("true", true)]
+        [TestCase("false", false)]
+        [TestCase("null", null)]
+        public void CanDeserializeNullable(string json, bool? expected)
+        {
+            var serializer = new JsonSerializer<bool?>();
 
             var value = serializer.Deserialize(json);
 

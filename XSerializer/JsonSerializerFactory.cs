@@ -19,19 +19,47 @@ namespace XSerializer
                         return DynamicJsonSerializer.Get(encrypt);
                     }
 
-                    if (type == typeof(string))
+                    if (type == typeof(string)
+                        || type == typeof(DateTime)
+                        || type == typeof(DateTime?)
+                        || type == typeof(DateTimeOffset)
+                        || type == typeof(DateTimeOffset?)
+                        || type == typeof(Guid)
+                        || type == typeof(Guid?))
                     {
-                        return StringJsonSerializer.Get(encrypt);
+                        return StringJsonSerializer.Get(type, encrypt);
                     }
 
-                    if (type == typeof(double)) // TODO: handler more number types.
+                    if (type == typeof(double)
+                        || type == typeof(double?)
+                        || type == typeof(int)
+                        || type == typeof(int?)
+                        || type == typeof(float)
+                        || type == typeof(float?)
+                        || type == typeof(long)
+                        || type == typeof(long?)
+                        || type == typeof(decimal)
+                        || type == typeof(decimal?)
+                        || type == typeof(byte)
+                        || type == typeof(byte?)
+                        || type == typeof(sbyte)
+                        || type == typeof(sbyte?)
+                        || type == typeof(short)
+                        || type == typeof(short?)
+                        || type == typeof(ushort)
+                        || type == typeof(ushort?)
+                        || type == typeof(uint)
+                        || type == typeof(uint?)
+                        || type == typeof(ulong)
+                        || type == typeof(ulong?)) // TODO: handler more number types.
                     {
-                        return NumberJsonSerializer.Get(encrypt);
+                        return NumberJsonSerializer.Get(type, encrypt);
                     }
 
-                    if (type == typeof(bool))
+                    if (type == typeof(bool)
+                        || type == typeof(bool?))
                     {
-                        return BooleanJsonSerializer.Get(encrypt);
+                        return BooleanJsonSerializer.Get(encrypt, type == typeof(bool?));
                     }
 
                     if (type.IsAssignableToGenericIDictionaryOfStringToAnything())

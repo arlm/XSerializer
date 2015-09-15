@@ -4,35 +4,51 @@ namespace XSerializer
 {
     internal sealed class BooleanJsonSerializer : IJsonSerializerInternal
     {
-        private static readonly Lazy<BooleanJsonSerializer> _clearText = new Lazy<BooleanJsonSerializer>(() => new BooleanJsonSerializer(false));
-        private static readonly Lazy<BooleanJsonSerializer> _encrypted = new Lazy<BooleanJsonSerializer>(() => new BooleanJsonSerializer(true));
+        private static readonly Lazy<BooleanJsonSerializer> _clearText = new Lazy<BooleanJsonSerializer>(() => new BooleanJsonSerializer(false, false));
+        private static readonly Lazy<BooleanJsonSerializer> _encrypted = new Lazy<BooleanJsonSerializer>(() => new BooleanJsonSerializer(true, false));
+        private static readonly Lazy<BooleanJsonSerializer> _clearTextNullable = new Lazy<BooleanJsonSerializer>(() => new BooleanJsonSerializer(false, true));
+        private static readonly Lazy<BooleanJsonSerializer> _encryptedNullable = new Lazy<BooleanJsonSerializer>(() => new BooleanJsonSerializer(true, true));
 
         private readonly bool _encrypt;
+        private readonly bool _nullable;
 
-        private BooleanJsonSerializer(bool encrypt)
+        private BooleanJsonSerializer(bool encrypt, bool nullable)
         {
             _encrypt = encrypt;
+            _nullable = nullable;
         }
 
-        public static BooleanJsonSerializer Get(bool encrypt)
+        public static BooleanJsonSerializer Get(bool encrypt, bool nullable)
         {
+            if (nullable)
+            {
+                return encrypt ? _encryptedNullable.Value : _clearTextNullable.Value;
+            }
+
             return encrypt ? _encrypted.Value : _clearText.Value;
         }
 
         public void SerializeObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
         {
-            var b = (bool)instance;
-
-            var toggler = new EncryptWritesToggler(writer);
-
-            if (_encrypt)
+            if (instance == null)
             {
-                toggler.Toggle();
+                writer.WriteNull();
             }
+            else
+            {
+                var b = (bool)instance;
 
-            writer.WriteValue(b);
+                var toggler = new EncryptWritesToggler(writer);
 
-            toggler.Revert();
+                if (_encrypt)
+                {
+                    toggler.Toggle();
+                }
+
+                writer.WriteValue(b);
+
+                toggler.Revert();
+            }
         }
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
@@ -51,10 +67,13 @@ namespace XSerializer
 
             if (reader.NodeType != JsonNodeType.Boolean)
             {
-                throw new XSerializerException(string.Format(
-                    "Unexpected node type '{0}' encountered in '{1}.DeserializeObject' method.",
-                    reader.NodeType,
-                    typeof(BooleanJsonSerializer)));
+                if (!_nullable || reader.NodeType != JsonNodeType.Null)
+                {
+                    throw new XSerializerException(string.Format(
+                        "Unexpected node type '{0}' encountered in '{1}.DeserializeObject' method.",
+                        reader.NodeType,
+                        typeof(BooleanJsonSerializer)));
+                }
             }
 
             try

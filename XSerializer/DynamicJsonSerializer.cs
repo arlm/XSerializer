@@ -47,19 +47,47 @@ namespace XSerializer
 
         private IJsonSerializerInternal GetSerializer(Type concreteType)
         {
-            if (concreteType == typeof(string))
+            if (concreteType == typeof(string)
+                || concreteType == typeof(DateTime)
+                || concreteType == typeof(DateTime?)
+                || concreteType == typeof(DateTimeOffset)
+                || concreteType == typeof(DateTimeOffset?)
+                || concreteType == typeof(Guid)
+                || concreteType == typeof(Guid?))
             {
-                return StringJsonSerializer.Get(_encrypt);
+                return StringJsonSerializer.Get(concreteType, _encrypt);
+            }
+
+            if (concreteType == typeof(double)
+                || concreteType == typeof(double?)
+                || concreteType == typeof(int)
+                || concreteType == typeof(int?)
+                || concreteType == typeof(float)
+                || concreteType == typeof(float?)
+                || concreteType == typeof(long)
+                || concreteType == typeof(long?)
+                || concreteType == typeof(decimal)
+                || concreteType == typeof(decimal?)
+                || concreteType == typeof(byte)
+                || concreteType == typeof(byte?)
+                || concreteType == typeof(sbyte)
+                || concreteType == typeof(sbyte?)
+                || concreteType == typeof(short)
+                || concreteType == typeof(short?)
+                || concreteType == typeof(ushort)
+                || concreteType == typeof(ushort?)
+                || concreteType == typeof(uint)
+                || concreteType == typeof(uint?)
+                || concreteType == typeof(ulong)
+                || concreteType == typeof(ulong?)) // TODO: handler more number types.
+            {
+                return NumberJsonSerializer.Get(concreteType, _encrypt);
             }
             
-            if (concreteType == typeof(double))
+            if (concreteType == typeof(bool)
+                || concreteType == typeof(bool?))
             {
-                return NumberJsonSerializer.Get(_encrypt);
-            }
-            
-            if (concreteType == typeof(bool))
-            {
-                return BooleanJsonSerializer.Get(_encrypt);
+                return BooleanJsonSerializer.Get(_encrypt, concreteType == typeof(bool?));
             }
             
             if (concreteType.IsAssignableToGenericIDictionaryOfStringToAnything())
