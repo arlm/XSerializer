@@ -134,6 +134,36 @@ namespace XSerializer.Tests
             Assert.That(json, Is.EqualTo(expected));
         }
 
+        [Test]
+        public void CanDeserializeGenericList()
+        {
+            var serializer = new JsonSerializer<List<string>>();
+
+            var result = serializer.Deserialize(@"[""abc"",""xyz""]");
+
+            Assert.That(result, Is.EqualTo(new List<string> { "abc", "xyz" }));
+        }
+
+        [Test]
+        public void CanDeserializeGenericIEnumerable()
+        {
+            var serializer = new JsonSerializer<IEnumerable<string>>();
+
+            var result = serializer.Deserialize(@"[""abc"",""xyz""]");
+
+            Assert.That(result, Is.EqualTo(new List<string> { "abc", "xyz" }));
+        }
+
+        [Test, Ignore] // TODO: unignore this test when DynamicJsonSerializer has been fully implemented.
+        public void CanDeserializeNonGenericIEnumerable()
+        {
+            var serializer = new JsonSerializer<IEnumerable>();
+
+            var result = serializer.Deserialize(@"[""abc"",""xyz""]");
+
+            Assert.That(result, Is.EqualTo(new ArrayList { "abc", "xyz" }));
+        }
+
         [Encrypt]
         public class Foo
         {
