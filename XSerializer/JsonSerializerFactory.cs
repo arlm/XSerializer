@@ -51,7 +51,7 @@ namespace XSerializer
                         || type == typeof(uint)
                         || type == typeof(uint?)
                         || type == typeof(ulong)
-                        || type == typeof(ulong?)) // TODO: handler more number types.
+                        || type == typeof(ulong?)) // TODO: handle more number types.
                     {
                         return NumberJsonSerializer.Get(type, encrypt);
                     }

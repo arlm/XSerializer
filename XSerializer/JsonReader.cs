@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -84,6 +85,71 @@ namespace XSerializer
                 if (NodeType != JsonNodeType.Whitespace)
                 {
                     return true;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Read the properties of a json object. The resulting collection contains the name of each
+        /// property. As the collection is enumerated, for each property name, the reader is positioned
+        /// at the beginning of the property's value. The caller is expected to parse the value, calling
+        /// <see cref="Read"/> or <see cref="ReadContent"/> one or more times, before continuing to
+        /// enumerate the collection.
+        /// </summary>
+        /// <exception cref="XSerializerException">If the JSON object is malformed.</exception>
+        public IEnumerable<string> ReadProperties()
+        {
+            if (!ReadContent())
+            {
+                throw new XSerializerException("Unexpected end of input while attempting to parse '{' character.");
+            }
+
+            if (NodeType != JsonNodeType.OpenObject)
+            {
+                throw new XSerializerException("Unexpected node type found while attempting to parse '{' character: " + NodeType + ".");
+            }
+
+            while (true)
+            {
+                if (!ReadContent())
+                {
+                    throw new XSerializerException("Unexpected end of input while attempting to parse property name.");
+                }
+
+                if (NodeType != JsonNodeType.String)
+                {
+                    throw new XSerializerException("Unexpected node type found while attempting to parse property name: " + NodeType + ".");
+                }
+
+                var name = (string)Value;
+
+                if (!ReadContent())
+                {
+                    throw new XSerializerException("Unexpected end of input while attempting to parse ':' character.");
+                }
+
+                if (NodeType != JsonNodeType.NameValueSeparator)
+                {
+                    throw new XSerializerException("Unexpected node type found while attempting to parse ':' character: " + NodeType + ".");
+                }
+
+                yield return name;
+
+                // The caller is expected to make one or more Read calls after receiving the yielded property name.
+
+                if (!ReadContent())
+                {
+                    throw new XSerializerException("Unexpected end of input while attempting to parse ',' or '}' character.");
+                }
+
+                switch (NodeType)
+                {
+                    case JsonNodeType.CloseObject:
+                        yield break;
+                    case JsonNodeType.ItemSeparator:
+                        break;
+                    default:
+                        throw new XSerializerException("Unexpected node type found while attempting to parse ',' or '}' character: " + NodeType + ".");
                 }
             }
         }

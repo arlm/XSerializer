@@ -117,5 +117,35 @@ namespace XSerializer.Tests
             Assert.That(reader.ReadContent(), Is.False);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.None));
         }
+
+        [Test]
+        public void ReadPropertiesReadsAJsonObjectsProperties()
+        {
+            const string json = @"{""foo"":123.45,""bar"":true,""baz"":""abc""}";
+
+            var reader = new JsonReader(new StringReader(json), new JsonSerializeOperationInfo());
+
+            var enumerator = reader.ReadProperties().GetEnumerator();
+
+            Assert.That(enumerator.MoveNext(), Is.True);
+            Assert.That(enumerator.Current, Is.EqualTo("foo"));
+            Assert.That(reader.Read(), Is.True);
+            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.Number));
+            Assert.That(reader.Value, Is.EqualTo("123.45"));
+
+            Assert.That(enumerator.MoveNext(), Is.True);
+            Assert.That(enumerator.Current, Is.EqualTo("bar"));
+            Assert.That(reader.Read(), Is.True);
+            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.Boolean));
+            Assert.That(reader.Value, Is.True);
+
+            Assert.That(enumerator.MoveNext(), Is.True);
+            Assert.That(enumerator.Current, Is.EqualTo("baz"));
+            Assert.That(reader.Read(), Is.True);
+            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.String));
+            Assert.That(reader.Value, Is.EqualTo("abc"));
+
+            Assert.That(enumerator.MoveNext(), Is.False);
+        }
     }
 }
