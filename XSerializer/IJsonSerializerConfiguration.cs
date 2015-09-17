@@ -11,5 +11,6 @@ namespace XSerializer
         IEncryptionMechanism EncryptionMechanism { get; }
         object EncryptKey { get; }
         bool EncryptRootObject { get; }
+        IDateTimeHandler DateTimeHandler { get; }
     }
 }

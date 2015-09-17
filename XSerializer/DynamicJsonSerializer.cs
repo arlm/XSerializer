@@ -31,17 +31,21 @@ namespace XSerializer
             }
             else
             {
-                var toggler = new EncryptWritesToggler(writer);
+                var serializer = _serializerCache.GetOrAdd(Tuple.Create(instance.GetType(), _encrypt), tuple => GetSerializer(tuple.Item1));
 
                 if (_encrypt)
                 {
+                    var toggler = new EncryptWritesToggler(writer);
                     toggler.Toggle();
+
+                    serializer.SerializeObject(writer, instance, info);
+
+                    toggler.Revert();
                 }
-
-                var serializer = _serializerCache.GetOrAdd(Tuple.Create(instance.GetType(), _encrypt), tuple => GetSerializer(tuple.Item1));
-                serializer.SerializeObject(writer, instance, info);
-
-                toggler.Revert();
+                else
+                {
+                    serializer.SerializeObject(writer, instance, info);
+                }
             }
         }
 

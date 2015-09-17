@@ -61,37 +61,45 @@ namespace XSerializer
             }
             else
             {
-                var toggler = new EncryptWritesToggler(writer);
-
                 if (_encrypt)
                 {
+                    var toggler = new EncryptWritesToggler(writer);
                     toggler.Toggle();
+
+                    Write(writer, instance, info);
+
+                    toggler.Revert();
                 }
-
-                writer.WriteOpenArray();
-
-                var enumerable = (IEnumerable)instance;
-
-                var first = true;
-
-                foreach (var item in enumerable)
+                else
                 {
-                    if (first)
-                    {
-                        first = false;
-                    }
-                    else
-                    {
-                        writer.WriteItemSeparator();
-                    }
+                    Write(writer, instance, info);
+                }
+            }
+        }
 
-                    _itemSerializer.SerializeObject(writer, item, info);
+        private void Write(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
+        {
+            writer.WriteOpenArray();
+
+            var enumerable = (IEnumerable)instance;
+
+            var first = true;
+
+            foreach (var item in enumerable)
+            {
+                if (first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    writer.WriteItemSeparator();
                 }
 
-                writer.WriteCloseArray();
-
-                toggler.Revert();
+                _itemSerializer.SerializeObject(writer, item, info);
             }
+
+            writer.WriteCloseArray();
         }
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
@@ -101,13 +109,26 @@ namespace XSerializer
                 throw new XSerializerException("Unexpected end of input while attempting to parse '[' character.");
             }
 
-            var toggler = new DecryptReadsToggler(reader);
-
             if (_encrypt)
             {
+                var toggler = new DecryptReadsToggler(reader);
                 toggler.Toggle();
+
+                try
+                {
+                    return Read(reader, info);
+                }
+                finally
+                {
+                    toggler.Toggle();
+                }
             }
 
+            return Read(reader, info);
+        }
+
+        private object Read(JsonReader reader, IJsonSerializeOperationInfo info)
+        {
             var list = _createList();
 
             while (true)
@@ -127,7 +148,8 @@ namespace XSerializer
 
                 if (reader.NodeType != JsonNodeType.ItemSeparator)
                 {
-                    throw new XSerializerException("Unexpected node type found while attempting to parse ',' character: " + reader.NodeType + ".");
+                    throw new XSerializerException("Unexpected node type found while attempting to parse ',' character: " +
+                                                   reader.NodeType + ".");
                 }
             }
 

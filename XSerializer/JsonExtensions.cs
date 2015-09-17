@@ -1,6 +1,3 @@
-using System;
-using XSerializer.Encryption;
-
 namespace XSerializer
 {
     internal static class JsonExtensions
@@ -13,7 +10,8 @@ namespace XSerializer
                 EncryptionEnabled = info.EncryptionEnabled,
                 EncryptionMechanism = info.EncryptionMechanism,
                 EncryptKey = info.EncryptKey,
-                SerializationState = new SerializationState()
+                SerializationState = new SerializationState(),
+                DateTimeHandler = info.DateTimeHandler
             };
         }
     }

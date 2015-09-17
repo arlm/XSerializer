@@ -146,7 +146,8 @@ namespace XSerializer
                 EncryptionEnabled = _configuration.EncryptionEnabled,
                 EncryptionMechanism = _configuration.EncryptionMechanism,
                 EncryptKey = _configuration.EncryptKey,
-                SerializationState = new SerializationState()
+                SerializationState = new SerializationState(),
+                DateTimeHandler = _configuration.DateTimeHandler
             };
         }
     }

@@ -32,16 +32,19 @@ namespace XSerializer
             }
             else
             {
-                var toggler = new EncryptWritesToggler(writer);
-
                 if (_encrypt)
                 {
+                    var toggler = new EncryptWritesToggler(writer);
                     toggler.Toggle();
+
+                    _write(writer, instance);
+
+                    toggler.Revert();
                 }
-
-                _write(writer, instance);
-
-                toggler.Revert();
+                else
+                {
+                    _write(writer, instance);
+                }
             }
         }
 
@@ -52,13 +55,26 @@ namespace XSerializer
                 throw new XSerializerException("Reached end of stream while parsing number value.");
             }
 
-            var toggler = new DecryptReadsToggler(reader);
-
             if (_encrypt)
             {
+                var toggler = new DecryptReadsToggler(reader);
                 toggler.Toggle();
+
+                try
+                {
+                    return Read(reader);
+                }
+                finally
+                {
+                    toggler.Revert();
+                }
             }
 
+            return Read(reader);
+        }
+
+        private object Read(JsonReader reader)
+        {
             if (reader.NodeType != JsonNodeType.Number)
             {
                 if (!_nullable || reader.NodeType != JsonNodeType.Null)
@@ -70,14 +86,7 @@ namespace XSerializer
                 }
             }
 
-            try
-            {
-                return _read((string)reader.Value);
-            }
-            finally
-            {
-                toggler.Revert();
-            }
+            return _read((string)reader.Value);
         }
 
         private static void SetDelegates(

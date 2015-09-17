@@ -57,85 +57,100 @@ namespace XSerializer
         {
             return (writer, instance, info) =>
             {
-                var toggler = new EncryptWritesToggler(writer);
-
                 if (_encrypt)
                 {
+                    var toggler = new EncryptWritesToggler(writer);
                     toggler.Toggle();
+
+                    WriteIDictionaryOfStringToObject(writer, instance, info);
+
+                    toggler.Revert();
                 }
-
-                writer.WriteOpenObject();
-
-                var dictionary = (IDictionary<string, object>)instance;
-
-                var first = true;
-
-                foreach (var item in dictionary)
+                else
                 {
-                    if (first)
-                    {
-                        first = false;
-                    }
-                    else
-                    {
-                        writer.WriteItemSeparator();
-                    }
+                    WriteIDictionaryOfStringToObject(writer, instance, info);
+                }
+            };
+        }
 
-                    writer.WriteValue(item.Key);
-                    writer.WriteNameValueSeparator();
-                    _valueSerializer.SerializeObject(writer, item.Value, info);
+        private void WriteIDictionaryOfStringToObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
+        {
+            writer.WriteOpenObject();
+
+            var dictionary = (IDictionary<string, object>)instance;
+
+            var first = true;
+
+            foreach (var item in dictionary)
+            {
+                if (first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    writer.WriteItemSeparator();
                 }
 
-                writer.WriteCloseObject();
+                writer.WriteValue(item.Key);
+                writer.WriteNameValueSeparator();
+                _valueSerializer.SerializeObject(writer, item.Value, info);
+            }
 
-                toggler.Revert();
-            };
+            writer.WriteCloseObject();
         }
 
         private Action<JsonWriter, object, IJsonSerializeOperationInfo> GetIDictionaryOfStringToAnythingWriteAction()
         {
             return (writer, instance, info) =>
             {
-                var toggler = new EncryptWritesToggler(writer);
-
                 if (_encrypt)
                 {
+                    var toggler = new EncryptWritesToggler(writer);
                     toggler.Toggle();
+
+                    WriteIDictionaryOfStringToAnything(writer, instance, info);
+
+                    toggler.Revert();
                 }
-
-                writer.WriteOpenObject();
-
-                var dictionary = (IEnumerable)instance;
-
-                var first = true;
-
-                Func<object, string> getKeyFunc = null;
-                Func<object, object> getValueFunc = null;
-
-                foreach (var item in dictionary)
+                else
                 {
+                    WriteIDictionaryOfStringToAnything(writer, instance, info);                    
+                }
+            };
+        }
+
+        private void WriteIDictionaryOfStringToAnything(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
+        {
+            writer.WriteOpenObject();
+
+            var dictionary = (IEnumerable)instance;
+
+            var first = true;
+
+            Func<object, string> getKeyFunc = null;
+            Func<object, object> getValueFunc = null;
+
+            foreach (var item in dictionary)
+            {
+                if (first)
+                {
+                    first = false;
                     var itemType = item.GetType();
-
-                    if (first)
-                    {
-                        first = false;
-                        getKeyFunc = _getKeyFuncCache.GetOrAdd(itemType, GetGetKeyFunc);
-                        getValueFunc = _getValueFuncCache.GetOrAdd(itemType, GetGetValueFunc);
-                    }
-                    else
-                    {
-                        writer.WriteItemSeparator();
-                    }
-
-                    writer.WriteValue(getKeyFunc(item));
-                    writer.WriteNameValueSeparator();
-                    _valueSerializer.SerializeObject(writer, getValueFunc(item), info);
+                    getKeyFunc = _getKeyFuncCache.GetOrAdd(itemType, GetGetKeyFunc);
+                    getValueFunc = _getValueFuncCache.GetOrAdd(itemType, GetGetValueFunc);
+                }
+                else
+                {
+                    writer.WriteItemSeparator();
                 }
 
-                writer.WriteCloseObject();
+                writer.WriteValue(getKeyFunc(item));
+                writer.WriteNameValueSeparator();
+                _valueSerializer.SerializeObject(writer, getValueFunc(item), info);
+            }
 
-                toggler.Revert();
-            };
+            writer.WriteCloseObject();
         }
 
         private static Func<object, string> GetGetKeyFunc(Type keyValuePairType)

@@ -150,5 +150,17 @@ namespace XSerializer.Tests
 
             Assert.That(enumerator.MoveNext(), Is.False);
         }
+
+        [Test]
+        public void ReadingPastTheEndOfTheStreamReturnsFalse()
+        {
+            var reader = new JsonReader(new StringReader("123"), new JsonSerializeOperationInfo());
+
+            Assert.That(reader.ReadContent(), Is.True);
+            Assert.That(reader.Value, Is.EqualTo("123"));
+            Assert.That(reader.ReadContent(), Is.False);
+            Assert.That(reader.ReadContent(), Is.False); // end of stream
+            Assert.That(reader.ReadContent(), Is.False); // end of stream
+        }
     }
 }

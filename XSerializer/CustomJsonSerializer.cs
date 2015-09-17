@@ -42,35 +42,43 @@ namespace XSerializer
             }
             else
             {
-                var toggler = new EncryptWritesToggler(writer);
-
                 if (_encrypt)
                 {
+                    var toggler = new EncryptWritesToggler(writer);
                     toggler.Toggle();
+
+                    Write(writer, instance, info);
+
+                    toggler.Revert();
                 }
-
-                writer.WriteOpenObject();
-
-                var first = true;
-
-                foreach (var property in _serializableProperties)
+                else
                 {
-                    if (first)
-                    {
-                        first = false;
-                    }
-                    else
-                    {
-                        writer.WriteItemSeparator();
-                    }
+                    Write(writer, instance, info);                    
+                }
+            }
+        }
 
-                    property.WriteValue(writer, instance, info);
+        private void Write(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
+        {
+            writer.WriteOpenObject();
+
+            var first = true;
+
+            foreach (var property in _serializableProperties)
+            {
+                if (first)
+                {
+                    first = false;
+                }
+                else
+                {
+                    writer.WriteItemSeparator();
                 }
 
-                writer.WriteCloseObject();
-
-                toggler.Revert();
+                property.WriteValue(writer, instance, info);
             }
+
+            writer.WriteCloseObject();
         }
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
@@ -80,13 +88,26 @@ namespace XSerializer
                 throw new XSerializerException("Unexpected end of input while attempting to parse '{' character.");
             }
 
-            var toggler = new DecryptReadsToggler(reader);
-
             if (_encrypt)
             {
+                var toggler = new DecryptReadsToggler(reader);
                 toggler.Toggle();
+
+                try
+                {
+                    return Read(reader, info);
+                }
+                finally
+                {
+                    toggler.Revert();
+                }
             }
 
+            return Read(reader, info);
+        }
+
+        private object Read(JsonReader reader, IJsonSerializeOperationInfo info)
+        {
             IHelper helper = GetHelper();
 
             foreach (var propertyName in reader.ReadProperties())
@@ -99,14 +120,7 @@ namespace XSerializer
                 }
             }
 
-            try
-            {
-                return helper.GetInstance();
-            }
-            finally
-            {
-                toggler.Revert();
-            }
+            return helper.GetInstance();
         }
 
         private static readonly ConcurrentDictionary<Type, Func<IHelper>> _createHelperCache = new ConcurrentDictionary<Type, Func<IHelper>>(); 
@@ -161,6 +175,22 @@ namespace XSerializer
             public object GetInstance()
             {
                 return _instance;
+            }
+        }
+
+        private class NonDefaultConstructorHelper : IHelper
+        {
+            private readonly Dictionary<string, object> _propertyValues = new Dictionary<string, object>();
+
+            public void SetValue(SerializableJsonProperty property, JsonReader reader, IJsonSerializeOperationInfo info)
+            {
+                var value = property.ReadValue(reader, info);
+                _propertyValues[property.Name] = value;
+            }
+
+            public object GetInstance()
+            {
+                throw new NotImplementedException();
             }
         }
     }

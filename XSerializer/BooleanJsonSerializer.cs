@@ -36,18 +36,19 @@ namespace XSerializer
             }
             else
             {
-                var b = (bool)instance;
-
-                var toggler = new EncryptWritesToggler(writer);
-
                 if (_encrypt)
                 {
+                    var toggler = new EncryptWritesToggler(writer);
                     toggler.Toggle();
+
+                    writer.WriteValue((bool)instance);
+
+                    toggler.Revert();
                 }
-
-                writer.WriteValue(b);
-
-                toggler.Revert();
+                else
+                {
+                    writer.WriteValue((bool)instance);
+                }
             }
         }
 
@@ -58,13 +59,26 @@ namespace XSerializer
                 throw new XSerializerException("Reached end of stream while parsing boolean value.");
             }
 
-            var toggler = new DecryptReadsToggler(reader);
-
             if (_encrypt)
             {
+                var toggler = new DecryptReadsToggler(reader);
                 toggler.Toggle();
+
+                try
+                {
+                    return Read(reader);
+                }
+                finally
+                {
+                    toggler.Revert();
+                }
             }
 
+            return Read(reader);
+        }
+
+        private object Read(JsonReader reader)
+        {
             if (reader.NodeType != JsonNodeType.Boolean)
             {
                 if (!_nullable || reader.NodeType != JsonNodeType.Null)
@@ -76,14 +90,7 @@ namespace XSerializer
                 }
             }
 
-            try
-            {
-                return reader.Value;
-            }
-            finally
-            {
-                toggler.Revert();
-            }
+            return reader.Value;
         }
     }
 }

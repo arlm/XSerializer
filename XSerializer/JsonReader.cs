@@ -7,28 +7,22 @@ namespace XSerializer
 {
     internal class JsonReader : IDisposable
     {
-        private readonly TextReader _reader;
+        private readonly TextReader _primaryReader;
         private readonly IJsonSerializeOperationInfo _info;
 
         private StringReader _decryptedReader;
+        private TextReader _currentReader;
         private bool _decryptReads;
 
         public JsonReader(TextReader reader, IJsonSerializeOperationInfo info)
         {
-            _reader = reader;
+            _primaryReader = reader;
+            _currentReader = _primaryReader;
             _info = info;
         }
 
         public JsonNodeType NodeType { get; private set; }
         public object Value { get; private set; }
-
-        private TextReader Reader
-        {
-            get
-            {
-                return _decryptedReader ?? _reader;
-            }
-        }
 
         public bool DecryptReads
         {
@@ -50,6 +44,7 @@ namespace XSerializer
                     }
 
                     _decryptedReader = new StringReader(_info.EncryptionMechanism.Decrypt((string)Value, _info.EncryptKey, _info.SerializationState));
+                    _currentReader = _decryptedReader;
                     Read();
                 }
                 else
@@ -60,6 +55,7 @@ namespace XSerializer
                     }
 
                     _decryptedReader = null;
+                    _currentReader = _primaryReader;
                 }
             }
         }
@@ -155,19 +151,14 @@ namespace XSerializer
         /// <returns>true if the next node was read successfully; false if there are no more nodes to read.</returns>
         public bool Read()
         {
-            var next = Reader.Peek();
+            var read = _currentReader.Read();
 
-            if (next == -1)
+            switch (read)
             {
-                Value = null;
-                NodeType = JsonNodeType.None;
-                return false;
-            }
-
-            var c = (char)Reader.Read();
-
-            switch (c)
-            {
+                case -1:
+                    Value = null;
+                    NodeType = JsonNodeType.None;
+                    return false;
                 case '"':
                     Value = ReadString();
                     NodeType = JsonNodeType.String;
@@ -184,7 +175,7 @@ namespace XSerializer
                 case '7':
                 case '8':
                 case '9':
-                    Value = ReadNumber(c);
+                    Value = ReadNumber((char)read);
                     NodeType = JsonNodeType.Number;
                     break;
                 case 't':
@@ -230,7 +221,7 @@ namespace XSerializer
                 case '\r':
                 case '\n':
                 case '\t':
-                    Value = ReadWhitespace(c);
+                    Value = ReadWhitespace((char)read);
                     NodeType = JsonNodeType.Whitespace;
                     break;
             }
@@ -240,46 +231,41 @@ namespace XSerializer
 
         private void ReadLiteral(string value, params char[] literalMinusFirstChar)
         {
-            foreach (var literalChar in literalMinusFirstChar)
+            for (int i = 0; i < literalMinusFirstChar.Length; i++)
             {
-                var peek = Reader.Peek();
+                var read = _currentReader.Read();
 
-                if (peek == -1)
+                if (read == -1)
                 {
                     throw new XSerializerException(string.Format("Reached end of input before literal '{0}' was parsed.", value));
                 }
 
-                if (Reader.Read() != literalChar)
+                if (read != literalMinusFirstChar[i])
                 {
-                    throw new XSerializerException(string.Format("Invalid literal character '{0}' in literal '{1}.", (char)peek, value));
+                    throw new XSerializerException(string.Format("Invalid literal character '{0}' in literal '{1}.", (char)read, value));
                 }
             }
         }
 
         private string ReadString()
         {
-            var sb = new StringBuilder();
+            var sb = new StringBuilder(38); // Large enough to read a DateTime or Guid.
 
             while (true)
             {
-                var read = Reader.Read();
+                var read = _currentReader.Read();
 
-                if (read == -1)
-                {
-                    throw new XSerializerException("Reached end of input before closing quote was found for string.");
-                }
-
-                var c = (char)read;
-
-                switch (c)
+                switch (read)
                 {
                     case '"':
                         return sb.ToString();
                     case '\\':
                         sb.Append(ReadEscapedChar());
                         break;
+                    case -1:
+                        throw new XSerializerException("Reached end of input before closing quote was found for string.");
                     default:
-                        sb.Append(c);
+                        sb.Append((char)read);
                         break;
                 }
             }
@@ -287,21 +273,14 @@ namespace XSerializer
 
         private char ReadEscapedChar()
         {
-            var read = Reader.Read();
+            var read = _currentReader.Read();
 
-            if (read == -1)
-            {
-                throw new XSerializerException("Reached end of input before reading escaped character.");
-            }
-
-            var c = (char)read;
-
-            switch (c)
+            switch (read)
             {
                 case '"':
                 case '\\':
                 case '/':
-                    return c;
+                    return (char)read;
                 case 'b':
                     return '\b';
                 case 'f':
@@ -314,22 +293,23 @@ namespace XSerializer
                     return '\t';
                 case 'u':
                     throw new NotImplementedException("Hexadecimal unicode escape characters have not yet been implemented.");
+                case -1:
+                    throw new XSerializerException("Reached end of input before reading escaped character.");
                 default:
-                    throw new XSerializerException("Unknown escaped character: \\" + c);
+                    throw new XSerializerException("Unknown escaped character: \\" + (char)read);
             }
         }
 
         private string ReadNumber(char c)
         {
             var sb = new StringBuilder();
-
             sb.Append(c);
 
             while (true)
             {
-                var i = Reader.Peek(); // TODO: consider a peek-free implementation.
+                var peek = _currentReader.Peek();
 
-                switch (i)
+                switch (peek)
                 {
                     case '+':
                     case '-':
@@ -351,7 +331,7 @@ namespace XSerializer
                         return sb.ToString();
                 }
 
-                sb.Append((char)Reader.Read());
+                sb.Append((char)_currentReader.Read());
             }
         }
 
@@ -360,9 +340,9 @@ namespace XSerializer
             var sb = new StringBuilder();
             sb.Append(first);
 
-            while (IsWhitespace(Reader.Peek()))
+            while (IsWhitespace(_currentReader.Peek()))
             {
-                sb.Append((char)Reader.Read());
+                sb.Append((char)_currentReader.Read());
             }
 
             return sb.ToString();

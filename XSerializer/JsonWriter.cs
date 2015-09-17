@@ -1,28 +1,24 @@
 using System;
+using System.Globalization;
 using System.IO;
 
 namespace XSerializer
 {
     internal class JsonWriter : IDisposable
     {
-        private readonly TextWriter _writer;
+        private readonly TextWriter _primaryWriter;
         private readonly IJsonSerializeOperationInfo _info;
 
-        private StringWriter _encryptingStringWriter;
         private bool _encryptWrites;
+
+        private StringWriter _encryptingStringWriter;
+        private TextWriter _currentWriter;
 
         public JsonWriter(TextWriter writer, IJsonSerializeOperationInfo info)
         {
-            _writer = writer;
+            _primaryWriter = writer;
+            _currentWriter = _primaryWriter;
             _info = info;
-        }
-
-        private TextWriter Writer
-        {
-            get
-            {
-                return _encryptingStringWriter ?? _writer;
-            }
         }
 
         public bool EncryptWrites
@@ -42,11 +38,13 @@ namespace XSerializer
                 {
                     // We're starting an encrypt session
                     _encryptingStringWriter = new StringWriter();
+                    _currentWriter = _encryptingStringWriter;
                 }
                 else
                 {
                     var plainText = _encryptingStringWriter.GetStringBuilder().ToString();
                     _encryptingStringWriter = null;
+                    _currentWriter = _primaryWriter;
 
                     // We're ending an encrypt session - encrypt if a mechanism exists.
                     if (_info.EncryptionMechanism != null)
@@ -62,7 +60,7 @@ namespace XSerializer
                     else
                     {
                         // No encryption mechanism exists - just write the plain text.
-                        Writer.Write(plainText);
+                        _currentWriter.Write(plainText);
                     }
                 }
             }
@@ -76,111 +74,111 @@ namespace XSerializer
             }
             else
             {
-                Writer.Write('"');
-                Writer.Write(Escape(value));
-                Writer.Write('"');
+                _currentWriter.Write('"');
+                _currentWriter.Write(Escape(value));
+                _currentWriter.Write('"');
             }
         }
 
         public void WriteValue(DateTime value)
         {
-            Writer.Write('"');
-            Writer.Write(value.ToString("O"));
-            Writer.Write('"');
+            _currentWriter.Write('"');
+            _currentWriter.Write(value.ToString("O", CultureInfo.InvariantCulture));
+            _currentWriter.Write('"');
         }
 
         public void WriteValue(DateTimeOffset value)
         {
-            Writer.Write('"');
-            Writer.Write(value.ToString("O"));
-            Writer.Write('"');
+            _currentWriter.Write('"');
+            _currentWriter.Write(value.ToString("O", CultureInfo.InvariantCulture));
+            _currentWriter.Write('"');
         }
 
         public void WriteValue(Guid value)
         {
-            Writer.Write('"');
-            Writer.Write(value.ToString("D"));
-            Writer.Write('"');
+            _currentWriter.Write('"');
+            _currentWriter.Write(value.ToString("D"));
+            _currentWriter.Write('"');
         }
 
         public void WriteValue(double value)
         {
-            Writer.Write(value);
+            _currentWriter.Write(value);
         }
 
         public void WriteValue(float value)
         {
-            Writer.Write(value);
+            _currentWriter.Write(value);
         }
 
         public void WriteValue(decimal value)
         {
-            Writer.Write(value);
+            _currentWriter.Write(value);
         }
 
         public void WriteValue(int value)
         {
-            Writer.Write(value);
+            _currentWriter.Write(value);
         }
 
         public void WriteValue(long value)
         {
-            Writer.Write(value);
+            _currentWriter.Write(value);
         }
 
         public void WriteValue(uint value)
         {
-            Writer.Write(value);
+            _currentWriter.Write(value);
         }
 
         public void WriteValue(ulong value)
         {
-            Writer.Write(value);
+            _currentWriter.Write(value);
         }
 
         public void WriteValue(bool value)
         {
-            Writer.Write(value ? "true" : "false");
+            _currentWriter.Write(value ? "true" : "false");
         }
 
         public void WriteNull()
         {
-            Writer.Write("null");
+            _currentWriter.Write("null");
         }
 
         public void WriteOpenObject()
         {
-            Writer.Write('{');
+            _currentWriter.Write('{');
         }
 
         public void WriteCloseObject()
         {
-            Writer.Write('}');
+            _currentWriter.Write('}');
         }
 
         public void WriteNameValueSeparator()
         {
-            Writer.Write(':');
+            _currentWriter.Write(':');
         }
 
         public void WriteItemSeparator()
         {
-            Writer.Write(',');
+            _currentWriter.Write(',');
         }
 
         public void WriteOpenArray()
         {
-            Writer.Write('[');
+            _currentWriter.Write('[');
         }
 
         public void WriteCloseArray()
         {
-            Writer.Write(']');
+            _currentWriter.Write(']');
         }
 
         public void Flush()
         {
-            Writer.Flush();
+            _currentWriter.Flush();
         }
 
         public void Dispose()

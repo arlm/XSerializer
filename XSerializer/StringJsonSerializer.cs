@@ -6,11 +6,11 @@ namespace XSerializer
     internal sealed class StringJsonSerializer : IJsonSerializerInternal
     {
         private static readonly ConcurrentDictionary<Tuple<Type, bool>, StringJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool>, StringJsonSerializer>();
-        
+
         private readonly bool _encrypt;
         private readonly bool _nullable;
         private readonly Action<JsonWriter, object> _write;
-        private readonly Func<string, object> _read;
+        private readonly Func<string, IJsonSerializeOperationInfo, object> _read;
 
         private StringJsonSerializer(Type type, bool encrypt)
         {
@@ -32,16 +32,19 @@ namespace XSerializer
             }
             else
             {
-                var toggler = new EncryptWritesToggler(writer);
-
                 if (_encrypt)
                 {
+                    var toggler = new EncryptWritesToggler(writer);
                     toggler.Toggle();
+
+                    _write(writer, instance);
+
+                    toggler.Revert();
                 }
-
-                _write(writer, instance);
-
-                toggler.Revert();
+                else
+                {
+                    _write(writer, instance);
+                }
             }
         }
 
@@ -52,13 +55,26 @@ namespace XSerializer
                 throw new XSerializerException("Reached end of stream while parsing string value.");
             }
 
-            var toggler = new DecryptReadsToggler(reader);
-
             if (_encrypt)
             {
+                var toggler = new DecryptReadsToggler(reader);
                 toggler.Toggle();
+
+                try
+                {
+                    return Read(reader, info);
+                }
+                finally
+                {
+                    toggler.Revert();
+                }
             }
 
+            return Read(reader, info);
+        }
+
+        private object Read(JsonReader reader, IJsonSerializeOperationInfo info)
+        {
             if (reader.NodeType != JsonNodeType.String)
             {
                 if (!_nullable || reader.NodeType != JsonNodeType.Null)
@@ -70,45 +86,38 @@ namespace XSerializer
                 }
             }
 
-            try
-            {
-                return _read((string)reader.Value);
-            }
-            finally
-            {
-                toggler.Revert();
-            }
+            return _read((string)reader.Value, info);
         }
 
-        private static void SetDelegates(
+        private void SetDelegates(
             Type type,
             out Action<JsonWriter, object> writeAction,
-            out Func<string, object> readFunc)
+            out Func<string, IJsonSerializeOperationInfo, object> readFunc)
         {
-            Func<string, object> readFuncLocal;
+            Func<string, IJsonSerializeOperationInfo, object> readFuncLocal;
 
             if (type == typeof(string))
             {
                 writeAction = (writer, value) => writer.WriteValue((string)value);
-                readFuncLocal = value => value;
+                readFuncLocal = (value, info) => value;
             }
             else if (type == typeof(DateTime)
                 || type == typeof(DateTime?))
             {
                 writeAction = (writer, value) => writer.WriteValue((DateTime)value);
-                readFuncLocal = value => DateTime.Parse(value);
+                readFuncLocal = (value, info) => info.DateTimeHandler.ParseDateTime(value);
             }
             else if (type == typeof(DateTimeOffset)
                 || type == typeof(DateTimeOffset?))
             {
                 writeAction = (writer, value) => writer.WriteValue((DateTimeOffset)value);
-                readFuncLocal = value => DateTimeOffset.Parse(value);
+                readFuncLocal = (value, info) => info.DateTimeHandler.ParseDateTimeOffset(value);
             }
             else if (type == typeof(Guid)
                      || type == typeof(Guid?))
             {
                 writeAction = (writer, value) => writer.WriteValue((Guid)value);
-                readFuncLocal = value => Guid.Parse(value);
+                readFuncLocal = (value, info) => Guid.Parse(value);
             }
             else
             {
@@ -118,7 +127,7 @@ namespace XSerializer
             readFunc =
                 type == typeof(string) || !type.IsNullableType()
                     ? readFuncLocal
-                    : value => value == null ? null : readFuncLocal(value);
+                    : (value, info) => value == null ? null : readFuncLocal(value, info);
         }
     }
 }

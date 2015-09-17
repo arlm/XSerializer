@@ -8,6 +8,7 @@ namespace XSerializer
         public JsonSerializerConfiguration()
         {
             Encoding = Encoding.UTF8;
+            DateTimeHandler = XSerializer.DateTimeHandler.Default;
         }
 
         public Encoding Encoding { get; set; }
@@ -16,5 +17,6 @@ namespace XSerializer
         public IEncryptionMechanism EncryptionMechanism { get; set; }
         public object EncryptKey { get; set; }
         public bool EncryptRootObject { get; set; }
+        public IDateTimeHandler DateTimeHandler { get; set; }
     }
 }
