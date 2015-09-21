@@ -77,7 +77,7 @@ namespace XSerializer
         {
             if (reader.NodeType != JsonNodeType.Number)
             {
-                if (!_nullable || reader.NodeType != JsonNodeType.Null)
+                if (!_nullable && reader.NodeType != JsonNodeType.Null)
                 {
                     throw new XSerializerException(string.Format(
                         "Unexpected node type '{0}' encountered in '{1}.DeserializeObject' method.",
