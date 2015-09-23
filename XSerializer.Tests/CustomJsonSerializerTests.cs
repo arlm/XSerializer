@@ -178,6 +178,31 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void CanDeserializeEmptyObject()
+        {
+            const string json = @"{}";
+
+            var serializer = new JsonSerializer<Bar>();
+
+            var instance = serializer.Deserialize(json);
+
+            Assert.That(instance.Baz, Is.Null);
+            Assert.That(instance.Corge, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void CanDeserializeNullObject()
+        {
+            const string json = @"null";
+
+            var serializer = new JsonSerializer<Bar>();
+
+            var instance = serializer.Deserialize(json);
+
+            Assert.That(instance, Is.Null);
+        }
+
+        [Test]
         public void CanDeserializeWithEncryptRootObjectEnabled()
         {
             var encryptionMechanism = new Base64EncryptionMechanism();

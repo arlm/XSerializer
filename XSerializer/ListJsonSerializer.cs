@@ -129,10 +129,22 @@ namespace XSerializer
 
         private object Read(JsonReader reader, IJsonSerializeOperationInfo info)
         {
+            if (reader.NodeType == JsonNodeType.Null)
+            {
+                return null;
+            }
+
             var list = _createList();
 
             while (true)
             {
+                if (reader.PeekNextNodeType() == JsonNodeType.CloseArray)
+                {
+                    // If the next content is CloseArray, read it and return the empty list.
+                    reader.Read();
+                    return list;
+                }
+
                 var item = _itemSerializer.DeserializeObject(reader, info);
                 _addItem(list, item);
 

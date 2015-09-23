@@ -107,9 +107,14 @@ namespace XSerializer
                     throw new XSerializerException("Unexpected end of input while attempting to parse property name.");
                 }
 
-                if (NodeType != JsonNodeType.String)
+                switch (NodeType)
                 {
-                    throw new XSerializerException("Unexpected node type found while attempting to parse property name: " + NodeType + ".");
+                    case JsonNodeType.CloseObject:
+                        yield break;
+                    case JsonNodeType.String:
+                        break;
+                    default:
+                        throw new XSerializerException("Unexpected node type found while attempting to parse ':' character: " + NodeType + ".");
                 }
 
                 var name = (string)Value;
@@ -141,6 +146,66 @@ namespace XSerializer
                         break;
                     default:
                         throw new XSerializerException("Unexpected node type found while attempting to parse ',' or '}' character: " + NodeType + ".");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Reads the next non-whitespace node type without changing the state of the reader. If the
+        /// next node type is whitespace, then all leading whitespace is consumed and discarded. The
+        /// next node type is then returned, again without changing the state of the reader.
+        /// </summary>
+        /// <returns>The next non-whitespace node type in the stream.</returns>
+        public JsonNodeType PeekNextNodeType()
+        {
+            while (true)
+            {
+                var peek = _currentReader.Peek();
+
+                switch (peek)
+                {
+                    case ' ':
+                    case '\r':
+                    case '\n':
+                    case '\t':
+                        ReadWhitespace((char)peek);
+                        continue;
+                    case -1:
+                        return JsonNodeType.None;
+                    case '"':
+                        return JsonNodeType.String;
+                    case '-':
+                    case '.':
+                    case '0':
+                    case '1':
+                    case '2':
+                    case '3':
+                    case '4':
+                    case '5':
+                    case '6':
+                    case '7':
+                    case '8':
+                    case '9':
+                        return JsonNodeType.Number;
+                    case 't':
+                    case 'f':
+                        return JsonNodeType.Boolean;
+                    case 'n':
+                        return JsonNodeType.Null;
+                    case '{':
+                        return JsonNodeType.OpenObject;
+                    case '}':
+                        return JsonNodeType.CloseObject;
+                    case ':':
+                        return JsonNodeType.NameValueSeparator;
+                    case ',':
+                        return JsonNodeType.ItemSeparator;
+                    case '[':
+                        return JsonNodeType.OpenArray;
+                    case ']':
+                        return JsonNodeType.CloseArray;
+                    default:
+                        throw new XSerializerException("Unknown character: " + (char)peek);
                 }
             }
         }

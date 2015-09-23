@@ -164,6 +164,66 @@ namespace XSerializer.Tests
             Assert.That(result, Is.EqualTo(new ArrayList { "abc", "xyz" }));
         }
 
+        [Test]
+        public void CanDeserializeEmptyGenericList()
+        {
+            var serializer = new JsonSerializer<List<string>>();
+
+            var result = serializer.Deserialize(@"[]");
+
+            Assert.That(result, Is.EqualTo(new List<string>()));
+        }
+
+        [Test]
+        public void CanDeserializeEmptyGenericIEnumerable()
+        {
+            var serializer = new JsonSerializer<IEnumerable<string>>();
+
+            var result = serializer.Deserialize(@"[]");
+
+            Assert.That(result, Is.EqualTo(new List<string>()));
+        }
+
+        [Test]
+        public void CanDeserializeEmptyNonGenericIEnumerable()
+        {
+            var serializer = new JsonSerializer<IEnumerable>();
+
+            var result = serializer.Deserialize(@"[]");
+
+            Assert.That(result, Is.EqualTo(new ArrayList()));
+        }
+
+        [Test]
+        public void CanDeserializeNullGenericList()
+        {
+            var serializer = new JsonSerializer<List<string>>();
+
+            var result = serializer.Deserialize(@"null");
+
+            Assert.That(result, Is.Null);
+        }
+
+        [Test]
+        public void CanDeserializeNullGenericIEnumerable()
+        {
+            var serializer = new JsonSerializer<IEnumerable<string>>();
+
+            var result = serializer.Deserialize(@"null");
+
+            Assert.That(result, Is.Null);
+        }
+
+        [Test]
+        public void CanDeserializeNullNonGenericIEnumerable()
+        {
+            var serializer = new JsonSerializer<IEnumerable>();
+
+            var result = serializer.Deserialize(@"null");
+
+            Assert.That(result, Is.Null);
+        }
+
         [Encrypt]
         public class Foo
         {

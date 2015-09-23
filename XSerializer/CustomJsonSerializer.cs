@@ -88,6 +88,11 @@ namespace XSerializer
                 throw new XSerializerException("Unexpected end of input while attempting to parse '{' character.");
             }
 
+            if (reader.NodeType == JsonNodeType.Null)
+            {
+                return null;
+            }
+
             if (_encrypt)
             {
                 var toggler = new DecryptReadsToggler(reader);
