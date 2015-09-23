@@ -120,7 +120,7 @@ namespace XSerializer
                 }
                 finally
                 {
-                    toggler.Toggle();
+                    toggler.Revert();
                 }
             }
 
