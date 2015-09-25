@@ -38,6 +38,11 @@ namespace XSerializer
 
                 if (_decryptReads)
                 {
+                    if (NodeType == JsonNodeType.Null)
+                    {
+                        return;
+                    }
+
                     if (NodeType != JsonNodeType.String)
                     {
                         throw new XSerializerException("Cannot decrypt non-string value.");
@@ -49,6 +54,11 @@ namespace XSerializer
                 }
                 else
                 {
+                    if (NodeType == JsonNodeType.Null)
+                    {
+                        return;
+                    }
+
                     if (_decryptedReader.Peek() != -1)
                     {
                         throw new InvalidOperationException("Attempted to set DecryptReads to false before the encrypted stream has been consumed.");

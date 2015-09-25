@@ -162,5 +162,17 @@ namespace XSerializer.Tests
             Assert.That(reader.ReadContent(), Is.False); // end of stream
             Assert.That(reader.ReadContent(), Is.False); // end of stream
         }
+
+        [Test]
+        public void CanSetDecryptReadsToTrueAndBackAgainWhenTheNodeTypeIsNull()
+        {
+            var reader = new JsonReader(new StringReader("null"), new JsonSerializeOperationInfo { EncryptionEnabled = true, EncryptionMechanism = new Base64EncryptionMechanism() });
+
+            Assert.That(reader.Read(), Is.True);
+            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.Null));
+
+            Assert.That(() => reader.DecryptReads = true, Throws.Nothing);
+            Assert.That(() => reader.DecryptReads = false, Throws.Nothing);
+        }
     }
 }
