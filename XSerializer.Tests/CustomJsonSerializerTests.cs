@@ -310,6 +310,19 @@ namespace XSerializer.Tests
             Assert.That(result.Waldo.Garply, Is.EqualTo(true));
         }
 
+        [Test]
+        public void IgnoresUnknownMembers()
+        {
+            var json = @"{""Qux"":""abc"",""Garply"":true,""Unknown"":{""Wat"":""Huh?""}}";
+
+            var serializer = new JsonSerializer<Baz>();
+
+            var result = serializer.Deserialize(json);
+
+            Assert.That(result.Qux, Is.EqualTo("abc"));
+            Assert.That(result.Garply, Is.True);
+        }
+
         public class Bar
         {
             public Baz Baz { get; set; }

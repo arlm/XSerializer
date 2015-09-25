@@ -161,6 +161,52 @@ namespace XSerializer
         }
 
         /// <summary>
+        /// Read and discard the next content value. If the next content type is <see cref="JsonNodeType.OpenObject"/>
+        /// or <see cref="JsonNodeType.OpenArray"/>, then the reader will continue to read and discard content until
+        /// the matching <see cref="JsonNodeType.CloseObject"/> or <see cref="JsonNodeType.CloseArray"/> content type
+        /// is found. For all other content types, no additional reads are made.
+        /// </summary>
+        public void Discard()
+        {
+            if (!ReadContent())
+            {
+                return;
+            }
+
+            switch (NodeType)
+            {
+                case JsonNodeType.OpenObject:
+                    Consume(JsonNodeType.OpenObject, JsonNodeType.CloseObject);
+                    break;
+                case JsonNodeType.OpenArray:
+                    Consume(JsonNodeType.OpenArray, JsonNodeType.CloseArray);
+                    break;
+            }
+        }
+
+        private void Consume(JsonNodeType openNodeType, JsonNodeType closeNodeType)
+        {
+            int nestLevel = 0;
+
+            while (Read())
+            {
+                if (NodeType == closeNodeType)
+                {
+                    if (nestLevel == 0)
+                    {
+                        return;
+                    }
+
+                    nestLevel--;
+                }
+                else if (NodeType == openNodeType)
+                {
+                    nestLevel++;
+                }
+            }
+        }
+
+        /// <summary>
         /// Reads the next non-whitespace node type without changing the state of the reader. If the
         /// next node type is whitespace, then all leading whitespace is consumed and discarded. The
         /// next node type is then returned, again without changing the state of the reader.

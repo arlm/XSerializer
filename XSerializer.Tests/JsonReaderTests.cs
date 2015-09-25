@@ -174,5 +174,25 @@ namespace XSerializer.Tests
             Assert.That(() => reader.DecryptReads = true, Throws.Nothing);
             Assert.That(() => reader.DecryptReads = false, Throws.Nothing);
         }
+
+        [TestCase("null")]
+        [TestCase("true")]
+        [TestCase("false")]
+        [TestCase("123.45")]
+        [TestCase(@"""abc""")]
+        [TestCase(@"{""foo"":true}")]
+        [TestCase(@"{""foo"":{""bar"":{""baz"":null},""qux"":null}}")]
+        [TestCase(@"[123.45,null]")]
+        [TestCase(@"[[123.45],[null]]")]
+        [TestCase(@"    null   ")]
+        public void DiscardConsumesTheCurrentValue(string json)
+        {
+            var reader = new JsonReader(new StringReader(json), new JsonSerializeOperationInfo());
+
+            reader.Discard();
+
+            // There should be nothing significant left
+            Assert.That(reader.ReadContent(), Is.False);
+        }
     }
 }

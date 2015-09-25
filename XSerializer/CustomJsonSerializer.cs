@@ -123,6 +123,10 @@ namespace XSerializer
                 {
                     helper.SetValue(property, reader, info);
                 }
+                else
+                {
+                    reader.Discard();
+                }
             }
 
             return helper.GetInstance();
