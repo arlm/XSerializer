@@ -324,24 +324,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfJsonObject()
-        {
-            var foo = new JsonArray
-            {
-                new JsonObject
-                {
-                    { "foo", true }
-                }
-            };
-
-            List<JsonObject> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar["foo"], Is.True);
-        }
-
-        [Test]
         public void CanConvertToJsonObjectArray()
         {
             var foo = new JsonArray
@@ -357,24 +339,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar["foo"], Is.True);
-        }
-
-        [Test]
-        public void CanConvertToListOfJsonArray()
-        {
-            var foo = new JsonArray
-            {
-                new JsonArray
-                {
-                    true
-                }
-            };
-
-            List<JsonArray> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar[0], Is.True);
         }
 
         [Test]
@@ -396,21 +360,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfString()
-        {
-            var foo = new JsonArray
-            {
-                "abc",
-            };
-
-            List<string> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo("abc"));
-        }
-
-        [Test]
         public void CanConvertToStringArray()
         {
             var foo = new JsonArray
@@ -423,23 +372,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo("abc"));
-        }
-
-        [Test]
-        public void CanConvertToListOfDateTime()
-        {
-            var now = DateTime.Now;
-
-            var foo = new JsonArray
-            {
-                now.ToString("O"),
-            };
-
-            List<DateTime> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo(now));
         }
 
         [Test]
@@ -457,25 +389,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo(now));
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableDateTime()
-        {
-            var now = DateTime.Now;
-
-            var foo = new JsonArray
-            {
-                now.ToString("O"), null
-            };
-
-            List<DateTime?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.EqualTo(now));
-            Assert.That(baz, Is.Null);
         }
 
         [Test]
@@ -498,23 +411,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfDateTimeOffset()
-        {
-            var now = DateTimeOffset.Now;
-
-            var foo = new JsonArray
-            {
-                now.ToString("O"),
-            };
-
-            List<DateTimeOffset> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo(now));
-        }
-
-        [Test]
         public void CanConvertToDateTimeOffsetArray()
         {
             var now = DateTimeOffset.Now;
@@ -529,25 +425,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo(now));
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableDateTimeOffset()
-        {
-            var now = DateTimeOffset.Now;
-
-            var foo = new JsonArray
-            {
-                now.ToString("O"), null
-            };
-
-            List<DateTimeOffset?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.EqualTo(now));
-            Assert.That(baz, Is.Null);
         }
 
         [Test]
@@ -570,23 +447,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfGuid()
-        {
-            var guid = Guid.NewGuid();
-
-            var foo = new JsonArray
-            {
-                guid.ToString("D"),
-            };
-
-            List<Guid> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo(guid));
-        }
-
-        [Test]
         public void CanConvertToGuidArray()
         {
             var guid = Guid.NewGuid();
@@ -601,25 +461,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo(guid));
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableGuid()
-        {
-            var guid = Guid.NewGuid();
-
-            var foo = new JsonArray
-            {
-                guid.ToString("D"), null
-            };
-
-            List<Guid?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.EqualTo(guid));
-            Assert.That(baz, Is.Null);
         }
 
         [Test]
@@ -642,21 +483,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfBoolean()
-        {
-            var foo = new JsonArray
-            {
-                true,
-            };
-
-            List<bool> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.True);
-        }
-
-        [Test]
         public void CanConvertToBooleanArray()
         {
             var foo = new JsonArray
@@ -669,23 +495,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.True);
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableBoolean()
-        {
-            var foo = new JsonArray
-            {
-                true, null
-            };
-
-            List<bool?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.True);
-            Assert.That(baz, Is.Null);
         }
 
         [Test]
@@ -706,21 +515,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfByte()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"),
-            };
-
-            List<byte> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
         public void CanConvertToByteArray()
         {
             var foo = new JsonArray
@@ -733,23 +527,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableByte()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"), null
-            };
-
-            List<byte?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.EqualTo(123));
-            Assert.That(baz, Is.Null);
         }
 
         [Test]
@@ -770,21 +547,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfSByte()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"),
-            };
-
-            List<sbyte> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
         public void CanConvertToSByteArray()
         {
             var foo = new JsonArray
@@ -797,23 +559,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableSByte()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"), null
-            };
-
-            List<sbyte?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.EqualTo(123));
-            Assert.That(baz, Is.Null);
         }
 
         [Test]
@@ -834,21 +579,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfInt16()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"),
-            };
-
-            List<short> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
         public void CanConvertToInt16Array()
         {
             var foo = new JsonArray
@@ -861,23 +591,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableInt16()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"), null
-            };
-
-            List<short?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.EqualTo(123));
-            Assert.That(baz, Is.Null);
         }
 
         [Test]
@@ -898,21 +611,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfUInt16()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"),
-            };
-
-            List<ushort> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
         public void CanConvertToUInt16Array()
         {
             var foo = new JsonArray
@@ -925,23 +623,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableUInt16()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"), null
-            };
-
-            List<ushort?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.EqualTo(123));
-            Assert.That(baz, Is.Null);
         }
 
         [Test]
@@ -962,21 +643,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfInt32()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"),
-            };
-
-            List<int> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
         public void CanConvertToInt32Array()
         {
             var foo = new JsonArray
@@ -989,23 +655,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableInt32()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"), null
-            };
-
-            List<int?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.EqualTo(123));
-            Assert.That(baz, Is.Null);
         }
 
         [Test]
@@ -1026,21 +675,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfUInt32()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"),
-            };
-
-            List<uint> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
         public void CanConvertToUInt32Array()
         {
             var foo = new JsonArray
@@ -1053,23 +687,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableUInt32()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"), null
-            };
-
-            List<uint?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.EqualTo(123));
-            Assert.That(baz, Is.Null);
         }
 
         [Test]
@@ -1090,21 +707,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfInt64()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"),
-            };
-
-            List<long> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
         public void CanConvertToInt64Array()
         {
             var foo = new JsonArray
@@ -1117,23 +719,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableInt64()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"), null
-            };
-
-            List<long?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.EqualTo(123));
-            Assert.That(baz, Is.Null);
         }
 
         [Test]
@@ -1154,21 +739,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfUInt64()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"),
-            };
-
-            List<ulong> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
         public void CanConvertToUInt64Array()
         {
             var foo = new JsonArray
@@ -1181,23 +751,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo(123));
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableUInt64()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123"), null
-            };
-
-            List<ulong?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.EqualTo(123));
-            Assert.That(baz, Is.Null);
         }
 
         [Test]
@@ -1218,21 +771,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfSingle()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123.45"),
-            };
-
-            List<float> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo(123.45F));
-        }
-
-        [Test]
         public void CanConvertToSingleArray()
         {
             var foo = new JsonArray
@@ -1245,23 +783,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo(123.45F));
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableSingle()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123.45"), null
-            };
-
-            List<float?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.EqualTo(123.45F));
-            Assert.That(baz, Is.Null);
         }
 
         [Test]
@@ -1282,21 +803,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfDouble()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123.45"),
-            };
-
-            List<double> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo(123.45));
-        }
-
-        [Test]
         public void CanConvertToDoubleArray()
         {
             var foo = new JsonArray
@@ -1309,23 +815,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo(123.45));
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableDouble()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123.45"), null
-            };
-
-            List<double?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.EqualTo(123.45));
-            Assert.That(baz, Is.Null);
         }
 
         [Test]
@@ -1346,21 +835,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanConvertToListOfDecimal()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123.45"),
-            };
-
-            List<decimal> fooConverted = foo;
-
-            var bar = fooConverted[0];
-
-            Assert.That(bar, Is.EqualTo(123.45M));
-        }
-
-        [Test]
         public void CanConvertToDecimalArray()
         {
             var foo = new JsonArray
@@ -1373,23 +847,6 @@ namespace XSerializer.Tests
             var bar = fooConverted[0];
 
             Assert.That(bar, Is.EqualTo(123.45M));
-        }
-
-        [Test]
-        public void CanConvertToListOfNullableDecimal()
-        {
-            var foo = new JsonArray
-            {
-                new JsonNumber("123.45"), null
-            };
-
-            List<decimal?> fooConverted = foo;
-
-            var bar = fooConverted[0];
-            var baz = fooConverted[1];
-
-            Assert.That(bar, Is.EqualTo(123.45M));
-            Assert.That(baz, Is.Null);
         }
 
         [Test]

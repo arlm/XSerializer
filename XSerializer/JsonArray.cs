@@ -78,7 +78,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<object>)this;
+                                    r = _values;
                                     return true;
                                 });
                             }
@@ -87,7 +87,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<JsonObject>)this;
+                                    r = new ConversionList<JsonObject>(_values);
                                     return true;
                                 });
                             }
@@ -96,7 +96,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<JsonArray>)this;
+                                    r = new ConversionList<JsonArray>(_values);
                                     return true;
                                 });
                             }
@@ -105,7 +105,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<bool>)this;
+                                    r = new ConversionList<bool>(TransformItems<bool>()._values);
                                     return true;
                                 });
                             }
@@ -114,7 +114,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<bool?>)this;
+                                    r = new ConversionList<bool?>(TransformItems<bool?>()._values);
                                     return true;
                                 });
                             }
@@ -123,7 +123,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<byte>)this;
+                                    r = new ConversionList<byte>(TransformItems<byte>()._values);
                                     return true;
                                 });
                             }
@@ -132,7 +132,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<byte?>)this;
+                                    r = new ConversionList<byte?>(TransformItems<byte?>()._values);
                                     return true;
                                 });
                             }
@@ -141,7 +141,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<sbyte>)this;
+                                    r = new ConversionList<sbyte>(TransformItems<sbyte>()._values);
                                     return true;
                                 });
                             }
@@ -150,7 +150,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<sbyte?>)this;
+                                    r = new ConversionList<sbyte?>(TransformItems<sbyte?>()._values);
                                     return true;
                                 });
                             }
@@ -159,7 +159,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<short>)this;
+                                    r = new ConversionList<short>(TransformItems<short>()._values);
                                     return true;
                                 });
                             }
@@ -168,7 +168,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<short?>)this;
+                                    r = new ConversionList<short?>(TransformItems<short?>()._values);
                                     return true;
                                 });
                             }
@@ -177,7 +177,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<ushort>)this;
+                                    r = new ConversionList<ushort>(TransformItems<ushort>()._values);
                                     return true;
                                 });
                             }
@@ -186,7 +186,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<ushort?>)this;
+                                    r = new ConversionList<ushort?>(TransformItems<ushort?>()._values);
                                     return true;
                                 });
                             }
@@ -195,7 +195,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<int>)this;
+                                    r = new ConversionList<int>(TransformItems<int>()._values);
                                     return true;
                                 });
                             }
@@ -204,7 +204,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<int?>)this;
+                                    r = new ConversionList<int?>(TransformItems<int?>()._values);
                                     return true;
                                 });
                             }
@@ -213,7 +213,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<uint>)this;
+                                    r = new ConversionList<uint>(TransformItems<uint>()._values);
                                     return true;
                                 });
                             }
@@ -222,7 +222,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<uint?>)this;
+                                    r = new ConversionList<uint?>(TransformItems<uint?>()._values);
                                     return true;
                                 });
                             }
@@ -231,7 +231,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<long>)this;
+                                    r = new ConversionList<long>(TransformItems<long>()._values);
                                     return true;
                                 });
                             }
@@ -240,7 +240,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<long?>)this;
+                                    r = new ConversionList<long?>(TransformItems<long?>()._values);
                                     return true;
                                 });
                             }
@@ -249,7 +249,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<ulong>)this;
+                                    r = new ConversionList<ulong>(TransformItems<ulong>()._values);
                                     return true;
                                 });
                             }
@@ -258,7 +258,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<ulong?>)this;
+                                    r = new ConversionList<ulong?>(TransformItems<ulong?>()._values);
                                     return true;
                                 });
                             }
@@ -267,7 +267,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<float>)this;
+                                    r = new ConversionList<float>(TransformItems<float>()._values);
                                     return true;
                                 });
                             }
@@ -276,7 +276,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<float?>)this;
+                                    r = new ConversionList<float?>(TransformItems<float?>()._values);
                                     return true;
                                 });
                             }
@@ -285,7 +285,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<double>)this;
+                                    r = new ConversionList<double>(_values);
                                     return true;
                                 });
                             }
@@ -294,7 +294,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<double?>)this;
+                                    r = new ConversionList<double?>(_values);
                                     return true;
                                 });
                             }
@@ -303,7 +303,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<decimal>)this;
+                                    r = new ConversionList<decimal>(TransformItems<decimal>()._values);
                                     return true;
                                 });
                             }
@@ -312,7 +312,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<decimal?>)this;
+                                    r = new ConversionList<decimal?>(TransformItems<decimal?>()._values);
                                     return true;
                                 });
                             }
@@ -321,7 +321,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<string>)this;
+                                    r = new ConversionList<string>(_values);
                                     return true;
                                 });
                             }
@@ -330,7 +330,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<DateTime>)this;
+                                    r = new ConversionList<DateTime>(TransformItems<DateTime>()._values);
                                     return true;
                                 });
                             }
@@ -339,7 +339,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<DateTime?>)this;
+                                    r = new ConversionList<DateTime?>(TransformItems<DateTime?>()._values);
                                     return true;
                                 });
                             }
@@ -348,7 +348,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<DateTimeOffset>)this;
+                                    r = new ConversionList<DateTimeOffset>(TransformItems<DateTimeOffset>()._values);
                                     return true;
                                 });
                             }
@@ -357,7 +357,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<DateTimeOffset?>)this;
+                                    r = new ConversionList<DateTimeOffset?>(TransformItems<DateTimeOffset?>()._values);
                                     return true;
                                 });
                             }
@@ -366,7 +366,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<Guid>)this;
+                                    r = new ConversionList<Guid>(TransformItems<Guid>()._values);
                                     return true;
                                 });
                             }
@@ -375,7 +375,7 @@ namespace XSerializer
                             {
                                 return ((out object r) =>
                                 {
-                                    r = (List<Guid?>)this;
+                                    r = new ConversionList<Guid?>(TransformItems<Guid?>()._values);
                                     return true;
                                 });
                             }
@@ -701,19 +701,9 @@ namespace XSerializer
             return jsonArray._values.ToArray();
         }
 
-        public static implicit operator List<JsonObject>(JsonArray jsonArray)
-        {
-            return jsonArray._values.Cast<JsonObject>().ToList();
-        }
-
         public static implicit operator JsonObject[](JsonArray jsonArray)
         {
             return jsonArray._values.Cast<JsonObject>().ToArray();
-        }
-
-        public static implicit operator List<JsonArray>(JsonArray jsonArray)
-        {
-            return jsonArray._values.Cast<JsonArray>().ToList();
         }
 
         public static implicit operator JsonArray[](JsonArray jsonArray)
@@ -721,19 +711,9 @@ namespace XSerializer
             return jsonArray._values.Cast<JsonArray>().ToArray();
         }
 
-        public static implicit operator List<string>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<string>()._values.Cast<string>().ToList();
-        }
-
         public static implicit operator string[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<string>()._values.Cast<string>().ToArray();
-        }
-
-        public static implicit operator List<DateTime>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<DateTime>()._values.Cast<DateTime>().ToList();
         }
 
         public static implicit operator DateTime[](JsonArray jsonArray)
@@ -741,19 +721,9 @@ namespace XSerializer
             return jsonArray.TransformItems<DateTime>()._values.Cast<DateTime>().ToArray();
         }
 
-        public static implicit operator List<DateTime?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<DateTime?>()._values.Cast<DateTime?>().ToList();
-        }
-
         public static implicit operator DateTime?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<DateTime?>()._values.Cast<DateTime?>().ToArray();
-        }
-
-        public static implicit operator List<DateTimeOffset>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<DateTimeOffset>()._values.Cast<DateTimeOffset>().ToList();
         }
 
         public static implicit operator DateTimeOffset[](JsonArray jsonArray)
@@ -761,19 +731,9 @@ namespace XSerializer
             return jsonArray.TransformItems<DateTimeOffset>()._values.Cast<DateTimeOffset>().ToArray();
         }
 
-        public static implicit operator List<DateTimeOffset?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<DateTimeOffset?>()._values.Cast<DateTimeOffset?>().ToList();
-        }
-
         public static implicit operator DateTimeOffset?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<DateTimeOffset?>()._values.Cast<DateTimeOffset?>().ToArray();
-        }
-
-        public static implicit operator List<Guid>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<Guid>()._values.Cast<Guid>().ToList();
         }
 
         public static implicit operator Guid[](JsonArray jsonArray)
@@ -781,19 +741,9 @@ namespace XSerializer
             return jsonArray.TransformItems<Guid>()._values.Cast<Guid>().ToArray();
         }
 
-        public static implicit operator List<Guid?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<Guid?>()._values.Cast<Guid?>().ToList();
-        }
-
         public static implicit operator Guid?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<Guid?>()._values.Cast<Guid?>().ToArray();
-        }
-
-        public static implicit operator List<bool>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<bool>()._values.Cast<bool>().ToList();
         }
 
         public static implicit operator bool[](JsonArray jsonArray)
@@ -801,19 +751,9 @@ namespace XSerializer
             return jsonArray.TransformItems<bool>()._values.Cast<bool>().ToArray();
         }
 
-        public static implicit operator List<bool?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<bool?>()._values.Cast<bool?>().ToList();
-        }
-
         public static implicit operator bool?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<bool?>()._values.Cast<bool?>().ToArray();
-        }
-
-        public static implicit operator List<byte>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<byte>()._values.Cast<byte>().ToList();
         }
 
         public static implicit operator byte[](JsonArray jsonArray)
@@ -821,19 +761,9 @@ namespace XSerializer
             return jsonArray.TransformItems<byte>()._values.Cast<byte>().ToArray();
         }
 
-        public static implicit operator List<byte?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<byte?>()._values.Cast<byte?>().ToList();
-        }
-
         public static implicit operator byte?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<byte?>()._values.Cast<byte?>().ToArray();
-        }
-
-        public static implicit operator List<sbyte>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<sbyte>()._values.Cast<sbyte>().ToList();
         }
 
         public static implicit operator sbyte[](JsonArray jsonArray)
@@ -841,19 +771,9 @@ namespace XSerializer
             return jsonArray.TransformItems<sbyte>()._values.Cast<sbyte>().ToArray();
         }
 
-        public static implicit operator List<sbyte?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<sbyte?>()._values.Cast<sbyte?>().ToList();
-        }
-
         public static implicit operator sbyte?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<sbyte?>()._values.Cast<sbyte?>().ToArray();
-        }
-
-        public static implicit operator List<short>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<short>()._values.Cast<short>().ToList();
         }
 
         public static implicit operator short[](JsonArray jsonArray)
@@ -861,19 +781,9 @@ namespace XSerializer
             return jsonArray.TransformItems<short>()._values.Cast<short>().ToArray();
         }
 
-        public static implicit operator List<short?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<short?>()._values.Cast<short?>().ToList();
-        }
-
         public static implicit operator short?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<short?>()._values.Cast<short?>().ToArray();
-        }
-
-        public static implicit operator List<ushort>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<ushort>()._values.Cast<ushort>().ToList();
         }
 
         public static implicit operator ushort[](JsonArray jsonArray)
@@ -881,19 +791,9 @@ namespace XSerializer
             return jsonArray.TransformItems<ushort>()._values.Cast<ushort>().ToArray();
         }
 
-        public static implicit operator List<ushort?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<ushort?>()._values.Cast<ushort?>().ToList();
-        }
-
         public static implicit operator ushort?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<ushort?>()._values.Cast<ushort?>().ToArray();
-        }
-
-        public static implicit operator List<int>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<int>()._values.Cast<int>().ToList();
         }
 
         public static implicit operator int[](JsonArray jsonArray)
@@ -901,19 +801,9 @@ namespace XSerializer
             return jsonArray.TransformItems<int>()._values.Cast<int>().ToArray();
         }
 
-        public static implicit operator List<int?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<int?>()._values.Cast<int?>().ToList();
-        }
-
         public static implicit operator int?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<int?>()._values.Cast<int?>().ToArray();
-        }
-
-        public static implicit operator List<uint>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<uint>()._values.Cast<uint>().ToList();
         }
 
         public static implicit operator uint[](JsonArray jsonArray)
@@ -921,19 +811,9 @@ namespace XSerializer
             return jsonArray.TransformItems<uint>()._values.Cast<uint>().ToArray();
         }
 
-        public static implicit operator List<uint?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<uint?>()._values.Cast<uint?>().ToList();
-        }
-
         public static implicit operator uint?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<uint?>()._values.Cast<uint?>().ToArray();
-        }
-
-        public static implicit operator List<long>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<long>()._values.Cast<long>().ToList();
         }
 
         public static implicit operator long[](JsonArray jsonArray)
@@ -941,19 +821,9 @@ namespace XSerializer
             return jsonArray.TransformItems<long>()._values.Cast<long>().ToArray();
         }
 
-        public static implicit operator List<long?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<long?>()._values.Cast<long?>().ToList();
-        }
-
         public static implicit operator long?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<long?>()._values.Cast<long?>().ToArray();
-        }
-
-        public static implicit operator List<ulong>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<ulong>()._values.Cast<ulong>().ToList();
         }
 
         public static implicit operator ulong[](JsonArray jsonArray)
@@ -961,19 +831,9 @@ namespace XSerializer
             return jsonArray.TransformItems<ulong>()._values.Cast<ulong>().ToArray();
         }
 
-        public static implicit operator List<ulong?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<ulong?>()._values.Cast<ulong?>().ToList();
-        }
-
         public static implicit operator ulong?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<ulong?>()._values.Cast<ulong?>().ToArray();
-        }
-
-        public static implicit operator List<float>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<float>()._values.Cast<float>().ToList();
         }
 
         public static implicit operator float[](JsonArray jsonArray)
@@ -981,19 +841,9 @@ namespace XSerializer
             return jsonArray.TransformItems<float>()._values.Cast<float>().ToArray();
         }
 
-        public static implicit operator List<float?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<float?>()._values.Cast<float?>().ToList();
-        }
-
         public static implicit operator float?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<float?>()._values.Cast<float?>().ToArray();
-        }
-
-        public static implicit operator List<double>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<double>()._values.Cast<double>().ToList();
         }
 
         public static implicit operator double[](JsonArray jsonArray)
@@ -1001,29 +851,14 @@ namespace XSerializer
             return jsonArray.TransformItems<double>()._values.Cast<double>().ToArray();
         }
 
-        public static implicit operator List<double?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<double?>()._values.Cast<double?>().ToList();
-        }
-
         public static implicit operator double?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<double?>()._values.Cast<double?>().ToArray();
         }
 
-        public static implicit operator List<decimal>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<decimal>()._values.Cast<decimal>().ToList();
-        }
-
         public static implicit operator decimal[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<decimal>()._values.Cast<decimal>().ToArray();
-        }
-
-        public static implicit operator List<decimal?>(JsonArray jsonArray)
-        {
-            return jsonArray.TransformItems<decimal?>()._values.Cast<decimal?>().ToList();
         }
 
         public static implicit operator decimal?[](JsonArray jsonArray)
@@ -1039,6 +874,97 @@ namespace XSerializer
         IEnumerator IEnumerable.GetEnumerator()
         {
             return GetEnumerator();
+        }
+
+        private class ConversionList<T> : IList<T>
+        {
+            private readonly List<T> _list = new List<T>();
+            private readonly List<object> _backingList;
+
+            public ConversionList(List<object> backingList)
+            {
+                _backingList = backingList;
+
+                foreach (var item in backingList)
+                {
+                    _list.Add((T)item);
+                }
+            }
+
+            public IEnumerator<T> GetEnumerator()
+            {
+                return _list.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return ((IEnumerable)_list).GetEnumerator();
+            }
+
+            public void Add(T item)
+            {
+                _list.Add(item);
+                _backingList.Add(item);
+            }
+
+            public void Clear()
+            {
+                _list.Clear();
+                _backingList.Clear();
+            }
+
+            public bool Contains(T item)
+            {
+                return _list.Contains(item);
+            }
+
+            public void CopyTo(T[] array, int arrayIndex)
+            {
+                _list.CopyTo(array, arrayIndex);
+            }
+
+            public bool Remove(T item)
+            {
+                return _list.Remove(item)
+                    && _backingList.Remove(item);
+            }
+
+            public int Count
+            {
+                get { return _list.Count; }
+            }
+
+            public bool IsReadOnly
+            {
+                get { return false; }
+            }
+
+            public int IndexOf(T item)
+            {
+                return _list.IndexOf(item);
+            }
+
+            public void Insert(int index, T item)
+            {
+                _list.Insert(index, item);
+                _backingList.Insert(index, item);
+            }
+
+            public void RemoveAt(int index)
+            {
+                _list.RemoveAt(index);
+                _backingList.RemoveAt(index);
+            }
+
+            public T this[int index]
+            {
+                get { return _list[index]; }
+                set
+                {
+                    _list[index] = value;
+                    _backingList[index] = value;
+                }
+            }
         }
     }
 }
