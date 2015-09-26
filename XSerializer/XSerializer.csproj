@@ -74,6 +74,7 @@
     <Compile Include="IJsonSerializerInternal.cs" />
     <Compile Include="IValueConverter.cs" />
     <Compile Include="IXSerializer.cs" />
+    <Compile Include="JsonArray.cs" />
     <Compile Include="JsonExtensions.cs" />
     <Compile Include="JsonIgnoreAttribute.cs" />
     <Compile Include="JsonNodeType.cs" />
