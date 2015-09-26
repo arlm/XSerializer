@@ -13,18 +13,36 @@ namespace XSerializer
         private readonly Dictionary<string, string> _numericStringValues = new Dictionary<string, string>();
         private readonly Dictionary<string, object> _projections = new Dictionary<string, object>();
 
+        private readonly IDateTimeHandler _dateTimeHandler;
+
         public JsonObject()
-            : this(Enumerable.Empty<KeyValuePair<string, object>>())
+            : this(DateTimeHandler.Default)
+        {
+        }
+
+        public JsonObject(IDateTimeHandler dateTimeHandler)
+            : this(dateTimeHandler, Enumerable.Empty<KeyValuePair<string, object>>())
         {
         }
 
         public JsonObject(params KeyValuePair<string, object>[] values)
-            : this((IEnumerable<KeyValuePair<string, object>>)values)
+            : this(DateTimeHandler.Default, values)
+        {
+        }
+
+        public JsonObject(IDateTimeHandler dateTimeHandler, params KeyValuePair<string, object>[] values)
+            : this(dateTimeHandler, (IEnumerable<KeyValuePair<string, object>>)values)
         {
         }
 
         public JsonObject(IEnumerable<KeyValuePair<string, object>> values)
+            : this(DateTimeHandler.Default, values)
         {
+        }
+
+        public JsonObject(IDateTimeHandler dateTimeHandler, IEnumerable<KeyValuePair<string, object>> values)
+        {
+            _dateTimeHandler = dateTimeHandler;
             foreach (var value in values)
             {
                 Add(value.Key, value.Value);
@@ -423,12 +441,15 @@ namespace XSerializer
                 var stringValue = value as string;
                 if (stringValue != null)
                 {
-                    DateTime dateTimeResult;
-                    if (DateTime.TryParse(stringValue, out dateTimeResult))
+                    try
                     {
-                        result = dateTimeResult;
+                        result = _dateTimeHandler.ParseDateTime(stringValue);
                         _projections.Add(binderName, result);
                         return true;
+                    }
+                    catch
+                    {
+                        return false;
                     }
                 }
             }
@@ -439,15 +460,27 @@ namespace XSerializer
         private bool AsDateTimeOffset(ref object result, string name, string binderName)
         {
             object value;
-            if (_values.TryGetValue(name, out value)
-                && value is string)
+            if (_values.TryGetValue(name, out value))
             {
-                DateTimeOffset dateTimeOffsetResult;
-                if (DateTimeOffset.TryParse((string)value, out dateTimeOffsetResult))
+                if (value == null)
                 {
-                    result = dateTimeOffsetResult;
+                    result = null;
                     _projections.Add(binderName, result);
                     return true;
+                }
+                var stringValue = value as string;
+                if (stringValue != null)
+                {
+                    try
+                    {
+                        result = _dateTimeHandler.ParseDateTimeOffset(stringValue);
+                        _projections.Add(binderName, result);
+                        return true;
+                    }
+                    catch
+                    {
+                        return false;
+                    }
                 }
             }
 

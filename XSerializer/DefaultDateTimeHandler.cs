@@ -4,9 +4,6 @@ namespace XSerializer
 {
     public class DefaultDateTimeHandler : IDateTimeHandler
     {
-        private readonly string _foo;
-        private readonly Type _type;
-
         private const string _dateFormat = "yyyy-MM-ddTHH:mm:ss.fffffffK";
 
         public override bool Equals(object obj)

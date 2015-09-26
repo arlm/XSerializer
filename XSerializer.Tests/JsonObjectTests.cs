@@ -28,7 +28,7 @@ namespace XSerializer.Tests
                 { "bar", new JsonNumber("123.45") },
             };
 
-            double bar = foo.bar;
+            object bar = foo.bar;
 
             Assert.That(bar, Is.EqualTo(123.45));
             Assert.That(bar, Is.InstanceOf<double>());
@@ -44,7 +44,7 @@ namespace XSerializer.Tests
                 { "bar", now.ToString("O") },
             };
 
-            DateTime bar = foo.barAsDateTime;
+            object bar = foo.barAsDateTime;
 
             Assert.That(bar, Is.EqualTo(now));
         }
@@ -57,7 +57,7 @@ namespace XSerializer.Tests
                 { "bar", "abc" },
             };
 
-            string bar = foo.barAsString;
+            object bar = foo.barAsString;
 
             Assert.That(bar, Is.EqualTo("abc"));
         }
@@ -72,7 +72,7 @@ namespace XSerializer.Tests
                 { "bar", now.ToString("O") },
             };
 
-            DateTimeOffset bar = foo.barAsDateTimeOffset;
+            object bar = foo.barAsDateTimeOffset;
 
             Assert.That(bar, Is.EqualTo(now));
         }
@@ -87,7 +87,7 @@ namespace XSerializer.Tests
                 { "bar", guid.ToString("D") },
             };
 
-            Guid bar = foo.barAsGuid;
+            object bar = foo.barAsGuid;
 
             Assert.That(bar, Is.EqualTo(guid));
         }
@@ -100,7 +100,7 @@ namespace XSerializer.Tests
                 { "bar", new JsonNumber("123") },
             };
 
-            byte bar = foo.barAsByte;
+            object bar = foo.barAsByte;
             
             const byte expected = 123;
 
@@ -116,7 +116,7 @@ namespace XSerializer.Tests
                 { "bar", new JsonNumber("123") },
             };
 
-            sbyte bar = foo.barAsSByte;
+            object bar = foo.barAsSByte;
             
             const sbyte expected = 123;
 
@@ -132,7 +132,7 @@ namespace XSerializer.Tests
                 { "bar", new JsonNumber("123") },
             };
 
-            short bar = foo.barAsInt16;
+            object bar = foo.barAsInt16;
             
             const short expected = 123;
 
@@ -148,7 +148,7 @@ namespace XSerializer.Tests
                 { "bar", new JsonNumber("123") },
             };
 
-            ushort bar = foo.barAsUInt16;
+            object bar = foo.barAsUInt16;
             
             const ushort expected = 123;
 
@@ -164,7 +164,7 @@ namespace XSerializer.Tests
                 { "bar", new JsonNumber("123") },
             };
 
-            int bar = foo.barAsInt32;
+            object bar = foo.barAsInt32;
 
             const int expected = 123;
 
@@ -180,7 +180,7 @@ namespace XSerializer.Tests
                 { "bar", new JsonNumber("123") },
             };
 
-            uint bar = foo.barAsUInt32;
+            object bar = foo.barAsUInt32;
 
             const uint expected = 123;
 
@@ -196,7 +196,7 @@ namespace XSerializer.Tests
                 { "bar", new JsonNumber("123") },
             };
 
-            long bar = foo.barAsInt64;
+            object bar = foo.barAsInt64;
 
             const long expected = 123;
 
@@ -212,7 +212,7 @@ namespace XSerializer.Tests
                 { "bar", new JsonNumber("123") },
             };
 
-            ulong bar = foo.barAsUInt64;
+            object bar = foo.barAsUInt64;
 
             const ulong expected = 123;
 
@@ -228,7 +228,7 @@ namespace XSerializer.Tests
                 { "bar", new JsonNumber("123.45") },
             };
 
-            float bar = foo.barAsSingle;
+            object bar = foo.barAsSingle;
 
             const float expected = 123.45F;
 
@@ -244,7 +244,7 @@ namespace XSerializer.Tests
                 { "bar", new JsonNumber("123.45") },
             };
 
-            double bar = foo.barAsDouble;
+            object bar = foo.barAsDouble;
 
             const double expected = 123.45;
 
@@ -260,7 +260,7 @@ namespace XSerializer.Tests
                 { "bar", new JsonNumber("123.45") },
             };
 
-            decimal bar = foo.barAsDecimal;
+            object bar = foo.barAsDecimal;
 
             const decimal expected = 123.45M;
 
@@ -278,7 +278,7 @@ namespace XSerializer.Tests
                 { "bar", barValue },
             };
 
-            object bar = foo["bar"];
+            var bar = foo["bar"];
 
             Assert.That(bar, Is.EqualTo(barValue));
         }
