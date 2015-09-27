@@ -5,7 +5,6 @@ using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -15,7 +14,6 @@ namespace XSerializer
         private readonly Dictionary<string, string> _numericStringValues = new Dictionary<string, string>();
         private readonly Dictionary<string, object> _projections = new Dictionary<string, object>();
 
-        private readonly IDateTimeHandler _dateTimeHandler;
         private readonly IJsonSerializeOperationInfo _info;
 
         public JsonObject()
@@ -493,7 +491,7 @@ namespace XSerializer
                 {
                     try
                     {
-                        result = _dateTimeHandler.ParseDateTime(stringValue);
+                        result = _info.DateTimeHandler.ParseDateTime(stringValue);
                         _projections.Add(binderName, result);
                         return true;
                     }
@@ -523,7 +521,7 @@ namespace XSerializer
                 {
                     try
                     {
-                        result = _dateTimeHandler.ParseDateTimeOffset(stringValue);
+                        result = _info.DateTimeHandler.ParseDateTimeOffset(stringValue);
                         _projections.Add(binderName, result);
                         return true;
                     }
