@@ -5,6 +5,7 @@ using System.Dynamic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace XSerializer
 {
@@ -152,6 +153,28 @@ namespace XSerializer
                         throw new NotSupportedException("Unsupported value type: " + value.GetType());
                     }
                 }
+            }
+
+            return this;
+        }
+
+        public JsonObject Encrypt(string name)
+        {
+            object value;
+            if (_values.TryGetValue(name, out value))
+            {
+                var sb = new StringBuilder();
+                
+                using (var stringwriter = new StringWriter(sb))
+                {
+                    using (var writer = new JsonWriter(stringwriter, _info))
+                    {
+                        DynamicJsonSerializer.Get(false).SerializeObject(writer, value, _info);
+                    }
+                }
+
+                value = _info.EncryptionMechanism.Encrypt(sb.ToString(), _info.EncryptKey, _info.SerializationState);
+                _values[name] = value;
             }
 
             return this;

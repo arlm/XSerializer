@@ -10,11 +10,17 @@ namespace XSerializer
         private static readonly Lazy<DynamicJsonSerializer> _encrypted = new Lazy<DynamicJsonSerializer>(() => new DynamicJsonSerializer(true));
 
         private readonly ConcurrentDictionary<Tuple<Type, bool>, IJsonSerializerInternal> _serializerCache = new ConcurrentDictionary<Tuple<Type, bool>, IJsonSerializerInternal>();
-        
-        private readonly bool _encrypt;
 
+        private readonly JsonObjectSerializer _jsonObjectSerializer;
+        private readonly JsonArraySerializer _jsonArraySerializer;
+
+        private readonly bool _encrypt;
+        
         private DynamicJsonSerializer(bool encrypt)
         {
+            _jsonObjectSerializer = new JsonObjectSerializer(this);
+            _jsonArraySerializer = new JsonArraySerializer(this);
+
             _encrypt = encrypt;
         }
 
@@ -83,7 +89,7 @@ namespace XSerializer
                 || concreteType == typeof(uint)
                 || concreteType == typeof(uint?)
                 || concreteType == typeof(ulong)
-                || concreteType == typeof(ulong?)) // TODO: handler more number types.
+                || concreteType == typeof(ulong?))
             {
                 return NumberJsonSerializer.Get(concreteType, _encrypt);
             }
@@ -92,6 +98,16 @@ namespace XSerializer
                 || concreteType == typeof(bool?))
             {
                 return BooleanJsonSerializer.Get(_encrypt, concreteType == typeof(bool?));
+            }
+
+            if (concreteType == typeof(JsonObject))
+            {
+                return _jsonObjectSerializer;
+            }
+
+            if (concreteType == typeof(JsonArray))
+            {
+                return _jsonArraySerializer;
             }
             
             if (concreteType.IsAssignableToGenericIDictionaryOfStringToAnything())
@@ -198,6 +214,88 @@ namespace XSerializer
             }
 
             return jsonArray;
+        }
+
+        private class JsonObjectSerializer : IJsonSerializerInternal
+        {
+            private readonly DynamicJsonSerializer _dynamicJsonSerializer;
+
+            public JsonObjectSerializer(DynamicJsonSerializer dynamicJsonSerializer)
+            {
+                _dynamicJsonSerializer = dynamicJsonSerializer;
+            }
+
+            public void SerializeObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
+            {
+                var jsonObject = (JsonObject)instance;
+                
+                writer.WriteOpenObject();
+
+                var first = true;
+
+                foreach (var item in jsonObject)
+                {
+                    if (first)
+                    {
+                        first = false;
+                    }
+                    else
+                    {
+                        writer.WriteItemSeparator();
+                    }
+
+                    writer.WriteValue(item.Key);
+                    writer.WriteNameValueSeparator();
+                    _dynamicJsonSerializer.SerializeObject(writer, item.Value, info);
+                }
+
+                writer.WriteCloseObject();
+            }
+
+            public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        private class JsonArraySerializer : IJsonSerializerInternal
+        {
+            private readonly DynamicJsonSerializer _dynamicJsonSerializer;
+
+            public JsonArraySerializer(DynamicJsonSerializer dynamicJsonSerializer)
+            {
+                _dynamicJsonSerializer = dynamicJsonSerializer;
+            }
+
+            public void SerializeObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
+            {
+                var jsonArray = (JsonArray)instance;
+
+                writer.WriteOpenArray();
+
+                var first = true;
+
+                foreach (var item in jsonArray)
+                {
+                    if (first)
+                    {
+                        first = false;
+                    }
+                    else
+                    {
+                        writer.WriteItemSeparator();
+                    }
+
+                    _dynamicJsonSerializer.SerializeObject(writer, item, info);
+                }
+
+                writer.WriteCloseArray();
+            }
+
+            public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }

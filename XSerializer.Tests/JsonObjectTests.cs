@@ -605,6 +605,124 @@ namespace XSerializer.Tests
             Assert.That(bar[2], Is.EqualTo(3));
         }
 
+        [TestCase(true, @"true")]
+        [TestCase(false, @"false")]
+        [TestCase("abc", @"""abc""")]
+        public void CanEncryptPrimitiveProperty(object value, string expectedPlaintextValue)
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var info = new JsonSerializeOperationInfo
+            {
+                EncryptionEnabled = true,
+                EncryptionMechanism = encryptionMechanism
+            };
+
+            dynamic foo =
+                new JsonObject(info)
+                {
+                    { "bar", value },
+                };
+
+            object barEncrypted = foo.bar;
+            foo.Encrypt("bar");
+            string bar = foo.bar;
+
+            Assert.That(bar, Is.Not.EqualTo(barEncrypted));
+
+            Assert.That(bar, Is.EqualTo(encryptionMechanism.Encrypt(expectedPlaintextValue)));
+        }
+
+        [Test]
+        public void CanEncryptNumericProperty()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var info = new JsonSerializeOperationInfo
+            {
+                EncryptionEnabled = true,
+                EncryptionMechanism = encryptionMechanism
+            };
+
+            dynamic foo =
+                new JsonObject(info)
+                {
+                    { "bar", new JsonNumber("123.45") },
+                };
+
+            object barEncrypted = foo.bar;
+            foo.Encrypt("bar");
+            string bar = foo.bar;
+
+            Assert.That(bar, Is.Not.EqualTo(barEncrypted));
+
+            Assert.That(bar, Is.EqualTo(encryptionMechanism.Encrypt("123.45")));
+        }
+
+        [Test]
+        public void CanEncryptJsonObjectProperty()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var info = new JsonSerializeOperationInfo
+            {
+                EncryptionEnabled = true,
+                EncryptionMechanism = encryptionMechanism
+            };
+
+            dynamic foo =
+                new JsonObject(info)
+                {
+                    {
+                        "bar", new JsonObject(info)
+                        {
+                            { "baz", false },
+                            { "qux", new JsonNumber("123.45") },
+                        }
+                    },
+                };
+
+            object barEncrypted = foo.bar;
+            foo.Encrypt("bar");
+            string bar = foo.bar;
+
+            Assert.That(bar, Is.Not.EqualTo(barEncrypted));
+
+            Assert.That(bar, Is.EqualTo(encryptionMechanism.Encrypt(@"{""baz"":false,""qux"":123.45}")));
+        }
+
+        [Test]
+        public void CanEncryptJsonArrayProperty()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var info = new JsonSerializeOperationInfo
+            {
+                EncryptionEnabled = true,
+                EncryptionMechanism = encryptionMechanism
+            };
+
+            dynamic foo =
+                new JsonObject(info)
+                {
+                    {
+                        "bar", new JsonArray(info)
+                        {
+                            false,
+                            new JsonNumber("123.45"),
+                        }
+                    },
+                };
+
+            object barEncrypted = foo.bar;
+            foo.Encrypt("bar");
+            string bar = foo.bar;
+
+            Assert.That(bar, Is.Not.EqualTo(barEncrypted));
+
+            Assert.That(bar, Is.EqualTo(encryptionMechanism.Encrypt(@"[false,123.45]")));
+        }
+
         [Test]
         public void CanDynamicSetProperty()
         {
