@@ -604,5 +604,57 @@ namespace XSerializer.Tests
             Assert.That(bar[1], Is.EqualTo(2));
             Assert.That(bar[2], Is.EqualTo(3));
         }
+
+        [Test]
+        public void CanDynamicSetProperty()
+        {
+            dynamic foo = new JsonObject
+            {
+                { "bar", "abc" }
+            };
+
+            Assert.That(foo.bar, Is.EqualTo("abc"));
+
+            foo.bar = "xyz";
+
+            Assert.That(foo.bar, Is.EqualTo("xyz"));
+        }
+
+        [Test]
+        public void CanIndexerSetProperty()
+        {
+            var foo = new JsonObject
+            {
+                { "bar", "abc" }
+            };
+
+            Assert.That(foo["bar"], Is.EqualTo("abc"));
+
+            foo["bar"] = "xyz";
+
+            Assert.That(foo["bar"], Is.EqualTo("xyz"));
+        }
+
+        [Test]
+        public void CannotDynamicSetPropertyThatDoesNotExist()
+        {
+            dynamic foo = new JsonObject
+            {
+                { "bar", "abc" }
+            };
+
+            Assert.That(() => foo.baz = "xyz", Throws.Exception);
+        }
+
+        [Test]
+        public void CannotIndexerSetPropertyThatDoesNotExist()
+        {
+            dynamic foo = new JsonObject
+            {
+                { "bar", "abc" }
+            };
+
+            Assert.That(() => foo["baz"] = "xyz", Throws.Exception);
+        }
     }
 }

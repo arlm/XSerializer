@@ -16,6 +16,25 @@ namespace XSerializer
 
         private readonly IJsonSerializeOperationInfo _info;
 
+        private static readonly string[] _definedProjections =
+        {
+            "AsByte",
+            "AsSByte",
+            "AsInt16",
+            "AsUInt16",
+            "AsInt32",
+            "AsUInt32",
+            "AsInt64",
+            "AsUInt64",
+            "AsDouble",
+            "AsSingle",
+            "AsDecimal",
+            "AsString",
+            "AsDateTime",
+            "AsDateTimeOffset",
+            "AsGuid",
+        };
+
         public JsonObject()
             : this(new JsonSerializeOperationInfo())
         {
@@ -88,6 +107,13 @@ namespace XSerializer
 
                 throw new KeyNotFoundException();
             }
+            set
+            {
+                if (!TrySetValue(key, value))
+                {
+                    throw new KeyNotFoundException();
+                }
+            }
         }
 
         public JsonObject Decrypt(string name)
@@ -142,6 +168,32 @@ namespace XSerializer
             return TryGetProjection(name, ref result);
         }
 
+        public bool TrySetValue(string name, object value)
+        {
+            if (_values.ContainsKey(name))
+            {
+                _values[name] = value;
+                _numericStringValues.Remove(name);
+                RemoveProjections(name);
+                return true;
+            }
+
+            return false;
+        }
+
+        private void RemoveProjections(string name)
+        {
+            var toRemove =
+                from projectionName in _projections.Keys
+                where projectionName.StartsWith(name) && _definedProjections.Any(projectionName.EndsWith)
+                select projectionName;
+
+            foreach (var key in toRemove)
+            {
+                _projections.Remove(key);
+            }
+        }
+
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             return _values.GetEnumerator();
@@ -155,6 +207,11 @@ namespace XSerializer
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
             return TryGetValue(binder.Name, out result);
+        }
+
+        public override bool TrySetMember(SetMemberBinder binder, object value)
+        {
+            return TrySetValue(binder.Name, value);
         }
 
         public override IEnumerable<string> GetDynamicMemberNames()
