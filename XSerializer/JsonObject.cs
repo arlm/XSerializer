@@ -6,17 +6,12 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
     public sealed class JsonObject : DynamicObject, IEnumerable<KeyValuePair<string, object>>
     {
-        private readonly Dictionary<string, object> _values = new Dictionary<string, object>();
-        private readonly Dictionary<string, string> _numericStringValues = new Dictionary<string, string>();
-        private readonly Dictionary<string, object> _projections = new Dictionary<string, object>();
-
-        private readonly IJsonSerializeOperationInfo _info;
-
         private static readonly string[] _definedProjections =
         {
             "AsByte",
@@ -33,42 +28,34 @@ namespace XSerializer
             "AsString",
             "AsDateTime",
             "AsDateTimeOffset",
-            "AsGuid",
+            "AsGuid"
         };
 
-        public JsonObject()
-            : this(new JsonSerializeOperationInfo())
+        private readonly Dictionary<string, object> _values = new Dictionary<string, object>();
+        private readonly Dictionary<string, string> _numericStringValues = new Dictionary<string, string>();
+        private readonly Dictionary<string, object> _projections = new Dictionary<string, object>();
+
+        private readonly IJsonSerializeOperationInfo _info;
+
+        public JsonObject(
+            IDateTimeHandler dateTimeHandler = null,
+            IEncryptionMechanism encryptionMechanism = null,
+            object encryptKey = null,
+            SerializationState serializationState = null)
+            : this(new JsonSerializeOperationInfo
+                {
+                    DateTimeHandler = dateTimeHandler ?? DateTimeHandler.Default,
+                    EncryptionEnabled = false,
+                    EncryptionMechanism = encryptionMechanism,
+                    EncryptKey = encryptKey,
+                    SerializationState = serializationState
+                })
         {
         }
 
         internal JsonObject(IJsonSerializeOperationInfo info)
-            : this(info, Enumerable.Empty<KeyValuePair<string, object>>())
-        {
-        }
-
-        public JsonObject(params KeyValuePair<string, object>[] values)
-            : this(new JsonSerializeOperationInfo(), values)
-        {
-        }
-
-        internal JsonObject(IJsonSerializeOperationInfo info, params KeyValuePair<string, object>[] values)
-            : this(info, (IEnumerable<KeyValuePair<string, object>>)values)
-        {
-        }
-
-        public JsonObject(IEnumerable<KeyValuePair<string, object>> values)
-            : this(new JsonSerializeOperationInfo(), values)
-        {
-        }
-
-        internal JsonObject(IJsonSerializeOperationInfo info, IEnumerable<KeyValuePair<string, object>> values)
         {
             _info = info;
-
-            foreach (var value in values)
-            {
-                Add(value.Key, value.Value);
-            }
         }
 
         public void Add(string name, object value)
@@ -96,12 +83,12 @@ namespace XSerializer
             throw new NotSupportedException("Unsupported value type: " + value.GetType());
         }
 
-        public object this[string key]
+        public object this[string name]
         {
             get
             {
                 object value;
-                if (TryGetValue(key, out value))
+                if (TryGetValue(name, out value))
                 {
                     return value;
                 }
@@ -110,7 +97,7 @@ namespace XSerializer
             }
             set
             {
-                if (!TrySetValue(key, value))
+                if (!TrySetValue(name, value))
                 {
                     throw new KeyNotFoundException();
                 }

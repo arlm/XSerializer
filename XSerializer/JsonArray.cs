@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -20,8 +21,19 @@ namespace XSerializer
         private readonly List<object> _transformableValues = new List<object>();
         private readonly List<Type> _transformedTypes = new List<Type>();
 
-        public JsonArray()
-            : this(new JsonSerializeOperationInfo())
+        public JsonArray(
+            IDateTimeHandler dateTimeHandler = null,
+            IEncryptionMechanism encryptionMechanism = null,
+            object encryptKey = null,
+            SerializationState serializationState = null)
+            : this(new JsonSerializeOperationInfo
+                {
+                    DateTimeHandler = dateTimeHandler ?? DateTimeHandler.Default,
+                    EncryptionEnabled = false,
+                    EncryptionMechanism = encryptionMechanism,
+                    EncryptKey = encryptKey,
+                    SerializationState = serializationState
+                })
         {
         }
 

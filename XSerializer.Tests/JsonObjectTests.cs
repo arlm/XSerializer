@@ -529,14 +529,8 @@ namespace XSerializer.Tests
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var info = new JsonSerializeOperationInfo
-            {
-                EncryptionEnabled = true,
-                EncryptionMechanism = encryptionMechanism
-            };
-
             dynamic foo =
-                new JsonObject(info)
+                new JsonObject(encryptionMechanism:encryptionMechanism)
                 {
                     { "bar", encryptionMechanism.Encrypt(jsonValue) },
                 };
@@ -555,14 +549,8 @@ namespace XSerializer.Tests
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var info = new JsonSerializeOperationInfo
-            {
-                EncryptionEnabled = true,
-                EncryptionMechanism = encryptionMechanism
-            };
-
             dynamic foo =
-                new JsonObject(info)
+                new JsonObject(encryptionMechanism:encryptionMechanism)
                 {
                     { "bar", encryptionMechanism.Encrypt(@"{""baz"":false,""qux"":123.45}") },
                 };
@@ -582,14 +570,8 @@ namespace XSerializer.Tests
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var info = new JsonSerializeOperationInfo
-            {
-                EncryptionEnabled = true,
-                EncryptionMechanism = encryptionMechanism
-            };
-
             dynamic foo =
-                new JsonObject(info)
+                new JsonObject(encryptionMechanism:encryptionMechanism)
                 {
                     { "bar", encryptionMechanism.Encrypt(@"[1,2,3]") },
                 };
@@ -612,14 +594,8 @@ namespace XSerializer.Tests
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var info = new JsonSerializeOperationInfo
-            {
-                EncryptionEnabled = true,
-                EncryptionMechanism = encryptionMechanism
-            };
-
             dynamic foo =
-                new JsonObject(info)
+                new JsonObject(encryptionMechanism:encryptionMechanism)
                 {
                     { "bar", value },
                 };
@@ -638,14 +614,8 @@ namespace XSerializer.Tests
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var info = new JsonSerializeOperationInfo
-            {
-                EncryptionEnabled = true,
-                EncryptionMechanism = encryptionMechanism
-            };
-
             dynamic foo =
-                new JsonObject(info)
+                new JsonObject(encryptionMechanism:encryptionMechanism)
                 {
                     { "bar", new JsonNumber("123.45") },
                 };
@@ -664,17 +634,11 @@ namespace XSerializer.Tests
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var info = new JsonSerializeOperationInfo
-            {
-                EncryptionEnabled = true,
-                EncryptionMechanism = encryptionMechanism
-            };
-
             dynamic foo =
-                new JsonObject(info)
+                new JsonObject(encryptionMechanism:encryptionMechanism)
                 {
                     {
-                        "bar", new JsonObject(info)
+                        "bar", new JsonObject(encryptionMechanism:encryptionMechanism)
                         {
                             { "baz", false },
                             { "qux", new JsonNumber("123.45") },
@@ -696,17 +660,11 @@ namespace XSerializer.Tests
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var info = new JsonSerializeOperationInfo
-            {
-                EncryptionEnabled = true,
-                EncryptionMechanism = encryptionMechanism
-            };
-
             dynamic foo =
-                new JsonObject(info)
+                new JsonObject(encryptionMechanism:encryptionMechanism)
                 {
                     {
-                        "bar", new JsonArray(info)
+                        "bar", new JsonArray(encryptionMechanism:encryptionMechanism)
                         {
                             false,
                             new JsonNumber("123.45"),

@@ -48,7 +48,7 @@ namespace XSerializer.Tests
         {
             var value = DateTime.Now;
 
-            var foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            var foo = new JsonArray
             {
                 value.ToString("O"),
             };
@@ -80,7 +80,7 @@ namespace XSerializer.Tests
         {
             var value = DateTimeOffset.Now;
 
-            var foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            var foo = new JsonArray
             {
                 value.ToString("O"),
             };
@@ -380,7 +380,7 @@ namespace XSerializer.Tests
         {
             var now = DateTime.Now;
 
-            var foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            var foo = new JsonArray
             {
                 now.ToString("O"),
             };
@@ -397,7 +397,7 @@ namespace XSerializer.Tests
         {
             var now = DateTime.Now;
 
-            var foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            var foo = new JsonArray
             {
                 now.ToString("O"), null
             };
@@ -416,7 +416,7 @@ namespace XSerializer.Tests
         {
             var now = DateTimeOffset.Now;
 
-            var foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            var foo = new JsonArray
             {
                 now.ToString("O"),
             };
@@ -433,7 +433,7 @@ namespace XSerializer.Tests
         {
             var now = DateTimeOffset.Now;
 
-            var foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            var foo = new JsonArray
             {
                 now.ToString("O"), null
             };
@@ -2274,7 +2274,7 @@ namespace XSerializer.Tests
         {
             var value = DateTime.Now;
 
-            dynamic foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            dynamic foo = new JsonArray
             {
                 value.ToString("O")
             };
@@ -2291,7 +2291,7 @@ namespace XSerializer.Tests
         {
             var value = DateTime.Now;
 
-            dynamic foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            dynamic foo = new JsonArray
             {
                 value.ToString("O")
             };
@@ -2308,7 +2308,7 @@ namespace XSerializer.Tests
         {
             var value = DateTime.Now;
 
-            dynamic foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            dynamic foo = new JsonArray
             {
                 value.ToString("O")
             };
@@ -2325,7 +2325,7 @@ namespace XSerializer.Tests
         {
             var value = DateTime.Now;
 
-            dynamic foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            dynamic foo = new JsonArray
             {
                 value.ToString("O"), null
             };
@@ -2344,7 +2344,7 @@ namespace XSerializer.Tests
         {
             var value = DateTime.Now;
 
-            dynamic foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            dynamic foo = new JsonArray
             {
                 value.ToString("O"), null
             };
@@ -2363,7 +2363,7 @@ namespace XSerializer.Tests
         {
             var value = DateTime.Now;
 
-            dynamic foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            dynamic foo = new JsonArray
             {
                 value.ToString("O"), null
             };
@@ -2382,7 +2382,7 @@ namespace XSerializer.Tests
         {
             var value = DateTimeOffset.Now;
 
-            dynamic foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            dynamic foo = new JsonArray
             {
                 value.ToString("O")
             };
@@ -2399,7 +2399,7 @@ namespace XSerializer.Tests
         {
             var value = DateTimeOffset.Now;
 
-            dynamic foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            dynamic foo = new JsonArray
             {
                 value.ToString("O")
             };
@@ -2416,7 +2416,7 @@ namespace XSerializer.Tests
         {
             var value = DateTimeOffset.Now;
 
-            dynamic foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            dynamic foo = new JsonArray
             {
                 value.ToString("O")
             };
@@ -2433,7 +2433,7 @@ namespace XSerializer.Tests
         {
             var value = DateTimeOffset.Now;
 
-            dynamic foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            dynamic foo = new JsonArray
             {
                 value.ToString("O"), null
             };
@@ -2452,7 +2452,7 @@ namespace XSerializer.Tests
         {
             var value = DateTimeOffset.Now;
 
-            dynamic foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            dynamic foo = new JsonArray
             {
                 value.ToString("O"), null
             };
@@ -2471,7 +2471,7 @@ namespace XSerializer.Tests
         {
             var value = DateTimeOffset.Now;
 
-            dynamic foo = new JsonArray(new JsonSerializeOperationInfo { DateTimeHandler = DateTimeHandler.Default })
+            dynamic foo = new JsonArray
             {
                 value.ToString("O"), null
             };
@@ -2605,14 +2605,8 @@ namespace XSerializer.Tests
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var info = new JsonSerializeOperationInfo
-            {
-                EncryptionEnabled = true,
-                EncryptionMechanism = encryptionMechanism
-            };
-
             dynamic foo =
-                new JsonArray(info)
+                new JsonArray(encryptionMechanism:encryptionMechanism)
                 {
                     encryptionMechanism.Encrypt(jsonValue),
                 };
@@ -2631,14 +2625,8 @@ namespace XSerializer.Tests
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var info = new JsonSerializeOperationInfo
-            {
-                EncryptionEnabled = true,
-                EncryptionMechanism = encryptionMechanism
-            };
-
             dynamic foo =
-                new JsonArray(info)
+                new JsonArray(encryptionMechanism:encryptionMechanism)
                 {
                     encryptionMechanism.Encrypt(@"{""baz"":false,""qux"":123.45}"),
                 };
@@ -2658,14 +2646,8 @@ namespace XSerializer.Tests
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
 
-            var info = new JsonSerializeOperationInfo
-            {
-                EncryptionEnabled = true,
-                EncryptionMechanism = encryptionMechanism
-            };
-
             dynamic foo =
-                new JsonArray(info)
+                new JsonArray(encryptionMechanism:encryptionMechanism)
                 {
                     encryptionMechanism.Encrypt(@"[1,2,3]"),
                 };
