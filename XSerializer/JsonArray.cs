@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using XSerializer.Encryption;
 
 namespace XSerializer
@@ -135,6 +136,26 @@ namespace XSerializer
                     }
                 }
             }
+
+            return this;
+        }
+
+        public JsonArray Encrypt(int index)
+        {
+            var value = _values[index];
+
+            var sb = new StringBuilder();
+
+            using (var stringwriter = new StringWriter(sb))
+            {
+                using (var writer = new JsonWriter(stringwriter, _info))
+                {
+                    DynamicJsonSerializer.Get(false).SerializeObject(writer, value, _info);
+                }
+            }
+
+            value = _info.EncryptionMechanism.Encrypt(sb.ToString(), _info.EncryptKey, _info.SerializationState);
+            _values[index] = value;
 
             return this;
         }
