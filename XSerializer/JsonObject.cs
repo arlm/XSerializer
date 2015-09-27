@@ -62,25 +62,16 @@ namespace XSerializer
         {
             if (name == null) throw new ArgumentNullException("name");
 
-            if (value == null
-                || value is bool
-                || value is string
-                || value is JsonArray
-                || value is JsonObject)
-            {
-                _values.Add(name, value);
-                return;
-            }
-
             var jsonNumber = value as JsonNumber;
             if (jsonNumber != null)
             {
                 _values.Add(name, jsonNumber.DoubleValue);
                 _numericStringValues.Add(name, jsonNumber.StringValue);
-                return;
             }
-
-            throw new NotSupportedException("Unsupported value type: " + value.GetType());
+            else
+            {
+                _values.Add(name, value);
+            }
         }
 
         public object this[string name]

@@ -45,13 +45,11 @@ namespace XSerializer
 
         public void Add(object value)
         {
-            if (value == null
-                || value is bool
-                || value is JsonArray
-                || value is JsonObject)
+            var jsonNumber = value as JsonNumber;
+            if (jsonNumber != null)
             {
-                _values.Add(value);
-                _transformableValues.Add(null);
+                _values.Add(jsonNumber.DoubleValue);
+                _transformableValues.Add(jsonNumber);
             }
             else if (value is string)
             {
@@ -60,16 +58,8 @@ namespace XSerializer
             }
             else
             {
-                var jsonNumber = value as JsonNumber;
-                if (jsonNumber != null)
-                {
-                    _values.Add(jsonNumber.DoubleValue);
-                    _transformableValues.Add(jsonNumber);
-                }
-                else
-                {
-                    throw new ArgumentException("Invalid value type: " + value.GetType(), "value");
-                }
+                _values.Add(value);
+                _transformableValues.Add(null);
             }
         }
 
