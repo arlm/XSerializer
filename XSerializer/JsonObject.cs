@@ -90,7 +90,7 @@ namespace XSerializer
             {
                 if (!TrySetValue(name, value))
                 {
-                    throw new KeyNotFoundException();
+                    Add(name, value);
                 }
             }
         }
@@ -205,7 +205,12 @@ namespace XSerializer
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            return TrySetValue(binder.Name, value);
+            if (!TrySetValue(binder.Name, value))
+            {
+                Add(binder.Name, value);
+            }
+
+            return true;
         }
 
         public override IEnumerable<string> GetDynamicMemberNames()
