@@ -60,330 +60,7 @@ namespace XSerializer
 
         public override bool TryConvert(ConvertBinder binder, out object result)
         {
-            var convertFunc = _convertFuncs.GetOrAdd(
-                binder.Type,
-                t =>
-                {
-                    if (t.IsInterface && t.IsGenericType)
-                    {
-                        var genericTypeDefinition = t.GetGenericTypeDefinition();
-
-                        if (genericTypeDefinition == typeof(IEnumerable<>)
-                            || genericTypeDefinition == typeof(ICollection<>)
-                            || genericTypeDefinition == typeof(IList<>))
-                        {
-                            var collectionType = t.GetGenericArguments()[0];
-
-                            if (collectionType == typeof(object))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = _values;
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(JsonObject))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<JsonObject>(_values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(JsonArray))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<JsonArray>(_values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(bool))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<bool>(TransformItems<bool>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(bool?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<bool?>(TransformItems<bool?>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(byte))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<byte>(TransformItems<byte>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(byte?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<byte?>(TransformItems<byte?>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(sbyte))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<sbyte>(TransformItems<sbyte>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(sbyte?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<sbyte?>(TransformItems<sbyte?>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(short))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<short>(TransformItems<short>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(short?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<short?>(TransformItems<short?>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(ushort))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<ushort>(TransformItems<ushort>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(ushort?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<ushort?>(TransformItems<ushort?>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(int))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<int>(TransformItems<int>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(int?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<int?>(TransformItems<int?>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(uint))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<uint>(TransformItems<uint>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(uint?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<uint?>(TransformItems<uint?>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(long))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<long>(TransformItems<long>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(long?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<long?>(TransformItems<long?>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(ulong))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<ulong>(TransformItems<ulong>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(ulong?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<ulong?>(TransformItems<ulong?>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(float))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<float>(TransformItems<float>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(float?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<float?>(TransformItems<float?>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(double))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<double>(_values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(double?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<double?>(_values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(decimal))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<decimal>(TransformItems<decimal>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(decimal?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<decimal?>(TransformItems<decimal?>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(string))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<string>(_values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(DateTime))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<DateTime>(TransformItems<DateTime>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(DateTime?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<DateTime?>(TransformItems<DateTime?>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(DateTimeOffset))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<DateTimeOffset>(TransformItems<DateTimeOffset>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(DateTimeOffset?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<DateTimeOffset?>(TransformItems<DateTimeOffset?>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(Guid))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<Guid>(TransformItems<Guid>()._values);
-                                    return true;
-                                });
-                            }
-
-                            if (collectionType == typeof(Guid?))
-                            {
-                                return ((out object r) =>
-                                {
-                                    r = new ConversionList<Guid?>(TransformItems<Guid?>()._values);
-                                    return true;
-                                });
-                            }
-                        }
-                    }
-
-                    return null;
-                });
+            var convertFunc = _convertFuncs.GetOrAdd(binder.Type, GetConvertFunc);
 
             return convertFunc != null
                 ? convertFunc(out result)
@@ -438,6 +115,329 @@ namespace XSerializer
             }
 
             return this;
+        }
+
+        private TryFunc GetConvertFunc(Type type)
+        {
+            if (type.IsInterface && type.IsGenericType)
+            {
+                var genericTypeDefinition = type.GetGenericTypeDefinition();
+
+                if (genericTypeDefinition == typeof(IEnumerable<>)
+                    || genericTypeDefinition == typeof(ICollection<>)
+                    || genericTypeDefinition == typeof(IList<>))
+                {
+                    var collectionType = type.GetGenericArguments()[0];
+
+                    if (collectionType == typeof(object))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = _values;
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(JsonObject))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<JsonObject>(_values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(JsonArray))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<JsonArray>(_values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(bool))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<bool>(TransformItems<bool>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(bool?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<bool?>(TransformItems<bool?>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(byte))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<byte>(TransformItems<byte>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(byte?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<byte?>(TransformItems<byte?>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(sbyte))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<sbyte>(TransformItems<sbyte>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(sbyte?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<sbyte?>(TransformItems<sbyte?>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(short))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<short>(TransformItems<short>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(short?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<short?>(TransformItems<short?>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(ushort))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<ushort>(TransformItems<ushort>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(ushort?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<ushort?>(TransformItems<ushort?>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(int))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<int>(TransformItems<int>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(int?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<int?>(TransformItems<int?>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(uint))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<uint>(TransformItems<uint>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(uint?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<uint?>(TransformItems<uint?>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(long))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<long>(TransformItems<long>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(long?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<long?>(TransformItems<long?>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(ulong))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<ulong>(TransformItems<ulong>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(ulong?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<ulong?>(TransformItems<ulong?>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(float))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<float>(TransformItems<float>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(float?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<float?>(TransformItems<float?>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(double))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<double>(_values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(double?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<double?>(_values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(decimal))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<decimal>(TransformItems<decimal>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(decimal?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<decimal?>(TransformItems<decimal?>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(string))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<string>(_values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(DateTime))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<DateTime>(TransformItems<DateTime>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(DateTime?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<DateTime?>(TransformItems<DateTime?>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(DateTimeOffset))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<DateTimeOffset>(TransformItems<DateTimeOffset>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(DateTimeOffset?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<DateTimeOffset?>(TransformItems<DateTimeOffset?>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(Guid))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<Guid>(TransformItems<Guid>()._values);
+                            return true;
+                        });
+                    }
+
+                    if (collectionType == typeof(Guid?))
+                    {
+                        return ((out object r) =>
+                        {
+                            r = new ConversionList<Guid?>(TransformItems<Guid?>()._values);
+                            return true;
+                        });
+                    }
+                }
+            }
+
+            return null;
         }
 
         private Func<object, object, object> GetTransform(Type type)
