@@ -2786,5 +2786,24 @@ namespace XSerializer.Tests
         }
 
         #endregion
+
+        #region Set item tests
+
+        [Test]
+        public void CanSetItem()
+        {
+            var foo = new JsonArray
+            {
+                "abc",
+            };
+
+            Assert.That(foo[0], Is.EqualTo("abc"));
+
+            foo[0] = "xyz";
+
+            Assert.That(foo[0], Is.EqualTo("xyz"));
+        }
+
+        #endregion
     }
 }

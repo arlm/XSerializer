@@ -85,6 +85,11 @@ namespace XSerializer
         public object this[int index]
         {
             get { return _values[index]; }
+            set
+            {
+                _values[index] = value;
+                _transformableValues[index] = null;
+            }
         }
 
         public int Count
