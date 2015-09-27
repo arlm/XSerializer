@@ -12,7 +12,7 @@ namespace XSerializer
     {
         private delegate bool TryFunc(out object result);
 
-        private static readonly ConcurrentDictionary<Type, TryFunc> _convertFuncs = new ConcurrentDictionary<Type, TryFunc>();
+        private readonly ConcurrentDictionary<Type, TryFunc> _convertFuncs = new ConcurrentDictionary<Type, TryFunc>();
 
         private readonly IJsonSerializeOperationInfo _info;
 
