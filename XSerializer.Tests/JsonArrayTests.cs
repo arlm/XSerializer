@@ -2753,6 +2753,38 @@ namespace XSerializer.Tests
             Assert.That(barEncrypted, Is.EqualTo(encryptionMechanism.Encrypt(@"[false,123.45]")));
         }
 
+        [Test]
+        public void EncryptDoesNothingIfNoEncryptionMechanismIsDefined()
+        {
+            dynamic foo =
+                new JsonArray
+                {
+                    "abc",
+                };
+
+            object bar = foo[0];
+            foo.Encrypt(0);
+            object barEncrypted = foo[0];
+
+            Assert.That(barEncrypted, Is.EqualTo(bar));
+        }
+
+        [Test]
+        public void DecryptDoesNothingIfNoEncryptionMechanismIsDefined()
+        {
+            dynamic foo =
+                new JsonArray
+                {
+                    "abc",
+                };
+
+            object barEncrypted = foo[0];
+            foo.Decrypt(0);
+            object bar = foo[0];
+
+            Assert.That(bar, Is.EqualTo(barEncrypted));
+        }
+
         #endregion
     }
 }

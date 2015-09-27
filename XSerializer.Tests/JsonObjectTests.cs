@@ -682,6 +682,38 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void EncryptDoesNothingIfNoEncryptionMechanismIsDefined()
+        {
+            dynamic foo =
+                new JsonObject
+                {
+                    { "bar", "abc" },
+                };
+
+            object bar = foo.bar;
+            foo.Encrypt("bar");
+            object barEncrypted = foo.bar;
+
+            Assert.That(barEncrypted, Is.EqualTo(bar));
+        }
+
+        [Test]
+        public void DecryptDoesNothingIfNoEncryptionMechanismIsDefined()
+        {
+            dynamic foo =
+                new JsonObject
+                {
+                    { "bar", "abc" },
+                };
+
+            object barEncrypted = foo.bar;
+            foo.Decrypt("bar");
+            object bar = foo.bar;
+
+            Assert.That(bar, Is.EqualTo(barEncrypted));
+        }
+
+        [Test]
         public void CanDynamicSetProperty()
         {
             dynamic foo = new JsonObject

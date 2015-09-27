@@ -94,43 +94,46 @@ namespace XSerializer
 
         public JsonArray Decrypt(int index)
         {
-            var value = _transformableValues[index];
-
-            if (value is string)
+            if (_info.EncryptionMechanism != null)
             {
-                var decryptedJson = _info.EncryptionMechanism.Decrypt(
-                    (string)value, _info.EncryptKey, _info.SerializationState);
+                var value = _transformableValues[index];
 
-                using (var stringReader = new StringReader(decryptedJson))
+                if (value is string)
                 {
-                    using (var reader = new JsonReader(stringReader, _info))
-                    {
-                        value = DynamicJsonSerializer.Get(false).DeserializeObject(reader, _info);
+                    var decryptedJson = _info.EncryptionMechanism.Decrypt(
+                        (string)value, _info.EncryptKey, _info.SerializationState);
 
-                        if (value == null
-                            || value is bool
-                            || value is JsonArray
-                            || value is JsonObject)
+                    using (var stringReader = new StringReader(decryptedJson))
+                    {
+                        using (var reader = new JsonReader(stringReader, _info))
                         {
-                            _values[index] = value;
-                            _transformableValues[index] = null;
-                        }
-                        else if (value is string)
-                        {
-                            _values[index] = value;
-                            _transformableValues[index] = value;
-                        }
-                        else
-                        {
-                            var jsonNumber = value as JsonNumber;
-                            if (jsonNumber != null)
+                            value = DynamicJsonSerializer.Get(false).DeserializeObject(reader, _info);
+
+                            if (value == null
+                                || value is bool
+                                || value is JsonArray
+                                || value is JsonObject)
                             {
-                                _values[index] = jsonNumber.DoubleValue;
-                                _transformableValues[index] = jsonNumber;
+                                _values[index] = value;
+                                _transformableValues[index] = null;
+                            }
+                            else if (value is string)
+                            {
+                                _values[index] = value;
+                                _transformableValues[index] = value;
                             }
                             else
                             {
-                                throw new NotSupportedException("Unsupported value type: " + value.GetType());
+                                var jsonNumber = value as JsonNumber;
+                                if (jsonNumber != null)
+                                {
+                                    _values[index] = jsonNumber.DoubleValue;
+                                    _transformableValues[index] = jsonNumber;
+                                }
+                                else
+                                {
+                                    throw new NotSupportedException("Unsupported value type: " + value.GetType());
+                                }
                             }
                         }
                     }
@@ -142,20 +145,23 @@ namespace XSerializer
 
         public JsonArray Encrypt(int index)
         {
-            var value = _values[index];
-
-            var sb = new StringBuilder();
-
-            using (var stringwriter = new StringWriter(sb))
+            if (_info.EncryptionMechanism != null)
             {
-                using (var writer = new JsonWriter(stringwriter, _info))
-                {
-                    DynamicJsonSerializer.Get(false).SerializeObject(writer, value, _info);
-                }
-            }
+                var value = _values[index];
 
-            value = _info.EncryptionMechanism.Encrypt(sb.ToString(), _info.EncryptKey, _info.SerializationState);
-            _values[index] = value;
+                var sb = new StringBuilder();
+
+                using (var stringwriter = new StringWriter(sb))
+                {
+                    using (var writer = new JsonWriter(stringwriter, _info))
+                    {
+                        DynamicJsonSerializer.Get(false).SerializeObject(writer, value, _info);
+                    }
+                }
+
+                value = _info.EncryptionMechanism.Encrypt(sb.ToString(), _info.EncryptKey, _info.SerializationState);
+                _values[index] = value;
+            }
 
             return this;
         }

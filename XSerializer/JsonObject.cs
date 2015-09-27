@@ -106,38 +106,41 @@ namespace XSerializer
 
         public JsonObject Decrypt(string name)
         {
-            object value;
-            if (_values.TryGetValue(name, out value)
-                && value is string)
+            if (_info.EncryptionMechanism != null)
             {
-                var decryptedJson = _info.EncryptionMechanism.Decrypt(
-                    (string)value, _info.EncryptKey, _info.SerializationState);
-
-                using (var stringReader = new StringReader(decryptedJson))
+                object value;
+                if (_values.TryGetValue(name, out value)
+                    && value is string)
                 {
-                    using (var reader = new JsonReader(stringReader, _info))
+                    var decryptedJson = _info.EncryptionMechanism.Decrypt(
+                        (string)value, _info.EncryptKey, _info.SerializationState);
+
+                    using (var stringReader = new StringReader(decryptedJson))
                     {
-                        value = DynamicJsonSerializer.Get(false).DeserializeObject(reader, _info);
-
-                        if (value == null
-                            || value is bool
-                            || value is string
-                            || value is JsonArray
-                            || value is JsonObject)
+                        using (var reader = new JsonReader(stringReader, _info))
                         {
-                            _values[name] = value;
-                            return this;
-                        }
+                            value = DynamicJsonSerializer.Get(false).DeserializeObject(reader, _info);
 
-                        var jsonNumber = value as JsonNumber;
-                        if (jsonNumber != null)
-                        {
-                            _values[name] = jsonNumber.DoubleValue;
-                            _numericStringValues[name] = jsonNumber.StringValue;
-                            return this;
-                        }
+                            if (value == null
+                                || value is bool
+                                || value is string
+                                || value is JsonArray
+                                || value is JsonObject)
+                            {
+                                _values[name] = value;
+                                return this;
+                            }
 
-                        throw new NotSupportedException("Unsupported value type: " + value.GetType());
+                            var jsonNumber = value as JsonNumber;
+                            if (jsonNumber != null)
+                            {
+                                _values[name] = jsonNumber.DoubleValue;
+                                _numericStringValues[name] = jsonNumber.StringValue;
+                                return this;
+                            }
+
+                            throw new NotSupportedException("Unsupported value type: " + value.GetType());
+                        }
                     }
                 }
             }
@@ -147,21 +150,24 @@ namespace XSerializer
 
         public JsonObject Encrypt(string name)
         {
-            object value;
-            if (_values.TryGetValue(name, out value))
+            if (_info.EncryptionMechanism != null)
             {
-                var sb = new StringBuilder();
-                
-                using (var stringwriter = new StringWriter(sb))
+                object value;
+                if (_values.TryGetValue(name, out value))
                 {
-                    using (var writer = new JsonWriter(stringwriter, _info))
-                    {
-                        DynamicJsonSerializer.Get(false).SerializeObject(writer, value, _info);
-                    }
-                }
+                    var sb = new StringBuilder();
 
-                value = _info.EncryptionMechanism.Encrypt(sb.ToString(), _info.EncryptKey, _info.SerializationState);
-                _values[name] = value;
+                    using (var stringwriter = new StringWriter(sb))
+                    {
+                        using (var writer = new JsonWriter(stringwriter, _info))
+                        {
+                            DynamicJsonSerializer.Get(false).SerializeObject(writer, value, _info);
+                        }
+                    }
+
+                    value = _info.EncryptionMechanism.Encrypt(sb.ToString(), _info.EncryptKey, _info.SerializationState);
+                    _values[name] = value;
+                }
             }
 
             return this;
