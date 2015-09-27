@@ -155,7 +155,7 @@ namespace XSerializer
 
         private object DeserializeJsonObject(JsonReader reader, IJsonSerializeOperationInfo info)
         {
-            var jsonObject = new JsonObject(info.DateTimeHandler);
+            var jsonObject = new JsonObject(info);
 
             foreach (var propertyName in reader.ReadProperties())
             {

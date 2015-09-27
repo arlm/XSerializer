@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using XSerializer.Encryption;
 
 namespace XSerializer
 {
@@ -14,35 +16,37 @@ namespace XSerializer
         private readonly Dictionary<string, object> _projections = new Dictionary<string, object>();
 
         private readonly IDateTimeHandler _dateTimeHandler;
+        private readonly IJsonSerializeOperationInfo _info;
 
         public JsonObject()
-            : this(DateTimeHandler.Default)
+            : this(new JsonSerializeOperationInfo())
         {
         }
 
-        public JsonObject(IDateTimeHandler dateTimeHandler)
-            : this(dateTimeHandler, Enumerable.Empty<KeyValuePair<string, object>>())
+        internal JsonObject(IJsonSerializeOperationInfo info)
+            : this(info, Enumerable.Empty<KeyValuePair<string, object>>())
         {
         }
 
         public JsonObject(params KeyValuePair<string, object>[] values)
-            : this(DateTimeHandler.Default, values)
+            : this(new JsonSerializeOperationInfo(), values)
         {
         }
 
-        public JsonObject(IDateTimeHandler dateTimeHandler, params KeyValuePair<string, object>[] values)
-            : this(dateTimeHandler, (IEnumerable<KeyValuePair<string, object>>)values)
+        internal JsonObject(IJsonSerializeOperationInfo info, params KeyValuePair<string, object>[] values)
+            : this(info, (IEnumerable<KeyValuePair<string, object>>)values)
         {
         }
 
         public JsonObject(IEnumerable<KeyValuePair<string, object>> values)
-            : this(DateTimeHandler.Default, values)
+            : this(new JsonSerializeOperationInfo(), values)
         {
         }
 
-        public JsonObject(IDateTimeHandler dateTimeHandler, IEnumerable<KeyValuePair<string, object>> values)
+        internal JsonObject(IJsonSerializeOperationInfo info, IEnumerable<KeyValuePair<string, object>> values)
         {
-            _dateTimeHandler = dateTimeHandler;
+            _info = info;
+
             foreach (var value in values)
             {
                 Add(value.Key, value.Value);
@@ -86,6 +90,47 @@ namespace XSerializer
 
                 throw new KeyNotFoundException();
             }
+        }
+
+        public JsonObject Decrypt(string name)
+        {
+            object value;
+            if (_values.TryGetValue(name, out value)
+                && value is string)
+            {
+                var decryptedJson = _info.EncryptionMechanism.Decrypt(
+                    (string)value, _info.EncryptKey, _info.SerializationState);
+
+                using (var stringReader = new StringReader(decryptedJson))
+                {
+                    using (var reader = new JsonReader(stringReader, _info))
+                    {
+                        value = DynamicJsonSerializer.Get(false).DeserializeObject(reader, _info);
+
+                        if (value == null
+                            || value is bool
+                            || value is string
+                            || value is JsonArray
+                            || value is JsonObject)
+                        {
+                            _values[name] = value;
+                            return this;
+                        }
+
+                        var jsonNumber = value as JsonNumber;
+                        if (jsonNumber != null)
+                        {
+                            _values[name] = jsonNumber.DoubleValue;
+                            _numericStringValues[name] = jsonNumber.StringValue;
+                            return this;
+                        }
+
+                        throw new NotSupportedException("Unsupported value type: " + value.GetType());
+                    }
+                }
+            }
+
+            return this;
         }
 
         public bool TryGetValue(string name, out object result)
