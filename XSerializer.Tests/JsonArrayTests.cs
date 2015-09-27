@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using XSerializer.Tests.Encryption;
 
 namespace XSerializer.Tests
 {
@@ -2590,6 +2591,94 @@ namespace XSerializer.Tests
 
             Assert.That(bar, Is.EqualTo(value));
             Assert.That(baz, Is.Null);
+        }
+
+        #endregion
+
+        #region Decrypt tests
+
+        [TestCase(@"true", true)]
+        [TestCase(@"false", false)]
+        [TestCase(@"""abc""", "abc")]
+        [TestCase(@"123.45", 123.45)]
+        public void CanDecryptPrimitiveItem(string jsonValue, object expectedValue)
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var info = new JsonSerializeOperationInfo
+            {
+                EncryptionEnabled = true,
+                EncryptionMechanism = encryptionMechanism
+            };
+
+            dynamic foo =
+                new JsonArray(info)
+                {
+                    encryptionMechanism.Encrypt(jsonValue),
+                };
+
+            string barEncrypted = foo[0];
+            foo.Decrypt(0);
+            object bar = foo[0];
+
+            Assert.That(bar, Is.Not.EqualTo(barEncrypted));
+
+            Assert.That(bar, Is.EqualTo(expectedValue));
+        }
+
+        [Test]
+        public void CanDecryptJsonObjectItem()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var info = new JsonSerializeOperationInfo
+            {
+                EncryptionEnabled = true,
+                EncryptionMechanism = encryptionMechanism
+            };
+
+            dynamic foo =
+                new JsonArray(info)
+                {
+                    encryptionMechanism.Encrypt(@"{""baz"":false,""qux"":123.45}"),
+                };
+
+            string barEncrypted = foo[0];
+            foo.Decrypt(0);
+            dynamic bar = foo[0];
+
+            Assert.That(bar, Is.Not.EqualTo(barEncrypted));
+
+            Assert.That(bar.baz, Is.False);
+            Assert.That(bar.qux, Is.EqualTo(123.45));
+        }
+
+        [Test]
+        public void CanDecryptJsonArrayItem()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            var info = new JsonSerializeOperationInfo
+            {
+                EncryptionEnabled = true,
+                EncryptionMechanism = encryptionMechanism
+            };
+
+            dynamic foo =
+                new JsonArray(info)
+                {
+                    encryptionMechanism.Encrypt(@"[1,2,3]"),
+                };
+
+            string barEncrypted = foo[0];
+            foo.Decrypt(0);
+            IList<int> bar = foo[0];
+
+            Assert.That(bar, Is.Not.EqualTo(barEncrypted));
+
+            Assert.That(bar[0], Is.EqualTo(1));
+            Assert.That(bar[1], Is.EqualTo(2));
+            Assert.That(bar[2], Is.EqualTo(3));
         }
 
         #endregion

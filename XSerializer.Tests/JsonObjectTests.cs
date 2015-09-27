@@ -521,7 +521,6 @@ namespace XSerializer.Tests
             Assert.That(bar, Is.EqualTo(expected));
         }
 
-        [TestCase(@"null", null)]
         [TestCase(@"true", true)]
         [TestCase(@"false", false)]
         [TestCase(@"""abc""", "abc")]

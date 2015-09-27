@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.IO;
 using System.Linq;
 
 namespace XSerializer
@@ -13,19 +14,20 @@ namespace XSerializer
 
         private static readonly ConcurrentDictionary<Type, TryFunc> _convertFuncs = new ConcurrentDictionary<Type, TryFunc>();
 
-        private readonly IDateTimeHandler _dateTimeHandler;
+        private readonly IJsonSerializeOperationInfo _info;
+
         private readonly List<object> _values = new List<object>();
         private readonly List<object> _transformableValues = new List<object>();
         private readonly List<Type> _transformedTypes = new List<Type>();
 
         public JsonArray()
-            : this(DateTimeHandler.Default)
+            : this(new JsonSerializeOperationInfo())
         {
         }
 
-        public JsonArray(IDateTimeHandler dateTimeHandler)
+        internal JsonArray(IJsonSerializeOperationInfo info)
         {
-            _dateTimeHandler = dateTimeHandler;
+            _info = info;
         }
 
         public void Add(object value)
@@ -75,6 +77,54 @@ namespace XSerializer
         public int Count
         {
             get { return _values.Count; }
+        }
+
+        public JsonArray Decrypt(int index)
+        {
+            var value = _transformableValues[index];
+
+            if (value is string)
+            {
+                var decryptedJson = _info.EncryptionMechanism.Decrypt(
+                    (string)value, _info.EncryptKey, _info.SerializationState);
+
+                using (var stringReader = new StringReader(decryptedJson))
+                {
+                    using (var reader = new JsonReader(stringReader, _info))
+                    {
+                        value = DynamicJsonSerializer.Get(false).DeserializeObject(reader, _info);
+
+                        if (value == null
+                            || value is bool
+                            || value is JsonArray
+                            || value is JsonObject)
+                        {
+                            _values[index] = value;
+                            _transformableValues[index] = null;
+                        }
+                        else if (value is string)
+                        {
+                            _values[index] = value;
+                            _transformableValues[index] = value;
+                        }
+                        else
+                        {
+                            var jsonNumber = value as JsonNumber;
+                            if (jsonNumber != null)
+                            {
+                                _values[index] = jsonNumber.DoubleValue;
+                                _transformableValues[index] = jsonNumber;
+                            }
+                            else
+                            {
+                                throw new NotSupportedException("Unsupported value type: " + value.GetType());
+                            }
+                        }
+                    }
+                }
+            }
+
+            return this;
         }
 
         public JsonArray TransformItems<T>()
@@ -521,7 +571,7 @@ namespace XSerializer
 
             try
             {
-                return _dateTimeHandler.ParseDateTime((string)transformableValue);
+                return _info.DateTimeHandler.ParseDateTime((string)transformableValue);
             }
             catch
             {
@@ -538,7 +588,7 @@ namespace XSerializer
 
             try
             {
-                return _dateTimeHandler.ParseDateTimeOffset((string)transformableValue);
+                return _info.DateTimeHandler.ParseDateTimeOffset((string)transformableValue);
             }
             catch
             {

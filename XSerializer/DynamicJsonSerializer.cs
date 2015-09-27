@@ -167,7 +167,7 @@ namespace XSerializer
 
         private object DeserializeJsonArray(JsonReader reader, IJsonSerializeOperationInfo info)
         {
-            var jsonArray = new JsonArray(info.DateTimeHandler);
+            var jsonArray = new JsonArray(info);
 
             while (true)
             {
