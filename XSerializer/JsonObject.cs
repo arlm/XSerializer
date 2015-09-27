@@ -159,6 +159,11 @@ namespace XSerializer
             return TryGetValue(binder.Name, out result);
         }
 
+        public override IEnumerable<string> GetDynamicMemberNames()
+        {
+            return _values.Keys;
+        }
+
         private bool TryGetProjection(string name, ref object result)
         {
             string modifiedName;

@@ -545,11 +545,11 @@ namespace XSerializer.Tests
 
             string barEncrypted = foo.bar;
             foo.Decrypt("bar");
-            object barDecrypted = foo.bar;
+            object bar = foo.bar;
 
-            Assert.That(barDecrypted, Is.Not.EqualTo(barEncrypted));
+            Assert.That(bar, Is.Not.EqualTo(barEncrypted));
 
-            Assert.That(barDecrypted, Is.EqualTo(expectedValue));
+            Assert.That(bar, Is.EqualTo(expectedValue));
         }
 
         [Test]
@@ -570,12 +570,13 @@ namespace XSerializer.Tests
                 };
 
             string barEncrypted = foo.bar;
-            var barDecrypted = foo.Decrypt("bar").bar;
+            foo.Decrypt("bar");
+            dynamic bar = foo.bar;
 
-            Assert.That(barDecrypted, Is.Not.EqualTo(barEncrypted));
+            Assert.That(bar, Is.Not.EqualTo(barEncrypted));
 
-            Assert.That(barDecrypted.baz, Is.False);
-            Assert.That(barDecrypted.qux, Is.EqualTo(123.45));
+            Assert.That(bar.baz, Is.False);
+            Assert.That(bar.qux, Is.EqualTo(123.45));
         }
 
         [Test]
@@ -597,13 +598,13 @@ namespace XSerializer.Tests
 
             string barEncrypted = foo.bar;
             foo.Decrypt("bar");
-            IList<int> barDecrypted = foo.bar;
+            IList<int> bar = foo.bar;
 
-            Assert.That(barDecrypted, Is.Not.EqualTo(barEncrypted));
+            Assert.That(bar, Is.Not.EqualTo(barEncrypted));
 
-            Assert.That(barDecrypted[0], Is.EqualTo(1));
-            Assert.That(barDecrypted[1], Is.EqualTo(2));
-            Assert.That(barDecrypted[2], Is.EqualTo(3));
+            Assert.That(bar[0], Is.EqualTo(1));
+            Assert.That(bar[1], Is.EqualTo(2));
+            Assert.That(bar[2], Is.EqualTo(3));
         }
     }
 }

@@ -429,8 +429,6 @@ namespace XSerializer
 
             var transform = GetTransform(type);
 
-            // TODO: Add additional transform functions.
-
             for (int i = 0; i < _values.Count; i++)
             {
                 if (_transformableValues[i] != null)
