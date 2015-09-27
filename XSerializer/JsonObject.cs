@@ -191,19 +191,6 @@ namespace XSerializer
             return false;
         }
 
-        private void RemoveProjections(string name)
-        {
-            var toRemove =
-                from projectionName in _projections.Keys
-                where projectionName.StartsWith(name) && _definedProjections.Any(projectionName.EndsWith)
-                select projectionName;
-
-            foreach (var key in toRemove)
-            {
-                _projections.Remove(key);
-            }
-        }
-
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             return _values.GetEnumerator();
@@ -309,6 +296,19 @@ namespace XSerializer
             }
 
             return false;
+        }
+
+        private void RemoveProjections(string name)
+        {
+            var toRemove =
+                from projectionName in _projections.Keys
+                where projectionName.StartsWith(name) && _definedProjections.Any(projectionName.EndsWith)
+                select projectionName;
+
+            foreach (var key in toRemove)
+            {
+                _projections.Remove(key);
+            }
         }
 
         private static bool EndsWith(string binderName, string suffix, out string name)

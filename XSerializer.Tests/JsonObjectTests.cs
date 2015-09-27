@@ -600,13 +600,13 @@ namespace XSerializer.Tests
                     { "bar", value },
                 };
 
-            object barEncrypted = foo.bar;
+            object bar = foo.bar;
             foo.Encrypt("bar");
-            string bar = foo.bar;
+            string barEncrypted = foo.bar;
 
-            Assert.That(bar, Is.Not.EqualTo(barEncrypted));
+            Assert.That(barEncrypted, Is.Not.EqualTo(bar));
 
-            Assert.That(bar, Is.EqualTo(encryptionMechanism.Encrypt(expectedPlaintextValue)));
+            Assert.That(barEncrypted, Is.EqualTo(encryptionMechanism.Encrypt(expectedPlaintextValue)));
         }
 
         [Test]
@@ -620,13 +620,13 @@ namespace XSerializer.Tests
                     { "bar", new JsonNumber("123.45") },
                 };
 
-            object barEncrypted = foo.bar;
+            object bar = foo.bar;
             foo.Encrypt("bar");
-            string bar = foo.bar;
+            string barEncrypted = foo.bar;
 
-            Assert.That(bar, Is.Not.EqualTo(barEncrypted));
+            Assert.That(barEncrypted, Is.Not.EqualTo(bar));
 
-            Assert.That(bar, Is.EqualTo(encryptionMechanism.Encrypt("123.45")));
+            Assert.That(barEncrypted, Is.EqualTo(encryptionMechanism.Encrypt("123.45")));
         }
 
         [Test]
@@ -646,13 +646,13 @@ namespace XSerializer.Tests
                     },
                 };
 
-            object barEncrypted = foo.bar;
+            object bar = foo.bar;
             foo.Encrypt("bar");
-            string bar = foo.bar;
+            string barEncrypted = foo.bar;
 
-            Assert.That(bar, Is.Not.EqualTo(barEncrypted));
+            Assert.That(barEncrypted, Is.Not.EqualTo(bar));
 
-            Assert.That(bar, Is.EqualTo(encryptionMechanism.Encrypt(@"{""baz"":false,""qux"":123.45}")));
+            Assert.That(barEncrypted, Is.EqualTo(encryptionMechanism.Encrypt(@"{""baz"":false,""qux"":123.45}")));
         }
 
         [Test]
@@ -672,13 +672,13 @@ namespace XSerializer.Tests
                     },
                 };
 
-            object barEncrypted = foo.bar;
+            object bar = foo.bar;
             foo.Encrypt("bar");
-            string bar = foo.bar;
+            string barEncrypted = foo.bar;
 
-            Assert.That(bar, Is.Not.EqualTo(barEncrypted));
+            Assert.That(barEncrypted, Is.Not.EqualTo(bar));
 
-            Assert.That(bar, Is.EqualTo(encryptionMechanism.Encrypt(@"[false,123.45]")));
+            Assert.That(barEncrypted, Is.EqualTo(encryptionMechanism.Encrypt(@"[false,123.45]")));
         }
 
         [Test]
