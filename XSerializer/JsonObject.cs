@@ -143,7 +143,8 @@ namespace XSerializer
             if (_info.EncryptionMechanism != null)
             {
                 object value;
-                if (_values.TryGetValue(name, out value))
+                if (_values.TryGetValue(name, out value)
+                    && value != null)
                 {
                     var sb = new StringBuilder();
 

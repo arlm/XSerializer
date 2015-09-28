@@ -2595,7 +2595,7 @@ namespace XSerializer.Tests
 
         #endregion
 
-        #region Decrypt tests
+        #region Encryption tests
 
         [TestCase(@"true", true)]
         [TestCase(@"false", false)]
@@ -2751,6 +2751,46 @@ namespace XSerializer.Tests
             Assert.That(barEncrypted, Is.Not.EqualTo(bar));
 
             Assert.That(barEncrypted, Is.EqualTo(encryptionMechanism.Encrypt(@"[false,123.45]")));
+        }
+
+        [Test]
+        public void EncryptDoesNothingIfTheItemIsNull()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            dynamic foo =
+                new JsonArray(encryptionMechanism:encryptionMechanism)
+                {
+                    null,
+                };
+
+            object bar1 = foo[0];
+            Assert.That(bar1, Is.Null);
+
+            foo.Encrypt(0);
+
+            object bar2 = foo[0];
+            Assert.That(bar2, Is.Null);
+        }
+
+        [Test]
+        public void DecryptDoesNothingIfTheItemIsNull()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            dynamic foo =
+                new JsonArray(encryptionMechanism:encryptionMechanism)
+                {
+                    null,
+                };
+
+            object bar1 = foo[0];
+            Assert.That(bar1, Is.Null);
+
+            foo.Decrypt(0);
+
+            object bar2 = foo[0];
+            Assert.That(bar2, Is.Null);
         }
 
         [Test]

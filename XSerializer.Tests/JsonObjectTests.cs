@@ -682,6 +682,46 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void EncryptDoesNothingIfTheValueIsNull()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            dynamic foo =
+                new JsonObject(encryptionMechanism:encryptionMechanism)
+                {
+                    { "bar", null },
+                };
+
+            object bar1 = foo.bar;
+            Assert.That(bar1, Is.Null);
+
+            foo.Encrypt("bar");
+
+            object bar2 = foo.bar;
+            Assert.That(bar2, Is.Null);
+        }
+
+        [Test]
+        public void DecryptDoesNothingIfTheValueIsNull()
+        {
+            var encryptionMechanism = new Base64EncryptionMechanism();
+
+            dynamic foo =
+                new JsonObject(encryptionMechanism:encryptionMechanism)
+                {
+                    { "bar", null },
+                };
+
+            object bar1 = foo.bar;
+            Assert.That(bar1, Is.Null);
+
+            foo.Decrypt("bar");
+
+            object bar2 = foo.bar;
+            Assert.That(bar2, Is.Null);
+        }
+
+        [Test]
         public void EncryptDoesNothingIfNoEncryptionMechanismIsDefined()
         {
             dynamic foo =
