@@ -143,7 +143,6 @@ namespace XSerializer
             return new JsonSerializeOperationInfo
             {
                 RedactEnabled = _configuration.RedactEnabled,
-                EncryptionEnabled = _configuration.EncryptionEnabled,
                 EncryptionMechanism = _configuration.EncryptionMechanism,
                 EncryptKey = _configuration.EncryptKey,
                 SerializationState = new SerializationState(),

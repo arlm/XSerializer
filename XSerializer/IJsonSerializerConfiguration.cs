@@ -7,7 +7,6 @@ namespace XSerializer
     {
         Encoding Encoding { get; }
         bool RedactEnabled { get; }
-        bool EncryptionEnabled { get; }
         IEncryptionMechanism EncryptionMechanism { get; }
         object EncryptKey { get; }
         bool EncryptRootObject { get; }

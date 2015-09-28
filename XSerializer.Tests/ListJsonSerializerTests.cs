@@ -26,7 +26,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true,
                 EncryptRootObject = true
             };
 
@@ -60,7 +59,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true,
                 EncryptRootObject = true
             };
 
@@ -84,7 +82,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true
             };
 
             var serializer = new JsonSerializer<List<object>>(configuration);
@@ -113,7 +110,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true
             };
 
             var serializer = new JsonSerializer<List<object>>(configuration);

@@ -34,7 +34,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true,
                 EncryptRootObject = true
             };
 
@@ -68,7 +67,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true
             };
 
             var serializer = new JsonSerializer<Grault>(configuration);
@@ -97,7 +95,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true
             };
 
             var serializer = new JsonSerializer<Waldo>(configuration);
@@ -128,7 +125,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true
             };
 
             var serializer = new JsonSerializer<Thud>(configuration);
@@ -215,7 +211,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true,
                 EncryptRootObject = true
             };
 
@@ -241,7 +236,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true
             };
 
             var serializer = new JsonSerializer<Grault>(configuration);
@@ -267,7 +261,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true
             };
 
             var serializer = new JsonSerializer<Waldo>(configuration);
@@ -297,7 +290,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true
             };
 
             var serializer = new JsonSerializer<Thud>(configuration);

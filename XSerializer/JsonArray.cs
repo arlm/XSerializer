@@ -30,7 +30,6 @@ namespace XSerializer
             : this(new JsonSerializeOperationInfo
                 {
                     DateTimeHandler = dateTimeHandler ?? DateTimeHandler.Default,
-                    EncryptionEnabled = false,
                     EncryptionMechanism = encryptionMechanism,
                     EncryptKey = encryptKey,
                     SerializationState = serializationState

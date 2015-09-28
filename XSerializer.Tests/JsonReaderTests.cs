@@ -44,7 +44,6 @@ namespace XSerializer.Tests
             var info = new JsonSerializeOperationInfo
             {
                 EncryptionMechanism = new Base64EncryptionMechanism(),
-                EncryptionEnabled = true
             };
 
             var reader = new JsonReader(new StringReader(cipherTextJson), info);
@@ -74,7 +73,6 @@ namespace XSerializer.Tests
             var info = new JsonSerializeOperationInfo
             {
                 EncryptionMechanism = new Base64EncryptionMechanism(),
-                EncryptionEnabled = true
             };
 
             var reader = new JsonReader(new StringReader(cipherTextJson), info);
@@ -166,7 +164,12 @@ namespace XSerializer.Tests
         [Test]
         public void CanSetDecryptReadsToTrueAndBackAgainWhenTheNodeTypeIsNull()
         {
-            var reader = new JsonReader(new StringReader("null"), new JsonSerializeOperationInfo { EncryptionEnabled = true, EncryptionMechanism = new Base64EncryptionMechanism() });
+            var reader = new JsonReader(
+                new StringReader("null"),
+                new JsonSerializeOperationInfo
+                {
+                    EncryptionMechanism = new Base64EncryptionMechanism()
+                });
 
             Assert.That(reader.Read(), Is.True);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.Null));

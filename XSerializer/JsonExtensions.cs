@@ -7,7 +7,6 @@ namespace XSerializer
             return new JsonSerializeOperationInfo
             {
                 RedactEnabled = info.RedactEnabled,
-                EncryptionEnabled = info.EncryptionEnabled,
                 EncryptionMechanism = info.EncryptionMechanism,
                 EncryptKey = info.EncryptKey,
                 SerializationState = new SerializationState(),

@@ -25,7 +25,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true,
                 EncryptRootObject = true
             };
 
@@ -49,7 +48,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true
             };
 
             var serializer = new JsonSerializer<IDictionary<string, object>>(configuration);
@@ -74,7 +72,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true
             };
 
             var serializer = new JsonSerializer<IDictionary<string, object>>(configuration);
@@ -109,7 +106,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true,
                 EncryptRootObject = true
             };
 
@@ -143,7 +139,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true,
                 EncryptRootObject = true
             };
 
@@ -167,7 +162,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true
             };
 
             var serializer = new JsonSerializer<IDictionary<string, Foo>>(configuration);
@@ -192,7 +186,6 @@ namespace XSerializer.Tests
             var configuration = new JsonSerializerConfiguration
             {
                 EncryptionMechanism = encryptionMechanism,
-                EncryptionEnabled = true
             };
 
             var serializer = new JsonSerializer<IDictionary<string, Qux>>(configuration);
