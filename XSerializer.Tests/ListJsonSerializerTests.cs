@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using NUnit.Framework;
@@ -137,6 +138,7 @@ namespace XSerializer.Tests
 
             var result = serializer.Deserialize(@"[""abc"",""xyz""]");
 
+            Assert.That(result, Is.InstanceOf<List<string>>());
             Assert.That(result, Is.EqualTo(new List<string> { "abc", "xyz" }));
         }
 
@@ -147,17 +149,75 @@ namespace XSerializer.Tests
 
             var result = serializer.Deserialize(@"[""abc"",""xyz""]");
 
+            Assert.That(result, Is.InstanceOf<List<string>>());
             Assert.That(result, Is.EqualTo(new List<string> { "abc", "xyz" }));
         }
 
-        [Test, Ignore] // TODO: unignore this test when DynamicJsonSerializer has been fully implemented.
+        [Test]
         public void CanDeserializeNonGenericIEnumerable()
         {
             var serializer = new JsonSerializer<IEnumerable>();
 
             var result = serializer.Deserialize(@"[""abc"",""xyz""]");
 
+            Assert.That(result, Is.InstanceOf<List<object>>());
+            Assert.That(result, Is.EqualTo(new List<object> { "abc", "xyz" }));
+        }
+
+        [Test]
+        public void CanDeserializeArrayList()
+        {
+            var serializer = new JsonSerializer<ArrayList>();
+
+            var result = serializer.Deserialize(@"[""abc"",""xyz""]");
+
+            Assert.That(result, Is.InstanceOf<ArrayList>());
             Assert.That(result, Is.EqualTo(new ArrayList { "abc", "xyz" }));
+        }
+
+        [Test]
+        public void CanDeserializeCustomGenericList()
+        {
+            var serializer = new JsonSerializer<CustomList<string>>();
+
+            var result = serializer.Deserialize(@"[""abc"",""xyz""]");
+
+            Assert.That(result, Is.InstanceOf<CustomList<string>>());
+            Assert.That(result, Is.EqualTo(new CustomList<string> { "abc", "xyz" }));
+        }
+
+        public class CustomList<T> : List<T>
+        {
+        }
+
+        [Test]
+        public void CanDeserializeTypedCustomGenericList()
+        {
+            var serializer = new JsonSerializer<CustomStringList>();
+
+            var result = serializer.Deserialize(@"[""abc"",""xyz""]");
+
+            Assert.That(result, Is.InstanceOf<CustomStringList>());
+            Assert.That(result, Is.EqualTo(new CustomStringList { "abc", "xyz" }));
+        }
+
+        public class CustomStringList : List<string>
+        {
+        }
+
+        [Test]
+        public void CanDeserializeCustomNonGenericList()
+        {
+            var serializer = new JsonSerializer<CustomArrayList>();
+
+            var result = serializer.Deserialize(@"[""abc"",""xyz""]");
+
+            Assert.That(result, Is.InstanceOf<CustomArrayList>());
+            Assert.That(result, Is.EqualTo(new CustomArrayList { "abc", "xyz" }));
+        }
+
+        public class CustomArrayList : ArrayList
+        {
         }
 
         [Test]
@@ -167,6 +227,7 @@ namespace XSerializer.Tests
 
             var result = serializer.Deserialize(@"[]");
 
+            Assert.That(result, Is.InstanceOf<List<string>>());
             Assert.That(result, Is.EqualTo(new List<string>()));
         }
 
@@ -177,6 +238,7 @@ namespace XSerializer.Tests
 
             var result = serializer.Deserialize(@"[]");
 
+            Assert.That(result, Is.InstanceOf<List<string>>());
             Assert.That(result, Is.EqualTo(new List<string>()));
         }
 
@@ -187,7 +249,8 @@ namespace XSerializer.Tests
 
             var result = serializer.Deserialize(@"[]");
 
-            Assert.That(result, Is.EqualTo(new ArrayList()));
+            Assert.That(result, Is.InstanceOf<List<object>>());
+            Assert.That(result, Is.EqualTo(new List<object>()));
         }
 
         [Test]

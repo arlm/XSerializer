@@ -15,7 +15,7 @@ namespace XSerializer
         private readonly bool _encrypt;
         private readonly IJsonSerializerInternal _itemSerializer;
 
-        private Func<object> _createList;
+        private readonly Func<object> _createList;
         private readonly Action<object, object> _addItem;
 
         private ListJsonSerializer(Type type, bool encrypt)
@@ -24,7 +24,8 @@ namespace XSerializer
 
             if (type.IsAssignableToGenericIEnumerable())
             {
-                _itemSerializer = JsonSerializerFactory.GetSerializer(type.GetGenericIEnumerableType().GetGenericArguments()[0], _encrypt);
+                var itemType = type.GetGenericIEnumerableType().GetGenericArguments()[0];
+                _itemSerializer = JsonSerializerFactory.GetSerializer(itemType, _encrypt);
             }
             else
             {
@@ -40,7 +41,7 @@ namespace XSerializer
                 }
                 else
                 {
-                    type = typeof(ArrayList);
+                    type = typeof(List<object>);
                 }
             }
 
