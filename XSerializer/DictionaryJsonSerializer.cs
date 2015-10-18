@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Text;
 
 namespace XSerializer
 {
@@ -10,10 +11,11 @@ namespace XSerializer
     {
         private static readonly ConcurrentDictionary<Tuple<Type, bool>, DictionaryJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool>, DictionaryJsonSerializer>();
 
-        private static readonly ConcurrentDictionary<Type, Func<object, string>> _getKeyFuncCache = new ConcurrentDictionary<Type, Func<object, string>>();
+        private static readonly ConcurrentDictionary<Type, Func<object, object>> _getKeyFuncCache = new ConcurrentDictionary<Type, Func<object, object>>();
         private static readonly ConcurrentDictionary<Type, Func<object, object>> _getValueFuncCache = new ConcurrentDictionary<Type, Func<object, object>>();
 
         private readonly Action<JsonWriter, object, IJsonSerializeOperationInfo> _write;
+        private readonly IJsonSerializerInternal _keySerializer;
         private readonly IJsonSerializerInternal _valueSerializer;
         
         private readonly bool _encrypt;
@@ -34,7 +36,9 @@ namespace XSerializer
             }
             else
             {
-                throw new NotImplementedException();
+                _keySerializer = JsonSerializerFactory.GetSerializer(type.GetGenericArguments()[0], _encrypt);
+                _valueSerializer = JsonSerializerFactory.GetSerializer(type.GetGenericArguments()[1], _encrypt);
+                _write = GetIDictionaryOfAnythingToAnythingWriteAction();
             }
         }
 
@@ -128,7 +132,7 @@ namespace XSerializer
 
             var first = true;
 
-            Func<object, string> getKeyFunc = null;
+            Func<object, object> getKeyFunc = null;
             Func<object, object> getValueFunc = null;
 
             foreach (var item in dictionary)
@@ -145,7 +149,7 @@ namespace XSerializer
                     writer.WriteItemSeparator();
                 }
 
-                writer.WriteValue(getKeyFunc(item));
+                writer.WriteValue((string)getKeyFunc(item));
                 writer.WriteNameValueSeparator();
                 _valueSerializer.SerializeObject(writer, getValueFunc(item), info);
             }
@@ -153,7 +157,70 @@ namespace XSerializer
             writer.WriteCloseObject();
         }
 
-        private static Func<object, string> GetGetKeyFunc(Type keyValuePairType)
+        private Action<JsonWriter, object, IJsonSerializeOperationInfo> GetIDictionaryOfAnythingToAnythingWriteAction()
+        {
+            return (writer, instance, info) =>
+            {
+                if (_encrypt)
+                {
+                    var toggler = new EncryptWritesToggler(writer);
+                    toggler.Toggle();
+
+                    WriteIDictionaryOfAnythingToAnything(writer, instance, info);
+
+                    toggler.Revert();
+                }
+                else
+                {
+                    WriteIDictionaryOfAnythingToAnything(writer, instance, info);                    
+                }
+            };
+        }
+
+        private void WriteIDictionaryOfAnythingToAnything(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
+        {
+            writer.WriteOpenObject();
+
+            var dictionary = (IEnumerable)instance;
+
+            var first = true;
+
+            Func<object, object> getKeyFunc = null;
+            Func<object, object> getValueFunc = null;
+
+            foreach (var item in dictionary)
+            {
+                if (first)
+                {
+                    first = false;
+                    var itemType = item.GetType();
+                    getKeyFunc = _getKeyFuncCache.GetOrAdd(itemType, GetGetKeyFunc);
+                    getValueFunc = _getValueFuncCache.GetOrAdd(itemType, GetGetValueFunc);
+                }
+                else
+                {
+                    writer.WriteItemSeparator();
+                }
+
+                var sb = new StringBuilder();
+
+                using (var stringWriter = new StringWriterWithEncoding(sb, Encoding.UTF8))
+                {
+                    using (var keyWriter = new JsonWriter(stringWriter, info))
+                    {
+                        _keySerializer.SerializeObject(keyWriter, getKeyFunc(item), info);
+                    }
+                }
+
+                writer.WriteValue((sb.ToString()));
+                writer.WriteNameValueSeparator();
+                _valueSerializer.SerializeObject(writer, getValueFunc(item), info);
+            }
+
+            writer.WriteCloseObject();
+        }
+
+        private static Func<object, object> GetGetKeyFunc(Type keyValuePairType)
         {
             var parameter = Expression.Parameter(typeof(object), "keyValuePair");
 
@@ -164,7 +231,12 @@ namespace XSerializer
                         Expression.Convert(parameter, keyValuePairType),
                         propertyInfo);
 
-            var lambda = Expression.Lambda<Func<object, string>>(body, new[] { parameter });
+            if (propertyInfo.PropertyType.IsValueType)
+            {
+                body = Expression.Convert(body, typeof(object));
+            }
+
+            var lambda = Expression.Lambda<Func<object, object>>(body, new[] { parameter });
             return lambda.Compile();
         }
 

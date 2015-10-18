@@ -132,6 +132,26 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void CanSerializeIDictionaryOfCustomTypeToCustomType()
+        {
+            var serializer = new JsonSerializer<IDictionary<Grault, Corge>>();
+
+            var json = serializer.Serialize(new Dictionary<Grault, Corge> { { new Grault { Bar = "xyz", Baz = false }, new Corge { Bar = "abc", Baz = true } } });
+
+            Assert.That(json, Is.EqualTo(@"{""{\""Bar\"":\""xyz\"",\""Baz\"":false}"":{""Bar"":""abc"",""Baz"":true}}"));
+        }
+
+        [Test]
+        public void CanSerializeIDictionaryOfValueTypeToCustomType()
+        {
+            var serializer = new JsonSerializer<IDictionary<int, Corge>>();
+
+            var json = serializer.Serialize(new Dictionary<int, Corge> { { 1, new Corge { Bar = "abc", Baz = true } } });
+
+            Assert.That(json, Is.EqualTo(@"{""1"":{""Bar"":""abc"",""Baz"":true}}"));
+        }
+
+        [Test]
         public void CanSerializeIDictionaryOfStringToCustomTypeEncrypted()
         {
             var encryptionMechanism = new Base64EncryptionMechanism();
@@ -220,6 +240,33 @@ namespace XSerializer.Tests
         {
             public string Bar { get; set; }
             public bool Baz { get; set; }
+        }
+
+        public class Grault
+        {
+            public string Bar { get; set; }
+
+            public bool Baz { get; set; }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return ((Bar != null ? Bar.GetHashCode() : 0) * 397) ^ Baz.GetHashCode();
+                }
+            }
+
+            public override bool Equals(object obj)
+            {
+                var other = obj as Grault;
+
+                if (other == null)
+                {
+                    return false;
+                }
+
+                return Bar == other.Bar && Baz == other.Baz;
+            }
         }
     }
 }
