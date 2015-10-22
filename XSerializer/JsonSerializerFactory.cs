@@ -62,7 +62,8 @@ namespace XSerializer
                         return BooleanJsonSerializer.Get(encrypt, type == typeof(bool?));
                     }
 
-                    if (type.IsAssignableToGenericIDictionary())
+                    if (type.IsAssignableToGenericIDictionary()
+                        || typeof(IDictionary).IsAssignableFrom(type))
                     {
                         return DictionaryJsonSerializer.Get(type, encrypt);
                     }
