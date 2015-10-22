@@ -59,8 +59,16 @@ namespace XSerializer
 
         public void Add(string name, object value)
         {
-            if (name == null) throw new ArgumentNullException("name");
+            if (name == null)
+            {
+                throw new ArgumentNullException("name");
+            }
 
+            AddImpl(name, GuardValue(value));
+        }
+
+        private void AddImpl(string name, object value)
+        {
             var jsonNumber = value as JsonNumber;
             if (jsonNumber != null)
             {
@@ -87,9 +95,10 @@ namespace XSerializer
             }
             set
             {
-                if (!TrySetValue(name, value))
+                value = GuardValue(value);
+                if (!TrySetValueImpl(name, value))
                 {
-                    Add(name, value);
+                    AddImpl(name, value);
                 }
             }
         }
@@ -177,15 +186,79 @@ namespace XSerializer
 
         public bool TrySetValue(string name, object value)
         {
+            return TrySetValueImpl(name, GuardValue(value));
+        }
+
+        private bool TrySetValueImpl(string name, object value)
+        {
             if (_values.ContainsKey(name))
             {
-                _values[name] = value;
-                _numericStringValues.Remove(name);
+                var jsonNumber = value as JsonNumber;
+                if (jsonNumber != null)
+                {
+                    _values[name] = jsonNumber.DoubleValue;
+                    _numericStringValues[name] = jsonNumber.StringValue;
+                }
+                else
+                {
+                    _values[name] = value;
+                    _numericStringValues.Remove(name);
+                }
+
                 RemoveProjections(name);
+
                 return true;
             }
 
             return false;
+        }
+
+        private static object GuardValue(object value)
+        {
+            if (value == null
+                || value is bool
+                || value is string
+                || value is JsonNumber
+                || value is JsonObject
+                || value is JsonArray)
+            {
+                return value;
+            }
+
+            if (value is int
+                || value is double
+                || value is byte
+                || value is long
+                || value is decimal
+                || value is uint
+                || value is ulong
+                || value is short
+                || value is float
+                || value is ushort
+                || value is sbyte)
+            {
+                return new JsonNumber(value.ToString());
+            }
+
+            if (value is Guid)
+            {
+                var guid = (Guid)value;
+                return guid.ToString("D");
+            }
+
+            if (value is DateTime)
+            {
+                var dateTime = (DateTime)value;
+                return dateTime.ToString("O");
+            }
+
+            if (value is DateTimeOffset)
+            {
+                var dateTimeOffset = (DateTimeOffset)value;
+                return dateTimeOffset.ToString("O");
+            }
+            
+            throw new XSerializerException("Invalid value for JsonObject member: " + value.GetType().FullName);
         }
 
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
@@ -198,6 +271,57 @@ namespace XSerializer
             return ((IEnumerable)_values).GetEnumerator();
         }
 
+        public override bool Equals(object obj)
+        {
+            var other = obj as JsonObject;
+            if (other == null)
+            {
+                return false;
+            }
+
+            foreach (var item in _values)
+            {
+                if (!other._values.ContainsKey(item.Key))
+                {
+                    return false;
+                }
+
+                if (_numericStringValues.ContainsKey(item.Key))
+                {
+                    if (!other._numericStringValues.ContainsKey(item.Key))
+                    {
+                        return false;
+                    }
+                }
+
+                var value = _values[item.Key];
+                var otherValue = other._values[item.Key];
+
+                if (!Equals(value, otherValue))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = typeof(JsonObject).GetHashCode();
+
+                foreach (var item in _values.OrderBy(x => x.Key))
+                {
+                    hashCode = (hashCode * 397) ^ item.Key.GetHashCode();
+                    hashCode = (hashCode * 397) ^ (item.Value != null ? item.Value.GetHashCode() : 0);
+                }
+
+                return hashCode;
+            }
+        }
+
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
             return TryGetValue(binder.Name, out result);
@@ -205,11 +329,7 @@ namespace XSerializer
 
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
-            if (!TrySetValue(binder.Name, value))
-            {
-                Add(binder.Name, value);
-            }
-
+            this[binder.Name] = value;
             return true;
         }
 

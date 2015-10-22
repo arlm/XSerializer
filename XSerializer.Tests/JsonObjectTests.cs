@@ -802,5 +802,65 @@ namespace XSerializer.Tests
 
             Assert.That(foo["bar"], Is.EqualTo("abc"));
         }
+
+        [Test]
+        public void GetHashCodeReturnsTheSameValueForEqualJsonObjects()
+        {
+            dynamic foo1 = new JsonObject();
+            dynamic foo2 = new JsonObject();
+
+            foo1.Bar = "abc";
+            foo1.Baz = 123;
+            foo1.Qux = true;
+            foo1.Garply = null;
+
+            foo2.Garply = null;
+            foo2.Qux = true;
+            foo2.Baz = 123;
+            foo2.Bar = "abc";
+
+            var foo1HashCode = foo1.GetHashCode();
+            var foo2HashCode = foo2.GetHashCode();
+
+            Assert.That(foo1HashCode, Is.EqualTo(foo2HashCode));
+        }
+
+        [Test]
+        public void EqualsReturnsTrueForEqualJsonObjects()
+        {
+            dynamic foo1 = new JsonObject();
+            dynamic foo2 = new JsonObject();
+
+            foo1.Bar = "abc";
+            foo1.Baz = 123;
+            foo1.Qux = true;
+            foo1.Garply = null;
+
+            foo2.Garply = null;
+            foo2.Qux = true;
+            foo2.Baz = 123;
+            foo2.Bar = "abc";
+
+            Assert.That(foo1.Equals(foo2), Is.True);
+        }
+
+        [Test]
+        public void EqualsReturnsFalseForNonEqualJsonObjects()
+        {
+            dynamic foo1 = new JsonObject();
+            dynamic foo2 = new JsonObject();
+
+            foo1.Bar = "abc";
+            foo1.Baz = 123;
+            foo1.Qux = true;
+            foo1.Garply = null;
+
+            foo2.Garply = null;
+            foo2.Qux = true;
+            foo2.Baz = 123;
+            foo2.Bar = "abcd";
+
+            Assert.That(foo1.Equals(foo2), Is.False);
+        }
     }
 }
