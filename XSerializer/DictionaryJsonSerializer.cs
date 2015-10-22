@@ -24,20 +24,31 @@ namespace XSerializer
         {
             _encrypt = encrypt;
 
-            if (typeof(IDictionary<string, object>).IsAssignableFrom(type))
+            if (type.IsAssignableToGenericIDictionary())
             {
-                _valueSerializer = JsonSerializerFactory.GetSerializer(type.GetGenericArguments()[1], _encrypt);
-                _write = GetIDictionaryOfStringToObjectWriteAction();
-            }
-            else if (type.IsAssignableToGenericIDictionaryOfStringToAnything())
-            {
-                _valueSerializer = JsonSerializerFactory.GetSerializer(type.GetGenericArguments()[1], _encrypt);
-                _write = GetIDictionaryOfStringToAnythingWriteAction();
+                var genericArguments = type.GetGenericArguments();
+
+                if (typeof(IDictionary<string, object>).IsAssignableFrom(type))
+                {
+                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt);
+                    _write = GetIDictionaryOfStringToObjectWriteAction();
+                }
+                else if (type.IsAssignableToGenericIDictionaryOfStringToAnything())
+                {
+                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt);
+                    _write = GetIDictionaryOfStringToAnythingWriteAction();
+                }
+                else
+                {
+                    _keySerializer = JsonSerializerFactory.GetSerializer(genericArguments[0], _encrypt);
+                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt);
+                    _write = GetIDictionaryOfAnythingToAnythingWriteAction();
+                }
             }
             else
             {
-                _keySerializer = JsonSerializerFactory.GetSerializer(type.GetGenericArguments()[0], _encrypt);
-                _valueSerializer = JsonSerializerFactory.GetSerializer(type.GetGenericArguments()[1], _encrypt);
+                _keySerializer = JsonSerializerFactory.GetSerializer(typeof(object), _encrypt);
+                _valueSerializer = _keySerializer;
                 _write = GetIDictionaryOfAnythingToAnythingWriteAction();
             }
         }

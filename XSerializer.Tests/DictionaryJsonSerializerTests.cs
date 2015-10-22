@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework;
 using XSerializer.Encryption;
 using XSerializer.Tests.Encryption;
@@ -218,6 +219,18 @@ namespace XSerializer.Tests
                     + encryptionMechanism.Encrypt(@"""abc""")
                     + @""""
                 + @",""Baz"":true}}";
+
+            Assert.That(json, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void CanSerializeNonGenericIDictionary()
+        {
+            var serializer = new JsonSerializer<Hashtable>();
+
+            var json = serializer.Serialize(new Hashtable { { "foo", new Qux { Bar = "abc", Baz = true } } });
+
+            var expected = @"{""foo"":{""Bar"":""abc"",""Baz"":true}}";
 
             Assert.That(json, Is.EqualTo(expected));
         }
