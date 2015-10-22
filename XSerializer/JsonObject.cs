@@ -286,16 +286,24 @@ namespace XSerializer
                     return false;
                 }
 
+                object value;
+                object otherValue;
+
                 if (_numericStringValues.ContainsKey(item.Key))
                 {
                     if (!other._numericStringValues.ContainsKey(item.Key))
                     {
                         return false;
                     }
-                }
 
-                var value = _values[item.Key];
-                var otherValue = other._values[item.Key];
+                    value = _numericStringValues[item.Key];
+                    otherValue = other._numericStringValues[item.Key];
+                }
+                else
+                {
+                    value = _values[item.Key];
+                    otherValue = other._values[item.Key];
+                }
 
                 if (!Equals(value, otherValue))
                 {

@@ -811,11 +811,9 @@ namespace XSerializer.Tests
 
             foo1.Bar = "abc";
             foo1.Baz = 123;
-            foo1.Qux = true;
-            foo1.Garply = null;
+            foo1.Qux = new JsonArray { true, null };
 
-            foo2.Garply = null;
-            foo2.Qux = true;
+            foo2.Qux = new JsonArray { true, null };
             foo2.Baz = 123;
             foo2.Bar = "abc";
 
@@ -833,11 +831,9 @@ namespace XSerializer.Tests
 
             foo1.Bar = "abc";
             foo1.Baz = 123;
-            foo1.Qux = true;
-            foo1.Garply = null;
+            foo1.Qux = new JsonArray { true, null };
 
-            foo2.Garply = null;
-            foo2.Qux = true;
+            foo2.Qux = new JsonArray { true, null };
             foo2.Baz = 123;
             foo2.Bar = "abc";
 
@@ -852,13 +848,11 @@ namespace XSerializer.Tests
 
             foo1.Bar = "abc";
             foo1.Baz = 123;
-            foo1.Qux = true;
-            foo1.Garply = null;
+            foo1.Qux = new JsonArray { true, null };
 
-            foo2.Garply = null;
-            foo2.Qux = true;
+            foo2.Qux = new JsonArray { false, null };
             foo2.Baz = 123;
-            foo2.Bar = "abcd";
+            foo2.Bar = "abc";
 
             Assert.That(foo1.Equals(foo2), Is.False);
         }

@@ -62,6 +62,36 @@ namespace XSerializer
             }
         }
 
+        public override bool Equals(object obj)
+        {
+            var other = obj as JsonArray;
+            if (other == null
+                || _values.Count != other._values.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < _values.Count; i++)
+            {
+                if (!Equals(_values[i], other._values[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return _values.Aggregate(
+                    typeof(JsonArray).GetHashCode(),
+                    (current, item) => (current * 397) ^ (item != null ? item.GetHashCode() : 0));
+            }
+        }
+
         public override bool TryConvert(ConvertBinder binder, out object result)
         {
             var convertFunc = _convertFuncs.GetOrAdd(binder.Type, GetConvertFunc);
