@@ -165,7 +165,7 @@ namespace XSerializer
                 case JsonNodeType.OpenArray:
                     return DeserializeJsonArray(reader, info);
                 default:
-                    throw new ArgumentOutOfRangeException("reader", "Invalid value for reader.NodeType.");
+                    throw new XSerializerException("Invalid json.");
             }
         }
 
