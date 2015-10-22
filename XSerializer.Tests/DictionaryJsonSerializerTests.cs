@@ -235,6 +235,114 @@ namespace XSerializer.Tests
             Assert.That(json, Is.EqualTo(expected));
         }
 
+        [Test]
+        public void CanDeserializeDictionaryOfStringToType()
+        {
+            var serializer = new JsonSerializer<Dictionary<string, int>>();
+
+            var json = @"{""foo"":1,""bar"":2}";
+
+            var dictionary = serializer.Deserialize(json);
+
+            Assert.That(dictionary["foo"], Is.EqualTo(1));
+            Assert.That(dictionary["bar"], Is.EqualTo(2));
+        }
+
+        [Test]
+        public void CanDeserializeIDictionaryOfStringToType()
+        {
+            var serializer = new JsonSerializer<IDictionary<string, int>>();
+
+            var json = @"{""foo"":1,""bar"":2}";
+
+            var dictionary = serializer.Deserialize(json);
+
+            Assert.That(dictionary["foo"], Is.EqualTo(1));
+            Assert.That(dictionary["bar"], Is.EqualTo(2));
+        }
+
+        [Test]
+        public void CanDeserializeDictionaryOfStringToObject()
+        {
+            var serializer = new JsonSerializer<Dictionary<string, object>>();
+
+            var json = @"{""foo"":1,""bar"":{""baz"":true}}";
+
+            var dictionary = serializer.Deserialize(json);
+
+            Assert.That(dictionary["foo"], Is.EqualTo(1));
+            Assert.That(dictionary["bar"], Is.EqualTo(new JsonObject { { "baz", true } }));
+        }
+
+        [Test]
+        public void CanDeserializeIDictionaryOfStringToObject()
+        {
+            var serializer = new JsonSerializer<IDictionary<string, object>>();
+
+            var json = @"{""foo"":1,""bar"":{""baz"":true}}";
+
+            var dictionary = serializer.Deserialize(json);
+
+            Assert.That(dictionary["foo"], Is.EqualTo(1));
+            Assert.That(dictionary["bar"], Is.EqualTo(new JsonObject { { "baz", true } }));
+        }
+
+        [Test]
+        public void CanDeserializeDictionaryOfCustomTypeToType()
+        {
+            var serializer = new JsonSerializer<Dictionary<Grault, int>>();
+
+            var json = @"{""{\""Bar\"":\""abc\"",\""Baz\"":true}"":1"
+                     + @",""{\""Bar\"":\""xyz\"",\""Baz\"":false}"":2}";
+
+            var dictionary = serializer.Deserialize(json);
+
+            Assert.That(dictionary[new Grault { Bar = "abc", Baz = true }], Is.EqualTo(1));
+            Assert.That(dictionary[new Grault { Bar = "xyz", Baz = false }], Is.EqualTo(2));
+        }
+
+        [Test]
+        public void CanDeserializeIDictionaryOfCustomTypeToType()
+        {
+            var serializer = new JsonSerializer<IDictionary<Grault, int>>();
+
+            var json = @"{""{\""Bar\"":\""abc\"",\""Baz\"":true}"":1"
+                     + @",""{\""Bar\"":\""xyz\"",\""Baz\"":false}"":2}";
+
+            var dictionary = serializer.Deserialize(json);
+
+            Assert.That(dictionary[new Grault { Bar = "abc", Baz = true }], Is.EqualTo(1));
+            Assert.That(dictionary[new Grault { Bar = "xyz", Baz = false }], Is.EqualTo(2));
+        }
+
+        [Test]
+        public void CanDeserializeHashTable()
+        {
+            var serializer = new JsonSerializer<Hashtable>();
+
+            var json = @"{""foo"":1,""bar"":{""baz"":true},""{\""qux\"":false}"":123.45}";
+
+            var dictionary = serializer.Deserialize(json);
+
+            Assert.That(dictionary["foo"], Is.EqualTo(1));
+            Assert.That(dictionary["bar"], Is.EqualTo(new JsonObject { { "baz", true } }));
+            Assert.That(dictionary[new JsonObject { { "qux", false } }], Is.EqualTo(123.45));
+        }
+
+        [Test]
+        public void CanDeserializeNonGenericIDictionary()
+        {
+            var serializer = new JsonSerializer<IDictionary>();
+
+            var json = @"{""foo"":1,""bar"":{""baz"":true},""{\""qux\"":false}"":123.45}";
+
+            var dictionary = serializer.Deserialize(json);
+
+            Assert.That(dictionary["foo"], Is.EqualTo(1));
+            Assert.That(dictionary["bar"], Is.EqualTo(new JsonObject { { "baz", true } }));
+            Assert.That(dictionary[new JsonObject { { "qux", false } }], Is.EqualTo(123.45));
+        }
+
         [Encrypt]
         public class Foo
         {

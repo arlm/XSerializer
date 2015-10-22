@@ -538,6 +538,13 @@ namespace XSerializer
             return isAssignableToIDictionary;
         }
 
+        internal static bool IsGenericIDictionary(this Type type)
+        {
+            return type.IsInterface
+                && type.IsGenericType
+                && type.GetGenericTypeDefinition() == typeof(IDictionary<,>);
+        }
+
         internal static bool IsAssignableToGenericIDictionary(this Type type)
         {
             var isAssignableToGenericIDictionary =

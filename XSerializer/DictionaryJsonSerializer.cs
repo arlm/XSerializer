@@ -2,7 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 
 namespace XSerializer
@@ -17,16 +20,23 @@ namespace XSerializer
         private readonly Action<JsonWriter, object, IJsonSerializeOperationInfo> _write;
         private readonly IJsonSerializerInternal _keySerializer;
         private readonly IJsonSerializerInternal _valueSerializer;
-        
+
+        private readonly Func<object> _createDictionary;
+        private readonly Func<string, IJsonSerializeOperationInfo, object> _deserializeKey;
+        private readonly Action<object, object, object> _addToDictionary;
+
         private readonly bool _encrypt;
 
         private DictionaryJsonSerializer(Type type, bool encrypt)
         {
             _encrypt = encrypt;
 
+            Type keyType;
+
             if (type.IsAssignableToGenericIDictionary())
             {
                 var genericArguments = type.GetGenericArguments();
+                keyType = genericArguments[0];
 
                 if (typeof(IDictionary<string, object>).IsAssignableFrom(type))
                 {
@@ -47,10 +57,33 @@ namespace XSerializer
             }
             else
             {
+                keyType = typeof(object);
+
                 _keySerializer = JsonSerializerFactory.GetSerializer(typeof(object), _encrypt);
                 _valueSerializer = _keySerializer;
                 _write = GetIDictionaryOfAnythingToAnythingWriteAction();
             }
+
+            if (type.IsInterface)
+            {
+                if (type.IsGenericIDictionary())
+                {
+                    type = typeof(Dictionary<,>).MakeGenericType(
+                        type.GetGenericArguments()[0], type.GetGenericArguments()[1]);
+                }
+                else if (type == typeof(IDictionary))
+                {
+                    type = typeof(Dictionary<object, object>);
+                }
+                else
+                {
+                    throw new NotSupportedException(type.FullName);
+                }
+            }
+
+            _createDictionary = GetCreateDictionaryFunc(type);
+            _deserializeKey = GetDeserializeKeyFunc(keyType);
+            _addToDictionary = GetAddToDictionaryAction(type);
         }
 
         public static DictionaryJsonSerializer Get(Type type, bool encrypt)
@@ -65,7 +98,149 @@ namespace XSerializer
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
         {
-            throw new NotImplementedException();
+            if (!reader.ReadContent())
+            {
+                throw new XSerializerException("Unexpected end of input while attempting to parse '{' character.");
+            }
+
+            if (reader.NodeType == JsonNodeType.Null)
+            {
+                return null;
+            }
+
+            if (_encrypt)
+            {
+                var toggler = new DecryptReadsToggler(reader);
+                toggler.Toggle();
+
+                try
+                {
+                    return Read(reader, info);
+                }
+                finally
+                {
+                    toggler.Revert();
+                }
+            }
+
+            return Read(reader, info);
+        }
+
+        private object Read(JsonReader reader, IJsonSerializeOperationInfo info)
+        {
+            var dictionary = _createDictionary();
+
+            foreach (var keyString in reader.ReadProperties())
+            {
+                var key = _deserializeKey(keyString, info);
+                var value = _valueSerializer.DeserializeObject(reader, info);
+
+                var jsonNumber = value as JsonNumber;
+                if (jsonNumber != null)
+                {
+                    value = jsonNumber.DoubleValue;
+                }
+
+                _addToDictionary(dictionary, key, value);
+            }
+
+            return dictionary;
+        }
+
+        private static Func<object> GetCreateDictionaryFunc(Type type)
+        {
+            var constructor = type.GetConstructor(Type.EmptyTypes);
+
+            if (constructor == null)
+            {
+                throw new ArgumentException("No default constructor for type: " + type + ".", "type");
+            }
+
+            Expression invokeConstructor = Expression.New(constructor);
+
+            if (type.IsValueType) // Boxing is necessary
+            {
+                invokeConstructor = Expression.Convert(invokeConstructor, typeof(object));
+            }
+
+            var lambda = Expression.Lambda<Func<object>>(invokeConstructor);
+            return lambda.Compile();
+        }
+
+        private Func<string, IJsonSerializeOperationInfo, object> GetDeserializeKeyFunc(Type type)
+        {
+            if (type == typeof(string))
+            {
+                return (keyString, info) => keyString;
+            }
+
+            var serializer = JsonSerializerFactory.GetSerializer(type, _encrypt);
+
+            return (keyString, info) =>
+            {
+                try
+                {
+                    using (var stringReader = new StringReader(keyString))
+                    {
+                        using (var reader = new JsonReader(stringReader, info))
+                        {
+                            return serializer.DeserializeObject(reader, info);
+                        }
+                    }
+                }
+                catch (XSerializerException)
+                {
+                    return keyString;
+                }
+            };
+        }
+
+        private static Action<object, object, object> GetAddToDictionaryAction(Type type)
+        {
+            var addMethod = type.GetMethods(BindingFlags.Public | BindingFlags.Instance).First(IsAddMethod);
+            var keyType = addMethod.GetParameters()[0].ParameterType;
+            var valueType = addMethod.GetParameters()[1].ParameterType;
+
+            var dictionaryParameter = Expression.Parameter(typeof(object), "dictionary");
+            var keyParameter = Expression.Parameter(typeof(object), "key");
+            var valueParameter = Expression.Parameter(typeof(object), "value");
+
+            Expression key = keyParameter;
+
+            if (keyType != typeof(object))
+            {
+                key = Expression.Convert(keyParameter, keyType);
+            }
+
+            Expression value = valueParameter;
+
+            if (valueType != typeof(object))
+            {
+                value = Expression.Convert(valueParameter, valueType);
+            }
+
+            var call = Expression.Call(
+                Expression.Convert(dictionaryParameter, type),
+                addMethod,
+                new[] { key, value });
+
+            var lambda = Expression.Lambda<Action<object, object, object>>(call, dictionaryParameter, keyParameter, valueParameter);
+            return lambda.Compile();
+        }
+
+        private static bool IsAddMethod(MethodInfo methodInfo)
+        {
+            if (methodInfo.Name == "Add")
+            {
+                var parameters = methodInfo.GetParameters();
+
+                if (parameters.Length == 2) // TODO: Better condition (check parameter type, etc.)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private Action<JsonWriter, object, IJsonSerializeOperationInfo> GetIDictionaryOfStringToObjectWriteAction()
