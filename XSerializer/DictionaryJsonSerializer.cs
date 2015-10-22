@@ -213,17 +213,28 @@ namespace XSerializer
                     writer.WriteItemSeparator();
                 }
 
-                var sb = new StringBuilder();
+                var key = getKeyFunc(item);
 
-                using (var stringWriter = new StringWriterWithEncoding(sb, Encoding.UTF8))
+                var keyString = key as string;
+                if (keyString != null)
                 {
-                    using (var keyWriter = new JsonWriter(stringWriter, info))
+                    writer.WriteValue(keyString);
+                }
+                else
+                {
+                    var sb = new StringBuilder();
+
+                    using (var stringWriter = new StringWriterWithEncoding(sb, Encoding.UTF8))
                     {
-                        _keySerializer.SerializeObject(keyWriter, getKeyFunc(item), info);
+                        using (var keyWriter = new JsonWriter(stringWriter, info))
+                        {
+                            _keySerializer.SerializeObject(keyWriter, key, info);
+                        }
                     }
+
+                    writer.WriteValue((sb.ToString()));
                 }
 
-                writer.WriteValue((sb.ToString()));
                 writer.WriteNameValueSeparator();
                 _valueSerializer.SerializeObject(writer, getValueFunc(item), info);
             }
