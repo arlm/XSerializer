@@ -53,6 +53,11 @@ namespace XSerializer
             _setValue(instance, value);
         }
 
+        public void SetValue(object instance, object value)
+        {
+            _setValue(instance, value);
+        }
+
         private static Func<object, object> GetGetValueFunc(PropertyInfo propertyInfo, Type declaringType)
         {
             var instanceParameter = Expression.Parameter(typeof(object), "instance");

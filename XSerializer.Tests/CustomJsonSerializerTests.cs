@@ -315,6 +315,185 @@ namespace XSerializer.Tests
             Assert.That(result.Garply, Is.True);
         }
 
+        [Test]
+        public void CanDeserializeNonDefaultConstructor()
+        {
+            var json = @"{""Bar"":123,""Baz"":""abc""}";
+
+            var serializer = new JsonSerializer<FooWithNonDefaultConstructor>();
+
+            var foo = serializer.Deserialize(json);
+
+            Assert.That(foo.Bar, Is.EqualTo(123));
+            Assert.That(foo.Baz, Is.EqualTo("abc"));
+        }
+
+        [Test]
+        public void CanDeserializeNonDefaultConstructorWithExtraProperties()
+        {
+            var json = @"{""Bar"":123,""Baz"":""abc""}";
+
+            var serializer = new JsonSerializer<FooWithNonDefaultConstructorAndExtraProperty>();
+
+            var foo = serializer.Deserialize(json);
+
+            Assert.That(foo.Bar, Is.EqualTo(123));
+            Assert.That(foo.Baz, Is.EqualTo("abc"));
+        }
+
+        [Test]
+        public void CanDeserializeClassWithMultiplNonDefaultConstructorsWhenOneIsDecoratedWithJsonConstructorAttribute()
+        {
+            var json = @"{""Bar"":123,""Baz"":""abc""}";
+
+            var serializer = new JsonSerializer<FooWithMultipleNonDefaultConstructorsButOneDecoratedWithJsonConstructorAttribute>();
+
+            var foo = serializer.Deserialize(json);
+
+            Assert.That(foo.Bar, Is.EqualTo(123));
+            Assert.That(foo.Baz, Is.EqualTo("abc"));
+        }
+
+        [Test]
+        public void CannotDeserializeClassWithMultiplNonDefaultConstructors()
+        {
+            var json = @"{""Bar"":123,""Baz"":""abc""}";
+
+            var serializer = new JsonSerializer<FooWithMultipleNonDefaultConstructors>();
+
+            Assert.That(() => serializer.Deserialize(json), Throws.InstanceOf<XSerializerException>());
+        }
+
+        [Test]
+        public void CannotDeserializeClassWithMultiplNonDefaultConstructorsWhenMoreThanOneIsDecoratedWithJsonConstructorAttribute()
+        {
+            var json = @"{""Bar"":123,""Baz"":""abc""}";
+
+            var serializer = new JsonSerializer<FooWithMultipleNonDefaultConstructorsDecoratedWithJsonConstructorAttribute>();
+
+            Assert.That(() => serializer.Deserialize(json), Throws.InstanceOf<XSerializerException>());
+        }
+
+        [Test]
+        public void CannotDeserializeAbstractClass()
+        {
+            var json = @"{""Bar"":123,""Baz"":""abc""}";
+
+            var serializer = new JsonSerializer<AbstractFoo>();
+
+            Assert.That(() => serializer.Deserialize(json), Throws.InstanceOf<XSerializerException>());
+        }
+
+        public class FooWithNonDefaultConstructor
+        {
+            private readonly int _bar;
+            private readonly string _baz;
+
+            public FooWithNonDefaultConstructor(int bar, string baz)
+            {
+                _bar = bar;
+                _baz = baz;
+            }
+
+            public int Bar { get { return _bar; } }
+            public string Baz { get { return _baz; } }
+        }
+
+        public class Foo3
+        {
+            public Foo3()
+            {
+            }
+
+            public Foo3(int bar, string baz)
+            {
+                Bar = bar;
+                Baz = baz;
+            }
+
+            public int Bar { get; set; }
+            public string Baz { get; set; }
+        }
+
+        public class FooWithNonDefaultConstructorAndExtraProperty
+        {
+            private readonly string _baz;
+
+            public FooWithNonDefaultConstructorAndExtraProperty(string baz)
+            {
+                _baz = baz;
+            }
+
+            public int Bar { get; set; }
+            public string Baz { get { return _baz; } }
+        }
+
+        public class FooWithMultipleNonDefaultConstructorsButOneDecoratedWithJsonConstructorAttribute
+        {
+            [JsonConstructor]
+            public FooWithMultipleNonDefaultConstructorsButOneDecoratedWithJsonConstructorAttribute(int bar)
+            {
+                Bar = bar;
+            }
+
+            public FooWithMultipleNonDefaultConstructorsButOneDecoratedWithJsonConstructorAttribute(int bar, string baz)
+            {
+                Bar = bar;
+                Baz = baz;
+            }
+
+            public int Bar { get; set; }
+            public string Baz { get; set; }
+        }
+
+        public class FooWithMultipleNonDefaultConstructors
+        {
+            public FooWithMultipleNonDefaultConstructors(int bar)
+            {
+                Bar = bar;
+            }
+
+            public FooWithMultipleNonDefaultConstructors(int bar, string baz)
+            {
+                Bar = bar;
+                Baz = baz;
+            }
+
+            public int Bar { get; set; }
+            public string Baz { get; set; }
+        }
+
+        public class FooWithMultipleNonDefaultConstructorsDecoratedWithJsonConstructorAttribute
+        {
+            [JsonConstructor]
+            public FooWithMultipleNonDefaultConstructorsDecoratedWithJsonConstructorAttribute(int bar)
+            {
+                Bar = bar;
+            }
+
+            [JsonConstructor]
+            public FooWithMultipleNonDefaultConstructorsDecoratedWithJsonConstructorAttribute(int bar, string baz)
+            {
+                Bar = bar;
+                Baz = baz;
+            }
+
+            public int Bar { get; set; }
+            public string Baz { get; set; }
+        }
+
+        public abstract class AbstractFoo
+        {
+            public int Bar { get; set; }
+            public string Baz { get; set; }
+        }
+
+        public static class StaticFoo
+        {
+            public static int Bar { get; set; }
+            public static string Baz { get; set; }
+        }
+
         public class Bar
         {
             public Baz Baz { get; set; }
