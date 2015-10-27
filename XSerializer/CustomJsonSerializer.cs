@@ -25,8 +25,8 @@ namespace XSerializer
 
             _serializablePropertiesMap = type.GetProperties()
                 .Where(p => p.IsJsonSerializable(type.GetConstructors().SelectMany(c => c.GetParameters())))
-                .Select(p => new { Key = p.Name, Value = new SerializableJsonProperty(p, _encrypt || p.GetCustomAttributes(typeof(EncryptAttribute), false).Any()) })
-                .ToDictionary(x => x.Key, x => x.Value, StringComparer.InvariantCultureIgnoreCase);
+                .Select(p => new SerializableJsonProperty(p, _encrypt || p.GetCustomAttributes(typeof(EncryptAttribute), false).Any()))
+                .ToDictionary(p => p.Name, StringComparer.InvariantCultureIgnoreCase);
 
             _serializableProperties = _serializablePropertiesMap.Values.ToArray();
             _createObjectFactory = new Lazy<Func<IObjectFactory>>(GetCreateObjectFactoryFunc);

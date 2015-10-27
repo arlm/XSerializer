@@ -18,7 +18,9 @@ namespace XSerializer
                 throw new ArgumentException("The DeclaringType of the PropertyInfo must not be null.", "propertyInfo");
             }
 
-            _name = propertyInfo.Name;
+            var jsonPropertyAttribute = (JsonPropertyAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(JsonPropertyAttribute));
+
+            _name = jsonPropertyAttribute != null ? jsonPropertyAttribute.Name : propertyInfo.Name;
             _serializer = new Lazy<IJsonSerializerInternal>(() => JsonSerializerFactory.GetSerializer(propertyInfo.PropertyType, encrypt));
 
             _getValue = GetGetValueFunc(propertyInfo, propertyInfo.DeclaringType);

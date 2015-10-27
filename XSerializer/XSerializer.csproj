@@ -81,6 +81,7 @@
     <Compile Include="JsonNodeType.cs" />
     <Compile Include="JsonNumber.cs" />
     <Compile Include="JsonObject.cs" />
+    <Compile Include="JsonPropertyAttribute.cs" />
     <Compile Include="JsonReader.cs" />
     <Compile Include="JsonSerializeOperationInfo.cs" />
     <Compile Include="JsonSerializer.cs" />

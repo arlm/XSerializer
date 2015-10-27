@@ -384,6 +384,23 @@ namespace XSerializer.Tests
             Assert.That(() => serializer.Deserialize(json), Throws.InstanceOf<XSerializerException>());
         }
 
+        [Test]
+        public void CanCustomizePropertyName()
+        {
+            var foo = new FooWithJsonPropertyAttributes { Bar = 123, Baz = "abc" };
+
+            var serializer = new JsonSerializer<FooWithJsonPropertyAttributes>();
+
+            var json = serializer.Serialize(foo);
+
+            Assert.That(json, Is.EqualTo(@"{""qux"":123,""garply"":""abc""}"));
+
+            var roundTrip = serializer.Deserialize(json);
+
+            Assert.That(roundTrip.Bar, Is.EqualTo(foo.Bar));
+            Assert.That(roundTrip.Baz, Is.EqualTo(foo.Baz));
+        }
+
         public class FooWithNonDefaultConstructor
         {
             private readonly int _bar;
@@ -492,6 +509,15 @@ namespace XSerializer.Tests
         {
             public static int Bar { get; set; }
             public static string Baz { get; set; }
+        }
+
+        public class FooWithJsonPropertyAttributes
+        {
+            [JsonProperty("qux")]
+            public int Bar { get; set; }
+
+            [JsonProperty("garply")]
+            public string Baz { get; set; }
         }
 
         public class Bar
