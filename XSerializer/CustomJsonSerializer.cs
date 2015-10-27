@@ -16,6 +16,7 @@ namespace XSerializer
         private readonly bool _encrypt;
         private readonly SerializableJsonProperty[] _serializableProperties;
         private readonly Dictionary<string, SerializableJsonProperty> _serializablePropertiesMap;
+        private readonly Lazy<Func<IObjectFactory>> _createObjectFactory;
 
         private CustomJsonSerializer(Type type, bool encrypt)
         {
@@ -28,6 +29,7 @@ namespace XSerializer
                 .ToDictionary(x => x.Key, x => x.Value, StringComparer.InvariantCultureIgnoreCase);
 
             _serializableProperties = _serializablePropertiesMap.Values.ToArray();
+            _createObjectFactory = new Lazy<Func<IObjectFactory>>(GetCreateObjectFactoryFunc);
         }
 
         public static CustomJsonSerializer Get(Type type, bool encrypt)
@@ -114,101 +116,116 @@ namespace XSerializer
 
         private object Read(JsonReader reader, IJsonSerializeOperationInfo info)
         {
-            IHelper helper = GetHelper();
+            var factory = _createObjectFactory.Value.Invoke();
 
             foreach (var propertyName in reader.ReadProperties())
             {
-                if (!helper.SetValue(reader, propertyName, info))
+                if (!factory.SetValue(reader, propertyName, info))
                 {
                     reader.Discard();
                 }
             }
 
-            return helper.GetInstance();
+            return factory.GetInstance();
         }
 
-        private static readonly ConcurrentDictionary<Type, Func<IHelper>> _createHelperCache = new ConcurrentDictionary<Type, Func<IHelper>>(); 
-
-        private IHelper GetHelper()
+        private Func<IObjectFactory> GetCreateObjectFactoryFunc()
         {
-            var createHelper = _createHelperCache.GetOrAdd(_type, t =>
+            var constructor = GetConstructor(_type);
+            var parameters = constructor.GetParameters();
+
+            if (parameters.Length == 0)
             {
-                var constructor = GetConstructor(t);
-                var parameters = constructor.GetParameters();
+                var createInstance = GetCreateInstanceFunc(constructor);
 
-                if (parameters.Length == 0)
-                {
-                    Expression invokeConstructor = Expression.New(constructor);
+                return () => new DefaultConstructorObjectFactory(_serializablePropertiesMap, createInstance());
+            }
+            else
+            {
+                var createInstance = GetCreateInstanceFunc(constructor, parameters);
+                var getSerializerAndArgIndex = GetGetSerializerAndArgIndexFunc(parameters);
+                var parametersLength = parameters.Length;
 
-                    if (t.IsValueType) // Boxing is necessary
-                    {
-                        invokeConstructor = Expression.Convert(invokeConstructor, typeof(object));
-                    }
+                return () => new NonDefaultConstructorObjectFactory(
+                    _serializablePropertiesMap,
+                    createInstance,
+                    getSerializerAndArgIndex,
+                    parametersLength);
+            }
+        }
 
-                    var lambda = Expression.Lambda<Func<object>>(invokeConstructor);
-                    var createInstance = lambda.Compile();
+        private Func<object> GetCreateInstanceFunc(ConstructorInfo constructor)
+        {
+            Expression invokeConstructor = Expression.New(constructor);
 
-                    return () => new DefaultConstructorHelper(_serializablePropertiesMap, createInstance());
-                }
-                else
-                {
-                    var argsParameter = Expression.Parameter(typeof(object[]), "args");
+            if (_type.IsValueType) // Boxing is necessary
+            {
+                invokeConstructor = Expression.Convert(invokeConstructor, typeof(object));
+            }
 
-                    var constructorArgs = new Expression[parameters.Length];
+            var lambda = Expression.Lambda<Func<object>>(invokeConstructor);
 
-                    for (int i = 0; i < parameters.Length; i++)
-                    {
-                        constructorArgs[i] = 
-                            Expression.Convert(
-                                Expression.ArrayAccess(argsParameter, Expression.Constant(i)),
-                                parameters[i].ParameterType);
-                    }
+            var createInstance = lambda.Compile();
 
-                    Expression invokeConstructor = Expression.New(constructor, constructorArgs);
+            return createInstance;
+        }
 
-                    if (t.IsValueType) // Boxing is necessary
-                    {
-                        invokeConstructor = Expression.Convert(invokeConstructor, typeof(object));
-                    }
+        private Func<object[], object> GetCreateInstanceFunc(ConstructorInfo constructor, ParameterInfo[] parameters)
+        {
+            var argsParameter = Expression.Parameter(typeof(object[]), "args");
 
-                    var createInstanceLambda = Expression.Lambda<Func<object[], object>>(invokeConstructor, argsParameter);
-                    var createInstance = createInstanceLambda.Compile();
+            var constructorArgs = new Expression[parameters.Length];
 
-                    var tupleConstructor = typeof(Tuple<IJsonSerializerInternal, int>).GetConstructors()[0];
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                constructorArgs[i] =
+                    Expression.Convert(
+                        Expression.ArrayAccess(argsParameter, Expression.Constant(i)),
+                        parameters[i].ParameterType);
+            }
 
-                    var propertyNameParameter = Expression.Parameter(typeof(string), "propertyName");
+            Expression invokeConstructor = Expression.New(constructor, constructorArgs);
 
-                    var switchCases = new SwitchCase[parameters.Length];
+            if (_type.IsValueType) // Boxing is necessary
+            {
+                invokeConstructor = Expression.Convert(invokeConstructor, typeof(object));
+            }
 
-                    for (int i = 0; i < parameters.Length; i++)
-                    {
-                        var serializer = JsonSerializerFactory.GetSerializer(parameters[i].ParameterType, _encrypt);
-                        
-                        switchCases[i] = Expression.SwitchCase(
-                            Expression.New(tupleConstructor, Expression.Constant(serializer), Expression.Constant(i)),
-                            Expression.Constant(parameters[i].Name.ToLower()));
-                    }
+            var createInstanceLambda = Expression.Lambda<Func<object[], object>>(invokeConstructor, argsParameter);
 
-                    var defaultCase = Expression.Constant(null, typeof(Tuple<IJsonSerializerInternal, int>));
+            var createInstance = createInstanceLambda.Compile();
 
-                    var switchExpression = Expression.Switch(propertyNameParameter, defaultCase, switchCases);
+            return createInstance;
+        }
 
-                    var getConstructorArgumentSerializerInfoLambda =
-                        Expression.Lambda<Func<string, Tuple<IJsonSerializerInternal, int>>>(
-                            switchExpression, propertyNameParameter);
-                    var getConstructorArgumentSerializerInfo = getConstructorArgumentSerializerInfoLambda.Compile();
+        private Func<string, Tuple<IJsonSerializerInternal, int>> GetGetSerializerAndArgIndexFunc(ParameterInfo[] parameters)
+        {
+            var tupleConstructor = typeof(Tuple<IJsonSerializerInternal, int>).GetConstructors()[0];
 
-                    var constructorParameters = parameters.Length;
+            var propertyNameParameter = Expression.Parameter(typeof(string), "propertyName");
 
-                    return () => new NonDefaultConstructorHelper(
-                        _serializablePropertiesMap,
-                        createInstance,
-                        getConstructorArgumentSerializerInfo,
-                        constructorParameters);
-                }
-            });
+            var switchCases = new SwitchCase[parameters.Length];
 
-            return createHelper();
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                var serializer = JsonSerializerFactory.GetSerializer(parameters[i].ParameterType, _encrypt);
+
+                switchCases[i] = Expression.SwitchCase(
+                    Expression.New(tupleConstructor, Expression.Constant(serializer), Expression.Constant(i)),
+                    Expression.Constant(parameters[i].Name.ToLower()));
+            }
+
+            var defaultCase = Expression.Constant(null, typeof(Tuple<IJsonSerializerInternal, int>));
+
+            var switchExpression = Expression.Switch(propertyNameParameter, defaultCase, switchCases);
+
+            var getSerializerAndArgIndexLambda =
+                Expression.Lambda<Func<string, Tuple<IJsonSerializerInternal, int>>>(
+                    switchExpression, propertyNameParameter);
+
+            var getSerializerAndArgIndex = getSerializerAndArgIndexLambda.Compile();
+
+            return getSerializerAndArgIndex;
         }
 
         private static ConstructorInfo GetConstructor(Type type)
@@ -264,18 +281,18 @@ namespace XSerializer
             return Attribute.IsDefined(constructor, typeof(JsonConstructorAttribute));
         }
 
-        private interface IHelper
+        private interface IObjectFactory
         {
             bool SetValue(JsonReader reader, string propertyName, IJsonSerializeOperationInfo info);
             object GetInstance();
         }
 
-        private class DefaultConstructorHelper : IHelper
+        private class DefaultConstructorObjectFactory : IObjectFactory
         {
             private readonly Dictionary<string, SerializableJsonProperty> _serializablePropertiesMap;
             private readonly object _instance;
 
-            public DefaultConstructorHelper(
+            public DefaultConstructorObjectFactory(
                 Dictionary<string, SerializableJsonProperty> serializablePropertiesMap,
                 object instance)
             {
@@ -302,34 +319,34 @@ namespace XSerializer
             }
         }
 
-        private class NonDefaultConstructorHelper : IHelper
+        private class NonDefaultConstructorObjectFactory : IObjectFactory
         {
             private readonly Dictionary<string, SerializableJsonProperty> _serializablePropertiesMap;
             private readonly Func<object[], object> _createInstance;
-            private readonly Func<string, Tuple<IJsonSerializerInternal, int>> _getConstructorArgumentSerializerInfo;
+            private readonly Func<string, Tuple<IJsonSerializerInternal, int>> _getSerializerAndArgIndex;
             private readonly object[] _constructorArguments;
             private readonly List<Action<object>> _setValueActions = new List<Action<object>>(); 
 
-            public NonDefaultConstructorHelper(
+            public NonDefaultConstructorObjectFactory(
                 Dictionary<string, SerializableJsonProperty> serializablePropertiesMap,
                 Func<object[], object> createInstance,
-                Func<string, Tuple<IJsonSerializerInternal, int>> getConstructorArgumentSerializerInfo,
+                Func<string, Tuple<IJsonSerializerInternal, int>> getSerializerAndArgIndex,
                 int constructorParameters)
             {
                 _serializablePropertiesMap = serializablePropertiesMap;
                 _createInstance = createInstance;
-                _getConstructorArgumentSerializerInfo = getConstructorArgumentSerializerInfo;
+                _getSerializerAndArgIndex = getSerializerAndArgIndex;
                 _constructorArguments = new object[constructorParameters];
             }
 
             public bool SetValue(JsonReader reader, string propertyName, IJsonSerializeOperationInfo info)
             {
-                var constructorArgumentSerializerInfo = _getConstructorArgumentSerializerInfo(propertyName.ToLower());
+                var serializerAndArgIndex = _getSerializerAndArgIndex(propertyName.ToLower());
 
-                if (constructorArgumentSerializerInfo != null)
+                if (serializerAndArgIndex != null)
                 {
-                    var value = constructorArgumentSerializerInfo.Item1.DeserializeObject(reader, info);
-                    _constructorArguments[constructorArgumentSerializerInfo.Item2] = value;
+                    var value = serializerAndArgIndex.Item1.DeserializeObject(reader, info);
+                    _constructorArguments[serializerAndArgIndex.Item2] = value;
                     return true;
                 }
                 
