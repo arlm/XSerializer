@@ -20,7 +20,7 @@ namespace XSerializer
 
             var jsonPropertyAttribute = (JsonPropertyAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(JsonPropertyAttribute));
 
-            _name = jsonPropertyAttribute != null ? jsonPropertyAttribute.Name : propertyInfo.Name;
+            _name = jsonPropertyAttribute.GetNameOrDefaultTo(propertyInfo.Name);
             _serializer = new Lazy<IJsonSerializerInternal>(() => JsonSerializerFactory.GetSerializer(propertyInfo.PropertyType, encrypt));
 
             _getValue = GetGetValueFunc(propertyInfo, propertyInfo.DeclaringType);
