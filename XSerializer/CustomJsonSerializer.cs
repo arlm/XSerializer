@@ -26,7 +26,7 @@ namespace XSerializer
             _serializablePropertiesMap = type.GetProperties()
                 .Where(p => p.IsJsonSerializable(type.GetConstructors().SelectMany(c => c.GetParameters())))
                 .Select(p => new SerializableJsonProperty(p, _encrypt || p.GetCustomAttributes(typeof(EncryptAttribute), false).Any()))
-                .ToDictionary(p => p.Name, StringComparer.InvariantCultureIgnoreCase);
+                .ToDictionary(p => p.Name);
 
             _serializableProperties = _serializablePropertiesMap.Values.ToArray();
             _createObjectFactory = new Lazy<Func<IObjectFactory>>(GetCreateObjectFactoryFunc);
@@ -209,9 +209,14 @@ namespace XSerializer
                 var serializer = JsonSerializerFactory.GetSerializer(parameters[i].ParameterType, _encrypt);
                 var serializerAndArgIndex = Tuple.Create(serializer, i);
 
+                var matchingProperties =
+                    _serializableProperties.Where(
+                        p => p.Name.Equals(parameters[i].Name, StringComparison.OrdinalIgnoreCase)).ToList();
+                var switchLabel = matchingProperties.Count == 1 ? matchingProperties[0].Name : parameters[i].Name;
+
                 switchCases[i] = Expression.SwitchCase(
                     Expression.Constant(serializerAndArgIndex),
-                    Expression.Constant(parameters[i].Name.ToLower()));
+                    Expression.Constant(switchLabel));
             }
 
             var defaultCase = Expression.Constant(null, typeof(Tuple<IJsonSerializerInternal, int>));
@@ -340,7 +345,7 @@ namespace XSerializer
 
             public bool SetValue(JsonReader reader, string propertyName, IJsonSerializeOperationInfo info)
             {
-                var serializerAndArgIndex = _getSerializerAndArgIndex(propertyName.ToLower());
+                var serializerAndArgIndex = _getSerializerAndArgIndex(propertyName);
 
                 if (serializerAndArgIndex != null)
                 {
