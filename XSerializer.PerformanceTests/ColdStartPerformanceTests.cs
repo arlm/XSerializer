@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if !DEBUG
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -160,3 +161,4 @@ namespace XSerializer.Tests.Performance
         }
     }
 }
+#endif

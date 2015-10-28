@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if !DEBUG
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -97,7 +98,7 @@ namespace XSerializer.Tests.Performance
 
             Assert.That(xSerializerRoundTrip, Is.EqualTo(newtonsoftRoundTrip));
 
-            const int iterations = 700000;
+            const int iterations = 100000;
 
             var newtonsoftStopwatch = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++)
@@ -134,7 +135,7 @@ namespace XSerializer.Tests.Performance
 
             Assert.That(xSerializerRoundTrip, Is.EqualTo(newtonsoftRoundTrip));
 
-            const int iterations = 700000;
+            const int iterations = 100000;
 
             var newtonsoftStopwatch = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++)
@@ -210,3 +211,4 @@ namespace XSerializer.Tests.Performance
         }
     }
 }
+#endif
