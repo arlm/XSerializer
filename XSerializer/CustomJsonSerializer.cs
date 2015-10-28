@@ -200,8 +200,6 @@ namespace XSerializer
 
         private Func<string, Tuple<IJsonSerializerInternal, int>> GetGetSerializerAndArgIndexFunc(ParameterInfo[] parameters)
         {
-            var tupleConstructor = typeof(Tuple<IJsonSerializerInternal, int>).GetConstructors()[0];
-
             var propertyNameParameter = Expression.Parameter(typeof(string), "propertyName");
 
             var switchCases = new SwitchCase[parameters.Length];
@@ -209,9 +207,10 @@ namespace XSerializer
             for (int i = 0; i < parameters.Length; i++)
             {
                 var serializer = JsonSerializerFactory.GetSerializer(parameters[i].ParameterType, _encrypt);
+                var tuple = Tuple.Create(serializer, i);
 
                 switchCases[i] = Expression.SwitchCase(
-                    Expression.New(tupleConstructor, Expression.Constant(serializer), Expression.Constant(i)),
+                    Expression.Constant(tuple),
                     Expression.Constant(parameters[i].Name.ToLower()));
             }
 
