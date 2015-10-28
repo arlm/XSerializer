@@ -207,10 +207,10 @@ namespace XSerializer
             for (int i = 0; i < parameters.Length; i++)
             {
                 var serializer = JsonSerializerFactory.GetSerializer(parameters[i].ParameterType, _encrypt);
-                var tuple = Tuple.Create(serializer, i);
+                var serializerAndArgIndex = Tuple.Create(serializer, i);
 
                 switchCases[i] = Expression.SwitchCase(
-                    Expression.Constant(tuple),
+                    Expression.Constant(serializerAndArgIndex),
                     Expression.Constant(parameters[i].Name.ToLower()));
             }
 
@@ -324,18 +324,18 @@ namespace XSerializer
             private readonly Func<object[], object> _createInstance;
             private readonly Func<string, Tuple<IJsonSerializerInternal, int>> _getSerializerAndArgIndex;
             private readonly object[] _constructorArguments;
-            private readonly List<Action<object>> _setValueActions = new List<Action<object>>(); 
+            private readonly List<Action<object>> _setPropertyValueActions = new List<Action<object>>(); 
 
             public NonDefaultConstructorObjectFactory(
                 Dictionary<string, SerializableJsonProperty> serializablePropertiesMap,
                 Func<object[], object> createInstance,
                 Func<string, Tuple<IJsonSerializerInternal, int>> getSerializerAndArgIndex,
-                int constructorParameters)
+                int argumentsLength)
             {
                 _serializablePropertiesMap = serializablePropertiesMap;
                 _createInstance = createInstance;
                 _getSerializerAndArgIndex = getSerializerAndArgIndex;
-                _constructorArguments = new object[constructorParameters];
+                _constructorArguments = new object[argumentsLength];
             }
 
             public bool SetValue(JsonReader reader, string propertyName, IJsonSerializeOperationInfo info)
@@ -353,7 +353,7 @@ namespace XSerializer
                 if (_serializablePropertiesMap.TryGetValue(propertyName, out property))
                 {
                     var value = property.ReadValue(reader, info);
-                    _setValueActions.Add(instance => property.SetValue(instance, value));
+                    _setPropertyValueActions.Add(instance => property.SetValue(instance, value));
                     return true;
                 }
 
@@ -364,9 +364,9 @@ namespace XSerializer
             {
                 var instance = _createInstance(_constructorArguments);
 
-                foreach (var setValue in _setValueActions)
+                foreach (var setPropertyValue in _setPropertyValueActions)
                 {
-                    setValue(instance);
+                    setPropertyValue(instance);
                 }
 
                 return instance;
