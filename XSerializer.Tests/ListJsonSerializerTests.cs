@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using NUnit.Framework;
@@ -283,6 +282,104 @@ namespace XSerializer.Tests
             Assert.That(result, Is.Null);
         }
 
+        [Test]
+        public void CanDeserializeReadonlyNonGenericIListProperty()
+        {
+            var serializer = new JsonSerializer<GarplyNonGenericIList>();
+
+            var json = @"{""Graults"":[true,false,null]}";
+
+            var garply = serializer.Deserialize(json);
+
+            Assert.That(garply.Graults[0], Is.True);
+            Assert.That(garply.Graults[1], Is.False);
+            Assert.That(garply.Graults[2], Is.Null);
+        }
+
+        [Test]
+        public void CanDeserializeReadonlyNonGenericImplementationOfNonGenericIListProperty()
+        {
+            var serializer = new JsonSerializer<GarplyNonGenericImplementationOfNonGenericIList>();
+
+            var json = @"{""Graults"":[true,false,null]}";
+
+            var garply = serializer.Deserialize(json);
+
+            Assert.That(garply.Graults[0], Is.True);
+            Assert.That(garply.Graults[1], Is.False);
+            Assert.That(garply.Graults[2], Is.Null);
+        }
+
+        [Test]
+        public void CanDeserializeReadonlyGenericListProperty()
+        {
+            var serializer = new JsonSerializer<GarplyGenericList>();
+
+            var json = @"{""Graults"":[1,2,3]}";
+
+            var garply = serializer.Deserialize(json);
+
+            Assert.That(garply.Graults[0], Is.EqualTo(1));
+            Assert.That(garply.Graults[1], Is.EqualTo(2));
+            Assert.That(garply.Graults[2], Is.EqualTo(3));
+        }
+
+        [Test]
+        public void CanDeserializeReadonlyNonGenericImplementationOfGenericListProperty()
+        {
+            var serializer = new JsonSerializer<GarplyNonGenericImplementationOfGenericIList>();
+
+            var json = @"{""Graults"":[1,2,3]}";
+
+            var garply = serializer.Deserialize(json);
+
+            Assert.That(garply.Graults[0], Is.EqualTo(1));
+            Assert.That(garply.Graults[1], Is.EqualTo(2));
+            Assert.That(garply.Graults[2], Is.EqualTo(3));
+        }
+
+        [Test]
+        public void CanDeserializeReadonlyGenericIListProperty()
+        {
+            var serializer = new JsonSerializer<GarplyGenericIList>();
+
+            var json = @"{""Graults"":[1,2,3]}";
+
+            var garply = serializer.Deserialize(json);
+
+            Assert.That(garply.Graults[0], Is.EqualTo(1));
+            Assert.That(garply.Graults[1], Is.EqualTo(2));
+            Assert.That(garply.Graults[2], Is.EqualTo(3));
+        }
+
+        [Test]
+        public void CanDeserializeReadonlyNonGenericInterfaceImplementationOfGenericListProperty()
+        {
+            var serializer = new JsonSerializer<GarplyNonGenericInterfaceImplementationOfGenericIList>();
+
+            var json = @"{""Graults"":[1,2,3]}";
+
+            var garply = serializer.Deserialize(json);
+
+            Assert.That(garply.Graults[0], Is.EqualTo(1));
+            Assert.That(garply.Graults[1], Is.EqualTo(2));
+            Assert.That(garply.Graults[2], Is.EqualTo(3));
+        }
+
+        [Test]
+        public void CanDeserializeReadonlyGenericImplementationOfGenericIListProperty()
+        {
+            var serializer = new JsonSerializer<GarplyGenericImplementationOfGenericIList>();
+
+            var json = @"{""Graults"":[1,2,3]}";
+
+            var garply = serializer.Deserialize(json);
+
+            Assert.That(garply.Graults[0], Is.EqualTo(1));
+            Assert.That(garply.Graults[1], Is.EqualTo(2));
+            Assert.That(garply.Graults[2], Is.EqualTo(3));
+        }
+
         [Encrypt]
         public class Foo
         {
@@ -295,6 +392,200 @@ namespace XSerializer.Tests
             [Encrypt]
             public string Bar { get; set; }
             public bool Baz { get; set; }
+        }
+
+        public class GarplyNonGenericIList
+        {
+            private readonly IList _graults = new ArrayList();
+
+            public IList Graults { get { return _graults; } }
+        }
+
+        public class GarplyNonGenericImplementationOfNonGenericIList
+        {
+            private readonly ArrayList _graults = new ArrayList();
+
+            public ArrayList Graults { get { return _graults; } }
+        }
+
+        public class GarplyGenericList
+        {
+            private readonly List<int> _graults = new List<int>();
+
+            public List<int> Graults { get { return _graults; } }
+        }
+
+        public class GarplyNonGenericImplementationOfGenericIList
+        {
+            private readonly IntList _graults = new IntList();
+
+            public IntList Graults { get { return _graults; } }
+        }
+
+        public class GarplyGenericIList
+        {
+            private readonly IList<int> _graults = new List<int>();
+
+            public IList<int> Graults { get { return _graults; } }
+        }
+
+        public class GarplyNonGenericInterfaceImplementationOfGenericIList
+        {
+            private readonly IIntList _graults = new IntList();
+
+            public IIntList Graults { get { return _graults; } }
+        }
+
+        public class GarplyGenericImplementationOfGenericIList
+        {
+            private readonly CustomIList<int> _graults = new CustomIList<int>();
+
+            public CustomIList<int> Graults { get { return _graults; } }
+        }
+        
+        public class CustomIList<T> : IList<T>
+        {
+            private readonly IList<T> _list = new List<T>();
+
+            public IEnumerator<T> GetEnumerator()
+            {
+                return _list.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return ((IEnumerable)_list).GetEnumerator();
+            }
+
+            public void Add(T item)
+            {
+                _list.Add(item);
+            }
+
+            public void Clear()
+            {
+                _list.Clear();
+            }
+
+            public bool Contains(T item)
+            {
+                return _list.Contains(item);
+            }
+
+            public void CopyTo(T[] array, int arrayIndex)
+            {
+                _list.CopyTo(array, arrayIndex);
+            }
+
+            public bool Remove(T item)
+            {
+                return _list.Remove(item);
+            }
+
+            public int Count
+            {
+                get { return _list.Count; }
+            }
+
+            public bool IsReadOnly
+            {
+                get { return _list.IsReadOnly; }
+            }
+
+            public int IndexOf(T item)
+            {
+                return _list.IndexOf(item);
+            }
+
+            public void Insert(int index, T item)
+            {
+                _list.Insert(index, item);
+            }
+
+            public void RemoveAt(int index)
+            {
+                _list.RemoveAt(index);
+            }
+
+            public T this[int index]
+            {
+                get { return _list[index]; }
+                set { _list[index] = value; }
+            }
+        }
+
+        public interface IIntList : IList<int>
+        {
+        }
+
+        public class IntList : IIntList
+        {
+            private readonly IList<int> _list = new List<int>();
+            public IEnumerator<int> GetEnumerator()
+            {
+                return _list.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return ((IEnumerable)_list).GetEnumerator();
+            }
+
+            public void Add(int item)
+            {
+                _list.Add(item);
+            }
+
+            public void Clear()
+            {
+                _list.Clear();
+            }
+
+            public bool Contains(int item)
+            {
+                return _list.Contains(item);
+            }
+
+            public void CopyTo(int[] array, int arrayIndex)
+            {
+                _list.CopyTo(array, arrayIndex);
+            }
+
+            public bool Remove(int item)
+            {
+                return _list.Remove(item);
+            }
+
+            public int Count
+            {
+                get { return _list.Count; }
+            }
+
+            public bool IsReadOnly
+            {
+                get { return _list.IsReadOnly; }
+            }
+
+            public int IndexOf(int item)
+            {
+                return _list.IndexOf(item);
+            }
+
+            public void Insert(int index, int item)
+            {
+                _list.Insert(index, item);
+            }
+
+            public void RemoveAt(int index)
+            {
+                _list.RemoveAt(index);
+            }
+
+            public int this[int index]
+            {
+                get { return _list[index]; }
+                set { _list[index] = value; }
+            }
         }
     }
 }

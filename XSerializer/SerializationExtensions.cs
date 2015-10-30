@@ -256,7 +256,7 @@ namespace XSerializer
                 return false;
             }
 
-            var isSerializable = property.GetIndexParameters().Length == 0 && (property.IsReadWriteProperty() || property.IsSerializableReadOnlyProperty(constructorParameters));
+            var isSerializable = property.GetIndexParameters().Length == 0 && (property.IsReadWriteProperty() || property.IsJsonSerializableReadOnlyProperty(constructorParameters));
             return isSerializable;
         }
         
@@ -288,6 +288,33 @@ namespace XSerializer
                     ||
                     (property.PropertyType.IsReadOnlyDictionary())
                 ); // TODO: add additional serializable types?
+        }
+
+        internal static bool IsJsonSerializableReadOnlyProperty(this PropertyInfo propertyInfo, IEnumerable<ParameterInfo> constructorParameters = null)
+        {
+            if (!propertyInfo.IsReadOnlyProperty())
+            {
+                return false;
+            }
+
+            if (typeof(IDictionary).IsAssignableFrom(propertyInfo.PropertyType)
+                || propertyInfo.PropertyType.IsAssignableToGenericIDictionary())
+            {
+                return true;
+            }
+
+            if (propertyInfo.PropertyType.IsArray)
+            {
+                return false;
+            }
+
+            if (typeof(IList).IsAssignableFrom(propertyInfo.PropertyType)
+                || propertyInfo.PropertyType.IsAssignableToGenericICollection())
+            {
+                return true;
+            }
+
+            return false;
         }
 
         internal static object ConvertIfNecessary(this object instance, Type targetType)
@@ -623,6 +650,21 @@ namespace XSerializer
             return iEnumerableType.GetGenericArguments()[0] == typeof(object);
         }
 
+        internal static bool IsGenericICollection(this Type type)
+        {
+            return type.IsInterface
+                && type.IsGenericType
+                && type.GetGenericTypeDefinition() == typeof(ICollection<>);
+        }
+
+        internal static bool IsAssignableToGenericICollection(this Type type)
+        {
+            var isAssignableToGenericICollection =
+                type.IsGenericICollection()
+                || type.GetInterfaces().Any(i => i.IsGenericICollection());
+            return isAssignableToGenericICollection;
+        }
+
         internal static Type GetGenericIDictionaryType(this Type type)
         {
             if (type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IDictionary<,>))
@@ -641,6 +683,16 @@ namespace XSerializer
             }
 
             return type.GetInterfaces().First(i => i.IsGenericIEnumerable());
+        }
+
+        internal static Type GetGenericICollectionType(this Type type)
+        {
+            if (type.IsGenericICollection())
+            {
+                return type;
+            }
+
+            return type.GetInterfaces().First(i => i.IsGenericICollection());
         }
 
         private static bool HasPublicGetter(this PropertyInfo property)

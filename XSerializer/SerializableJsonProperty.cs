@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -25,9 +27,148 @@ namespace XSerializer
 
             _getValue = GetGetValueFunc(propertyInfo, propertyInfo.DeclaringType);
 
-            if (propertyInfo.CanWrite)
+            if (propertyInfo.IsReadWriteProperty())
             {
                 _setValue = GetSetValueAction(propertyInfo, propertyInfo.DeclaringType);
+            }
+            else if (propertyInfo.IsJsonSerializableReadOnlyProperty())
+            {
+                if (typeof(IDictionary).IsAssignableFrom(propertyInfo.PropertyType))
+                {
+                    _setValue = (instance, value) =>
+                    {
+                        var dictionary = (IDictionary)value;
+                        var destinationDictionary = (IDictionary)_getValue(instance);
+
+                        foreach (DictionaryEntry item in dictionary)
+                        {
+                            destinationDictionary.Add(item.Key, item.Value);
+                        }
+                    };
+                }
+                else if (propertyInfo.PropertyType.IsAssignableToGenericIDictionary())
+                {
+                    var valueParameter = Expression.Parameter(typeof(object), "value");
+
+                    var enumerableType = propertyInfo.PropertyType.GetGenericIEnumerableType();
+                    var convertValue = Expression.Convert(valueParameter, enumerableType);
+
+                    var getEnumeratorMethod = enumerableType.GetMethod("GetEnumerator");
+                    var callGetEnumerator = Expression.Call(convertValue, getEnumeratorMethod);
+
+                    var getEnumeratorLambda =
+                        Expression.Lambda<Func<object, IEnumerator>>(callGetEnumerator, valueParameter);
+
+                    var getEnumerator = getEnumeratorLambda.Compile();
+
+                    var itemParameter = Expression.Parameter(typeof(object), "item");
+
+                    var dictionaryType = propertyInfo.PropertyType.GetGenericIDictionaryType();
+                    var dictionaryGenericArguments = dictionaryType.GetGenericArguments();
+                    var keyValuePairType =
+                        typeof(KeyValuePair<,>).MakeGenericType(
+                            dictionaryGenericArguments[0], dictionaryGenericArguments[1]);
+
+                    var convertItem = Expression.Convert(itemParameter, keyValuePairType);
+
+                    var keyPropertyInfo = keyValuePairType.GetProperty("Key");
+                    Expression keyProperty = Expression.Property(convertItem, keyPropertyInfo);
+
+                    if (keyPropertyInfo.PropertyType.IsValueType) // Boxing is required
+                    {
+                        keyProperty = Expression.Convert(keyProperty, typeof(object));
+                    }
+
+                    var getItemKeyLambda = Expression.Lambda<Func<object, object>>(keyProperty, itemParameter);
+                    var getItemKey = getItemKeyLambda.Compile();
+
+                    var valuePropertyInfo = keyValuePairType.GetProperty("Value");
+                    Expression valueProperty = Expression.Property(convertItem, valuePropertyInfo);
+
+                    if (valuePropertyInfo.PropertyType.IsValueType) // Boxing is required
+                    {
+                        valueProperty = Expression.Convert(valueProperty, typeof(object));
+                    }
+
+                    var getItemValueLambda = Expression.Lambda<Func<object, object>>(valueProperty, itemParameter);
+                    var getItemValue = getItemValueLambda.Compile();
+
+                    var destinationDictionaryParameter = Expression.Parameter(typeof(object), "destinationDictionary");
+                    var keyParameter = Expression.Parameter(typeof(object), "key");
+
+                    var convertDestinationDictionary = Expression.Convert(destinationDictionaryParameter, dictionaryType);
+                    var convertKey = Expression.Convert(keyParameter, keyPropertyInfo.PropertyType);
+                    convertValue = Expression.Convert(valueParameter, valuePropertyInfo.PropertyType);
+
+                    var addMethod = dictionaryType.GetMethod("Add");
+                    var callAddMethod = Expression.Call(
+                        convertDestinationDictionary, addMethod, convertKey, convertValue);
+
+                    var addLambda = Expression.Lambda<Action<object, object, object>>(
+                        callAddMethod, destinationDictionaryParameter, keyParameter, valueParameter);
+                    var add = addLambda.Compile();
+
+                    _setValue = (instance, value) =>
+                    {
+                        var dictionaryEnumerator = getEnumerator(value);
+                        var destinationDictionary = _getValue(instance);
+
+                        while (dictionaryEnumerator.MoveNext())
+                        {
+                            add(destinationDictionary, getItemKey(dictionaryEnumerator.Current), getItemValue(dictionaryEnumerator.Current));
+                        }
+                    };
+                }
+                else if (!propertyInfo.PropertyType.IsArray)
+                {
+                    if (typeof(IList).IsAssignableFrom(propertyInfo.PropertyType))
+                    {
+                        _setValue = (instance, value) =>
+                        {
+                            var list = (IList)value;
+                            var destinationList = (IList)_getValue(instance);
+
+                            foreach (var item in list)
+                            {
+                                destinationList.Add(item);
+                            }
+                        };
+                    }
+                    else if (propertyInfo.PropertyType.IsAssignableToGenericICollection())
+                    {
+                        var destinationListParameter = Expression.Parameter(typeof(object), "destinationList");
+                        var itemParameter = Expression.Parameter(typeof(object), "item");
+
+                        var collectionType = propertyInfo.PropertyType.GetGenericICollectionType();
+
+                        var itemType = collectionType.GetGenericArguments()[0];
+                        var convertItemParameter = Expression.Convert(itemParameter, itemType);
+
+                        var convertDestinationList = Expression.Convert(destinationListParameter, collectionType);
+
+                        var addMethod = collectionType.GetMethod("Add");
+                        var callAddMethod = Expression.Call(
+                            convertDestinationList,
+                            addMethod,
+                            new Expression[] { convertItemParameter });
+
+                        var lambda = Expression.Lambda<Action<object, object>>(
+                            callAddMethod,
+                            destinationListParameter,
+                            itemParameter);
+                        var add = lambda.Compile();
+
+                        _setValue = (instance, value) =>
+                        {
+                            var destinationList = _getValue(instance);
+
+                            foreach (var item in (IEnumerable)value)
+                            {
+                                add(destinationList, item);
+                            }
+                        };
+                    }
+                }
             }
         }
 

@@ -343,6 +343,71 @@ namespace XSerializer.Tests
             Assert.That(dictionary[new JsonObject { { "qux", false } }], Is.EqualTo(123.45));
         }
 
+        [Test]
+        public void CanDeserializeReadonlyGenericDictionaryProperty()
+        {
+            var serializer = new JsonSerializer<GarplyGenericDictionary>();
+
+            var json = @"{""GraultMap"":{""Bar"":456,""Foo"":123}}";
+
+            var garply = serializer.Deserialize(json);
+
+            Assert.That(garply.GraultMap["Foo"], Is.EqualTo(123));
+            Assert.That(garply.GraultMap["Bar"], Is.EqualTo(456));
+        }
+
+        [Test]
+        public void CanDeserializeReadonlyNonGenericIDictionaryProperty()
+        {
+            var serializer = new JsonSerializer<GarplyNonGenericIDictionary>();
+
+            var json = @"{""GraultMap"":{""Bar"":456,""Foo"":123}}";
+
+            var garply = serializer.Deserialize(json);
+
+            Assert.That(garply.GraultMap["Foo"], Is.EqualTo(123));
+            Assert.That(garply.GraultMap["Bar"], Is.EqualTo(456));
+        }
+
+        [Test]
+        public void CanDeserializeReadonlyNonGenericImplementationOfNonGenericIDictionaryProperty()
+        {
+            var serializer = new JsonSerializer<GarplyNonGenericImplementationOfNonGenericIDictionary>();
+
+            var json = @"{""GraultMap"":{""Bar"":456,""Foo"":123}}";
+
+            var garply = serializer.Deserialize(json);
+
+            Assert.That(garply.GraultMap["Foo"], Is.EqualTo(123));
+            Assert.That(garply.GraultMap["Bar"], Is.EqualTo(456));
+        }
+
+        [Test]
+        public void CanDeserializeReadonlyGenericIDictionaryProperty()
+        {
+            var serializer = new JsonSerializer<GarplyGenericIDictionary>();
+
+            var json = @"{""GraultMap"":{""Bar"":456,""Foo"":123}}";
+
+            var garply = serializer.Deserialize(json);
+
+            Assert.That(garply.GraultMap["Foo"], Is.EqualTo(123));
+            Assert.That(garply.GraultMap["Bar"], Is.EqualTo(456));
+        }
+
+        [Test]
+        public void CanDeserializeReadonlyGenericImplementationOfGenericIDictionaryProperty()
+        {
+            var serializer = new JsonSerializer<GarplyGenericImplementationOfGenericIDictionary>();
+
+            var json = @"{""GraultMap"":{""Bar"":456,""Foo"":123}}";
+
+            var garply = serializer.Deserialize(json);
+
+            Assert.That(garply.GraultMap["Foo"], Is.EqualTo(123));
+            Assert.That(garply.GraultMap["Bar"], Is.EqualTo(456));
+        }
+
         [Encrypt]
         public class Foo
         {
@@ -387,6 +452,126 @@ namespace XSerializer.Tests
                 }
 
                 return Bar == other.Bar && Baz == other.Baz;
+            }
+        }
+
+        public class GarplyNonGenericIDictionary
+        {
+            private readonly IDictionary _graults = new Hashtable();
+
+            public IDictionary GraultMap { get { return _graults; } }
+        }
+
+        public class GarplyNonGenericImplementationOfNonGenericIDictionary
+        {
+            private readonly Hashtable _graults = new Hashtable();
+
+            public Hashtable GraultMap { get { return _graults; } }
+        }
+
+        public class GarplyGenericDictionary
+        {
+            private readonly Dictionary<string, int> _graults = new Dictionary<string, int>();
+
+            public Dictionary<string, int> GraultMap { get { return _graults; } }
+        }
+
+        public class GarplyGenericIDictionary
+        {
+            private readonly IDictionary<string, int> _graults = new Dictionary<string, int>();
+
+            public IDictionary<string, int> GraultMap { get { return _graults; } }
+        }
+
+        public class GarplyGenericImplementationOfGenericIDictionary
+        {
+            private readonly CustomIDictionary<string, int> _graults = new CustomIDictionary<string, int>();
+
+            public CustomIDictionary<string, int> GraultMap { get { return _graults; } }
+        }
+
+        public class CustomIDictionary<TKey, TValue> : IDictionary<TKey, TValue>
+        {
+            private readonly IDictionary<TKey, TValue> _dictionary = new Dictionary<TKey, TValue>();
+            public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+            {
+                return _dictionary.GetEnumerator();
+            }
+
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return ((IEnumerable)_dictionary).GetEnumerator();
+            }
+
+            public void Add(KeyValuePair<TKey, TValue> item)
+            {
+                _dictionary.Add(item);
+            }
+
+            public void Clear()
+            {
+                _dictionary.Clear();
+            }
+
+            public bool Contains(KeyValuePair<TKey, TValue> item)
+            {
+                return _dictionary.Contains(item);
+            }
+
+            public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+            {
+                _dictionary.CopyTo(array, arrayIndex);
+            }
+
+            public bool Remove(KeyValuePair<TKey, TValue> item)
+            {
+                return _dictionary.Remove(item);
+            }
+
+            public int Count
+            {
+                get { return _dictionary.Count; }
+            }
+
+            public bool IsReadOnly
+            {
+                get { return _dictionary.IsReadOnly; }
+            }
+
+            public bool ContainsKey(TKey key)
+            {
+                return _dictionary.ContainsKey(key);
+            }
+
+            public void Add(TKey key, TValue value)
+            {
+                _dictionary.Add(key, value);
+            }
+
+            public bool Remove(TKey key)
+            {
+                return _dictionary.Remove(key);
+            }
+
+            public bool TryGetValue(TKey key, out TValue value)
+            {
+                return _dictionary.TryGetValue(key, out value);
+            }
+
+            public TValue this[TKey key]
+            {
+                get { return _dictionary[key]; }
+                set { _dictionary[key] = value; }
+            }
+
+            public ICollection<TKey> Keys
+            {
+                get { return _dictionary.Keys; }
+            }
+
+            public ICollection<TValue> Values
+            {
+                get { return _dictionary.Values; }
             }
         }
     }

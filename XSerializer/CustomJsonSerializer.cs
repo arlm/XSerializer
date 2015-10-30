@@ -210,8 +210,8 @@ namespace XSerializer
                 var serializerAndArgIndex = Tuple.Create(serializer, i);
 
                 var matchingProperties =
-                    _serializableProperties.Where(
-                        p => p.Name.Equals(parameters[i].Name, StringComparison.OrdinalIgnoreCase)).ToList();
+                    _type.GetProperties().Where(p =>
+                        p.Name.Equals(parameters[i].Name, StringComparison.OrdinalIgnoreCase)).ToList();
                 var switchLabel = matchingProperties.Count == 1 ? matchingProperties[0].Name : parameters[i].Name;
 
                 switchCases[i] = Expression.SwitchCase(
