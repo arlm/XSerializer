@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using XSerializer.Encryption;
 using XSerializer.Tests.Encryption;
@@ -314,6 +315,34 @@ namespace XSerializer.Tests
 
             Assert.That(result.Qux, Is.EqualTo("abc"));
             Assert.That(result.Garply, Is.True);
+        }
+
+        [Test]
+        public void ReadonlyAddableTypeInjectedIntoNonDefaultConstructorIsNotDoubleAdded()
+        {
+            var serializer = new JsonSerializer<DontDoubleAddMeBro>();
+
+            var json = @"{""Stuff"":[1,2,3]}";
+
+            var thing = serializer.Deserialize(json);
+
+            Assert.That(thing.Stuff.Count, Is.EqualTo(3));
+            Assert.That(thing.Stuff, Is.EqualTo(new[] { 1, 2, 3 }));
+        }
+
+        public class DontDoubleAddMeBro
+        {
+            private readonly List<int> _stuff;
+
+            public DontDoubleAddMeBro(List<int> stuff)
+            {
+                _stuff = stuff;
+            }
+
+            public List<int> Stuff
+            {
+                get { return _stuff; }
+            }
         }
 
         [Test]
