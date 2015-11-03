@@ -12,7 +12,7 @@ namespace XSerializer
 {
     internal sealed class DictionaryJsonSerializer : IJsonSerializerInternal
     {
-        private static readonly ConcurrentDictionary<Tuple<Type, bool>, DictionaryJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool>, DictionaryJsonSerializer>();
+        private static readonly ConcurrentDictionary<Tuple<Type, bool, JsonConcreteImplementations>, DictionaryJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool, JsonConcreteImplementations>, DictionaryJsonSerializer>();
 
         private static readonly ConcurrentDictionary<Type, Func<object, object>> _getKeyFuncCache = new ConcurrentDictionary<Type, Func<object, object>>();
         private static readonly ConcurrentDictionary<Type, Func<object, object>> _getValueFuncCache = new ConcurrentDictionary<Type, Func<object, object>>();
@@ -26,10 +26,12 @@ namespace XSerializer
         private readonly Action<object, object, object> _addToDictionary;
 
         private readonly bool _encrypt;
+        private readonly JsonConcreteImplementations _concreteImplementations;
 
-        private DictionaryJsonSerializer(Type type, bool encrypt)
+        private DictionaryJsonSerializer(Type type, bool encrypt, JsonConcreteImplementations concreteImplementations)
         {
             _encrypt = encrypt;
+            _concreteImplementations = concreteImplementations;
 
             Type keyType;
 
@@ -40,18 +42,18 @@ namespace XSerializer
 
                 if (typeof(IDictionary<string, object>).IsAssignableFrom(type))
                 {
-                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt);
+                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt, _concreteImplementations);
                     _write = GetIDictionaryOfStringToObjectWriteAction();
                 }
                 else if (type.IsAssignableToGenericIDictionaryOfStringToAnything())
                 {
-                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt);
+                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt, _concreteImplementations);
                     _write = GetIDictionaryOfStringToAnythingWriteAction();
                 }
                 else
                 {
-                    _keySerializer = JsonSerializerFactory.GetSerializer(genericArguments[0], _encrypt);
-                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt);
+                    _keySerializer = JsonSerializerFactory.GetSerializer(genericArguments[0], _encrypt, _concreteImplementations);
+                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt, _concreteImplementations);
                     _write = GetIDictionaryOfAnythingToAnythingWriteAction();
                 }
             }
@@ -59,7 +61,7 @@ namespace XSerializer
             {
                 keyType = typeof(object);
 
-                _keySerializer = JsonSerializerFactory.GetSerializer(typeof(object), _encrypt);
+                _keySerializer = JsonSerializerFactory.GetSerializer(typeof(object), _encrypt, _concreteImplementations);
                 _valueSerializer = _keySerializer;
                 _write = GetIDictionaryOfAnythingToAnythingWriteAction();
             }
@@ -86,9 +88,9 @@ namespace XSerializer
             _addToDictionary = GetAddToDictionaryAction(type);
         }
 
-        public static DictionaryJsonSerializer Get(Type type, bool encrypt)
+        public static DictionaryJsonSerializer Get(Type type, bool encrypt, JsonConcreteImplementations concreteImplementations)
         {
-            return _cache.GetOrAdd(Tuple.Create(type, encrypt), t => new DictionaryJsonSerializer(t.Item1, t.Item2));
+            return _cache.GetOrAdd(Tuple.Create(type, encrypt, concreteImplementations), t => new DictionaryJsonSerializer(t.Item1, t.Item2, t.Item3));
         }
 
         public void SerializeObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
@@ -174,7 +176,7 @@ namespace XSerializer
                 return (keyString, info) => keyString;
             }
 
-            var serializer = JsonSerializerFactory.GetSerializer(type, _encrypt);
+            var serializer = JsonSerializerFactory.GetSerializer(type, _encrypt, _concreteImplementations);
 
             return (keyString, info) =>
             {

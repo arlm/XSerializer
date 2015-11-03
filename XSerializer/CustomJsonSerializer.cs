@@ -10,31 +10,57 @@ namespace XSerializer
 {
     internal sealed class CustomJsonSerializer : IJsonSerializerInternal
     {
-        private static readonly ConcurrentDictionary<Tuple<Type, bool>, CustomJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool>, CustomJsonSerializer>();
+        private static readonly ConcurrentDictionary<Tuple<Type, bool, JsonConcreteImplementations>, CustomJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool, JsonConcreteImplementations>, CustomJsonSerializer>();
+
+        private readonly ConcurrentDictionary<Type, List<SerializableJsonProperty>> _serializingPropertiesMap = new ConcurrentDictionary<Type, List<SerializableJsonProperty>>();
+        private readonly Dictionary<string, SerializableJsonProperty> _deserializingPropertiesMap;
 
         private readonly Type _type;
+        private readonly JsonConcreteImplementations _concreteImplementations;
         private readonly bool _encrypt;
-        private readonly SerializableJsonProperty[] _serializableProperties;
-        private readonly Dictionary<string, SerializableJsonProperty> _serializablePropertiesMap;
         private readonly Lazy<Func<IObjectFactory>> _createObjectFactory;
 
-        private CustomJsonSerializer(Type type, bool encrypt)
+        private CustomJsonSerializer(Type type, bool encrypt, JsonConcreteImplementations concreteImplementations)
         {
+            _concreteImplementations = concreteImplementations;
             _type = type;
+
+            if (_concreteImplementations.ConcreteImplementationsByType.ContainsKey(type))
+            {
+                _type = _concreteImplementations.ConcreteImplementationsByType[type];
+            }
+            else
+            {
+                var concreteImplementationAttribute = (JsonConcreteImplementationAttribute)Attribute.GetCustomAttribute(_type, typeof(JsonConcreteImplementationAttribute));
+                if (concreteImplementationAttribute != null)
+                {
+                    _type = concreteImplementationAttribute.Type;
+                }
+            }
+
             _encrypt = encrypt || Attribute.GetCustomAttribute(type, typeof(EncryptAttribute)) != null;
 
-            _serializablePropertiesMap = type.GetProperties()
-                .Where(p => p.IsJsonSerializable(type.GetConstructors().SelectMany(c => c.GetParameters())))
-                .Select(p => new SerializableJsonProperty(p, _encrypt || p.GetCustomAttributes(typeof(EncryptAttribute), false).Any()))
-                .ToDictionary(p => p.Name);
+            var serializableProperties = GetSerializableProperties(_type);
+            _deserializingPropertiesMap = serializableProperties.ToDictionary(p => p.Name);
 
-            _serializableProperties = _serializablePropertiesMap.Values.ToArray();
+            if (!_type.IsAbstract)
+            {
+                _serializingPropertiesMap[_type] = serializableProperties;
+            }
+
             _createObjectFactory = new Lazy<Func<IObjectFactory>>(GetCreateObjectFactoryFunc);
         }
 
-        public static CustomJsonSerializer Get(Type type, bool encrypt)
+        private List<SerializableJsonProperty> GetSerializableProperties(Type type)
         {
-            return _cache.GetOrAdd(Tuple.Create(type, encrypt), t => new CustomJsonSerializer(t.Item1, t.Item2));
+            return type.GetProperties()
+                .Where(p => p.IsJsonSerializable(type.GetConstructors().SelectMany(c => c.GetParameters())))
+                .Select(p => new SerializableJsonProperty(p, _encrypt || p.GetCustomAttributes(typeof(EncryptAttribute), false).Any(), _concreteImplementations)).ToList();
+        }
+
+        public static CustomJsonSerializer Get(Type type, bool encrypt, JsonConcreteImplementations concreteImplementations)
+        {
+            return _cache.GetOrAdd(Tuple.Create(type, encrypt, concreteImplementations), t => new CustomJsonSerializer(t.Item1, t.Item2, t.Item3));
         }
 
         public void SerializeObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
@@ -67,7 +93,9 @@ namespace XSerializer
 
             var first = true;
 
-            foreach (var property in _serializableProperties)
+            var serializingProperties = _serializingPropertiesMap.GetOrAdd(instance.GetType(), GetSerializableProperties);
+
+            foreach (var property in serializingProperties)
             {
                 if (first)
                 {
@@ -138,7 +166,7 @@ namespace XSerializer
             {
                 var createInstance = GetCreateInstanceFunc(constructor);
 
-                return () => new DefaultConstructorObjectFactory(_serializablePropertiesMap, createInstance());
+                return () => new DefaultConstructorObjectFactory(_deserializingPropertiesMap, createInstance());
             }
             else
             {
@@ -147,7 +175,7 @@ namespace XSerializer
                 var parametersLength = parameters.Length;
 
                 return () => new NonDefaultConstructorObjectFactory(
-                    _serializablePropertiesMap,
+                    _deserializingPropertiesMap,
                     createInstance,
                     getSerializerAndArgIndex,
                     parametersLength);
@@ -206,7 +234,7 @@ namespace XSerializer
 
             for (int i = 0; i < parameters.Length; i++)
             {
-                var serializer = JsonSerializerFactory.GetSerializer(parameters[i].ParameterType, _encrypt);
+                var serializer = JsonSerializerFactory.GetSerializer(parameters[i].ParameterType, _encrypt, _concreteImplementations);
                 var serializerAndArgIndex = Tuple.Create(serializer, i);
 
                 var matchingProperties =

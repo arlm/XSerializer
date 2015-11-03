@@ -52,6 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BooleanJsonSerializer.cs" />
+    <Compile Include="JsonConcreteImplementationAttribute.cs" />
     <Compile Include="CustomJsonSerializer.cs" />
     <Compile Include="DateTimeHandler.cs" />
     <Compile Include="DefaultDateTimeHandler.cs" />
@@ -75,6 +76,7 @@
     <Compile Include="IValueConverter.cs" />
     <Compile Include="IXSerializer.cs" />
     <Compile Include="JsonArray.cs" />
+    <Compile Include="JsonConcreteImplementations.cs" />
     <Compile Include="JsonConstructorAttribute.cs" />
     <Compile Include="JsonExtensions.cs" />
     <Compile Include="JsonIgnoreAttribute.cs" />

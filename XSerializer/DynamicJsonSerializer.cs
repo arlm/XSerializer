@@ -6,27 +6,27 @@ namespace XSerializer
 {
     internal sealed class DynamicJsonSerializer : IJsonSerializerInternal
     {
-        private static readonly Lazy<DynamicJsonSerializer> _clearText = new Lazy<DynamicJsonSerializer>(() => new DynamicJsonSerializer(false));
-        private static readonly Lazy<DynamicJsonSerializer> _encrypted = new Lazy<DynamicJsonSerializer>(() => new DynamicJsonSerializer(true));
-
-        private readonly ConcurrentDictionary<Tuple<Type, bool>, IJsonSerializerInternal> _serializerCache = new ConcurrentDictionary<Tuple<Type, bool>, IJsonSerializerInternal>();
+        private static readonly ConcurrentDictionary<Tuple<bool, JsonConcreteImplementations>, DynamicJsonSerializer> _cache = new ConcurrentDictionary<Tuple<bool, JsonConcreteImplementations>, DynamicJsonSerializer>();
+        private static readonly ConcurrentDictionary<Tuple<Type, bool>, IJsonSerializerInternal> _serializerCache = new ConcurrentDictionary<Tuple<Type, bool>, IJsonSerializerInternal>();
 
         private readonly JsonObjectSerializer _jsonObjectSerializer;
         private readonly JsonArraySerializer _jsonArraySerializer;
 
         private readonly bool _encrypt;
-        
-        private DynamicJsonSerializer(bool encrypt)
+        private readonly JsonConcreteImplementations _concreteImplementations;
+
+        private DynamicJsonSerializer(bool encrypt, JsonConcreteImplementations concreteImplementations)
         {
             _jsonObjectSerializer = new JsonObjectSerializer(this);
             _jsonArraySerializer = new JsonArraySerializer(this);
 
             _encrypt = encrypt;
+            _concreteImplementations = concreteImplementations;
         }
 
-        public static DynamicJsonSerializer Get(bool encrypt)
+        public static DynamicJsonSerializer Get(bool encrypt, JsonConcreteImplementations concreteImplementations)
         {
-            return encrypt ? _encrypted.Value : _clearText.Value;
+            return _cache.GetOrAdd(Tuple.Create(encrypt, concreteImplementations), t => new DynamicJsonSerializer(t.Item1, t.Item2));
         }
 
         public void SerializeObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
@@ -57,47 +57,35 @@ namespace XSerializer
 
         private IJsonSerializerInternal GetSerializer(Type concreteType)
         {
+            // Note that no checks are made for nullable types. The concreteType parameter is retrieved
+            // from a call to .GetType() on a non-null instance.
+
             if (concreteType == typeof(string)
                 || concreteType == typeof(DateTime)
-                || concreteType == typeof(DateTime?)
                 || concreteType == typeof(DateTimeOffset)
-                || concreteType == typeof(DateTimeOffset?)
-                || concreteType == typeof(Guid)
-                || concreteType == typeof(Guid?))
+                || concreteType == typeof(Guid))
             {
                 return StringJsonSerializer.Get(concreteType, _encrypt);
             }
 
             if (concreteType == typeof(double)
-                || concreteType == typeof(double?)
                 || concreteType == typeof(int)
-                || concreteType == typeof(int?)
                 || concreteType == typeof(float)
-                || concreteType == typeof(float?)
                 || concreteType == typeof(long)
-                || concreteType == typeof(long?)
                 || concreteType == typeof(decimal)
-                || concreteType == typeof(decimal?)
                 || concreteType == typeof(byte)
-                || concreteType == typeof(byte?)
                 || concreteType == typeof(sbyte)
-                || concreteType == typeof(sbyte?)
                 || concreteType == typeof(short)
-                || concreteType == typeof(short?)
                 || concreteType == typeof(ushort)
-                || concreteType == typeof(ushort?)
                 || concreteType == typeof(uint)
-                || concreteType == typeof(uint?)
-                || concreteType == typeof(ulong)
-                || concreteType == typeof(ulong?))
+                || concreteType == typeof(ulong))
             {
                 return NumberJsonSerializer.Get(concreteType, _encrypt);
             }
             
-            if (concreteType == typeof(bool)
-                || concreteType == typeof(bool?))
+            if (concreteType == typeof(bool))
             {
-                return BooleanJsonSerializer.Get(_encrypt, concreteType == typeof(bool?));
+                return BooleanJsonSerializer.Get(_encrypt, false);
             }
 
             if (concreteType == typeof(JsonObject))
@@ -112,15 +100,15 @@ namespace XSerializer
             
             if (concreteType.IsAssignableToGenericIDictionaryOfStringToAnything())
             {
-                return DictionaryJsonSerializer.Get(concreteType, _encrypt);
+                return DictionaryJsonSerializer.Get(concreteType, _encrypt, _concreteImplementations);
             }
             
             if (typeof(IEnumerable).IsAssignableFrom(concreteType))
             {
-                return ListJsonSerializer.Get(concreteType, _encrypt);
+                return ListJsonSerializer.Get(concreteType, _encrypt, _concreteImplementations);
             }
-            
-            return CustomJsonSerializer.Get(concreteType, _encrypt);
+
+            return CustomJsonSerializer.Get(concreteType, _encrypt, _concreteImplementations);
         }
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
@@ -153,13 +141,11 @@ namespace XSerializer
             switch (reader.NodeType)
             {
                 case JsonNodeType.Null:
-                    return null;
                 case JsonNodeType.String:
-                    return (string)reader.Value;
+                case JsonNodeType.Boolean:
+                    return reader.Value;
                 case JsonNodeType.Number:
                     return new JsonNumber((string)reader.Value);
-                case JsonNodeType.Boolean:
-                    return (bool)reader.Value;
                 case JsonNodeType.OpenObject:
                     return DeserializeJsonObject(reader, info);
                 case JsonNodeType.OpenArray:

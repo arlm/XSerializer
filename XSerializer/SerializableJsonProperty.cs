@@ -8,22 +8,44 @@ namespace XSerializer
 {
     internal class SerializableJsonProperty
     {
+        private readonly JsonConcreteImplementations _concreteImplementations;
         private readonly string _name;
         private readonly Lazy<IJsonSerializerInternal> _serializer;
         private readonly Func<object, object> _getValue;
         private readonly Action<object, object> _setValue;
 
-        public SerializableJsonProperty(PropertyInfo propertyInfo, bool encrypt)
+        public SerializableJsonProperty(PropertyInfo propertyInfo, bool encrypt, JsonConcreteImplementations concreteImplementations)
         {
             if (propertyInfo.DeclaringType == null)
             {
                 throw new ArgumentException("The DeclaringType of the PropertyInfo must not be null.", "propertyInfo");
             }
 
-            var jsonPropertyAttribute = (JsonPropertyAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(JsonPropertyAttribute));
+            _concreteImplementations = concreteImplementations;
 
+            var jsonPropertyAttribute = (JsonPropertyAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(JsonPropertyAttribute));
             _name = jsonPropertyAttribute.GetNameOrDefaultTo(propertyInfo.Name);
-            _serializer = new Lazy<IJsonSerializerInternal>(() => JsonSerializerFactory.GetSerializer(propertyInfo.PropertyType, encrypt));
+
+            var propertyType = propertyInfo.PropertyType;
+
+            if (_concreteImplementations.ConcreteImplementationsByProperty.ContainsKey(propertyInfo))
+            {
+                propertyType = _concreteImplementations.ConcreteImplementationsByProperty[propertyInfo];
+            }
+            else if (_concreteImplementations.ConcreteImplementationsByType.ContainsKey(propertyType))
+            {
+                propertyType = _concreteImplementations.ConcreteImplementationsByType[propertyType];
+            }
+            else
+            {
+                var concreteImplementationAttribute = (JsonConcreteImplementationAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(JsonConcreteImplementationAttribute));
+                if (concreteImplementationAttribute != null)
+                {
+                    propertyType = concreteImplementationAttribute.Type;
+                }
+            }
+
+            _serializer = new Lazy<IJsonSerializerInternal>(() => JsonSerializerFactory.GetSerializer(propertyType, encrypt, _concreteImplementations));
 
             _getValue = GetGetValueFunc(propertyInfo, propertyInfo.DeclaringType);
 
@@ -33,7 +55,9 @@ namespace XSerializer
             }
             else if (propertyInfo.IsJsonSerializableReadOnlyProperty())
             {
-                if (typeof(IDictionary).IsAssignableFrom(propertyInfo.PropertyType))
+                // TODO: Before any of these checks, see if there is a constructor that matches this property. If so, don't do the "addable" deserialization technique.
+
+                if (typeof(IDictionary).IsAssignableFrom(propertyType))
                 {
                     _setValue = (instance, value) =>
                     {
@@ -46,11 +70,11 @@ namespace XSerializer
                         }
                     };
                 }
-                else if (propertyInfo.PropertyType.IsAssignableToGenericIDictionary())
+                else if (propertyType.IsAssignableToGenericIDictionary())
                 {
                     var valueParameter = Expression.Parameter(typeof(object), "value");
 
-                    var enumerableType = propertyInfo.PropertyType.GetGenericIEnumerableType();
+                    var enumerableType = propertyType.GetGenericIEnumerableType();
                     var convertValue = Expression.Convert(valueParameter, enumerableType);
 
                     var getEnumeratorMethod = enumerableType.GetMethod("GetEnumerator");
@@ -63,7 +87,7 @@ namespace XSerializer
 
                     var itemParameter = Expression.Parameter(typeof(object), "item");
 
-                    var dictionaryType = propertyInfo.PropertyType.GetGenericIDictionaryType();
+                    var dictionaryType = propertyType.GetGenericIDictionaryType();
                     var dictionaryGenericArguments = dictionaryType.GetGenericArguments();
                     var keyValuePairType =
                         typeof(KeyValuePair<,>).MakeGenericType(
@@ -119,9 +143,9 @@ namespace XSerializer
                         }
                     };
                 }
-                else if (!propertyInfo.PropertyType.IsArray)
+                else if (!propertyType.IsArray)
                 {
-                    if (typeof(IList).IsAssignableFrom(propertyInfo.PropertyType))
+                    if (typeof(IList).IsAssignableFrom(propertyType))
                     {
                         _setValue = (instance, value) =>
                         {
@@ -134,12 +158,12 @@ namespace XSerializer
                             }
                         };
                     }
-                    else if (propertyInfo.PropertyType.IsAssignableToGenericICollection())
+                    else if (propertyType.IsAssignableToGenericICollection())
                     {
                         var destinationListParameter = Expression.Parameter(typeof(object), "destinationList");
                         var itemParameter = Expression.Parameter(typeof(object), "item");
 
-                        var collectionType = propertyInfo.PropertyType.GetGenericICollectionType();
+                        var collectionType = propertyType.GetGenericICollectionType();
 
                         var itemType = collectionType.GetGenericArguments()[0];
                         var convertItemParameter = Expression.Convert(itemParameter, itemType);

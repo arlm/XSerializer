@@ -297,6 +297,11 @@ namespace XSerializer
                 return false;
             }
 
+            if (constructorParameters != null && constructorParameters.Any(p => string.Equals(p.Name, propertyInfo.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+
             if (typeof(IDictionary).IsAssignableFrom(propertyInfo.PropertyType)
                 || propertyInfo.PropertyType.IsAssignableToGenericIDictionary())
             {

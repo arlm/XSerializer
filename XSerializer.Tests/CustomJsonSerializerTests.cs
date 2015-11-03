@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System;
+using NUnit.Framework;
 using XSerializer.Encryption;
 using XSerializer.Tests.Encryption;
 
@@ -401,6 +402,273 @@ namespace XSerializer.Tests
             Assert.That(roundTrip.Baz, Is.EqualTo(foo.Baz));
         }
 
+        [Test]
+        public void CanSerializeInterface()
+        {
+            var serializer = new JsonSerializer<ISpam>();
+
+            ISpam ham = new Spam { Eggs = 123 };
+
+            var json = serializer.Serialize(ham);
+
+            Assert.That(json, Is.EqualTo(@"{""Eggs"":123}"));
+        }
+
+        [Test]
+        public void CannotDeserializeInterfaceWhenNoConcreteTypeIsSpecified()
+        {
+            var json = @"{""Eggs"":123}";
+
+            var serializer = new JsonSerializer<ISpam>();
+
+            Assert.That(() => serializer.Deserialize(json), Throws.TypeOf<XSerializerException>());
+        }
+
+        [Test]
+        public void CanDeserializeInterfaceWhenConcreteTypeIsSpecifiedViaAttribute()
+        {
+            var json = @"{""Eggs"":123}";
+
+            var serializer = new JsonSerializer<IHam>();
+
+            var ham = serializer.Deserialize(json);
+
+            Assert.That(ham, Is.InstanceOf<Ham>());
+            Assert.That(ham.Eggs, Is.EqualTo(123));
+        }
+
+        [Test]
+        public void CanDeserializeInterfaceWhenConcreteTypeIsSpecifiedViaConfiguration()
+        {
+            var json = @"{""Eggs"":123}";
+
+            var configuration = new JsonSerializerConfiguration();
+            configuration.ConcreteImplementationsByType.Add(typeof(ISpam), typeof(Spam));
+            var serializer = new JsonSerializer<ISpam>(configuration);
+
+            var spam = serializer.Deserialize(json);
+
+            Assert.That(spam, Is.InstanceOf<Spam>());
+            Assert.That(spam.Eggs, Is.EqualTo(123));
+        }
+
+        [Test]
+        public void CanDeserializeInterfaceWhenConcreteTypeIsSpecifiedByBothAttributeAndConfiguration()
+        {
+            var json = @"{""Eggs"":123}";
+
+            var configuration = new JsonSerializerConfiguration();
+            configuration.ConcreteImplementationsByType.Add(typeof(IHam), typeof(Bacon));
+            var serializer = new JsonSerializer<IHam>(configuration);
+
+            var ham = serializer.Deserialize(json);
+
+            Assert.That(ham, Is.InstanceOf<Bacon>()); // Choose the configured mapping, not the attribute mapping
+            Assert.That(ham.Eggs, Is.EqualTo(123));
+        }
+
+        [Test]
+        public void CanSerializeInterfacePropertyWithoutSpecifyingConcreteType()
+        {
+            var serializer = new JsonSerializer<Breakfast>();
+
+            var food = new Breakfast
+            {
+                Menu = new Spam
+                {
+                    Eggs = 123
+                }
+            };
+
+            var json = serializer.Serialize(food);
+
+            Assert.That(json, Is.EqualTo(@"{""Menu"":{""Eggs"":123}}"));
+        }
+
+        [Test]
+        public void CanDeserializeInterfacePropertyWhenConcreteTypeIsSpecifiedViaAttributedInterface()
+        {
+            var serializer = new JsonSerializer<Lunch>();
+
+            var json = @"{""Menu"":{""Eggs"":123}}";
+
+            var food = serializer.Deserialize(json);
+
+            Assert.That(food.Menu, Is.InstanceOf<Ham>());
+            Assert.That(food.Menu.Eggs, Is.EqualTo(123));
+        }
+
+        [Test]
+        public void CanDeserializeInterfacePropertyWhenConcreteTypeIsSpecifiedViaConfigurationByType()
+        {
+            var configuration = new JsonSerializerConfiguration();
+            configuration.ConcreteImplementationsByType.Add(typeof(ISpam), typeof(Spam));
+            var serializer = new JsonSerializer<Breakfast>(configuration);
+
+            var json = @"{""Menu"":{""Eggs"":123}}";
+
+            var food = serializer.Deserialize(json);
+
+            Assert.That(food.Menu, Is.InstanceOf<Spam>());
+            Assert.That(food.Menu.Eggs, Is.EqualTo(123));
+        }
+
+        [Test]
+        public void CanDeserializeInterfacePropertyWhenConcreteTypeIsSpecifiedViaAttributedProperty()
+        {
+            var serializer = new JsonSerializer<Dinner>();
+
+            var json = @"{""Menu"":{""Eggs"":123}}";
+
+            var food = serializer.Deserialize(json);
+
+            Assert.That(food.Menu, Is.InstanceOf<Spam>());
+            Assert.That(food.Menu.Eggs, Is.EqualTo(123));
+        }
+
+        [Test]
+        public void CanDeserializeInterfacePropertyWhenConcreteTypeIsSpecifiedViaConfigurationByProperty()
+        {
+            var configuration = new JsonSerializerConfiguration();
+            configuration.ConcreteImplementationsByProperty.Add(typeof(Breakfast).GetProperty("Menu"), typeof(Spam));
+            var serializer = new JsonSerializer<Breakfast>(configuration);
+
+            var json = @"{""Menu"":{""Eggs"":123}}";
+
+            var food = serializer.Deserialize(json);
+
+            Assert.That(food.Menu, Is.InstanceOf<Spam>());
+            Assert.That(food.Menu.Eggs, Is.EqualTo(123));
+        }
+
+        [Test]
+        public void GivenMultipleSpecifiedConcreteTypesConfigurationByPropertyHasHighestPriority()
+        {
+            var configuration = new JsonSerializerConfiguration();
+            configuration.ConcreteImplementationsByProperty.Add(typeof(FourthMeal).GetProperty("Menu"), typeof(Prosciutto));
+            configuration.ConcreteImplementationsByType.Add(typeof(IHam), typeof(ChristmasHam));
+            var serializer = new JsonSerializer<FourthMeal>(configuration);
+
+            var json = @"{""Menu"":{""Eggs"":123}}";
+
+            var food = serializer.Deserialize(json);
+
+            Assert.That(food.Menu, Is.InstanceOf<Prosciutto>());
+            Assert.That(food.Menu.Eggs, Is.EqualTo(123));
+        }
+
+        [Test]
+        public void GivenMultipleSpecifiedConcreteTypesConfigurationByInterfaceHasSecondHighestPriority()
+        {
+            var configuration = new JsonSerializerConfiguration();
+            configuration.ConcreteImplementationsByType.Add(typeof(IHam), typeof(Prosciutto));
+            var serializer = new JsonSerializer<FourthMeal>(configuration);
+
+            var json = @"{""Menu"":{""Eggs"":123}}";
+
+            var food = serializer.Deserialize(json);
+
+            Assert.That(food.Menu, Is.InstanceOf<Prosciutto>());
+            Assert.That(food.Menu.Eggs, Is.EqualTo(123));
+        }
+
+        [Test]
+        public void GivenMultipleSpecifiedConcreteTypesAttributedPropertyHasThirdHighestPriority()
+        {
+            var serializer = new JsonSerializer<FourthMeal>();
+
+            var json = @"{""Menu"":{""Eggs"":123}}";
+
+            var food = serializer.Deserialize(json);
+
+            Assert.That(food.Menu, Is.InstanceOf<Bacon>());
+            Assert.That(food.Menu.Eggs, Is.EqualTo(123));
+        }
+
+        [Test]
+        public void MismatchedAttributedInterfaceThrowsExceptionOnDeserialization()
+        {
+            var serializer = new JsonSerializer<IRetch>();
+
+            var json = @"{""Eggs"":123}";
+
+            Assert.That(() => serializer.Deserialize(json), Throws.TypeOf<InvalidCastException>());
+        }
+
+        [Test]
+        public void MismatchedAttributedInterfacePropertyThrowsExceptionOnDeserialization()
+        {
+            var serializer = new JsonSerializer<DryHeave>();
+
+            var json = @"{""Menu"":{""Eggs"":123}}";
+
+            Assert.That(() => serializer.Deserialize(json), Throws.TypeOf<InvalidCastException>());
+        }
+
+        [Test]
+        public void MismatchedPropertyWithAttributedInterfaceTypeThrowsExceptionOnDeserialization()
+        {
+            var serializer = new JsonSerializer<Vomit>();
+
+            var json = @"{""Menu"":{""Eggs"":123}}";
+
+            Assert.That(() => serializer.Deserialize(json), Throws.TypeOf<InvalidCastException>());
+        }
+
+        [Test]
+        public void MismatchedConfigurationByTypeThrowsExceptionOnDeserialization()
+        {
+            var configuration = new JsonSerializerConfiguration();
+            configuration.ConcreteImplementationsByType.Add(typeof(IHam), typeof(Spam));
+            var serializer = new JsonSerializer<Vomit>(configuration);
+
+            var json = @"{""Menu"":{""Eggs"":123}}";
+
+            Assert.That(() => serializer.Deserialize(json), Throws.TypeOf<InvalidCastException>());
+        }
+
+        [Test]
+        public void MismatchedConfigurationByPropertyThrowsExceptionOnDeserialization()
+        {
+            var configuration = new JsonSerializerConfiguration();
+            configuration.ConcreteImplementationsByProperty.Add(typeof(Lunch).GetProperty("Menu"), typeof(Spam));
+            var serializer = new JsonSerializer<Vomit>(configuration);
+
+            var json = @"{""Menu"":{""Eggs"":123}}";
+
+            Assert.That(() => serializer.Deserialize(json), Throws.TypeOf<InvalidCastException>());
+        }
+
+        [Test]
+        public void CanOverrideAbstractClass()
+        {
+            var configuration = new JsonSerializerConfiguration();
+            configuration.ConcreteImplementationsByType.Add(typeof(WidgetBase), typeof(Widget));
+            var serializer = new JsonSerializer<WidgetBase>(configuration);
+
+            var json = @"{""Gadget"":123}";
+
+            var widget = serializer.Deserialize(json);
+
+            Assert.That(widget, Is.InstanceOf<Widget>());
+            Assert.That(widget.Gadget, Is.EqualTo(123));
+        }
+
+        [Test]
+        public void CanOverrideConcreteClass()
+        {
+            var configuration = new JsonSerializerConfiguration();
+            configuration.ConcreteImplementationsByType.Add(typeof(Widget), typeof(WidgetDerived));
+            var serializer = new JsonSerializer<Widget>(configuration);
+
+            var json = @"{""Gadget"":123}";
+
+            var widget = serializer.Deserialize(json);
+
+            Assert.That(widget, Is.InstanceOf<WidgetDerived>());
+            Assert.That(widget.Gadget, Is.EqualTo(123));
+        }
+
         public class FooWithNonDefaultConstructor
         {
             private readonly int _bar;
@@ -560,6 +828,94 @@ namespace XSerializer.Tests
             public Grault Grault { get; set; }
             [Encrypt]
             public Waldo Waldo { get; set; }
+        }
+
+        [JsonConcreteImplementation(typeof(Ham))]
+        public interface IHam
+        {
+            int Eggs { get; set; }
+        }
+
+        public class Ham : IHam
+        {
+            public int Eggs { get; set; }
+        }
+
+        public class Bacon : IHam
+        {
+            public int Eggs { get; set; }
+        }
+
+        public class Prosciutto : IHam
+        {
+            public int Eggs { get; set; }
+        }
+
+        public class ChristmasHam : IHam
+        {
+            public int Eggs { get; set; }
+        }
+
+        public interface ISpam
+        {
+            int Eggs { get; set; }
+        }
+
+        public class Spam : ISpam
+        {
+            public int Eggs { get; set; }
+        }
+
+        public class Breakfast
+        {
+            public ISpam Menu { get; set; }
+        }
+
+        public class Lunch
+        {
+            public IHam Menu { get; set; }
+        }
+
+        public class Dinner
+        {
+            [JsonConcreteImplementation(typeof(Spam))]
+            public ISpam Menu { get; set; }
+        }
+
+        public class FourthMeal
+        {
+            [JsonConcreteImplementation(typeof(Bacon))]
+            public IHam Menu { get; set; }
+        }
+
+        [JsonConcreteImplementation(typeof(Spam))]
+        public interface IRetch
+        {
+            int Eggs { get; set; }
+        }
+
+        public class Vomit
+        {
+            public IRetch Menu { get; set; }
+        }
+
+        public class DryHeave
+        {
+            [JsonConcreteImplementation(typeof(Spam))]
+            public IHam Menu { get; set; }
+        }
+
+        public abstract class WidgetBase
+        {
+            public int Gadget { get; set; }
+        }
+
+        public class Widget : WidgetBase
+        {
+        }
+
+        public class WidgetDerived : Widget
+        {
         }
     }
 }

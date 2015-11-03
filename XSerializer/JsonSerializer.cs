@@ -49,7 +49,7 @@ namespace XSerializer
                 Attribute.GetCustomAttribute(typeof(T), typeof(EncryptAttribute)) != null
                 || configuration.EncryptRootObject;
 
-            _serializer = JsonSerializerFactory.GetSerializer(typeof(T), encrypt);
+            _serializer = JsonSerializerFactory.GetSerializer(typeof(T), encrypt, _configuration.ConcreteImplementationsByType, _configuration.ConcreteImplementationsByProperty);
         }
 
         string IXSerializer.Serialize(object instance)

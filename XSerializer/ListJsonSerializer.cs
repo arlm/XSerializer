@@ -10,7 +10,7 @@ namespace XSerializer
 {
     internal sealed class ListJsonSerializer : IJsonSerializerInternal
     {
-        private static readonly ConcurrentDictionary<Tuple<Type, bool>, ListJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool>, ListJsonSerializer>();
+        private static readonly ConcurrentDictionary<Tuple<Type, bool, JsonConcreteImplementations>, ListJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool, JsonConcreteImplementations>, ListJsonSerializer>();
 
         private readonly bool _encrypt;
         private readonly IJsonSerializerInternal _itemSerializer;
@@ -18,18 +18,18 @@ namespace XSerializer
         private readonly Func<object> _createList;
         private readonly Action<object, object> _addItem;
 
-        private ListJsonSerializer(Type type, bool encrypt)
+        private ListJsonSerializer(Type type, bool encrypt, JsonConcreteImplementations concreteImplementations)
         {
             _encrypt = encrypt;
 
             if (type.IsAssignableToGenericIEnumerable())
             {
                 var itemType = type.GetGenericIEnumerableType().GetGenericArguments()[0];
-                _itemSerializer = JsonSerializerFactory.GetSerializer(itemType, _encrypt);
+                _itemSerializer = JsonSerializerFactory.GetSerializer(itemType, _encrypt, concreteImplementations);
             }
             else
             {
-                _itemSerializer = JsonSerializerFactory.GetSerializer(typeof(object), _encrypt);
+                _itemSerializer = JsonSerializerFactory.GetSerializer(typeof(object), _encrypt, concreteImplementations);
             }
 
             if (type.IsInterface)
@@ -49,9 +49,9 @@ namespace XSerializer
             _addItem = GetAddItemAction(type);
         }
 
-        public static ListJsonSerializer Get(Type type, bool encrypt)
+        public static ListJsonSerializer Get(Type type, bool encrypt, JsonConcreteImplementations concreteImplementations)
         {
-            return _cache.GetOrAdd(Tuple.Create(type, encrypt), t => new ListJsonSerializer(t.Item1, t.Item2));
+            return _cache.GetOrAdd(Tuple.Create(type, encrypt, concreteImplementations), t => new ListJsonSerializer(t.Item1, t.Item2, t.Item3));
         }
 
         public void SerializeObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)

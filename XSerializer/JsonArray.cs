@@ -131,7 +131,7 @@ namespace XSerializer
                     {
                         using (var reader = new JsonReader(stringReader, _info))
                         {
-                            value = DynamicJsonSerializer.Get(false).DeserializeObject(reader, _info);
+                            value = DynamicJsonSerializer.Get(false, JsonConcreteImplementations.Empty).DeserializeObject(reader, _info);
 
                             if (value == null
                                 || value is bool
@@ -181,7 +181,7 @@ namespace XSerializer
                     {
                         using (var writer = new JsonWriter(stringwriter, _info))
                         {
-                            DynamicJsonSerializer.Get(false).SerializeObject(writer, value, _info);
+                            DynamicJsonSerializer.Get(false, JsonConcreteImplementations.Empty).SerializeObject(writer, value, _info);
                         }
                     }
 

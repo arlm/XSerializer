@@ -1,4 +1,7 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
+using System.Text;
 using XSerializer.Encryption;
 
 namespace XSerializer
@@ -9,6 +12,8 @@ namespace XSerializer
         {
             Encoding = Encoding.UTF8;
             DateTimeHandler = XSerializer.DateTimeHandler.Default;
+            ConcreteImplementationsByType = new Dictionary<Type, Type>();
+            ConcreteImplementationsByProperty = new Dictionary<PropertyInfo, Type>();
         }
 
         public Encoding Encoding { get; set; }
@@ -17,5 +22,7 @@ namespace XSerializer
         public object EncryptKey { get; set; }
         public bool EncryptRootObject { get; set; }
         public IDateTimeHandler DateTimeHandler { get; set; }
+        public IDictionary<Type, Type> ConcreteImplementationsByType { get; set; }
+        public IDictionary<PropertyInfo, Type> ConcreteImplementationsByProperty { get; set; }
     }
 }
