@@ -10,6 +10,10 @@ using XSerializer.Encryption;
 
 namespace XSerializer
 {
+    /// <summary>
+    /// A representation of a JSON array. Provides an advanced dynamic API as well as a standard
+    /// object API.
+    /// </summary>
     public sealed class JsonArray : DynamicObject, IEnumerable<object>
     {
         private delegate bool TryFunc(out object result);
@@ -22,6 +26,13 @@ namespace XSerializer
         private readonly List<object> _transformableValues = new List<object>();
         private readonly List<Type> _transformedTypes = new List<Type>();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonArray"/> class.
+        /// </summary>
+        /// <param name="dateTimeHandler">The object that determines how date time values are parsed.</param>
+        /// <param name="encryptionMechanism">The object the performs encryption operations.</param>
+        /// <param name="encryptKey">A key optionally used by the encryption mechanism during encryption operations.</param>
+        /// <param name="serializationState">An object optionally used by the encryption mechanism to carry state across multiple encryption operations.</param>
         public JsonArray(
             IDateTimeHandler dateTimeHandler = null,
             IEncryptionMechanism encryptionMechanism = null,
@@ -42,6 +53,10 @@ namespace XSerializer
             _info = info;
         }
 
+        /// <summary>
+        /// Adds an object to the end of the <see cref="JsonArray"/>.
+        /// </summary>
+        /// <param name="value">The object to be added to the end of the <see cref="JsonArray"/>.</param>
         public void Add(object value)
         {
             var jsonNumber = value as JsonNumber;
@@ -62,6 +77,13 @@ namespace XSerializer
             }
         }
 
+        /// <summary>
+        /// Determines whether the specified <see cref="object"/> is equal to the current <see cref="object"/>.
+        /// </summary>
+        /// <param name="obj">The <see cref="object"/> to compare with the current <see cref="object"/>.</param>
+        /// <returns>
+        /// true if the specified <see cref="object"/> is equal to the current <see cref="object"/>; otherwise, false.
+        /// </returns>
         public override bool Equals(object obj)
         {
             var other = obj as JsonArray;
@@ -82,6 +104,12 @@ namespace XSerializer
             return true;
         }
 
+        /// <summary>
+        /// Serves as a hash function for a particular type. 
+        /// </summary>
+        /// <returns>
+        /// A hash code for the current <see cref="object"/>.
+        /// </returns>
         public override int GetHashCode()
         {
             unchecked
@@ -92,6 +120,14 @@ namespace XSerializer
             }
         }
 
+        /// <summary>
+        /// Provides implementation for type conversion operations.
+        /// </summary>
+        /// <param name="binder">Provides information about the conversion operation.</param>
+        /// <param name="result">The result of the type conversion operation.</param>
+        /// <returns>
+        /// true if the operation is successful; otherwise, false.
+        /// </returns>
         public override bool TryConvert(ConvertBinder binder, out object result)
         {
             var convertFunc = _convertFuncs.GetOrAdd(binder.Type, GetConvertFunc);
@@ -101,6 +137,10 @@ namespace XSerializer
                 : base.TryConvert(binder, out result);
         }
 
+        /// <summary>
+        /// Gets or sets the element at the specified index.
+        /// </summary>
+        /// <param name="index">The zero-based index of the element to get or set.</param>
         public object this[int index]
         {
             get { return _values[index]; }
@@ -111,11 +151,19 @@ namespace XSerializer
             }
         }
 
+        /// <summary>
+        /// Gets the number of elements actually contained in the <see cref="JsonArray"/>.
+        /// </summary>
         public int Count
         {
             get { return _values.Count; }
         }
 
+        /// <summary>
+        /// Decrypts the item at the specified index, changing its value in place.
+        /// </summary>
+        /// <param name="index">The index of the value to decrypt.</param>
+        /// <returns>This instance of <see cref="JsonArray"/>.</returns>
         public JsonArray Decrypt(int index)
         {
             if (_info.EncryptionMechanism != null)
@@ -167,6 +215,11 @@ namespace XSerializer
             return this;
         }
 
+        /// <summary>
+        /// Encrypts the item at the specified index, changing its value in place.
+        /// </summary>
+        /// <param name="index">The index of the value to encrypt.</param>
+        /// <returns>This instance of <see cref="JsonArray"/>.</returns>
         public JsonArray Encrypt(int index)
         {
             if (_info.EncryptionMechanism != null)
@@ -193,11 +246,24 @@ namespace XSerializer
             return this;
         }
 
+        /// <summary>
+        /// Convert all of the items in this <see cref="JsonArray"/> to the type specified by
+        /// the <typeparamref name="T"/> generic argument.
+        /// </summary>
+        /// <typeparam name="T">The type to convert items to.</typeparam>
+        /// <returns>This instance of <see cref="JsonArray"/>.</returns>
         public JsonArray TransformItems<T>()
         {
             return TransformItems(typeof(T));
         }
 
+
+        /// <summary>
+        /// Convert all of the items in this <see cref="JsonArray"/> to the type specified by
+        /// the <paramref name="type"/> parameter.
+        /// </summary>
+        /// <param name="type">The type to convert items to.</param>
+        /// <returns>This instance of <see cref="JsonArray"/>.</returns>
         public JsonArray TransformItems(Type type)
         {
             if (_transformedTypes.Contains(type))
@@ -805,189 +871,370 @@ namespace XSerializer
                 : currentItem;
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="List{T}"/> of <see cref="object"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator List<object>(JsonArray jsonArray)
         {
             return jsonArray._values;
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an object array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator object[](JsonArray jsonArray)
         {
             return jsonArray._values.ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="JsonObject"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator JsonObject[](JsonArray jsonArray)
         {
             return jsonArray._values.Cast<JsonObject>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="JsonArray"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator JsonArray[](JsonArray jsonArray)
         {
             return jsonArray._values.Cast<JsonArray>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="string"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator string[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<string>()._values.Cast<string>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="DateTime"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator DateTime[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<DateTime>()._values.Cast<DateTime>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="DateTime"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator DateTime?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<DateTime?>()._values.Cast<DateTime?>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="DateTimeOffset"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator DateTimeOffset[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<DateTimeOffset>()._values.Cast<DateTimeOffset>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="DateTimeOffset"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator DateTimeOffset?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<DateTimeOffset?>()._values.Cast<DateTimeOffset?>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="Guid"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator Guid[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<Guid>()._values.Cast<Guid>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="Guid"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator Guid?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<Guid?>()._values.Cast<Guid?>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="bool"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator bool[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<bool>()._values.Cast<bool>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="bool"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator bool?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<bool?>()._values.Cast<bool?>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="byte"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator byte[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<byte>()._values.Cast<byte>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="byte"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator byte?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<byte?>()._values.Cast<byte?>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="sbyte"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         [CLSCompliantAttribute(false)]
         public static implicit operator sbyte[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<sbyte>()._values.Cast<sbyte>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="sbyte"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         [CLSCompliantAttribute(false)]
         public static implicit operator sbyte?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<sbyte?>()._values.Cast<sbyte?>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="short"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator short[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<short>()._values.Cast<short>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="short"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator short?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<short?>()._values.Cast<short?>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="ushort"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         [CLSCompliantAttribute(false)]
         public static implicit operator ushort[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<ushort>()._values.Cast<ushort>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="ushort"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         [CLSCompliantAttribute(false)]
         public static implicit operator ushort?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<ushort?>()._values.Cast<ushort?>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="int"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator int[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<int>()._values.Cast<int>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="int"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator int?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<int?>()._values.Cast<int?>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="uint"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         [CLSCompliantAttribute(false)]
         public static implicit operator uint[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<uint>()._values.Cast<uint>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="uint"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         [CLSCompliantAttribute(false)]
         public static implicit operator uint?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<uint?>()._values.Cast<uint?>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="long"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator long[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<long>()._values.Cast<long>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="long"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator long?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<long?>()._values.Cast<long?>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="ulong"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         [CLSCompliantAttribute(false)]
         public static implicit operator ulong[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<ulong>()._values.Cast<ulong>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="ulong"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         [CLSCompliantAttribute(false)]
         public static implicit operator ulong?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<ulong?>()._values.Cast<ulong?>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="float"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator float[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<float>()._values.Cast<float>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="float"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator float?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<float?>()._values.Cast<float?>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="double"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator double[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<double>()._values.Cast<double>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="double"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator double?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<double?>()._values.Cast<double?>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to a <see cref="decimal"/> array.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator decimal[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<decimal>()._values.Cast<decimal>().ToArray();
         }
 
+        /// <summary>
+        /// Defines an implicit conversion of a <see cref="JsonArray"/> object to an array of nullable <see cref="decimal"/>.
+        /// </summary>
+        /// <param name="jsonArray">The object to convert.</param>
+        /// <returns>The converted object.</returns>
         public static implicit operator decimal?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<decimal?>()._values.Cast<decimal?>().ToArray();
         }
 
+        /// <summary>
+        /// Returns an enumerator that iterates through the collection.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="IEnumerator{T}"/> that can be used to iterate through the collection.
+        /// </returns>
         public IEnumerator<object> GetEnumerator()
         {
             return _values.GetEnumerator();

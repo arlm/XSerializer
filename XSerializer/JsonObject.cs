@@ -10,6 +10,10 @@ using XSerializer.Encryption;
 
 namespace XSerializer
 {
+    /// <summary>
+    /// A representation of a JSON object. Provides an advanced dynamic API as well as a standard
+    /// object API.
+    /// </summary>
     public sealed class JsonObject : DynamicObject, IEnumerable<KeyValuePair<string, object>>
     {
         private static readonly string[] _definedProjections =
@@ -37,6 +41,13 @@ namespace XSerializer
 
         private readonly IJsonSerializeOperationInfo _info;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonObject"/> class.
+        /// </summary>
+        /// <param name="dateTimeHandler">The object that determines how date time values are parsed.</param>
+        /// <param name="encryptionMechanism">The object the performs encryption operations.</param>
+        /// <param name="encryptKey">A key optionally used by the encryption mechanism during encryption operations.</param>
+        /// <param name="serializationState">An object optionally used by the encryption mechanism to carry state across multiple encryption operations.</param>
         public JsonObject(
             IDateTimeHandler dateTimeHandler = null,
             IEncryptionMechanism encryptionMechanism = null,
@@ -57,6 +68,12 @@ namespace XSerializer
             _info = info;
         }
 
+        /// <summary>
+        /// Add a property to the JSON object.
+        /// </summary>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <exception cref="ArgumentNullException">If <paramref name="name"/> is null.</exception>
         public void Add(string name, object value)
         {
             if (name == null)
@@ -81,6 +98,11 @@ namespace XSerializer
             }
         }
 
+        /// <summary>
+        /// Gets or sets the value associated with the specified property name.
+        /// </summary>
+        /// <param name="name">The name of the property</param>
+        /// <exception cref="KeyNotFoundException">When getting the value, if no property exists with the specified name.</exception>
         public object this[string name]
         {
             get
@@ -103,6 +125,11 @@ namespace XSerializer
             }
         }
 
+        /// <summary>
+        /// Decrypts the specified property, changing its value in place.
+        /// </summary>
+        /// <param name="name">The name of the property to decrypt.</param>
+        /// <returns>This instance of <see cref="JsonObject"/>.</returns>
         public JsonObject Decrypt(string name)
         {
             if (_info.EncryptionMechanism != null)
@@ -147,6 +174,11 @@ namespace XSerializer
             return this;
         }
 
+        /// <summary>
+        /// Encrypts the specified property, changing its value in place.
+        /// </summary>
+        /// <param name="name">The name of the property to encrypt.</param>
+        /// <returns>This instance of <see cref="JsonObject"/>.</returns>
         public JsonObject Encrypt(string name)
         {
             if (_info.EncryptionMechanism != null)
@@ -173,6 +205,14 @@ namespace XSerializer
             return this;
         }
 
+        /// <summary>
+        /// Gets the value of the specified property.
+        /// </summary>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="result">
+        /// When this method returns, contains the value of the property, if the name exists; otherwise, null.
+        /// </param>
+        /// <returns>True if the JSON object contains the specified property; otherwise false.</returns>
         public bool TryGetValue(string name, out object result)
         {
             if (_values.TryGetValue(name, out result)
@@ -184,6 +224,12 @@ namespace XSerializer
             return TryGetProjection(name, ref result);
         }
 
+        /// <summary>
+        /// Set the value of the specified property.
+        /// </summary>
+        /// <param name="name">The name of the property.</param>
+        /// <param name="value">The value of the property.</param>
+        /// <returns>True if the JSON object contains the specified property; otherwise false.</returns>
         public bool TrySetValue(string name, object value)
         {
             return TrySetValueImpl(name, GuardValue(value));
@@ -261,6 +307,12 @@ namespace XSerializer
             throw new XSerializerException("Invalid value for JsonObject member: " + value.GetType().FullName);
         }
 
+        /// <summary>
+        /// Returns an enumerator that iterates through the collection.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="IEnumerator{T}"/> that can be used to iterate through the collection.
+        /// </returns>
         public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
         {
             return _values.GetEnumerator();
@@ -271,6 +323,13 @@ namespace XSerializer
             return ((IEnumerable)_values).GetEnumerator();
         }
 
+        /// <summary>
+        /// Determines whether the specified <see cref="object"/> is equal to the current <see cref="object"/>.
+        /// </summary>
+        /// <param name="obj">The <see cref="object"/> to compare with the current <see cref="object"/>.</param>
+        /// <returns>
+        /// true if the specified <see cref="object"/> is equal to the current <see cref="object"/>; otherwise, false.
+        /// </returns>
         public override bool Equals(object obj)
         {
             var other = obj as JsonObject;
@@ -314,6 +373,12 @@ namespace XSerializer
             return true;
         }
 
+        /// <summary>
+        /// Serves as a hash function for a particular type. 
+        /// </summary>
+        /// <returns>
+        /// A hash code for the current <see cref="object"/>.
+        /// </returns>
         public override int GetHashCode()
         {
             unchecked
@@ -330,17 +395,39 @@ namespace XSerializer
             }
         }
 
+        /// <summary>
+        /// Provides the implementation for operations that get member values.
+        /// </summary>
+        /// <param name="binder">Provides information about the object that called the dynamic operation.</param>
+        /// <param name="result">The result of the get operation.</param>
+        /// <returns>
+        /// true if the operation is successful; otherwise, false.
+        /// </returns>
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
             return TryGetValue(binder.Name, out result);
         }
 
+        /// <summary>
+        /// Provides the implementation for operations that set member values.
+        /// </summary>
+        /// <param name="binder">Provides information about the object that called the dynamic operation.</param>
+        /// <param name="value">The value to set to the member.</param>
+        /// <returns>
+        /// true if the operation is successful; otherwise, false.
+        /// </returns>
         public override bool TrySetMember(SetMemberBinder binder, object value)
         {
             this[binder.Name] = value;
             return true;
         }
 
+        /// <summary>
+        /// Returns the enumeration of all dynamic member names. 
+        /// </summary>
+        /// <returns>
+        /// A sequence that contains dynamic member names.
+        /// </returns>
         public override IEnumerable<string> GetDynamicMemberNames()
         {
             return _values.Keys;
