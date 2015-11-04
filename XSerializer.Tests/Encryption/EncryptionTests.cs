@@ -22,7 +22,7 @@ namespace XSerializer.Tests.Encryption
         [Test]
         public void CanEncryptAndDecryptEntireRootObjectViaOptions()
         {
-            var encryptionMechanism = new Base64EncryptionMechanism();
+            IEncryptionMechanism encryptionMechanism = new Base64EncryptionMechanism();
 
             var serializer = new XmlSerializer<UnencryptedThing>(x => x.EncryptRootObject().WithEncryptionMechanism(encryptionMechanism));
 
@@ -48,7 +48,7 @@ namespace XSerializer.Tests.Encryption
         [Test]
         public void CanEncryptAndDecryptEntireRootObjectViaEncryptAttribute()
         {
-            var encryptionMechanism = new Base64EncryptionMechanism();
+            IEncryptionMechanism encryptionMechanism = new Base64EncryptionMechanism();
 
             var serializer = new XmlSerializer<EncryptedThing>(x => x.WithEncryptionMechanism(encryptionMechanism));
 
@@ -74,7 +74,7 @@ namespace XSerializer.Tests.Encryption
         [Test]
         public void EncryptsAndDecryptsPropertyWhenTheClassOfThePropertyTypeIsDecoratedWithEncryptAttribute()
         {
-            var encryptionMechanism = new Base64EncryptionMechanism();
+            IEncryptionMechanism encryptionMechanism = new Base64EncryptionMechanism();
 
             var serializer = new XmlSerializer<Container<EncryptedThing>>(x => x.WithEncryptionMechanism(encryptionMechanism));
 
@@ -103,7 +103,7 @@ namespace XSerializer.Tests.Encryption
         [Test]
         public void EncryptsAndDecryptsGenericListPropertyWhenTheListGenericArgumentClassIsDecoratedWithEncryptAttribute()
         {
-            var encryptionMechanism = new Base64EncryptionMechanism();
+            IEncryptionMechanism encryptionMechanism = new Base64EncryptionMechanism();
 
             var serializer = new XmlSerializer<Container<List<EncryptedThing>>>(x => x.WithEncryptionMechanism(encryptionMechanism));
 
@@ -147,7 +147,7 @@ namespace XSerializer.Tests.Encryption
         [Test]
         public void EncryptsAndDecryptsGenericDictionaryPropertyWhenTheKeyClassIsDecoratedWithEncryptAttribute()
         {
-            var encryptionMechanism = new Base64EncryptionMechanism();
+            IEncryptionMechanism encryptionMechanism = new Base64EncryptionMechanism();
 
             var serializer = new XmlSerializer<Container<Dictionary<EncryptedThing, int>>>(x => x.WithEncryptionMechanism(encryptionMechanism));
 
@@ -199,7 +199,7 @@ namespace XSerializer.Tests.Encryption
         [Test]
         public void EncryptsAndDecryptsGenericDictionaryPropertyWhenTheValueClassIsDecoratedWithEncryptAttribute()
         {
-            var encryptionMechanism = new Base64EncryptionMechanism();
+            IEncryptionMechanism encryptionMechanism = new Base64EncryptionMechanism();
 
             var serializer = new XmlSerializer<Container<Dictionary<int, EncryptedThing>>>(x => x.WithEncryptionMechanism(encryptionMechanism));
 

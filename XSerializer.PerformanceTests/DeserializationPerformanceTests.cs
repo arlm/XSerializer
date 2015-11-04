@@ -1,6 +1,8 @@
-﻿using System;
+﻿#if !DEBUG
+using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Xml;
 using NUnit.Framework;
 using XSerializer.Encryption;
@@ -78,6 +80,135 @@ namespace XSerializer.Tests.Performance
 
             Console.WriteLine("XmlSerializer Elapsed Time: {0}", xmlSerializerStopwatch.Elapsed);
             Console.WriteLine("CustomSerializer Elapsed Time: {0}", customSerializerStopwatch.Elapsed);
-        } 
+        }
+
+        [Test]
+        public void BenchmarkJson()
+        {
+            var json = @"{""Corge"":""abc"",""Grault"":123.45,""Garply"":true,""Bar"":{""Waldo"":""2015-09-16T11:43:50.8355302-04:00"",""Fred"":""862663f1-3dd1-46c2-97d5-f9034b784854""},""Bazes"":[{""Wibble"":2147483647,""Wobble"":9223372036854775807,""Wubble"":123.45},{""Wibble"":0,""Wobble"":0,""Wubble"":0.5},{""Wibble"":-2147483648,""Wobble"":-9223372036854775808,""Wubble"":-123.45}]}";
+
+            var newtonsoftJsonSerializer = new Newtonsoft.Json.JsonSerializer();
+            var xSerializerJsonSerializer = new JsonSerializer<Foo>();
+
+            var newtonsoftResult = NewtonsoftJsonDeserialize(newtonsoftJsonSerializer, json);
+            var xSerializerResult = XSerializerJsonDeserialize(xSerializerJsonSerializer, json);
+
+            var newtonsoftRoundTrip = NewtonsoftJsonSerialize(newtonsoftJsonSerializer, newtonsoftResult);
+            var xSerializerRoundTrip = XSerializerJsonSerialize(xSerializerJsonSerializer, xSerializerResult);
+
+            Assert.That(xSerializerRoundTrip, Is.EqualTo(newtonsoftRoundTrip));
+
+            const int iterations = 100000;
+
+            var newtonsoftStopwatch = Stopwatch.StartNew();
+            for (int i = 0; i < iterations; i++)
+            {
+                NewtonsoftJsonDeserialize(newtonsoftJsonSerializer, json);
+            }
+            newtonsoftStopwatch.Stop();
+
+            var xSerializerStopwatch = Stopwatch.StartNew();
+            for (int i = 0; i < iterations; i++)
+            {
+                XSerializerJsonDeserialize(xSerializerJsonSerializer, json);
+            }
+            xSerializerStopwatch.Stop();
+
+            Console.WriteLine("Deserialization");
+            Console.WriteLine("Newtonsoft Elapsed Time: {0}", newtonsoftStopwatch.Elapsed);
+            Console.WriteLine("XSerializer Elapsed Time: {0}", xSerializerStopwatch.Elapsed);
+        }
+
+        [Test]
+        public void BenchmarkNonDefaultConstructorJson()
+        {
+            var json = @"{""Corge"":""abc"",""Grault"":123.45,""Garply"":true,""Bar"":{""Waldo"":""2015-09-16T11:43:50.8355302-04:00"",""Fred"":""862663f1-3dd1-46c2-97d5-f9034b784854""},""Bazes"":[{""Wibble"":2147483647,""Wobble"":9223372036854775807,""Wubble"":123.45},{""Wibble"":0,""Wobble"":0,""Wubble"":0.5},{""Wibble"":-2147483648,""Wobble"":-9223372036854775808,""Wubble"":-123.45}]}";
+
+            var newtonsoftJsonSerializer = new Newtonsoft.Json.JsonSerializer();
+            var xSerializerJsonSerializer = new JsonSerializer<Foo2>();
+
+            var newtonsoftResult = NewtonsoftJsonDeserialize(newtonsoftJsonSerializer, json);
+            var xSerializerResult = XSerializerJsonDeserialize(xSerializerJsonSerializer, json);
+
+            var newtonsoftRoundTrip = NewtonsoftJsonSerialize(newtonsoftJsonSerializer, newtonsoftResult);
+            var xSerializerRoundTrip = XSerializerJsonSerialize(xSerializerJsonSerializer, xSerializerResult);
+
+            Assert.That(xSerializerRoundTrip, Is.EqualTo(newtonsoftRoundTrip));
+
+            const int iterations = 100000;
+
+            var newtonsoftStopwatch = Stopwatch.StartNew();
+            for (int i = 0; i < iterations; i++)
+            {
+                NewtonsoftJsonDeserialize(newtonsoftJsonSerializer, json);
+            }
+            newtonsoftStopwatch.Stop();
+
+            var xSerializerStopwatch = Stopwatch.StartNew();
+            for (int i = 0; i < iterations; i++)
+            {
+                XSerializerJsonDeserialize(xSerializerJsonSerializer, json);
+            }
+            xSerializerStopwatch.Stop();
+
+            Console.WriteLine("Deserialization");
+            Console.WriteLine("Newtonsoft Elapsed Time: {0}", newtonsoftStopwatch.Elapsed);
+            Console.WriteLine("XSerializer Elapsed Time: {0}", xSerializerStopwatch.Elapsed);
+        }
+
+        private static Foo NewtonsoftJsonDeserialize(Newtonsoft.Json.JsonSerializer jsonSerializer, string json)
+        {
+            using (var reader = new StringReader(json))
+            {
+                return (Foo)jsonSerializer.Deserialize(reader, typeof(Foo));
+            }
+        }
+
+        private static Foo XSerializerJsonDeserialize(JsonSerializer<Foo> jsonSerializer, string json)
+        {
+            using (var reader = new StringReader(json))
+            {
+                return jsonSerializer.Deserialize(reader);
+            }
+        }
+
+        private static Foo2 XSerializerJsonDeserialize(JsonSerializer<Foo2> jsonSerializer, string json)
+        {
+            using (var reader = new StringReader(json))
+            {
+                return jsonSerializer.Deserialize(reader);
+            }
+        }
+
+        private static string NewtonsoftJsonSerialize(Newtonsoft.Json.JsonSerializer jsonSerializer, Foo foo)
+        {
+            var sb = new StringBuilder();
+            using (var writer = new StringWriter(sb))
+            {
+                jsonSerializer.Serialize(writer, foo);
+            }
+            return sb.ToString();
+        }
+
+        private static string XSerializerJsonSerialize(JsonSerializer<Foo> jsonSerializer, Foo foo)
+        {
+            var sb = new StringBuilder();
+            using (var writer = new StringWriter(sb))
+            {
+                jsonSerializer.Serialize(writer, foo);
+            }
+            return sb.ToString();
+        }
+
+        private static string XSerializerJsonSerialize(JsonSerializer<Foo2> jsonSerializer, Foo2 foo)
+        {
+            var sb = new StringBuilder();
+            using (var writer = new StringWriter(sb))
+            {
+                jsonSerializer.Serialize(writer, foo);
+            }
+            return sb.ToString();
+        }
     }
 }
+#endif

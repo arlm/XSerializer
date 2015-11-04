@@ -92,7 +92,7 @@ namespace XSerializer
 
             try
             {
-                streamWriter = new StreamWriter(stream, encoding ?? Encoding.UTF8);
+                streamWriter = new StreamWriter(stream, encoding ?? Encoding.UTF8); 
 
                 var xmlWriter = new XSerializerXmlTextWriter(streamWriter, options)
                 {
@@ -242,6 +242,24 @@ namespace XSerializer
             return isSerializable;
         }
 
+        public static bool IsJsonSerializable(this PropertyInfo property, IEnumerable<ParameterInfo> constructorParameters)
+        {
+            if (property.DeclaringType.IsAnonymous())
+            {
+                return true;
+            }
+
+            if (Attribute.IsDefined(property, typeof(JsonIgnoreAttribute))
+                || Attribute.GetCustomAttributes(property).Any(attribute =>
+                    attribute.GetType().FullName == "Newtonsoft.Json.JsonIgnoreAttribute"))
+            {
+                return false;
+            }
+
+            var isSerializable = property.GetIndexParameters().Length == 0 && (property.IsReadWriteProperty() || property.IsJsonSerializableReadOnlyProperty(constructorParameters));
+            return isSerializable;
+        }
+        
         internal static bool IsReadWriteProperty(this PropertyInfo property)
         {
             var isReadWriteProperty = property.HasPublicGetter() && property.HasPublicSetter();
@@ -270,6 +288,38 @@ namespace XSerializer
                     ||
                     (property.PropertyType.IsReadOnlyDictionary())
                 ); // TODO: add additional serializable types?
+        }
+
+        internal static bool IsJsonSerializableReadOnlyProperty(this PropertyInfo propertyInfo, IEnumerable<ParameterInfo> constructorParameters = null)
+        {
+            if (!propertyInfo.IsReadOnlyProperty())
+            {
+                return false;
+            }
+
+            if (constructorParameters != null && constructorParameters.Any(p => string.Equals(p.Name, propertyInfo.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                return true;
+            }
+
+            if (typeof(IDictionary).IsAssignableFrom(propertyInfo.PropertyType)
+                || propertyInfo.PropertyType.IsAssignableToGenericIDictionary())
+            {
+                return true;
+            }
+
+            if (propertyInfo.PropertyType.IsArray)
+            {
+                return false;
+            }
+
+            if (typeof(IList).IsAssignableFrom(propertyInfo.PropertyType)
+                || propertyInfo.PropertyType.IsAssignableToGenericICollection())
+            {
+                return true;
+            }
+
+            return false;
         }
 
         internal static object ConvertIfNecessary(this object instance, Type targetType)
@@ -520,6 +570,13 @@ namespace XSerializer
             return isAssignableToIDictionary;
         }
 
+        internal static bool IsGenericIDictionary(this Type type)
+        {
+            return type.IsInterface
+                && type.IsGenericType
+                && type.GetGenericTypeDefinition() == typeof(IDictionary<,>);
+        }
+
         internal static bool IsAssignableToGenericIDictionary(this Type type)
         {
             var isAssignableToGenericIDictionary =
@@ -547,6 +604,18 @@ namespace XSerializer
             }
                 
             return iDictionaryType.GetGenericArguments()[0] == typeof(object) || iDictionaryType.GetGenericArguments()[1] == typeof(object);
+        }
+
+        internal static bool IsAssignableToGenericIDictionaryOfStringToAnything(this Type type)
+        {
+            if (type.IsAssignableToGenericIDictionary())
+            {
+                var dictionaryType = type.GetGenericIDictionaryType();
+                var args = dictionaryType.GetGenericArguments();
+                return args[0] == typeof(string);
+            }
+
+            return false;
         }
 
         internal static bool IsAssignableToNonGenericIEnumerable(this Type type)
@@ -586,6 +655,21 @@ namespace XSerializer
             return iEnumerableType.GetGenericArguments()[0] == typeof(object);
         }
 
+        internal static bool IsGenericICollection(this Type type)
+        {
+            return type.IsInterface
+                && type.IsGenericType
+                && type.GetGenericTypeDefinition() == typeof(ICollection<>);
+        }
+
+        internal static bool IsAssignableToGenericICollection(this Type type)
+        {
+            var isAssignableToGenericICollection =
+                type.IsGenericICollection()
+                || type.GetInterfaces().Any(i => i.IsGenericICollection());
+            return isAssignableToGenericICollection;
+        }
+
         internal static Type GetGenericIDictionaryType(this Type type)
         {
             if (type.IsInterface && type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IDictionary<,>))
@@ -604,6 +688,16 @@ namespace XSerializer
             }
 
             return type.GetInterfaces().First(i => i.IsGenericIEnumerable());
+        }
+
+        internal static Type GetGenericICollectionType(this Type type)
+        {
+            if (type.IsGenericICollection())
+            {
+                return type;
+            }
+
+            return type.GetInterfaces().First(i => i.IsGenericICollection());
         }
 
         private static bool HasPublicGetter(this PropertyInfo property)
@@ -897,22 +991,6 @@ namespace XSerializer
                 var key = typeof(T).GetHashCode();
                 key = (key * 397) ^ typeName.GetHashCode();
                 return key;
-            }
-        }
-
-        private class StringWriterWithEncoding : StringWriter
-        {
-            private readonly Encoding _encoding;
-
-            public StringWriterWithEncoding(StringBuilder sb, Encoding encoding)
-                : base(sb)
-            {
-                _encoding = encoding;
-            }
-
-            public override Encoding Encoding
-            {
-                get { return _encoding; }
             }
         }
     }
