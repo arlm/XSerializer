@@ -44,6 +44,14 @@ namespace XSerializer
         /// <summary>
         /// Initializes a new instance of the <see cref="JsonObject"/> class.
         /// </summary>
+        public JsonObject()
+            : this(null, null, null, null)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonObject"/> class.
+        /// </summary>
         /// <param name="dateTimeHandler">The object that determines how date time values are parsed.</param>
         /// <param name="encryptionMechanism">The object the performs encryption operations.</param>
         /// <param name="encryptKey">A key optionally used by the encryption mechanism during encryption operations.</param>
