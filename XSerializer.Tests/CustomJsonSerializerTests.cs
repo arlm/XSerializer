@@ -946,5 +946,33 @@ namespace XSerializer.Tests
         public class WidgetDerived : Widget
         {
         }
+
+        [Test]
+        public void CanDeserializeReadonlyPropertyWithNameSpecifiedByJsonPropertyAttribute()
+        {
+            var serializer = new JsonSerializer<Broken.Foo>();
+
+            var json = @"{""bar"":123}";
+
+            var foo = serializer.Deserialize(json);
+
+            Assert.That(foo.Bar, Is.EqualTo(123));
+        }
+
+        public static class Broken
+        {
+            public class Foo
+            {
+                private readonly int _bar;
+
+                public Foo(int bar)
+                {
+                    _bar = bar;
+                }
+
+                [JsonProperty("bar")]
+                public int Bar { get { return _bar; } }
+            }
+        }
     }
 }

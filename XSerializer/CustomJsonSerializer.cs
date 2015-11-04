@@ -240,7 +240,8 @@ namespace XSerializer
                 var matchingProperties =
                     _type.GetProperties().Where(p =>
                         p.Name.Equals(parameters[i].Name, StringComparison.OrdinalIgnoreCase)).ToList();
-                var switchLabel = matchingProperties.Count == 1 ? matchingProperties[0].Name : parameters[i].Name;
+                
+                var switchLabel = matchingProperties.Count == 1 ? matchingProperties[0].GetName() : parameters[i].Name;
 
                 switchCases[i] = Expression.SwitchCase(
                     Expression.Constant(serializerAndArgIndex),
@@ -308,9 +309,9 @@ namespace XSerializer
 
         private static bool IsDecoratedWithJsonConstructorAttribute(ConstructorInfo constructor)
         {
-            // TODO: Add support for JSON.NET's JsonConstructorAttribute.
-
-            return Attribute.IsDefined(constructor, typeof(JsonConstructorAttribute));
+            return Attribute.IsDefined(constructor, typeof(JsonConstructorAttribute))
+                   || Attribute.GetCustomAttributes(constructor).Any(attribute =>
+                       attribute.GetType().FullName == "Newtonsoft.Json.JsonConstructorAttribute");
         }
 
         private interface IObjectFactory

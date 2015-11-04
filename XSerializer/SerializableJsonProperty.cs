@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -22,9 +23,7 @@ namespace XSerializer
             }
 
             _mappings = mappings;
-
-            var jsonPropertyAttribute = (JsonPropertyAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(JsonPropertyAttribute));
-            _name = jsonPropertyAttribute.GetNameOrDefaultTo(propertyInfo.Name);
+            _name = propertyInfo.GetName();
 
             var propertyType = propertyInfo.PropertyType;
 
