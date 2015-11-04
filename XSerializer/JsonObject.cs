@@ -14,7 +14,7 @@ namespace XSerializer
     /// A representation of a JSON object. Provides an advanced dynamic API as well as a standard
     /// object API.
     /// </summary>
-    public sealed class JsonObject : DynamicObject, IEnumerable<KeyValuePair<string, object>>
+    public sealed class JsonObject : DynamicObject, IDictionary<string, object>
     {
         private static readonly string[] _definedProjections =
         {
@@ -131,6 +131,77 @@ namespace XSerializer
                     AddImpl(name, value);
                 }
             }
+        }
+
+        bool IDictionary<string, object>.ContainsKey(string key)
+        {
+            object dummy;
+            return TryGetValue(key, out dummy);
+        }
+
+        bool IDictionary<string, object>.Remove(string key)
+        {
+            if (_values.Remove(key))
+            {
+                RemoveProjections(key);
+                return true;
+            }
+
+            return false;
+        }
+
+        ICollection<string> IDictionary<string, object>.Keys
+        {
+            get { return _values.Keys; }
+        }
+
+        ICollection<object> IDictionary<string, object>.Values
+        {
+            get { return _values.Values; }
+        }
+
+        void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item)
+        {
+            Add(item.Key, item.Value);
+        }
+
+        void ICollection<KeyValuePair<string, object>>.Clear()
+        {
+            _values.Clear();
+            _numericStringValues.Clear();
+            _projections.Clear();
+        }
+
+        bool ICollection<KeyValuePair<string, object>>.Contains(KeyValuePair<string, object> item)
+        {
+            object value;
+            return TryGetValue(item.Key, out value) && Equals(item.Value, value);
+        }
+
+        void ICollection<KeyValuePair<string, object>>.CopyTo(KeyValuePair<string, object>[] array, int arrayIndex)
+        {
+            ((ICollection<KeyValuePair<string, object>>)_values).CopyTo(array, arrayIndex);
+        }
+
+        bool ICollection<KeyValuePair<string, object>>.Remove(KeyValuePair<string, object> item)
+        {
+            if (((ICollection<KeyValuePair<string, object>>)_values).Remove(item))
+            {
+                RemoveProjections(item.Key);
+                return true;
+            }
+
+            return false;
+        }
+
+        int ICollection<KeyValuePair<string, object>>.Count
+        {
+            get { return _values.Count; }
+        }
+
+        bool ICollection<KeyValuePair<string, object>>.IsReadOnly
+        {
+            get { return false; }
         }
 
         /// <summary>
