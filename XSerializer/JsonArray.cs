@@ -14,7 +14,7 @@ namespace XSerializer
     /// A representation of a JSON array. Provides an advanced dynamic API as well as a standard
     /// object API.
     /// </summary>
-    public sealed class JsonArray : DynamicObject, IEnumerable<object>
+    public sealed class JsonArray : DynamicObject, IList<object>
     {
         private delegate bool TryFunc(out object result);
 
@@ -165,6 +165,103 @@ namespace XSerializer
         public int Count
         {
             get { return _values.Count; }
+        }
+
+        /// <summary>
+        /// Removes all items from the <see cref="JsonArray"/>.
+        /// </summary>
+        public void Clear()
+        {
+            _values.Clear();
+            _transformableValues.Clear();
+            _transformedTypes.Clear();
+        }
+
+        /// <summary>
+        /// Determines whether the <see cref="JsonArray"/> contains a specific value.
+        /// </summary>
+        /// <param name="item">The object to locate in the <see cref="JsonArray"/>.</param>
+        /// <returns>
+        /// true if <paramref name="item"/> is found in the <see cref="JsonArray"/>; otherwise, false.
+        /// </returns>
+        public bool Contains(object item)
+        {
+            return _values.Contains(item);
+        }
+
+        /// <summary>
+        /// Copies the elements of the <see cref="JsonArray"/> to an <see cref="Array"/>, starting at a particular <see cref="Array"/> index.
+        /// </summary>
+        /// <param name="array">The one-dimensional <see cref="Array"/> that is the destination of the elements copied from <see cref="JsonArray"/>. The <see cref="Array"/> must have zero-based indexing.</param>
+        /// <param name="arrayIndex">The zero-based index in <paramref name="array"/> at which copying begins.</param>
+        public void CopyTo(object[] array, int arrayIndex)
+        {
+            _values.CopyTo(array, arrayIndex);
+        }
+
+        /// <summary>
+        /// Removes the first occurrence of a specific object from the <see cref="JsonArray"/>.
+        /// </summary>
+        /// <param name="item">The object to remove from the <see cref="JsonArray"/>.</param>
+        /// <returns>
+        /// true if <paramref name="item"/> was successfully removed from the <see cref="JsonArray"/>; otherwise, false. This method also returns false if <paramref name="item"/> is not found in the original <see cref="JsonArray"/>.
+        /// </returns>
+        public bool Remove(object item)
+        {
+            var index = _values.IndexOf(item);
+
+            if (index == -1)
+            {
+                return false;
+            }
+
+            _values.RemoveAt(index);
+            _transformableValues.RemoveAt(index);
+            return true;
+        }
+
+        /// <summary>
+        /// Determines the index of a specific item in the <see cref="JsonArray"/>.
+        /// </summary>
+        /// <returns>
+        /// The index of <paramref name="item"/> if found in the list; otherwise, -1.
+        /// </returns>
+        /// <param name="item">The object to locate in the <see cref="JsonArray"/>.</param>
+        public int IndexOf(object item)
+        {
+            return _values.IndexOf(item);
+        }
+
+        /// <summary>
+        /// Inserts an item to the <see cref="JsonArray"/> at the specified index.
+        /// </summary>
+        /// <param name="index">The zero-based index at which <paramref name="item"/> should be inserted.</param>
+        /// <param name="item">The object to insert into the <see cref="JsonArray"/>.</param>
+        public void Insert(int index, object item)
+        {
+            _values.Insert(index, item);
+            _transformableValues.Insert(index, null);
+        }
+
+        /// <summary>
+        /// Removes the <see cref="JsonArray"/> item at the specified index.
+        /// </summary>
+        /// <param name="index">The zero-based index of the item to remove.</param>
+        public void RemoveAt(int index)
+        {
+            _values.RemoveAt(index);
+            _transformableValues.RemoveAt(index);
+        }
+
+        /// <summary>
+        /// Gets a value indicating whether the <see cref="JsonArray"/> is read-only.
+        /// </summary>
+        /// <returns>
+        /// true if the <see cref="JsonArray"/> is read-only; otherwise, false.
+        /// </returns>
+        public bool IsReadOnly
+        {
+            get { return false; }
         }
 
         /// <summary>
