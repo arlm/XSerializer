@@ -43,7 +43,7 @@ namespace XSerializer
         /// type. This is typically a interface-to-implementation or astract-class-to-inheritor
         /// relationship, although a concrete-class-to-inheritor relationship is also possible.
         /// </summary>
-        IDictionary<Type, Type> ConcreteImplementationsByType { get; }
+        IDictionary<Type, Type> MappingsByType { get; }
 
         /// <summary>
         /// Gets a dictionary for property-to-type mappings, where the value type is assignable to
@@ -51,6 +51,6 @@ namespace XSerializer
         /// astract-class-to-inheritor relationship, although a concrete-class-to-inheritor relationship
         /// is also possible.
         /// </summary>
-        IDictionary<PropertyInfo, Type> ConcreteImplementationsByProperty { get; }
+        IDictionary<PropertyInfo, Type> MappingsByProperty { get; }
     }
 }

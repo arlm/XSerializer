@@ -8,15 +8,15 @@ namespace XSerializer
     /// operations.
     /// </summary>
     [AttributeUsage(AttributeTargets.Interface | AttributeTargets.Class | AttributeTargets.Property )]
-    public class JsonConcreteImplementationAttribute : Attribute
+    public class JsonMappingAttribute : Attribute
     {
         private readonly Type _type;
         
         /// <summary>
-        /// Initializes a new instance of the <see cref="JsonConcreteImplementationAttribute"/> class.
+        /// Initializes a new instance of the <see cref="JsonMappingAttribute"/> class.
         /// </summary>
         /// <param name="type">The <see cref="System.Type"/> to use in place of the type of the decorated member.</param>
-        public JsonConcreteImplementationAttribute(Type type)
+        public JsonMappingAttribute(Type type)
         {
             _type = type;
         }

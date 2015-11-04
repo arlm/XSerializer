@@ -8,32 +8,32 @@ namespace XSerializer
 {
     internal static class JsonSerializerFactory
     {
-        private static readonly ConcurrentDictionary<Tuple<Type, bool, JsonConcreteImplementations>, IJsonSerializerInternal> _cache =
-            new ConcurrentDictionary<Tuple<Type, bool, JsonConcreteImplementations>, IJsonSerializerInternal>();
+        private static readonly ConcurrentDictionary<Tuple<Type, bool, JsonMappings>, IJsonSerializerInternal> _cache =
+            new ConcurrentDictionary<Tuple<Type, bool, JsonMappings>, IJsonSerializerInternal>();
 
         public static IJsonSerializerInternal GetSerializer(
             Type type,
             bool encrypt,
-            IDictionary<Type, Type> concreteImplementationsByType,
-            IDictionary<PropertyInfo, Type> concreteImplementationsByProperty)
+            IDictionary<Type, Type> mappingsByType,
+            IDictionary<PropertyInfo, Type> mappingsByProperty)
         {
             return GetSerializer(
                 type, encrypt,
-                new JsonConcreteImplementations(concreteImplementationsByType, concreteImplementationsByProperty));
+                new JsonMappings(mappingsByType, mappingsByProperty));
         }
 
         public static IJsonSerializerInternal GetSerializer(
             Type type,
             bool encrypt,
-            JsonConcreteImplementations concreteImplementations)
+            JsonMappings mappings)
         {
             return _cache.GetOrAdd(
-                Tuple.Create(type, encrypt, concreteImplementations),
+                Tuple.Create(type, encrypt, mappings),
                 tuple =>
                 {
                     if (type == typeof(object))
                     {
-                        return DynamicJsonSerializer.Get(encrypt, concreteImplementations);
+                        return DynamicJsonSerializer.Get(encrypt, mappings);
                     }
 
                     if (type == typeof(string)
@@ -82,17 +82,17 @@ namespace XSerializer
                     if (type.IsAssignableToGenericIDictionary()
                         || typeof(IDictionary).IsAssignableFrom(type))
                     {
-                        return DictionaryJsonSerializer.Get(type, encrypt, concreteImplementations);
+                        return DictionaryJsonSerializer.Get(type, encrypt, mappings);
                     }
 
                     if (typeof(IEnumerable).IsAssignableFrom(type))
                     {
-                        return ListJsonSerializer.Get(type, encrypt, concreteImplementations);
+                        return ListJsonSerializer.Get(type, encrypt, mappings);
                     }
 
                     // TODO: Handle more types or possibly black-list some types or types of types.
 
-                    return CustomJsonSerializer.Get(type, encrypt, concreteImplementations);
+                    return CustomJsonSerializer.Get(type, encrypt, mappings);
                 });
         }
     }

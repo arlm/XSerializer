@@ -19,8 +19,8 @@ namespace XSerializer
         {
             Encoding = Encoding.UTF8;
             DateTimeHandler = XSerializer.DateTimeHandler.Default;
-            ConcreteImplementationsByType = new Dictionary<Type, Type>();
-            ConcreteImplementationsByProperty = new Dictionary<PropertyInfo, Type>();
+            MappingsByType = new Dictionary<Type, Type>();
+            MappingsByProperty = new Dictionary<PropertyInfo, Type>();
         }
 
         /// <summary>
@@ -61,7 +61,7 @@ namespace XSerializer
         /// relationship, although a concrete-class-to-inheritor relationship is also possible.
         /// </summary>
         /// <remarks>The default value is a new <see cref="Dictionary{TKey,TValue}"/>.</remarks>
-        public IDictionary<Type, Type> ConcreteImplementationsByType { get; set; }
+        public IDictionary<Type, Type> MappingsByType { get; set; }
 
         /// <summary>
         /// Gets a dictionary for property-to-type mappings, where the value type is assignable to
@@ -70,6 +70,6 @@ namespace XSerializer
         /// is also possible.
         /// </summary>
         /// <remarks>The default value is a new <see cref="Dictionary{TKey,TValue}"/>.</remarks>
-        public IDictionary<PropertyInfo, Type> ConcreteImplementationsByProperty { get; set; }
+        public IDictionary<PropertyInfo, Type> MappingsByProperty { get; set; }
     }
 }

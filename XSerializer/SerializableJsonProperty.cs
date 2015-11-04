@@ -8,44 +8,44 @@ namespace XSerializer
 {
     internal class SerializableJsonProperty
     {
-        private readonly JsonConcreteImplementations _concreteImplementations;
+        private readonly JsonMappings _mappings;
         private readonly string _name;
         private readonly Lazy<IJsonSerializerInternal> _serializer;
         private readonly Func<object, object> _getValue;
         private readonly Action<object, object> _setValue;
 
-        public SerializableJsonProperty(PropertyInfo propertyInfo, bool encrypt, JsonConcreteImplementations concreteImplementations)
+        public SerializableJsonProperty(PropertyInfo propertyInfo, bool encrypt, JsonMappings mappings)
         {
             if (propertyInfo.DeclaringType == null)
             {
                 throw new ArgumentException("The DeclaringType of the PropertyInfo must not be null.", "propertyInfo");
             }
 
-            _concreteImplementations = concreteImplementations;
+            _mappings = mappings;
 
             var jsonPropertyAttribute = (JsonPropertyAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(JsonPropertyAttribute));
             _name = jsonPropertyAttribute.GetNameOrDefaultTo(propertyInfo.Name);
 
             var propertyType = propertyInfo.PropertyType;
 
-            if (_concreteImplementations.ConcreteImplementationsByProperty.ContainsKey(propertyInfo))
+            if (_mappings.MappingsByProperty.ContainsKey(propertyInfo))
             {
-                propertyType = _concreteImplementations.ConcreteImplementationsByProperty[propertyInfo];
+                propertyType = _mappings.MappingsByProperty[propertyInfo];
             }
-            else if (_concreteImplementations.ConcreteImplementationsByType.ContainsKey(propertyType))
+            else if (_mappings.MappingsByType.ContainsKey(propertyType))
             {
-                propertyType = _concreteImplementations.ConcreteImplementationsByType[propertyType];
+                propertyType = _mappings.MappingsByType[propertyType];
             }
             else
             {
-                var concreteImplementationAttribute = (JsonConcreteImplementationAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(JsonConcreteImplementationAttribute));
-                if (concreteImplementationAttribute != null)
+                var mappingAttribute = (JsonMappingAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(JsonMappingAttribute));
+                if (mappingAttribute != null)
                 {
-                    propertyType = concreteImplementationAttribute.Type;
+                    propertyType = mappingAttribute.Type;
                 }
             }
 
-            _serializer = new Lazy<IJsonSerializerInternal>(() => JsonSerializerFactory.GetSerializer(propertyType, encrypt, _concreteImplementations));
+            _serializer = new Lazy<IJsonSerializerInternal>(() => JsonSerializerFactory.GetSerializer(propertyType, encrypt, _mappings));
 
             _getValue = GetGetValueFunc(propertyInfo, propertyInfo.DeclaringType);
 

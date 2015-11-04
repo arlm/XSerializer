@@ -6,27 +6,27 @@ namespace XSerializer
 {
     internal sealed class DynamicJsonSerializer : IJsonSerializerInternal
     {
-        private static readonly ConcurrentDictionary<Tuple<bool, JsonConcreteImplementations>, DynamicJsonSerializer> _cache = new ConcurrentDictionary<Tuple<bool, JsonConcreteImplementations>, DynamicJsonSerializer>();
+        private static readonly ConcurrentDictionary<Tuple<bool, JsonMappings>, DynamicJsonSerializer> _cache = new ConcurrentDictionary<Tuple<bool, JsonMappings>, DynamicJsonSerializer>();
         private static readonly ConcurrentDictionary<Tuple<Type, bool>, IJsonSerializerInternal> _serializerCache = new ConcurrentDictionary<Tuple<Type, bool>, IJsonSerializerInternal>();
 
         private readonly JsonObjectSerializer _jsonObjectSerializer;
         private readonly JsonArraySerializer _jsonArraySerializer;
 
         private readonly bool _encrypt;
-        private readonly JsonConcreteImplementations _concreteImplementations;
+        private readonly JsonMappings _mappings;
 
-        private DynamicJsonSerializer(bool encrypt, JsonConcreteImplementations concreteImplementations)
+        private DynamicJsonSerializer(bool encrypt, JsonMappings mappings)
         {
             _jsonObjectSerializer = new JsonObjectSerializer(this);
             _jsonArraySerializer = new JsonArraySerializer(this);
 
             _encrypt = encrypt;
-            _concreteImplementations = concreteImplementations;
+            _mappings = mappings;
         }
 
-        public static DynamicJsonSerializer Get(bool encrypt, JsonConcreteImplementations concreteImplementations)
+        public static DynamicJsonSerializer Get(bool encrypt, JsonMappings mappings)
         {
-            return _cache.GetOrAdd(Tuple.Create(encrypt, concreteImplementations), t => new DynamicJsonSerializer(t.Item1, t.Item2));
+            return _cache.GetOrAdd(Tuple.Create(encrypt, mappings), t => new DynamicJsonSerializer(t.Item1, t.Item2));
         }
 
         public void SerializeObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
@@ -100,15 +100,15 @@ namespace XSerializer
             
             if (concreteType.IsAssignableToGenericIDictionaryOfStringToAnything())
             {
-                return DictionaryJsonSerializer.Get(concreteType, _encrypt, _concreteImplementations);
+                return DictionaryJsonSerializer.Get(concreteType, _encrypt, _mappings);
             }
             
             if (typeof(IEnumerable).IsAssignableFrom(concreteType))
             {
-                return ListJsonSerializer.Get(concreteType, _encrypt, _concreteImplementations);
+                return ListJsonSerializer.Get(concreteType, _encrypt, _mappings);
             }
 
-            return CustomJsonSerializer.Get(concreteType, _encrypt, _concreteImplementations);
+            return CustomJsonSerializer.Get(concreteType, _encrypt, _mappings);
         }
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)

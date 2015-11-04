@@ -444,7 +444,7 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CannotDeserializeInterfaceWhenNoConcreteTypeIsSpecified()
+        public void CannotDeserializeInterfaceWhenNoMappingIsSpecified()
         {
             var json = @"{""Eggs"":123}";
 
@@ -454,7 +454,7 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanDeserializeInterfaceWhenConcreteTypeIsSpecifiedViaAttribute()
+        public void CanDeserializeInterfaceWhenMappingIsSpecifiedViaAttribute()
         {
             var json = @"{""Eggs"":123}";
 
@@ -467,12 +467,12 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanDeserializeInterfaceWhenConcreteTypeIsSpecifiedViaConfiguration()
+        public void CanDeserializeInterfaceWhenMappingIsSpecifiedViaConfiguration()
         {
             var json = @"{""Eggs"":123}";
 
             var configuration = new JsonSerializerConfiguration();
-            configuration.ConcreteImplementationsByType.Add(typeof(ISpam), typeof(Spam));
+            configuration.MappingsByType.Add(typeof(ISpam), typeof(Spam));
             var serializer = new JsonSerializer<ISpam>(configuration);
 
             var spam = serializer.Deserialize(json);
@@ -482,12 +482,12 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanDeserializeInterfaceWhenConcreteTypeIsSpecifiedByBothAttributeAndConfiguration()
+        public void CanDeserializeInterfaceWhenMappingIsSpecifiedByBothAttributeAndConfiguration()
         {
             var json = @"{""Eggs"":123}";
 
             var configuration = new JsonSerializerConfiguration();
-            configuration.ConcreteImplementationsByType.Add(typeof(IHam), typeof(Bacon));
+            configuration.MappingsByType.Add(typeof(IHam), typeof(Bacon));
             var serializer = new JsonSerializer<IHam>(configuration);
 
             var ham = serializer.Deserialize(json);
@@ -497,7 +497,7 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanSerializeInterfacePropertyWithoutSpecifyingConcreteType()
+        public void CanSerializeInterfacePropertyWithoutSpecifyingMapping()
         {
             var serializer = new JsonSerializer<Breakfast>();
 
@@ -515,7 +515,7 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanDeserializeInterfacePropertyWhenConcreteTypeIsSpecifiedViaAttributedInterface()
+        public void CanDeserializeInterfacePropertyWhenMappingIsSpecifiedViaAttributedInterface()
         {
             var serializer = new JsonSerializer<Lunch>();
 
@@ -528,10 +528,10 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanDeserializeInterfacePropertyWhenConcreteTypeIsSpecifiedViaConfigurationByType()
+        public void CanDeserializeInterfacePropertyWhenMappingIsSpecifiedViaConfigurationByType()
         {
             var configuration = new JsonSerializerConfiguration();
-            configuration.ConcreteImplementationsByType.Add(typeof(ISpam), typeof(Spam));
+            configuration.MappingsByType.Add(typeof(ISpam), typeof(Spam));
             var serializer = new JsonSerializer<Breakfast>(configuration);
 
             var json = @"{""Menu"":{""Eggs"":123}}";
@@ -543,7 +543,7 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanDeserializeInterfacePropertyWhenConcreteTypeIsSpecifiedViaAttributedProperty()
+        public void CanDeserializeInterfacePropertyWhenMappingIsSpecifiedViaAttributedProperty()
         {
             var serializer = new JsonSerializer<Dinner>();
 
@@ -556,10 +556,10 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void CanDeserializeInterfacePropertyWhenConcreteTypeIsSpecifiedViaConfigurationByProperty()
+        public void CanDeserializeInterfacePropertyWhenMappingIsSpecifiedViaConfigurationByProperty()
         {
             var configuration = new JsonSerializerConfiguration();
-            configuration.ConcreteImplementationsByProperty.Add(typeof(Breakfast).GetProperty("Menu"), typeof(Spam));
+            configuration.MappingsByProperty.Add(typeof(Breakfast).GetProperty("Menu"), typeof(Spam));
             var serializer = new JsonSerializer<Breakfast>(configuration);
 
             var json = @"{""Menu"":{""Eggs"":123}}";
@@ -571,11 +571,11 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void GivenMultipleSpecifiedConcreteTypesConfigurationByPropertyHasHighestPriority()
+        public void GivenMultipleMappingsConfigurationByPropertyHasHighestPriority()
         {
             var configuration = new JsonSerializerConfiguration();
-            configuration.ConcreteImplementationsByProperty.Add(typeof(FourthMeal).GetProperty("Menu"), typeof(Prosciutto));
-            configuration.ConcreteImplementationsByType.Add(typeof(IHam), typeof(ChristmasHam));
+            configuration.MappingsByProperty.Add(typeof(FourthMeal).GetProperty("Menu"), typeof(Prosciutto));
+            configuration.MappingsByType.Add(typeof(IHam), typeof(ChristmasHam));
             var serializer = new JsonSerializer<FourthMeal>(configuration);
 
             var json = @"{""Menu"":{""Eggs"":123}}";
@@ -587,10 +587,10 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void GivenMultipleSpecifiedConcreteTypesConfigurationByInterfaceHasSecondHighestPriority()
+        public void GivenMultipleMappingsConfigurationByInterfaceHasSecondHighestPriority()
         {
             var configuration = new JsonSerializerConfiguration();
-            configuration.ConcreteImplementationsByType.Add(typeof(IHam), typeof(Prosciutto));
+            configuration.MappingsByType.Add(typeof(IHam), typeof(Prosciutto));
             var serializer = new JsonSerializer<FourthMeal>(configuration);
 
             var json = @"{""Menu"":{""Eggs"":123}}";
@@ -602,7 +602,7 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void GivenMultipleSpecifiedConcreteTypesAttributedPropertyHasThirdHighestPriority()
+        public void GivenMultipleMappingsAttributedPropertyHasThirdHighestPriority()
         {
             var serializer = new JsonSerializer<FourthMeal>();
 
@@ -648,7 +648,7 @@ namespace XSerializer.Tests
         public void MismatchedConfigurationByTypeThrowsExceptionOnDeserialization()
         {
             var configuration = new JsonSerializerConfiguration();
-            configuration.ConcreteImplementationsByType.Add(typeof(IHam), typeof(Spam));
+            configuration.MappingsByType.Add(typeof(IHam), typeof(Spam));
             var serializer = new JsonSerializer<Vomit>(configuration);
 
             var json = @"{""Menu"":{""Eggs"":123}}";
@@ -660,7 +660,7 @@ namespace XSerializer.Tests
         public void MismatchedConfigurationByPropertyThrowsExceptionOnDeserialization()
         {
             var configuration = new JsonSerializerConfiguration();
-            configuration.ConcreteImplementationsByProperty.Add(typeof(Lunch).GetProperty("Menu"), typeof(Spam));
+            configuration.MappingsByProperty.Add(typeof(Lunch).GetProperty("Menu"), typeof(Spam));
             var serializer = new JsonSerializer<Vomit>(configuration);
 
             var json = @"{""Menu"":{""Eggs"":123}}";
@@ -672,7 +672,7 @@ namespace XSerializer.Tests
         public void CanOverrideAbstractClass()
         {
             var configuration = new JsonSerializerConfiguration();
-            configuration.ConcreteImplementationsByType.Add(typeof(WidgetBase), typeof(Widget));
+            configuration.MappingsByType.Add(typeof(WidgetBase), typeof(Widget));
             var serializer = new JsonSerializer<WidgetBase>(configuration);
 
             var json = @"{""Gadget"":123}";
@@ -687,7 +687,7 @@ namespace XSerializer.Tests
         public void CanOverrideConcreteClass()
         {
             var configuration = new JsonSerializerConfiguration();
-            configuration.ConcreteImplementationsByType.Add(typeof(Widget), typeof(WidgetDerived));
+            configuration.MappingsByType.Add(typeof(Widget), typeof(WidgetDerived));
             var serializer = new JsonSerializer<Widget>(configuration);
 
             var json = @"{""Gadget"":123}";
@@ -859,7 +859,7 @@ namespace XSerializer.Tests
             public Waldo Waldo { get; set; }
         }
 
-        [JsonConcreteImplementation(typeof(Ham))]
+        [JsonMapping(typeof(Ham))]
         public interface IHam
         {
             int Eggs { get; set; }
@@ -907,17 +907,17 @@ namespace XSerializer.Tests
 
         public class Dinner
         {
-            [JsonConcreteImplementation(typeof(Spam))]
+            [JsonMapping(typeof(Spam))]
             public ISpam Menu { get; set; }
         }
 
         public class FourthMeal
         {
-            [JsonConcreteImplementation(typeof(Bacon))]
+            [JsonMapping(typeof(Bacon))]
             public IHam Menu { get; set; }
         }
 
-        [JsonConcreteImplementation(typeof(Spam))]
+        [JsonMapping(typeof(Spam))]
         public interface IRetch
         {
             int Eggs { get; set; }
@@ -930,7 +930,7 @@ namespace XSerializer.Tests
 
         public class DryHeave
         {
-            [JsonConcreteImplementation(typeof(Spam))]
+            [JsonMapping(typeof(Spam))]
             public IHam Menu { get; set; }
         }
 
