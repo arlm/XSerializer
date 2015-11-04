@@ -264,7 +264,7 @@ namespace XSerializer
                 EncryptionMechanism = _configuration.EncryptionMechanism,
                 EncryptKey = _configuration.EncryptKey,
                 SerializationState = new SerializationState(),
-                DateTimeHandler = _configuration.DateTimeHandler
+                DateTimeHandler = _configuration.DateTimeHandler ?? DateTimeHandler.Default
             };
         }
     }
