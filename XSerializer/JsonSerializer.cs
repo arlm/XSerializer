@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.IO;
 using System.Linq.Expressions;
 using System.Text;
@@ -25,7 +24,7 @@ namespace XSerializer
                     var jsonSerializerType = typeof(JsonSerializer<>).MakeGenericType(t);
                     var ctor = jsonSerializerType.GetConstructor(new[] { typeof(IJsonSerializerConfiguration) });
 
-                    Debug.Assert(ctor != null);
+                    if (ctor == null) throw new InvalidOperationException("A source code change has resulted in broken reflection. typeof(JsonSerializer<>).MakeGenericType(type).GetConstructor(new[] { typeof(IJsonSerializerConfiguration) })");
 
                     var parameter = Expression.Parameter(typeof(IJsonSerializerConfiguration), "configuration");
 
@@ -151,7 +150,6 @@ namespace XSerializer
         {
             return new JsonSerializeOperationInfo
             {
-                RedactEnabled = _configuration.RedactEnabled,
                 EncryptionMechanism = _configuration.EncryptionMechanism,
                 EncryptKey = _configuration.EncryptKey,
                 SerializationState = new SerializationState(),

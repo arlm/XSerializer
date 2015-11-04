@@ -6,10 +6,12 @@ using XSerializer.Encryption;
 
 namespace XSerializer
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public interface IJsonSerializerConfiguration
     {
         Encoding Encoding { get; }
-        bool RedactEnabled { get; }
         IEncryptionMechanism EncryptionMechanism { get; }
         object EncryptKey { get; }
         bool EncryptRootObject { get; }
