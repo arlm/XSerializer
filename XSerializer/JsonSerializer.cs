@@ -10,24 +10,33 @@ namespace XSerializer
 {
     public static class JsonSerializer
     {
-        private static readonly ConcurrentDictionary<Type, Func<IXSerializer>> _createXmlSerializerFuncs = new ConcurrentDictionary<Type, Func<IXSerializer>>();
+        private static readonly ConcurrentDictionary<Type, Func<IJsonSerializerConfiguration, IXSerializer>> _createXmlSerializerFuncs = new ConcurrentDictionary<Type, Func<IJsonSerializerConfiguration, IXSerializer>>();
 
         public static IXSerializer Create(Type type)
+        {
+            return Create(type, null);
+        }
+
+        public static IXSerializer Create(Type type, IJsonSerializerConfiguration configuration)
         {
             var createJsonSerializer = _createXmlSerializerFuncs.GetOrAdd(
                 type, t =>
                 {
                     var jsonSerializerType = typeof(JsonSerializer<>).MakeGenericType(t);
-                    var ctor = jsonSerializerType.GetConstructor(new Type[0]);
+                    var ctor = jsonSerializerType.GetConstructor(new[] { typeof(IJsonSerializerConfiguration) });
 
                     Debug.Assert(ctor != null);
 
-                    var lambda = Expression.Lambda<Func<IXSerializer>>(Expression.New(ctor));
+                    var parameter = Expression.Parameter(typeof(IJsonSerializerConfiguration), "configuration");
+
+                    var lambda = Expression.Lambda<Func<IJsonSerializerConfiguration, IXSerializer>>(
+                        Expression.New(ctor, parameter),
+                        parameter);
 
                     return lambda.Compile();
                 });
 
-            return createJsonSerializer();
+            return createJsonSerializer(configuration ?? new JsonSerializerConfiguration());
         }
     }
 
