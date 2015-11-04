@@ -19,7 +19,7 @@
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <licenseUrl>https://github.com/QuickenLoans/XSerializer/blob/master/LICENSE.md</licenseUrl>
         <projectUrl>https://github.com/QuickenLoans/XSerializer</projectUrl>
-        <iconUrl>https://raw.githubusercontent.com/QuickenLoans/XSerializer/master/XSerializer/XSerializerLogo.png</iconUrl>
+        <iconUrl>https://raw.githubusercontent.com/QuickenLoans/XSerializer/0.3.0-rc1/XSerializer/XSerializerLogo.png</iconUrl>
     </metadata>
     <files>
     </files>
