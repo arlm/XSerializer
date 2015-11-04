@@ -39,5 +39,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion("0.3.0")]
 [assembly: AssemblyInformationalVersion("0.3.0-alpha08")]
 
+#if !BUILD
 [assembly: InternalsVisibleTo("XSerializer.Tests")]
 [assembly: InternalsVisibleTo("XSerializer.PerformanceTests")]
+#endif
