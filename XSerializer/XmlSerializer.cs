@@ -1,4 +1,5 @@
-﻿using System;
+﻿#pragma warning disable 612
+using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
@@ -175,3 +176,4 @@ namespace XSerializer
         }
     }
 }
+#pragma warning restore 612

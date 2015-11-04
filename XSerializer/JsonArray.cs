@@ -880,11 +880,13 @@ namespace XSerializer
             return jsonArray.TransformItems<byte?>()._values.Cast<byte?>().ToArray();
         }
 
+        [CLSCompliantAttribute(false)]
         public static implicit operator sbyte[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<sbyte>()._values.Cast<sbyte>().ToArray();
         }
 
+        [CLSCompliantAttribute(false)]
         public static implicit operator sbyte?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<sbyte?>()._values.Cast<sbyte?>().ToArray();
@@ -900,11 +902,13 @@ namespace XSerializer
             return jsonArray.TransformItems<short?>()._values.Cast<short?>().ToArray();
         }
 
+        [CLSCompliantAttribute(false)]
         public static implicit operator ushort[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<ushort>()._values.Cast<ushort>().ToArray();
         }
 
+        [CLSCompliantAttribute(false)]
         public static implicit operator ushort?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<ushort?>()._values.Cast<ushort?>().ToArray();
@@ -920,11 +924,13 @@ namespace XSerializer
             return jsonArray.TransformItems<int?>()._values.Cast<int?>().ToArray();
         }
 
+        [CLSCompliantAttribute(false)]
         public static implicit operator uint[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<uint>()._values.Cast<uint>().ToArray();
         }
 
+        [CLSCompliantAttribute(false)]
         public static implicit operator uint?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<uint?>()._values.Cast<uint?>().ToArray();
@@ -940,11 +946,13 @@ namespace XSerializer
             return jsonArray.TransformItems<long?>()._values.Cast<long?>().ToArray();
         }
 
+        [CLSCompliantAttribute(false)]
         public static implicit operator ulong[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<ulong>()._values.Cast<ulong>().ToArray();
         }
 
+        [CLSCompliantAttribute(false)]
         public static implicit operator ulong?[](JsonArray jsonArray)
         {
             return jsonArray.TransformItems<ulong?>()._values.Cast<ulong?>().ToArray();

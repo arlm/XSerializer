@@ -20,7 +20,7 @@
         /// <remarks>
         /// <para>
         /// The <see cref="Encrypt"/> method should be implemented
-        /// in such a way that it treates the value of <see cref="encryptKey"/> as
+        /// in such a way that it treates the value of <paramref name="encryptKey"/> as
         /// if it were a key to a dictionary. The value of that dictionary should
         /// contain encryption parameters specific to a particular invocation of the
         /// <see cref="Encrypt"/> method. If the value of <paramref name="encryptKey"/>
