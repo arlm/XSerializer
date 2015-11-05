@@ -19,10 +19,10 @@ namespace XSerializer
         private static readonly ConcurrentDictionary<Type, Func<IJsonSerializerConfiguration, IXSerializer>> _createXmlSerializerFuncs = new ConcurrentDictionary<Type, Func<IJsonSerializerConfiguration, IXSerializer>>();
 
         /// <summary>
-        /// Create an instance of IXmlSerializer for the given type using a default configuration.
+        /// Create an instance of <see cref="IXSerializer"/> for the given type using a default configuration.
         /// </summary>
         /// <param name="type">The type of the object that the serializer will operate on.</param>
-        /// <returns>An instance of IXmlSerializer.</returns>
+        /// <returns>An instance of <see cref="IXSerializer"/>.</returns>
         /// <remarks>
         /// An instance of the generic <see cref="JsonSerializer{T}"/> class of type <paramref name="type"/>
         /// is returned from this method.
@@ -33,11 +33,11 @@ namespace XSerializer
         }
 
         /// <summary>
-        /// Create an instance of IXmlSerializer for the given type using the specified configuration.
+        /// Create an instance of <see cref="IXSerializer"/> for the given type using the specified configuration.
         /// </summary>
         /// <param name="type">The type of the object that the serializer will operate on.</param>
         /// <param name="configuration">The configuration for the serializer.</param>
-        /// <returns>An instance of IXmlSerializer.</returns>
+        /// <returns>An instance of <see cref="IXSerializer"/>.</returns>
         /// <remarks>
         /// An instance of the generic <see cref="JsonSerializer{T}"/> class of type <paramref name="type"/>
         /// is returned from this method.
@@ -66,7 +66,7 @@ namespace XSerializer
     }
 
     /// <summary>
-    /// An object used for serializing and deserializing objects of type <typeparamref name="T"/>.
+    /// An object used for JSON serializing and deserializing objects of type <typeparamref name="T"/>.
     /// </summary>
     /// <typeparam name="T">The type of object to serialize and deserialize.</typeparam>
     public class JsonSerializer<T> : IXSerializer

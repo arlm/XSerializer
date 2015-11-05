@@ -1,5 +1,4 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 
 namespace XSerializer
 {
@@ -53,10 +52,5 @@ namespace XSerializer
         /// </param>
         /// <returns>An object created from the <see cref="TextReader"/>.</returns>
         object Deserialize(TextReader textReader);
-    }
-
-    [Obsolete]
-    public interface IXmlSerializer : IXSerializer
-    {
     }
 }
