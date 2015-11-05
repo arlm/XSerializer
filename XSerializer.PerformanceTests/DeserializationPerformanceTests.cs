@@ -90,7 +90,7 @@ namespace XSerializer.Tests.Performance
             var newtonsoftJsonSerializer = new Newtonsoft.Json.JsonSerializer();
             var xSerializerJsonSerializer = new JsonSerializer<Foo>();
 
-            var newtonsoftResult = NewtonsoftJsonDeserialize(newtonsoftJsonSerializer, json);
+            var newtonsoftResult = NewtonsoftJsonDeserializeFoo(newtonsoftJsonSerializer, json);
             var xSerializerResult = XSerializerJsonDeserialize(xSerializerJsonSerializer, json);
 
             var newtonsoftRoundTrip = NewtonsoftJsonSerialize(newtonsoftJsonSerializer, newtonsoftResult);
@@ -103,7 +103,7 @@ namespace XSerializer.Tests.Performance
             var newtonsoftStopwatch = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++)
             {
-                NewtonsoftJsonDeserialize(newtonsoftJsonSerializer, json);
+                NewtonsoftJsonDeserializeFoo(newtonsoftJsonSerializer, json);
             }
             newtonsoftStopwatch.Stop();
 
@@ -127,7 +127,7 @@ namespace XSerializer.Tests.Performance
             var newtonsoftJsonSerializer = new Newtonsoft.Json.JsonSerializer();
             var xSerializerJsonSerializer = new JsonSerializer<Foo2>();
 
-            var newtonsoftResult = NewtonsoftJsonDeserialize(newtonsoftJsonSerializer, json);
+            var newtonsoftResult = NewtonsoftJsonDeserializeFoo2(newtonsoftJsonSerializer, json);
             var xSerializerResult = XSerializerJsonDeserialize(xSerializerJsonSerializer, json);
 
             var newtonsoftRoundTrip = NewtonsoftJsonSerialize(newtonsoftJsonSerializer, newtonsoftResult);
@@ -140,7 +140,7 @@ namespace XSerializer.Tests.Performance
             var newtonsoftStopwatch = Stopwatch.StartNew();
             for (int i = 0; i < iterations; i++)
             {
-                NewtonsoftJsonDeserialize(newtonsoftJsonSerializer, json);
+                NewtonsoftJsonDeserializeFoo2(newtonsoftJsonSerializer, json);
             }
             newtonsoftStopwatch.Stop();
 
@@ -156,11 +156,19 @@ namespace XSerializer.Tests.Performance
             Console.WriteLine("XSerializer Elapsed Time: {0}", xSerializerStopwatch.Elapsed);
         }
 
-        private static Foo NewtonsoftJsonDeserialize(Newtonsoft.Json.JsonSerializer jsonSerializer, string json)
+        private static Foo NewtonsoftJsonDeserializeFoo(Newtonsoft.Json.JsonSerializer jsonSerializer, string json)
         {
             using (var reader = new StringReader(json))
             {
                 return (Foo)jsonSerializer.Deserialize(reader, typeof(Foo));
+            }
+        }
+
+        private static Foo2 NewtonsoftJsonDeserializeFoo2(Newtonsoft.Json.JsonSerializer jsonSerializer, string json)
+        {
+            using (var reader = new StringReader(json))
+            {
+                return (Foo2)jsonSerializer.Deserialize(reader, typeof(Foo2));
             }
         }
 
@@ -181,6 +189,16 @@ namespace XSerializer.Tests.Performance
         }
 
         private static string NewtonsoftJsonSerialize(Newtonsoft.Json.JsonSerializer jsonSerializer, Foo foo)
+        {
+            var sb = new StringBuilder();
+            using (var writer = new StringWriter(sb))
+            {
+                jsonSerializer.Serialize(writer, foo);
+            }
+            return sb.ToString();
+        }
+
+        private static string NewtonsoftJsonSerialize(Newtonsoft.Json.JsonSerializer jsonSerializer, Foo2 foo)
         {
             var sb = new StringBuilder();
             using (var writer = new StringWriter(sb))
