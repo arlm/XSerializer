@@ -10,31 +10,31 @@ namespace XSerializer
 {
     internal sealed class CustomJsonSerializer : IJsonSerializerInternal
     {
-        private static readonly ConcurrentDictionary<Tuple<Type, bool, JsonConcreteImplementations>, CustomJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool, JsonConcreteImplementations>, CustomJsonSerializer>();
+        private static readonly ConcurrentDictionary<Tuple<Type, bool, JsonMappings>, CustomJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool, JsonMappings>, CustomJsonSerializer>();
 
         private readonly ConcurrentDictionary<Type, List<SerializableJsonProperty>> _serializingPropertiesMap = new ConcurrentDictionary<Type, List<SerializableJsonProperty>>();
         private readonly Dictionary<string, SerializableJsonProperty> _deserializingPropertiesMap;
 
         private readonly Type _type;
-        private readonly JsonConcreteImplementations _concreteImplementations;
+        private readonly JsonMappings _mappings;
         private readonly bool _encrypt;
         private readonly Lazy<Func<IObjectFactory>> _createObjectFactory;
 
-        private CustomJsonSerializer(Type type, bool encrypt, JsonConcreteImplementations concreteImplementations)
+        private CustomJsonSerializer(Type type, bool encrypt, JsonMappings mappings)
         {
-            _concreteImplementations = concreteImplementations;
+            _mappings = mappings;
             _type = type;
 
-            if (_concreteImplementations.ConcreteImplementationsByType.ContainsKey(type))
+            if (_mappings.MappingsByType.ContainsKey(type))
             {
-                _type = _concreteImplementations.ConcreteImplementationsByType[type];
+                _type = _mappings.MappingsByType[type];
             }
             else
             {
-                var concreteImplementationAttribute = (JsonConcreteImplementationAttribute)Attribute.GetCustomAttribute(_type, typeof(JsonConcreteImplementationAttribute));
-                if (concreteImplementationAttribute != null)
+                var mappingAttribute = (JsonMappingAttribute)Attribute.GetCustomAttribute(_type, typeof(JsonMappingAttribute));
+                if (mappingAttribute != null)
                 {
-                    _type = concreteImplementationAttribute.Type;
+                    _type = mappingAttribute.Type;
                 }
             }
 
@@ -55,12 +55,12 @@ namespace XSerializer
         {
             return type.GetProperties()
                 .Where(p => p.IsJsonSerializable(type.GetConstructors().SelectMany(c => c.GetParameters())))
-                .Select(p => new SerializableJsonProperty(p, _encrypt || p.GetCustomAttributes(typeof(EncryptAttribute), false).Any(), _concreteImplementations)).ToList();
+                .Select(p => new SerializableJsonProperty(p, _encrypt || p.GetCustomAttributes(typeof(EncryptAttribute), false).Any(), _mappings)).ToList();
         }
 
-        public static CustomJsonSerializer Get(Type type, bool encrypt, JsonConcreteImplementations concreteImplementations)
+        public static CustomJsonSerializer Get(Type type, bool encrypt, JsonMappings mappings)
         {
-            return _cache.GetOrAdd(Tuple.Create(type, encrypt, concreteImplementations), t => new CustomJsonSerializer(t.Item1, t.Item2, t.Item3));
+            return _cache.GetOrAdd(Tuple.Create(type, encrypt, mappings), t => new CustomJsonSerializer(t.Item1, t.Item2, t.Item3));
         }
 
         public void SerializeObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
@@ -234,13 +234,14 @@ namespace XSerializer
 
             for (int i = 0; i < parameters.Length; i++)
             {
-                var serializer = JsonSerializerFactory.GetSerializer(parameters[i].ParameterType, _encrypt, _concreteImplementations);
+                var serializer = JsonSerializerFactory.GetSerializer(parameters[i].ParameterType, _encrypt, _mappings);
                 var serializerAndArgIndex = Tuple.Create(serializer, i);
 
                 var matchingProperties =
                     _type.GetProperties().Where(p =>
                         p.Name.Equals(parameters[i].Name, StringComparison.OrdinalIgnoreCase)).ToList();
-                var switchLabel = matchingProperties.Count == 1 ? matchingProperties[0].Name : parameters[i].Name;
+                
+                var switchLabel = matchingProperties.Count == 1 ? matchingProperties[0].GetName() : parameters[i].Name;
 
                 switchCases[i] = Expression.SwitchCase(
                     Expression.Constant(serializerAndArgIndex),
@@ -308,9 +309,9 @@ namespace XSerializer
 
         private static bool IsDecoratedWithJsonConstructorAttribute(ConstructorInfo constructor)
         {
-            // TODO: Add support for JSON.NET's JsonConstructorAttribute.
-
-            return Attribute.IsDefined(constructor, typeof(JsonConstructorAttribute));
+            return Attribute.IsDefined(constructor, typeof(JsonConstructorAttribute))
+                   || Attribute.GetCustomAttributes(constructor).Any(attribute =>
+                       attribute.GetType().FullName == "Newtonsoft.Json.JsonConstructorAttribute");
         }
 
         private interface IObjectFactory

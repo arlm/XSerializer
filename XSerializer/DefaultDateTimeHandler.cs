@@ -2,15 +2,36 @@ using System;
 
 namespace XSerializer
 {
+    /// <summary>
+    /// The default implementation of <see cref="IDateTimeHandler"/>. Expects values to be
+    /// in the "yyyy-MM-ddTHH:mm:ss.fffffffK" format.
+    /// </summary>
     public class DefaultDateTimeHandler : IDateTimeHandler
     {
         private const string _dateFormat = "yyyy-MM-ddTHH:mm:ss.fffffffK";
 
+        /// <summary>
+        /// Determines whether the specified <see cref="object"/> is equal to the
+        /// current <see cref="object"/>.
+        /// </summary>
+        /// <param name="obj">
+        /// The <see cref="object"/> to compare with the current <see cref="object"/>.
+        /// </param>
+        /// <returns>
+        /// true if the specified <see cref="object"/> is equal to the current
+        /// <see cref="object"/>; otherwise, false.
+        /// </returns>
         public override bool Equals(object obj)
         {
             return obj != null && obj.GetType() == typeof(DefaultDateTimeHandler);
         }
 
+        /// <summary>
+        /// Serves as a hash function for a particular type. 
+        /// </summary>
+        /// <returns>
+        /// A hash code for the current <see cref="object"/>.
+        /// </returns>
         public override int GetHashCode()
         {
             unchecked
@@ -19,6 +40,11 @@ namespace XSerializer
             }
         }
 
+        /// <summary>
+        /// Parse the given string representation into a <see cref="DateTime"/> value.
+        /// </summary>
+        /// <param name="value">A string representation of a date time.</param>
+        /// <returns>A <see cref="DateTime"/> value.</returns>
         public DateTime ParseDateTime(string value)
         {
             int year, month, day, hour, minute, second, offsetHours, offsetMinutes;
@@ -51,6 +77,11 @@ namespace XSerializer
             return dateTime;
         }
 
+        /// <summary>
+        /// Parse the given string representation into a <see cref="DateTimeOffset"/> value.
+        /// </summary>
+        /// <param name="value">A string representation of a date time.</param>
+        /// <returns>A <see cref="DateTimeOffset"/> value.</returns>
         public DateTimeOffset ParseDateTimeOffset(string value)
         {
             int year, month, day, hour, minute, second, offsetHours, offsetMinutes;

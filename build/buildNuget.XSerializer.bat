@@ -1,7 +1,7 @@
-msbuild /p:Configuration=Release ..\XSerializer\XSerializer.csproj
+msbuild /p:Configuration=Build ..\XSerializer\XSerializer.csproj
 
-ildasm ..\XSerializer\bin\Release\XSerializer.dll /out:..\XSerializer\bin\Release\XSerializer.il
-ren ..\XSerializer\bin\Release\XSerializer.dll ..\XSerializer\bin\Release\XSerializer.dll.orig
-ilasm ..\XSerializer\bin\Release\XSerializer.il /res:..\XSerializer\bin\Release\XSerializer.res /dll /key=..\XSerializer\XSerializer.snk
+ildasm ..\XSerializer\bin\Build\XSerializer.dll /out:..\XSerializer\bin\Build\XSerializer.il
+ren ..\XSerializer\bin\Build\XSerializer.dll ..\XSerializer\bin\Build\XSerializer.dll.orig
+ilasm ..\XSerializer\bin\Build\XSerializer.il /res:..\XSerializer\bin\Build\XSerializer.res /dll /key=..\XSerializer\XSerializer.snk
 
-nuget pack ..\XSerializer\XSerializer.csproj -Properties Configuration=Release
+nuget pack ..\XSerializer\XSerializer.csproj -Properties Configuration=Build

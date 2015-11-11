@@ -7,11 +7,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("XSerializer")]
-[assembly: AssemblyDescription("A .NET XML serializer that serializes and deserializes anything.")]
+[assembly: AssemblyDescription("Advanced, high-performance XML and JSON serializers")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Quicken Loans")]
 [assembly: AssemblyProduct("XSerializer")]
-[assembly: AssemblyCopyright("Copyright © Quicken Loans 2013-2014")]
+[assembly: AssemblyCopyright("Copyright © Quicken Loans 2013-2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -39,5 +39,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyFileVersion("0.3.0")]
 [assembly: AssemblyInformationalVersion("0.3.0-alpha08")]
 
+#if !BUILD
 [assembly: InternalsVisibleTo("XSerializer.Tests")]
 [assembly: InternalsVisibleTo("XSerializer.PerformanceTests")]
+#endif

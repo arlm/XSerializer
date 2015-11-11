@@ -259,6 +259,37 @@ namespace XSerializer
             var isSerializable = property.GetIndexParameters().Length == 0 && (property.IsReadWriteProperty() || property.IsJsonSerializableReadOnlyProperty(constructorParameters));
             return isSerializable;
         }
+
+        internal static string GetName(this PropertyInfo property)
+        {
+            var jsonPropertyAttribute = (JsonPropertyAttribute)Attribute.GetCustomAttribute(property, typeof(JsonPropertyAttribute));
+            if (jsonPropertyAttribute != null && !string.IsNullOrEmpty(jsonPropertyAttribute.Name))
+            {
+                return jsonPropertyAttribute.Name;
+            }
+
+            var newtonsoftJsonPropertyAttribute =
+                Attribute.GetCustomAttributes(property).FirstOrDefault(attribute =>
+                    attribute.GetType().FullName == "Newtonsoft.Json.JsonPropertyAttribute");
+
+            if (newtonsoftJsonPropertyAttribute != null)
+            {
+                var propertyNameProperty = newtonsoftJsonPropertyAttribute.GetType().GetProperty("PropertyName");
+
+                if (propertyNameProperty != null
+                    && propertyNameProperty.PropertyType == typeof(string))
+                {
+                    var propertyName = (string)propertyNameProperty.GetValue(newtonsoftJsonPropertyAttribute, new object[0]);
+
+                    if (!string.IsNullOrEmpty(propertyName))
+                    {
+                        return propertyName;
+                    }
+                }
+            }
+
+            return property.Name;
+        }
         
         internal static bool IsReadWriteProperty(this PropertyInfo property)
         {

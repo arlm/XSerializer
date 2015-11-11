@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -11,21 +10,60 @@ using XSerializer.Encryption;
 
 namespace XSerializer
 {
+    /// <summary>
+    /// A factory class that creates instances of the <see cref="IXSerializer"/> interface.
+    /// </summary>
+    /// <remarks>
+    /// An instance of the generic <see cref="XmlSerializer{T}"/> class is returned from
+    /// each method in this class.
+    /// </remarks>
     public static class XmlSerializer
     {
-        private static readonly ConcurrentDictionary<Type, Func<XmlSerializationOptions, Type[], IXmlSerializer>> _createXmlSerializerFuncs = new ConcurrentDictionary<Type, Func<XmlSerializationOptions, Type[], IXmlSerializer>>();
+        private static readonly ConcurrentDictionary<Type, Func<XmlSerializationOptions, Type[], IXSerializer>> _createXmlSerializerFuncs = new ConcurrentDictionary<Type, Func<XmlSerializationOptions, Type[], IXSerializer>>();
 
-        public static IXmlSerializer Create(Type type, params Type[] extraTypes)
+        /// <summary>
+        /// Create an instance of <see cref="IXSerializer"/> for the given type using a default configuration.
+        /// </summary>
+        /// <param name="type">The type of the object that the serializer will operate on.</param>
+        /// <param name="extraTypes">Extra types that can be serialized.</param>
+        /// <returns>An instance of <see cref="IXSerializer"/>.</returns>
+        /// <remarks>
+        /// An instance of the generic <see cref="XmlSerializer{T}"/> class of type <paramref name="type"/>
+        /// is returned from this method.
+        /// </remarks>
+        public static IXSerializer Create(Type type, params Type[] extraTypes)
         {
             return Create(type, new XmlSerializationOptions(), extraTypes);
         }
 
-        public static IXmlSerializer Create(Type type, Action<XmlSerializationOptions> setOptions, params Type[] extraTypes)
+        /// <summary>
+        /// Create an instance of <see cref="IXSerializer"/> for the given type using a default configuration.
+        /// </summary>
+        /// <param name="type">The type of the object that the serializer will operate on.</param>
+        /// <param name="setOptions">A callback for setting options.</param>
+        /// <param name="extraTypes">Extra types that can be serialized.</param>
+        /// <returns>An instance of <see cref="IXSerializer"/>.</returns>
+        /// <remarks>
+        /// An instance of the generic <see cref="XmlSerializer{T}"/> class of type <paramref name="type"/>
+        /// is returned from this method.
+        /// </remarks>
+        public static IXSerializer Create(Type type, Action<XmlSerializationOptions> setOptions, params Type[] extraTypes)
         {
             return Create(type, GetSerializationOptions(setOptions), extraTypes);
         }
 
-        public static IXmlSerializer Create(Type type, XmlSerializationOptions options, params Type[] extraTypes)
+        /// <summary>
+        /// Create an instance of <see cref="IXSerializer"/> for the given type using a default configuration.
+        /// </summary>
+        /// <param name="type">The type of the object that the serializer will operate on.</param>
+        /// <param name="options">Options.</param>
+        /// <param name="extraTypes">Extra types that can be serialized.</param>
+        /// <returns>An instance of <see cref="IXSerializer"/>.</returns>
+        /// <remarks>
+        /// An instance of the generic <see cref="XmlSerializer{T}"/> class of type <paramref name="type"/>
+        /// is returned from this method.
+        /// </remarks>
+        public static IXSerializer Create(Type type, XmlSerializationOptions options, params Type[] extraTypes)
         {
             var createXmlSerializer = _createXmlSerializerFuncs.GetOrAdd(
                 type,
@@ -34,13 +72,12 @@ namespace XSerializer
                     var xmlSerializerType = typeof(XmlSerializer<>).MakeGenericType(t);
                     var ctor = xmlSerializerType.GetConstructor(new[] { typeof(XmlSerializationOptions), typeof(Type[]) });
 
-                    Debug.Assert(ctor != null);
-
+                    if (ctor == null) throw new InvalidOperationException("A source code change has resulted in broken reflection. typeof(XmlSerializer<>).MakeGenericType(type).GetConstructor(new[] { typeof(XmlSerializationOptions), typeof(Type[]) })");
                     var optionsParameter = Expression.Parameter(typeof(XmlSerializationOptions), "options");
                     var extraTypesParameter = Expression.Parameter(typeof(Type[]), "extraTypes");
 
                     var lambda =
-                        Expression.Lambda<Func<XmlSerializationOptions, Type[], IXmlSerializer>>(
+                        Expression.Lambda<Func<XmlSerializationOptions, Type[], IXSerializer>>(
                             Expression.New(ctor, optionsParameter, extraTypesParameter),
                             optionsParameter,
                             extraTypesParameter);
@@ -64,23 +101,44 @@ namespace XSerializer
         }
     }
 
-    public class XmlSerializer<T> : IXmlSerializer
+    /// <summary>
+    /// An object used for XML serializing and deserializing objects of type <typeparamref name="T"/>.
+    /// </summary>
+    /// <typeparam name="T">The type of object to serialize and deserialize.</typeparam>
+    public class XmlSerializer<T> : IXSerializer
     {
         private readonly IXmlSerializerInternal _serializer;
         private readonly Encoding _encoding;
         private readonly Formatting _formatting;
         private readonly ISerializeOptions _serializeOptions;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonSerializer{T}"/> class using a
+        /// default configuration.
+        /// </summary>
+        /// <param name="extraTypes">Extra types that can be serialized.</param>
         public XmlSerializer(params Type[] extraTypes)
             : this(new XmlSerializationOptions(), extraTypes)
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonSerializer{T}"/> class using a
+        /// default configuration.
+        /// </summary>
+        /// <param name="setOptions">A callback for setting options.</param>
+        /// <param name="extraTypes">Extra types that can be serialized.</param>
         public XmlSerializer(Action<XmlSerializationOptions> setOptions, params Type[] extraTypes)
             : this(XmlSerializer.GetSerializationOptions(setOptions), extraTypes)
         {
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonSerializer{T}"/> class using a
+        /// default configuration.
+        /// </summary>
+        /// <param name="options">Options.</param>
+        /// <param name="extraTypes">Extra types that can be serialized.</param>
         public XmlSerializer(XmlSerializationOptions options, params Type[] extraTypes)
         {
             if (((IXmlSerializerOptions)options).RootElementName == null)
@@ -114,6 +172,11 @@ namespace XSerializer
             get { return _serializer; }
         }
 
+        /// <summary>
+        /// Serialize the given object to an XML string.
+        /// </summary>
+        /// <param name="instance">The object to serialize.</param>
+        /// <returns>An XML string representation of the object.</returns>
         public string Serialize(T instance)
         {
             return _serializer.SerializeObject(instance, _encoding, _formatting, _serializeOptions);
@@ -124,6 +187,11 @@ namespace XSerializer
             return Serialize((T)instance);
         }
 
+        /// <summary>
+        /// Serialize the given object to the given <see cref="Stream"/> as XML.
+        /// </summary>
+        /// <param name="stream">The <see cref="Stream"/> to serialize the object to.</param>
+        /// <param name="instance">The object to serialize.</param>
         public void Serialize(Stream stream, T instance)
         {
             _serializer.SerializeObject(stream, instance, _encoding, _formatting, _serializeOptions);
@@ -134,6 +202,11 @@ namespace XSerializer
             Serialize(stream, (T)instance);
         }
 
+        /// <summary>
+        /// Serialize the given object to the given <see cref="Stream"/> as JSON.
+        /// </summary>
+        /// <param name="writer">The <see cref="TextWriter"/> to serialize the object to.</param>
+        /// <param name="instance">The object to serialize.</param>
         public void Serialize(TextWriter writer, T instance)
         {
             _serializer.SerializeObject(writer, instance, _formatting, _serializeOptions);
@@ -144,6 +217,11 @@ namespace XSerializer
             Serialize(writer, (T)instance);
         }
 
+        /// <summary>
+        /// Deserialize an object from a XML representation of that object.
+        /// </summary>
+        /// <param name="xml">A XML representation of an object.</param>
+        /// <returns>An object created from the XML string.</returns>
         public T Deserialize(string xml)
         {
             return (T)_serializer.DeserializeObject(xml, _serializeOptions).ConvertIfNecessary(typeof(T));
@@ -154,6 +232,14 @@ namespace XSerializer
             return Deserialize(xml);
         }
 
+        /// <summary>
+        /// Deserialize an object from a <see cref="Stream"/> containing a XML representation
+        /// of that object.
+        /// </summary>
+        /// <param name="stream">
+        /// A <see cref="Stream"/> that when read, contains a representation of an object.
+        /// </param>
+        /// <returns>An object created from the <see cref="Stream"/>.</returns>
         public T Deserialize(Stream stream)
         {
             return (T)_serializer.DeserializeObject(stream, _serializeOptions).ConvertIfNecessary(typeof(T));
@@ -164,6 +250,14 @@ namespace XSerializer
             return Deserialize(stream);
         }
 
+        /// <summary>
+        /// Deserialize an object from a <see cref="Stream"/> containing a XML representation
+        /// of that object.
+        /// </summary>
+        /// <param name="reader">
+        /// A <see cref="TextReader"/> that when read, contains a representation of an object.
+        /// </param>
+        /// <returns>An object created from the <see cref="TextReader"/>.</returns>
         public T Deserialize(TextReader reader)
         {
             return (T)_serializer.DeserializeObject(reader, _serializeOptions).ConvertIfNecessary(typeof(T));

@@ -1,5 +1,48 @@
 #XSerializer - serialize *anything*#
 
+
+XSerializer is a library that provides advanced, high-performance XML and JSON serializers.
+
+#### XML
+
+XSerializer's XML serialization handles properties and types that the System.Xml.Serialization.XmlSerializer does not handle, such as interfaces and dictionaries. It is meant to be a drop-in replacement for the BCL XmlSerializer - it uses the same attributes: [XmlElement], [XmlAttribute], etc.
+
+```c#
+// Create an instance of a serializer.
+XmlSerializer<Foo> serializer1 = new XmlSerializer<Foo>();
+
+// If the type of object is not known at compile time, use a factory method.
+IXSerializer serializer2 = XmlSerializer.Create(someType);
+```
+
+#### JSON
+
+JSON serialization in XSerializer has better performance than JSON.NET (Newtonsoft). It also has better support for deserialization into a variable or field of type dynamic.
+
+```c#
+// Create an instance of a serializer.
+JsonSerializer<Foo> serializer1 = new JsonSerializer<Foo>();
+
+// If the type of object is not known at compile time, use a factory method.
+IXSerializer serializer2 = JsonSerializer.Create(someType);
+```
+
+#### Encryption
+
+XSerializer's XML and JSON serializers support the concept of field-level encryption. Properties that are decorated with an [Encrypt] attribute have their values encrypted/decrypted automatically. The actual mechanism to encrypt these fields is exposed through the IEncryptionMechanism interface - users of the encrypt feature are expected to implement this interface in their project.
+
+```c#
+public class Foo
+{
+    // This property is sensitive and should be encrypted.
+    [Encrypt]
+    public int Bar { get; set; }
+    
+    // This property is not sensitive and can be serialized in plain text.
+    public DateTime Baz { get; set; }
+}
+```
+
 ##Typical Usage##
 
 You can serialize/deserialize like this:

@@ -40,6 +40,16 @@
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>XSerializer.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Build|AnyCPU'">
+    <OutputPath>bin\Build\</OutputPath>
+    <DefineConstants>TRACE;BUILD</DefineConstants>
+    <DocumentationFile>bin\Release\XSerializer.xml</DocumentationFile>
+    <Optimize>true</Optimize>
+    <DebugType>pdbonly</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -52,7 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BooleanJsonSerializer.cs" />
-    <Compile Include="JsonConcreteImplementationAttribute.cs" />
+    <Compile Include="JsonMappingAttribute.cs" />
     <Compile Include="CustomJsonSerializer.cs" />
     <Compile Include="DateTimeHandler.cs" />
     <Compile Include="DefaultDateTimeHandler.cs" />
@@ -76,7 +86,7 @@
     <Compile Include="IValueConverter.cs" />
     <Compile Include="IXSerializer.cs" />
     <Compile Include="JsonArray.cs" />
-    <Compile Include="JsonConcreteImplementations.cs" />
+    <Compile Include="JsonMappings.cs" />
     <Compile Include="JsonConstructorAttribute.cs" />
     <Compile Include="JsonExtensions.cs" />
     <Compile Include="JsonIgnoreAttribute.cs" />
@@ -138,7 +148,7 @@
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
   </Target>
   <Target Name="InjectModuleInitializer" AfterTargets="AfterBuild" Condition="'$(UseInjectModuleInitializer)' == 'true'">
-    <Exec Command="..\packages\Rock.StaticDependencyInjection.1.1.2\tools\InjectModuleInitializer.exe &quot;$(TargetPath)&quot;" />
+    <Exec Command="..\packages\Rock.StaticDependencyInjection.1.1.3\tools\InjectModuleInitializer.exe &quot;$(TargetPath)&quot;" />
   </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
