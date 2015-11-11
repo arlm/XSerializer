@@ -1,5 +1,5 @@
-﻿using Newtonsoft.Json;
-#if !DEBUG
+﻿#if !DEBUG
+using Newtonsoft.Json;
 using System;
 using System.Diagnostics;
 using System.IO;

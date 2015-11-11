@@ -1,7 +1,5 @@
-﻿#pragma warning disable 612
-using System;
+﻿using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -271,4 +269,3 @@ namespace XSerializer
         }
     }
 }
-#pragma warning restore 612

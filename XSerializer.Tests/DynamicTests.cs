@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Dynamic;
 using System.Xml.Serialization;
 using System.Collections;
+
 namespace XSerializer.Tests
 {
     public class DynamicTests
