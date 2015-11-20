@@ -160,7 +160,7 @@ namespace XSerializer
             readFunc =
                 !type.IsNullableType()
                     ? readFuncLocal
-                    : value => value == null ? null : readFuncLocal(value);
+                    : value => string.IsNullOrEmpty(value) ? null : readFuncLocal(value);
         }
     }
 }
