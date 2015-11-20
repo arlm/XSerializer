@@ -75,7 +75,8 @@ namespace XSerializer
 
         private object Read(JsonReader reader)
         {
-            if (reader.NodeType != JsonNodeType.Number)
+            if (reader.NodeType != JsonNodeType.Number
+                && reader.NodeType != JsonNodeType.String)
             {
                 if (!_nullable && reader.NodeType != JsonNodeType.Null)
                 {
@@ -96,7 +97,7 @@ namespace XSerializer
         {
             Func<string, object> readFuncLocal;
 
-            if (type == typeof(double) || type == typeof(double?) || type == null)
+            if (type == typeof(double) || type == typeof(double?))
             {
                 writeAction = (writer, value) => writer.WriteValue((double)value);
                 readFuncLocal = value => double.Parse(value);
@@ -159,7 +160,7 @@ namespace XSerializer
             readFunc =
                 !type.IsNullableType()
                     ? readFuncLocal
-                    : value => value == null ? null : readFuncLocal(value);
+                    : value => string.IsNullOrEmpty(value) ? null : readFuncLocal(value);
         }
     }
 }

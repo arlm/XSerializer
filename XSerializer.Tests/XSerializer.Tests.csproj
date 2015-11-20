@@ -56,6 +56,8 @@
     <Compile Include="BclXmlSerializerExtensions.cs" />
     <Compile Include="BooleanJsonSerializerTests.cs" />
     <Compile Include="JsonArrayTests.cs" />
+    <Compile Include="JsonBooleanTests.cs" />
+    <Compile Include="JsonNumberTests.cs" />
     <Compile Include="JsonObjectTests.cs" />
     <Compile Include="CustomJsonSerializerTests.cs" />
     <Compile Include="DateTimeOffsetTests.cs" />
@@ -70,6 +72,7 @@
     <Compile Include="GuidTests.cs" />
     <Compile Include="JsonReaderTests.cs" />
     <Compile Include="JsonSerializerFactoryTests.cs" />
+    <Compile Include="JsonStringTests.cs" />
     <Compile Include="JsonWriterTests.cs" />
     <Compile Include="ListJsonSerializerTests.cs" />
     <Compile Include="NilTests.cs" />

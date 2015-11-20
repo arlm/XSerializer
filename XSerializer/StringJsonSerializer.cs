@@ -75,18 +75,33 @@ namespace XSerializer
 
         private object Read(JsonReader reader, IJsonSerializeOperationInfo info)
         {
-            if (reader.NodeType != JsonNodeType.String)
+            string value;
+
+            switch (reader.NodeType)
             {
-                if (!_nullable && reader.NodeType != JsonNodeType.Null)
-                {
-                    throw new XSerializerException(string.Format(
-                        "Unexpected node type '{0}' encountered in '{1}.DeserializeObject' method.",
-                        reader.NodeType,
-                        typeof(StringJsonSerializer)));
-                }
+                case JsonNodeType.Number:
+                case JsonNodeType.String:
+                    value = (string)reader.Value;
+                    break;
+                case JsonNodeType.Boolean:
+                    value = (bool)reader.Value ? "true" : "false";
+                    break;
+                default:
+                    if (_nullable && reader.NodeType == JsonNodeType.Null)
+                    {
+                        value = null;
+                    }
+                    else
+                    {
+                        throw new XSerializerException(string.Format(
+                            "Unexpected node type '{0}' encountered in '{1}.DeserializeObject' method.",
+                            reader.NodeType,
+                            typeof(StringJsonSerializer)));
+                    }
+                    break;
             }
 
-            return _read((string)reader.Value, info);
+            return _read(value, info);
         }
 
         private void SetDelegates(
