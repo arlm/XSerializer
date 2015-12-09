@@ -20,7 +20,7 @@ namespace XSerializer
 
         public object ParseString(string value, ISerializeOptions options)
         {
-            if (value == null)
+            if (string.IsNullOrEmpty(value))
             {
                 return null;
             }
