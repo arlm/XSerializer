@@ -202,7 +202,7 @@ namespace XSerializer
             }
 
             {
-                var defaultValue = Activator.CreateInstance(type);
+                var defaultValue = type.IsValueType ? Activator.CreateInstance(type) : null;
                 return (value, options) => string.IsNullOrEmpty(value) ? defaultValue : Convert.ChangeType(value, type);
             }
         }
