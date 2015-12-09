@@ -54,96 +54,12 @@ namespace XSerializer
                     && type.GetGenericTypeDefinition() == typeof(Nullable<>)
                     && type.GetGenericArguments()[0].IsEnum))
             {
-                return (value, options) => value == null || value == "XXXXXX" ? defaultValue : Enum.Parse(type, value);
+                return (value, options) => string.IsNullOrEmpty(value) || value == "XXXXXX" ? defaultValue : Enum.Parse(type, value);
             }
 
             if (type == typeof(bool) || type == typeof(bool?))
             {
-                return (value, options) => value == null || value == "XXXXXX" ? defaultValue : Convert.ChangeType(value, type);
-            }
-
-            if (type == typeof(DateTime))
-            {
-                return ParseStringForDateTime;
-            }
-
-            if (type == typeof(DateTime?))
-            {
-                return ParseStringForNullableDateTime;
-            }
-
-            if (type == typeof(DateTimeOffset))
-            {
-                return ParseStringForDateTimeOffset;
-            }
-
-            if (type == typeof(DateTimeOffset?))
-            {
-                return ParseStringForNullableDateTimeOffset;
-            }
-
-            if (type == typeof(TimeSpan))
-            {
-                return ParseStringForTimeSpan;
-            }
-
-            if (type == typeof(TimeSpan?))
-            {
-                return ParseStringForNullableTimeSpan;
-            }
-
-            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
-            {
-                return (value, options) => Convert.ChangeType(value, type.GetGenericArguments()[0]);
-            }
-
-            return (value, options) => Convert.ChangeType(value, type);
-        }
-
-        private static Func<object, ISerializeOptions, string> GetRedactedGetStringFunc(Type type, RedactAttribute redactAttribute)
-        {
-            if (type == typeof(string))
-            {
-                return (value, options) => redactAttribute.Redact((string)value, options.ShouldRedact);
-            }
-
-            if (type == typeof(bool) || type == typeof(bool?))
-            {
-                return (value, options) => redactAttribute.Redact((bool?)value, options.ShouldRedact);
-            }
-
-            if (type == typeof(DateTime) || type == typeof(DateTime?))
-            {
-                return (value, options) => redactAttribute.Redact((DateTime?)value, options.ShouldRedact);
-            }
-
-            if (type == typeof(DateTimeOffset) || type == typeof(DateTimeOffset?))
-            {
-                return (value, options) => redactAttribute.Redact((DateTimeOffset?)value, options.ShouldRedact);
-            }
-
-            if (type == typeof(TimeSpan) || type == typeof(TimeSpan?))
-            {
-                return (value, options) => redactAttribute.Redact((TimeSpan?)value, options.ShouldRedact);
-            }
-
-            return (value, options) => redactAttribute.Redact(value, options.ShouldRedact);
-        }
-
-        private static Func<string, ISerializeOptions, object> GetNonRedactedGetParseStringFunc(Type type)
-        {
-            if (type.IsEnum)
-            {
-                var defaultValue = Activator.CreateInstance(type);
-                return (value, options) => value == null ? defaultValue : Enum.Parse(type, value);
-            }
-
-            if (type.IsGenericType
-                && type.GetGenericTypeDefinition() == typeof(Nullable<>)
-                && type.GetGenericArguments()[0].IsEnum)
-            {
-                var enumType = type.GetGenericArguments()[0];
-                return (value, options) => value == null ? null : Enum.Parse(enumType, value);
+                return (value, options) => string.IsNullOrEmpty(value) || value == "XXXXXX" ? defaultValue : Convert.ChangeType(value, type);
             }
 
             if (type == typeof(DateTime))
@@ -188,10 +104,107 @@ namespace XSerializer
 
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
-                return (value, options) => Convert.ChangeType(value, type.GetGenericArguments()[0]);
+                return (value, options) => string.IsNullOrEmpty(value) ? null : Convert.ChangeType(value, type.GetGenericArguments()[0]);
             }
 
-            return (value, options) => Convert.ChangeType(value, type);
+            return (value, options) => string.IsNullOrEmpty(value) ? defaultValue : Convert.ChangeType(value, type);
+        }
+
+        private static Func<object, ISerializeOptions, string> GetRedactedGetStringFunc(Type type, RedactAttribute redactAttribute)
+        {
+            if (type == typeof(string))
+            {
+                return (value, options) => redactAttribute.Redact((string)value, options.ShouldRedact);
+            }
+
+            if (type == typeof(bool) || type == typeof(bool?))
+            {
+                return (value, options) => redactAttribute.Redact((bool?)value, options.ShouldRedact);
+            }
+
+            if (type == typeof(DateTime) || type == typeof(DateTime?))
+            {
+                return (value, options) => redactAttribute.Redact((DateTime?)value, options.ShouldRedact);
+            }
+
+            if (type == typeof(DateTimeOffset) || type == typeof(DateTimeOffset?))
+            {
+                return (value, options) => redactAttribute.Redact((DateTimeOffset?)value, options.ShouldRedact);
+            }
+
+            if (type == typeof(TimeSpan) || type == typeof(TimeSpan?))
+            {
+                return (value, options) => redactAttribute.Redact((TimeSpan?)value, options.ShouldRedact);
+            }
+
+            return (value, options) => redactAttribute.Redact(value, options.ShouldRedact);
+        }
+
+        private static Func<string, ISerializeOptions, object> GetNonRedactedGetParseStringFunc(Type type)
+        {
+            if (type.IsEnum)
+            {
+                var defaultValue = Activator.CreateInstance(type);
+                return (value, options) => string.IsNullOrEmpty(value) ? defaultValue : Enum.Parse(type, value);
+            }
+
+            if (type.IsGenericType
+                && type.GetGenericTypeDefinition() == typeof(Nullable<>)
+                && type.GetGenericArguments()[0].IsEnum)
+            {
+                var enumType = type.GetGenericArguments()[0];
+                return (value, options) => string.IsNullOrEmpty(value) ? null : Enum.Parse(enumType, value);
+            }
+
+            if (type == typeof(DateTime))
+            {
+                return ParseStringForDateTime;
+            }
+
+            if (type == typeof(DateTime?))
+            {
+                return ParseStringForNullableDateTime;
+            }
+
+            if (type == typeof(DateTimeOffset))
+            {
+                return ParseStringForDateTimeOffset;
+            }
+
+            if (type == typeof(DateTimeOffset?))
+            {
+                return ParseStringForNullableDateTimeOffset;
+            }
+
+            if (type == typeof(TimeSpan))
+            {
+                return ParseStringForTimeSpan;
+            }
+
+            if (type == typeof(TimeSpan?))
+            {
+                return ParseStringForNullableTimeSpan;
+            }
+
+            if (type == typeof(Guid))
+            {
+                return ParseStringForGuid;
+            }
+
+            if (type == typeof(Guid?))
+            {
+                return ParseStringForNullableGuid;
+            }
+
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                return (value, options) => string.IsNullOrEmpty(value) ? null : Convert.ChangeType(value, type.GetGenericArguments()[0]);
+            }
+
+            {
+                var defaultValue = Activator.CreateInstance(type);
+                return (value, options) => string.IsNullOrEmpty(value) ? defaultValue : Convert.ChangeType(value, type);
+            }
         }
 
         private static Func<object, ISerializeOptions, string> GetNonRedactedGetStringFunc(Type type)
@@ -241,7 +254,7 @@ namespace XSerializer
 
         private static object ParseStringForDateTime(string value, ISerializeOptions options)
         {
-            if (value == null)
+            if (string.IsNullOrEmpty(value))
             {
                 return new DateTime();
             }
@@ -254,7 +267,7 @@ namespace XSerializer
 
         private static object ParseStringForNullableDateTime(string value, ISerializeOptions options)
         {
-            if (value == null)
+            if (string.IsNullOrEmpty(value))
             {
                 return null;
             }
@@ -267,7 +280,7 @@ namespace XSerializer
 
         private static object ParseStringForDateTimeOffset(string value, ISerializeOptions options)
         {
-            if (value == null)
+            if (string.IsNullOrEmpty(value))
             {
                 return new DateTimeOffset();
             }
@@ -280,7 +293,7 @@ namespace XSerializer
 
         private static object ParseStringForNullableDateTimeOffset(string value, ISerializeOptions options)
         {
-            if (value == null)
+            if (string.IsNullOrEmpty(value))
             {
                 return null;
             }
@@ -293,7 +306,7 @@ namespace XSerializer
 
         private static object ParseStringForTimeSpan(string value, ISerializeOptions options)
         {
-            if (value == null)
+            if (string.IsNullOrEmpty(value))
             {
                 return new TimeSpan();
             }
@@ -303,7 +316,7 @@ namespace XSerializer
 
         private static object ParseStringForNullableTimeSpan(string value, ISerializeOptions options)
         {
-            if (value == null)
+            if (string.IsNullOrEmpty(value))
             {
                 return null;
             }
@@ -313,7 +326,7 @@ namespace XSerializer
 
         private static object ParseStringForGuid(string value, ISerializeOptions options)
         {
-            if (value == null)
+            if (string.IsNullOrEmpty(value))
             {
                 return new Guid();
             }
@@ -323,7 +336,7 @@ namespace XSerializer
 
         private static object ParseStringForNullableGuid(string value, ISerializeOptions options)
         {
-            if (value == null)
+            if (string.IsNullOrEmpty(value))
             {
                 return null;
             }
