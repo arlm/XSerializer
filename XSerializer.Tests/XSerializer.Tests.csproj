@@ -58,6 +58,7 @@
     <Compile Include="DeserializeEmptyStringIntoValueTypeTests.cs" />
     <Compile Include="JsonArrayTests.cs" />
     <Compile Include="JsonBooleanTests.cs" />
+    <Compile Include="JsonMiscellaneousTypesTests.cs" />
     <Compile Include="JsonNumberTests.cs" />
     <Compile Include="JsonObjectTests.cs" />
     <Compile Include="CustomJsonSerializerTests.cs" />
