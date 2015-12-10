@@ -42,7 +42,11 @@ namespace XSerializer
                         || type == typeof(DateTimeOffset)
                         || type == typeof(DateTimeOffset?)
                         || type == typeof(Guid)
-                        || type == typeof(Guid?))
+                        || type == typeof(Guid?)
+                        || type.IsEnum
+                        || (type.IsNullableType() && Nullable.GetUnderlyingType(type).IsEnum)
+                        || type == typeof(Type)
+                        || type == typeof(Uri))
                     {
                         return StringJsonSerializer.Get(type, encrypt);
                     }

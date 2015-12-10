@@ -134,6 +134,27 @@ namespace XSerializer
                 writeAction = (writer, value) => writer.WriteValue((Guid)value);
                 readFuncLocal = (value, info) => Guid.Parse(value);
             }
+            else if (type.IsEnum)
+            {
+                writeAction = (writer, value) => writer.WriteValue(value.ToString());
+                readFuncLocal = (value, info) => Enum.Parse(type, value);
+            }
+            else if (type.IsNullableType() && Nullable.GetUnderlyingType(type).IsEnum)
+            {
+                writeAction = (writer, value) => writer.WriteValue(value.ToString());
+                var enumType = Nullable.GetUnderlyingType(type);
+                readFuncLocal = (value, info) => Enum.Parse(enumType, value);
+            }
+            else if (type == typeof(Type))
+            {
+                writeAction = (writer, value) => writer.WriteValue(GetStringValue((Type)value));
+                readFuncLocal = (value, info) => Type.GetType(value);
+            }
+            else if (type == typeof(Uri))
+            {
+                writeAction = (writer, value) => writer.WriteValue(value.ToString());
+                readFuncLocal = (value, info) => new Uri(value);
+            }
             else
             {
                 throw new ArgumentException("Unknown string type: " + type, "type");
@@ -143,6 +164,11 @@ namespace XSerializer
                 type == typeof(string) || !type.IsNullableType()
                     ? readFuncLocal
                     : (value, info) => value == null ? null : readFuncLocal(value, info);
+        }
+
+        private static string GetStringValue(Type type)
+        {
+            return type.FullName + ", " + type.Assembly.GetName().Name;
         }
     }
 }
