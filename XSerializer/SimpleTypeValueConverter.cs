@@ -59,7 +59,7 @@ namespace XSerializer
 
             if (type == typeof(bool) || type == typeof(bool?))
             {
-                return (value, options) => string.IsNullOrEmpty(value) || value == "XXXXXX" ? defaultValue : Convert.ChangeType(value, type);
+                return (value, options) => string.IsNullOrEmpty(value) || value == "XXXXXX" ? defaultValue : ParseStringForBool(value, options);
             }
 
             if (type == typeof(DateTime))
@@ -196,6 +196,11 @@ namespace XSerializer
                 return ParseStringForNullableGuid;
             }
 
+            if (type == typeof(bool))
+            {
+                return ParseStringForBool;
+            }
+
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 return (value, options) => string.IsNullOrEmpty(value) ? null : Convert.ChangeType(value, type.GetGenericArguments()[0]);
@@ -263,6 +268,21 @@ namespace XSerializer
                 value,
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.RoundtripKind);
+        }
+
+        private static object ParseStringForBool(string value, ISerializeOptions options)
+        {
+            if (value == "1")
+            {
+                return true;
+            }
+
+            if (value == "0")
+            {
+                return false;
+            }
+
+            return Convert.ToBoolean(value);
         }
 
         private static object ParseStringForNullableDateTime(string value, ISerializeOptions options)
