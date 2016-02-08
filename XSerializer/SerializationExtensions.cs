@@ -100,6 +100,7 @@ namespace XSerializer
                 };
 
                 serializer.SerializeObject(xmlWriter, instance, options);
+                xmlWriter.Flush();
             }
             finally
             {
@@ -125,6 +126,7 @@ namespace XSerializer
             };
 
             serializer.SerializeObject(xmlWriter, instance, options);
+            xmlWriter.Flush();
         }
 
         public static object DeserializeObject(this IXmlSerializerInternal serializer, string xml, ISerializeOptions options)
@@ -172,7 +174,8 @@ namespace XSerializer
                 ShouldAlwaysEmitTypes = serializeOptions.ShouldAlwaysEmitTypes,
                 ShouldEmitNil = serializeOptions.ShouldEmitNil,
                 ShouldEncrypt = serializeOptions.ShouldEncrypt,
-                ShouldRedact = serializeOptions.ShouldRedact
+                ShouldRedact = serializeOptions.ShouldRedact,
+                ShouldEnumParserIgnoreCase = serializeOptions.ShouldEnumParserIgnoreCase
             };
         }
 
@@ -186,6 +189,7 @@ namespace XSerializer
             public IEncryptionMechanism EncryptionMechanism { get; set; }
             public object EncryptKey { get; set; }
             public SerializationState SerializationState { get; set; }
+            public bool ShouldEnumParserIgnoreCase { get; set; }
         }
 
         /// <summary>
