@@ -57,9 +57,14 @@ namespace XSerializer
                 return (value, options) => string.IsNullOrEmpty(value) || value == "XXXXXX" ? defaultValue : Enum.Parse(type, value);
             }
 
-            if (type == typeof(bool) || type == typeof(bool?))
+            if (type == typeof(bool))
             {
-                return (value, options) => string.IsNullOrEmpty(value) || value == "XXXXXX" ? defaultValue : ParseStringForBool(value, options);
+                return (value, options) => value == "XXXXXX" ? defaultValue : ParseStringForBool(value, options);
+            }
+
+            if (type == typeof(bool?))
+            {
+                return (value, options) => value == "XXXXXX" ? defaultValue : ParseStringForNullableBool(value, options);
             }
 
             if (type == typeof(DateTime))
@@ -201,6 +206,11 @@ namespace XSerializer
                 return ParseStringForBool;
             }
 
+            if (type == typeof (bool?))
+            {
+                return ParseStringForNullableBool;
+            }
+
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
             {
                 return (value, options) => string.IsNullOrEmpty(value) ? null : Convert.ChangeType(value, type.GetGenericArguments()[0]);
@@ -283,6 +293,11 @@ namespace XSerializer
             }
 
             return Convert.ToBoolean(value);
+        }
+
+        private static object ParseStringForNullableBool(string value, ISerializeOptions options)
+        {
+            return string.IsNullOrEmpty(value) ? null : ParseStringForBool(value, options);
         }
 
         private static object ParseStringForNullableDateTime(string value, ISerializeOptions options)
