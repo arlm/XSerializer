@@ -175,7 +175,7 @@ namespace XSerializer
                 ShouldEmitNil = serializeOptions.ShouldEmitNil,
                 ShouldEncrypt = serializeOptions.ShouldEncrypt,
                 ShouldRedact = serializeOptions.ShouldRedact,
-                ShouldEnumParserIgnoreCase = serializeOptions.ShouldEnumParserIgnoreCase
+                ShouldIgnoreCaseForEnum = serializeOptions.ShouldIgnoreCaseForEnum
             };
         }
 
@@ -189,7 +189,7 @@ namespace XSerializer
             public IEncryptionMechanism EncryptionMechanism { get; set; }
             public object EncryptKey { get; set; }
             public SerializationState SerializationState { get; set; }
-            public bool ShouldEnumParserIgnoreCase { get; set; }
+            public bool ShouldIgnoreCaseForEnum { get; set; }
         }
 
         /// <summary>

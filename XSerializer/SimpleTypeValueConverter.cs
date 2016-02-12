@@ -54,7 +54,7 @@ namespace XSerializer
                     && type.GetGenericTypeDefinition() == typeof(Nullable<>)
                     && type.GetGenericArguments()[0].IsEnum))
             {
-                return (value, options) => string.IsNullOrEmpty(value) || value == "XXXXXX" ? defaultValue : Enum.Parse(type, value, options.ShouldEnumParserIgnoreCase);
+                return (value, options) => string.IsNullOrEmpty(value) || value == "XXXXXX" ? defaultValue : Enum.Parse(type, value, options.ShouldIgnoreCaseForEnum);
             }
 
             if (type == typeof(bool) || type == typeof(bool?))
@@ -145,7 +145,7 @@ namespace XSerializer
             if (type.IsEnum)
             {
                 var defaultValue = Activator.CreateInstance(type);
-                return (value, options) => string.IsNullOrEmpty(value) ? defaultValue : Enum.Parse(type, value, options.ShouldEnumParserIgnoreCase);
+                return (value, options) => string.IsNullOrEmpty(value) ? defaultValue : Enum.Parse(type, value, options.ShouldIgnoreCaseForEnum);
             }
 
             if (type.IsGenericType
@@ -153,7 +153,7 @@ namespace XSerializer
                 && type.GetGenericArguments()[0].IsEnum)
             {
                 var enumType = type.GetGenericArguments()[0];
-                return (value, options) => string.IsNullOrEmpty(value) ? null : Enum.Parse(enumType, value, options.ShouldEnumParserIgnoreCase);
+                return (value, options) => string.IsNullOrEmpty(value) ? null : Enum.Parse(enumType, value, options.ShouldIgnoreCaseForEnum);
             }
 
             if (type == typeof(DateTime))

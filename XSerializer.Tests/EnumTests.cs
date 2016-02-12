@@ -67,6 +67,34 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void EnumElementDeserializesCorrectlyWhenIgnoreCaseForEnumIsPassedIn()
+        {
+            var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<EnumElementContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <MyEnum>vALUE1</MyEnum>
+</EnumElementContainer>";
+
+            var serializer = new CustomSerializer<EnumElementContainer>(null, TestXmlSerializerOptions.WithExtraTypes());
+
+            var container = (EnumElementContainer)serializer.DeserializeObject(xml, new TestSerializeOptions { ShouldIgnoreCaseForEnum = true });
+
+            Assert.That(container.MyEnum, Is.EqualTo(MyEnum.Value1));
+        }
+        
+        [Test]
+        public void EnumAttributeDeserializesCorrectlyWhenIgnoreCaseForEnumIsPassedIn()
+        {
+            var xml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<EnumAttributeContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" MyEnum=""vALUE1"" />";
+
+            var serializer = new CustomSerializer<EnumAttributeContainer>(null, TestXmlSerializerOptions.WithExtraTypes());
+
+            var container = (EnumAttributeContainer)serializer.DeserializeObject(xml, new TestSerializeOptions { ShouldIgnoreCaseForEnum = true });
+
+            Assert.That(container.MyEnum, Is.EqualTo(MyEnum.Value1));
+        }
+
+        [Test]
         public void EnumTypeElementSerializesCorrectlyWhenExtraTypesArePassedIn()
         {
             var container = new EnumTypeElementContainer

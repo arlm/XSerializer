@@ -21,7 +21,7 @@ namespace XSerializer
         private bool _emitNil;
         private IEncryptionMechanism _encryptionMechanism;
         private object _encryptKey;
-        private bool _shouldEnumParserIgnoreCase;
+        private bool _shouldIgnoreCaseForEnum;
 
         public XmlSerializationOptions(
             XmlSerializerNamespaces namespaces = null,
@@ -37,7 +37,7 @@ namespace XSerializer
             bool emitNil = false,
             IEncryptionMechanism encryptionMechanism = null,
             object encryptKey = null,
-            bool ShouldEnumParserIgnoreCase = false)
+            bool ShouldIgnoreCaseForEnum = false)
         {
             _namespaces = namespaces ?? new XmlSerializerNamespaces();
             _encoding = encoding ?? Encoding.UTF8;
@@ -53,7 +53,7 @@ namespace XSerializer
             _emitNil = emitNil;
             _encryptionMechanism = encryptionMechanism;
             _encryptKey = encryptKey;
-            _shouldEnumParserIgnoreCase = ShouldEnumParserIgnoreCase;
+            _shouldIgnoreCaseForEnum = ShouldIgnoreCaseForEnum;
         }
 
         internal Encoding Encoding { get { return _encoding; } }
@@ -79,7 +79,7 @@ namespace XSerializer
         IEncryptionMechanism ISerializeOptions.EncryptionMechanism { get { return _encryptionMechanism; } }
         object ISerializeOptions.EncryptKey { get { return _encryptKey; } }
         SerializationState ISerializeOptions.SerializationState { get { return null; } }
-        bool ISerializeOptions.ShouldEnumParserIgnoreCase { get { return _shouldEnumParserIgnoreCase; } }
+        bool ISerializeOptions.ShouldIgnoreCaseForEnum { get { return _shouldIgnoreCaseForEnum; } }
 
         internal void SetExtraTypes(Type[] extraTypes)
         {
@@ -164,9 +164,9 @@ namespace XSerializer
             return this;
         }
 
-        public XmlSerializationOptions ShouldEnumParserIgnoreCase()
+        public XmlSerializationOptions IgnoreCaseForEnum()
         {
-            _shouldEnumParserIgnoreCase = true;
+            _shouldIgnoreCaseForEnum = true;
             return this;
         }
     }

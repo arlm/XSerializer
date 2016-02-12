@@ -13,6 +13,6 @@ namespace XSerializer
         IEncryptionMechanism EncryptionMechanism { get; }
         object EncryptKey { get; }
         SerializationState SerializationState { get; }
-        bool ShouldEnumParserIgnoreCase { get; }
+        bool ShouldIgnoreCaseForEnum { get; }
     }
 }
