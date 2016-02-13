@@ -135,6 +135,12 @@ namespace XSerializer.Tests
   </Item>
 </MyContainer>";
 
+        private const string ContainerXmlWithBooleanElementAs0 = @"<MyContainer xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <Piece xsi:type=""ListTests_ClassWithBool"">
+    <Boo>0</Boo>
+  </Piece>
+</MyContainer>";
+
         [Test]
         public void CanHandleEmptyList()
         {
@@ -156,7 +162,8 @@ namespace XSerializer.Tests
 
         private static readonly ListTests_ClassWithDynamicProperty Item = new ListTests_ClassWithDynamicProperty { Foo = "abc", Bar = GetExpando("Brian", 35), Baz = "xyz" };
         private static readonly ListTests_ClassWithDynamicProperty SecondItem = new ListTests_ClassWithDynamicProperty { Foo = "ABC", Bar = GetExpando("Matilda", 3), Baz = "XYZ" };
-        
+        private static readonly ListTests_ClassWithBool ThirdItem = new ListTests_ClassWithBool {Boo = false};
+
         private static dynamic GetExpando(string name, int age)
         {
             dynamic expando = new ExpandoObject();
@@ -501,6 +508,12 @@ namespace XSerializer.Tests
                     typeof(ContainerWithReadWriteArrayListAndElementAttribute),
                     new ContainerWithReadWriteArrayListAndElementAttribute { Items = new ArrayList { Item } })
                         .SetName("Container with read-write ArrayList with xml element attribute");
+
+                yield return new TestCaseData(
+                    ContainerXmlWithBooleanElementAs0,
+                    typeof(ContainerWithReadWriteArrayListAndElementAttribute),
+                    new ContainerWithReadWriteArrayListAndElementAttribute { Items = new ArrayList { ThirdItem } })
+                        .SetName("Container with boolean value xml element");
 
                 yield return new TestCaseData(
                     ContainerXmlWithElementAttributeWithTypeHint,
@@ -972,6 +985,11 @@ namespace XSerializer.Tests
             public string Foo { get; set; }
             public dynamic Bar { get; set; }
             public string Baz { get; set; }
+        }
+
+        public class ListTests_ClassWithBool
+        {
+            public bool Boo { get; set; }
         }
     }
 }
