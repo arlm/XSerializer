@@ -107,9 +107,14 @@ namespace XSerializer
                 return ParseStringForNullableGuid;
             }
 
-            if (type == typeof(char) || type == typeof(char?))
+            if (type == typeof(char))
             {
-                return (value, options) => string.IsNullOrEmpty(value) || value == "X" ? defaultValue : ParseStringForChar(value, options);
+                return (value, options) => string.IsNullOrEmpty(value) ? null : ParseStringForChar(value, options);
+            }
+
+            if (type == typeof(char?))
+            {
+                return (value, options) => string.IsNullOrEmpty(value) ? null : ParseStringForNullableChar(value, options);
             }
 
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
@@ -211,9 +216,14 @@ namespace XSerializer
                 return ParseStringForNullableGuid;
             }
 
-            if (type == typeof(char) || type == typeof(char?))
+            if (type == typeof(char))
             {
                 return ParseStringForChar;
+            }
+
+            if (type == typeof(char?))
+            {
+                return ParseStringForNullableChar;
             }
 
             if (type == typeof(bool))
@@ -406,19 +416,26 @@ namespace XSerializer
 
         private static object ParseStringForChar(string value, ISerializeOptions options)
         {
-            if (string.IsNullOrEmpty(value))
-            {
-                return default(char);
-            }
-
-            // .Net serializers (XmlSerializer & DataContractSerializer) serialize char types as integers
             if (options.ShouldSerializeCharAsInt)
             {
-                int charAsInt = int.Parse(value);
-                if (charAsInt >= char.MinValue && charAsInt <= char.MaxValue)
-                {
-                    return (char)charAsInt;
-                }
+                var charAsInt = ushort.Parse(value);
+                return (char)charAsInt;
+            }
+
+            return (char)Convert.ChangeType(value, typeof(char));
+        }
+
+        private static object ParseStringForNullableChar(string value, ISerializeOptions options)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return null;
+            }
+
+            if (options.ShouldSerializeCharAsInt)
+            {
+                var charAsInt = ushort.Parse(value);
+                return (char)charAsInt;
             }
 
             return (char)Convert.ChangeType(value, typeof(char));
@@ -469,21 +486,17 @@ namespace XSerializer
 
         private static string GetStringFromChar(object value, ISerializeOptions options)
         {
-            char character = (char)value;
-
-            // .Net serializers (XmlSerializer & DataContractSerializer) serialize char types as integers
             if (options.ShouldSerializeCharAsInt)
             {
-                return ((int)character).ToString();
+                value = (int)(char)value;
             }
 
-            return character.ToString();
+            return value.ToString();
         }
 
         private static string GetStringFromNullableChar(object value, ISerializeOptions options)
         {
-            char? nullableChar = value as char?;
-            return nullableChar == null ? null : GetStringFromChar(nullableChar.Value, options);
+            return value == null ? null : GetStringFromChar(value, options);
         }
 
         private static int CreateKey(Type type, RedactAttribute redactAttribute)
