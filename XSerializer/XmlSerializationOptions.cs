@@ -21,6 +21,7 @@ namespace XSerializer
         private bool _emitNil;
         private IEncryptionMechanism _encryptionMechanism;
         private object _encryptKey;
+        private bool _shouldIgnoreCaseForEnum;
 
         public XmlSerializationOptions(
             XmlSerializerNamespaces namespaces = null,
@@ -35,7 +36,8 @@ namespace XSerializer
             bool treatEmptyElementAsString = false,
             bool emitNil = false,
             IEncryptionMechanism encryptionMechanism = null,
-            object encryptKey = null)
+            object encryptKey = null,
+            bool ShouldIgnoreCaseForEnum = false)
         {
             _namespaces = namespaces ?? new XmlSerializerNamespaces();
             _encoding = encoding ?? Encoding.UTF8;
@@ -51,6 +53,7 @@ namespace XSerializer
             _emitNil = emitNil;
             _encryptionMechanism = encryptionMechanism;
             _encryptKey = encryptKey;
+            _shouldIgnoreCaseForEnum = ShouldIgnoreCaseForEnum;
         }
 
         internal Encoding Encoding { get { return _encoding; } }
@@ -76,6 +79,7 @@ namespace XSerializer
         IEncryptionMechanism ISerializeOptions.EncryptionMechanism { get { return _encryptionMechanism; } }
         object ISerializeOptions.EncryptKey { get { return _encryptKey; } }
         SerializationState ISerializeOptions.SerializationState { get { return null; } }
+        bool ISerializeOptions.ShouldIgnoreCaseForEnum { get { return _shouldIgnoreCaseForEnum; } }
 
         internal void SetExtraTypes(Type[] extraTypes)
         {
@@ -157,6 +161,12 @@ namespace XSerializer
         public XmlSerializationOptions WithEncryptKey(object encryptKey)
         {
             _encryptKey = encryptKey;
+            return this;
+        }
+
+        public XmlSerializationOptions IgnoreCaseForEnum()
+        {
+            _shouldIgnoreCaseForEnum = true;
             return this;
         }
     }
