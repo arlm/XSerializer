@@ -14,5 +14,6 @@ namespace XSerializer
         object EncryptKey { get; }
         SerializationState SerializationState { get; }
         bool ShouldIgnoreCaseForEnum { get; }
+        bool ShouldSerializeCharAsInt { get; }
     }
 }

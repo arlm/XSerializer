@@ -30,5 +30,6 @@ namespace XSerializer.Tests
         public object EncryptKey { get; set; }
         public SerializationState SerializationState { get; set; }
         public bool ShouldIgnoreCaseForEnum { get; set; }
+        public bool ShouldSerializeCharAsInt { get; set; }
     }
 }
