@@ -38,7 +38,7 @@ namespace XSerializer
             bool emitNil = false,
             IEncryptionMechanism encryptionMechanism = null,
             object encryptKey = null,
-            bool ShouldIgnoreCaseForEnum = false,
+            bool shouldIgnoreCaseForEnum = false,
             bool shouldSerializeCharAsInt = false)
         {
             _namespaces = namespaces ?? new XmlSerializerNamespaces();
@@ -55,8 +55,8 @@ namespace XSerializer
             _emitNil = emitNil;
             _encryptionMechanism = encryptionMechanism;
             _encryptKey = encryptKey;
-            _shouldIgnoreCaseForEnum = ShouldIgnoreCaseForEnum;
-            this._shouldSerializeCharAsInt = shouldSerializeCharAsInt;
+            _shouldIgnoreCaseForEnum = shouldIgnoreCaseForEnum;
+            _shouldSerializeCharAsInt = shouldSerializeCharAsInt;
         }
 
         internal Encoding Encoding { get { return _encoding; } }
@@ -83,7 +83,7 @@ namespace XSerializer
         object ISerializeOptions.EncryptKey { get { return _encryptKey; } }
         SerializationState ISerializeOptions.SerializationState { get { return null; } }
         bool ISerializeOptions.ShouldIgnoreCaseForEnum { get { return _shouldIgnoreCaseForEnum; } }
-        public bool ShouldSerializeCharAsInt { get { return this._shouldSerializeCharAsInt; }}
+        bool ISerializeOptions.ShouldSerializeCharAsInt { get { return _shouldSerializeCharAsInt; }}
 
         internal void SetExtraTypes(Type[] extraTypes)
         {
