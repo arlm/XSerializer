@@ -55,6 +55,7 @@
     <Compile Include="AttributeTests.cs" />
     <Compile Include="BclXmlSerializerExtensions.cs" />
     <Compile Include="BooleanJsonSerializerTests.cs" />
+    <Compile Include="BooleanTests.cs" />
     <Compile Include="DeserializeEmptyStringIntoValueTypeTests.cs" />
     <Compile Include="DotNetXmlSerializerCompatabilityTest.cs" />
     <Compile Include="JsonArrayTests.cs" />
