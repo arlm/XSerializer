@@ -44,6 +44,18 @@ namespace XSerializer.Tests
             Assert.That(result.Bar, Is.EqualTo(expectedValue));
         }
 
+        [Test]
+        public void CanDeserializeNullLiteralAsString()
+        {
+            var serializer = new JsonSerializer<FooString>();
+
+            var json = @"{""Bar"":null}";
+
+            var result = serializer.Deserialize(json);
+
+            Assert.That(result.Bar, Is.Null);
+        }
+
         public class FooInt
         {
             public int? Bar { get; set; }
@@ -57,6 +69,11 @@ namespace XSerializer.Tests
         public class FooBool
         {
             public bool? Bar { get; set; }
+        }
+
+        public class FooString
+        {
+            public string Bar { get; set; }
         }
     }
 }
