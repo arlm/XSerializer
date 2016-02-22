@@ -144,7 +144,7 @@ namespace XSerializer.Tests
 
             var instance = _serializer.Deserialize(xml);
 
-            Assert.That(instance.CharTextProperty.Value, Is.EqualTo(default(char)));
+            Assert.That(instance.CharTextProperty.Value, Is.EqualTo('X'));
         }
 
         [Test]
@@ -157,7 +157,7 @@ namespace XSerializer.Tests
 
             var instance = _serializer.Deserialize(xml);
 
-            Assert.That(instance.NullableCharTextProperty.Value, Is.Null);
+            Assert.That(instance.NullableCharTextProperty.Value, Is.EqualTo('X'));
         }
 
         [TestCase(RedactEnumForXmlText.First, "XXXXXXXXXX")]
