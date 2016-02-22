@@ -317,6 +317,11 @@ namespace XSerializer
 
         private static object ParseStringForBool(string value, ISerializeOptions options)
         {
+            if (string.IsNullOrEmpty(value))
+            {
+                return default(bool);
+            }
+
             if (value == "1")
             {
                 return true;
