@@ -15,7 +15,7 @@ namespace XSerializer
         private StringJsonSerializer(Type type, bool encrypt)
         {
             _encrypt = encrypt;
-            _nullable = type.IsNullableType();
+            _nullable = !type.IsValueType || type.IsNullableType();
             SetDelegates(type, out _write, out _read);
         }
 
