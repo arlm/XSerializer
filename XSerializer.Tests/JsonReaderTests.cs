@@ -27,7 +27,7 @@ namespace XSerializer.Tests
             }
 
             reader.Read();
-            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.None));
+            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.EndOfString));
         }
 
         [TestCase("true", new[] { JsonNodeType.Boolean })]
@@ -62,7 +62,7 @@ namespace XSerializer.Tests
 
             reader.DecryptReads = false;
 
-            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.None));
+            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.EndOfString));
         }
 
         [Test]
@@ -113,7 +113,7 @@ namespace XSerializer.Tests
             Assert.That(reader.ReadContent(), Is.True);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.CloseObject));
             Assert.That(reader.ReadContent(), Is.False);
-            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.None));
+            Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.EndOfString));
         }
 
         [Test]

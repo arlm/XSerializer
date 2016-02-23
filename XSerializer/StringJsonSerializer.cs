@@ -55,12 +55,12 @@ namespace XSerializer
             {
                 if (reader.NodeType == JsonNodeType.Invalid)
                 {
-                    throw new MalformedDocumentException("Missing open quote for string value.", path, reader.Value, reader.Line, reader.Position);
+                    throw new MalformedDocumentException(MalformedDocumentError.StringMissingOpenQuote, path, reader.Value, reader.Line, reader.Position);
                 }
 
-                Debug.Assert(reader.NodeType == JsonNodeType.None);
+                Debug.Assert(reader.NodeType == JsonNodeType.EndOfString);
 
-                throw new MalformedDocumentException("Missing close quote for string value.", path, reader.Line, reader.Position);
+                throw new MalformedDocumentException(MalformedDocumentError.StringMissingCloseQuote, path, reader.Line, reader.Position);
             }
 
             if (_encrypt)
@@ -101,7 +101,7 @@ namespace XSerializer
                     }
                     else
                     {
-                        throw new MalformedDocumentException("Unexpected input for string value.",
+                        throw new MalformedDocumentException(MalformedDocumentError.StringUnexpectedNode,
                             path, reader.Value, reader.Line, reader.Position);
                     }
                     break;
@@ -186,7 +186,7 @@ namespace XSerializer
             }
             catch (Exception ex)
             {
-                throw new MalformedDocumentException("Invalid value for '" + type + "'.", path, value, line, position, ex);
+                throw new MalformedDocumentException(MalformedDocumentError.StringInvalidValue, path, value, line, position, ex, type);
             }
         }
 

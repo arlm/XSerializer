@@ -21,8 +21,17 @@ namespace XSerializer
             _info = info;
         }
 
-        public JsonNodeType NodeType { get; private set; }
-        public object Value { get; private set; }
+        private JsonNodeType _nodeType;
+        public JsonNodeType NodeType
+        {
+            get { return _nodeType; }
+        }
+
+        private object _value;
+        public object Value
+        {
+            get { return _value; }
+        }
 
         private int _currentLine;
         private int _currentPosition;
@@ -233,7 +242,7 @@ namespace XSerializer
                         ReadWhitespace((char)peek);
                         continue;
                     case -1:
-                        return JsonNodeType.None;
+                        return JsonNodeType.EndOfString;
                     case '"':
                         return JsonNodeType.String;
                     case '-':
@@ -289,13 +298,11 @@ namespace XSerializer
             switch (read)
             {
                 case -1:
-                    Value = null;
-                    NodeType = JsonNodeType.None;
+                    _value = null;
+                    _nodeType = JsonNodeType.EndOfString;
                     return false;
                 case '"':
-                    Value = ReadString();
-                    NodeType = JsonNodeType.String;
-                    return true;
+                    return TryReadString(out _value, out _nodeType);
                 case '-':
                 case '.':
                 case '0':
@@ -308,59 +315,59 @@ namespace XSerializer
                 case '7':
                 case '8':
                 case '9':
-                    Value = ReadNumber((char)read);
-                    NodeType = JsonNodeType.Number;
+                    _value = ReadNumber((char)read);
+                    _nodeType = JsonNodeType.Number;
                     return true;
                 case 't':
                     ReadLiteral("true", 'r', 'u', 'e');
-                    Value = true;
-                    NodeType = JsonNodeType.Boolean;
+                    _value = true;
+                    _nodeType = JsonNodeType.Boolean;
                     return true;
                 case 'f':
                     ReadLiteral("false", 'a', 'l', 's', 'e');
-                    Value = false;
-                    NodeType = JsonNodeType.Boolean;
+                    _value = false;
+                    _nodeType = JsonNodeType.Boolean;
                     return true;
                 case 'n':
                     ReadLiteral("null", 'u', 'l', 'l');
-                    Value = null;
-                    NodeType = JsonNodeType.Null;
+                    _value = null;
+                    _nodeType = JsonNodeType.Null;
                     return true;
                 case '{':
-                    Value = '{';
-                    NodeType = JsonNodeType.OpenObject;
+                    _value = '{';
+                    _nodeType = JsonNodeType.OpenObject;
                     return true;
                 case '}':
-                    Value = '}';
-                    NodeType = JsonNodeType.CloseObject;
+                    _value = '}';
+                    _nodeType = JsonNodeType.CloseObject;
                     return true;
                 case ':':
-                    Value = ':';
-                    NodeType = JsonNodeType.NameValueSeparator;
+                    _value = ':';
+                    _nodeType = JsonNodeType.NameValueSeparator;
                     return true;
                 case ',':
-                    Value = ',';
-                    NodeType = JsonNodeType.ItemSeparator;
+                    _value = ',';
+                    _nodeType = JsonNodeType.ItemSeparator;
                     return true;
                 case '[':
-                    Value = '[';
-                    NodeType = JsonNodeType.OpenArray;
+                    _value = '[';
+                    _nodeType = JsonNodeType.OpenArray;
                     return true;
                 case ']':
-                    Value = ']';
-                    NodeType = JsonNodeType.CloseArray;
+                    _value = ']';
+                    _nodeType = JsonNodeType.CloseArray;
                     return true;
                 case ' ':
                 case '\r':
                 case '\n':
                 case '\t':
-                    Value = ReadWhitespace((char)read);
-                    NodeType = JsonNodeType.Whitespace;
+                    _value = ReadWhitespace((char)read);
+                    _nodeType = JsonNodeType.Whitespace;
                     return true;
             }
 
-            Value = (char)read;
-            NodeType = JsonNodeType.Invalid;
+            _value = (char)read;
+            _nodeType = JsonNodeType.Invalid;
             return false;
         }
 
@@ -382,7 +389,7 @@ namespace XSerializer
             }
         }
 
-        private string ReadString()
+        private bool TryReadString(out object value, out JsonNodeType nodeType)
         {
             var sb = new StringBuilder(38); // Large enough to read a DateTime or Guid.
 
@@ -393,12 +400,16 @@ namespace XSerializer
                 switch (read)
                 {
                     case '"':
-                        return sb.ToString();
+                        value = sb.ToString();
+                        nodeType = JsonNodeType.String;
+                        return true;
                     case '\\':
                         sb.Append(ReadEscapedChar());
                         break;
                     case -1:
-                        throw new XSerializerException("Reached end of input before closing quote was found for string.");
+                        value = null;
+                        nodeType = JsonNodeType.EndOfString;
+                        return false;
                     default:
                         sb.Append((char)read);
                         break;

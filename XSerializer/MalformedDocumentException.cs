@@ -1,39 +1,38 @@
 using System;
+using System.Diagnostics;
 
 namespace XSerializer
 {
     public class MalformedDocumentException : XSerializerException
     {
+        private readonly MalformedDocumentError _error;
         private readonly string _path;
         private readonly int _line;
         private readonly int _position;
         private readonly object _value;
 
-        internal MalformedDocumentException(string message, string path, int line, int position, Exception innerException = null)
-            : base(FormatMessage(message, path, line, position, null), innerException)
+        internal MalformedDocumentException(MalformedDocumentError error, string path, int line, int position, Exception innerException = null, params object[] additionalArgs)
+            : base(FormatMessage(error, path, line, position, null, additionalArgs), innerException)
         {
+            _error = error;
             _path = path;
             _line = line;
             _position = position;
         }
 
-        internal MalformedDocumentException(string message, string path, object value, int line, int position, Exception innerException = null)
-            : base(FormatMessage(message, path, line, position, value ?? "null"), innerException)
+        internal MalformedDocumentException(MalformedDocumentError error, string path, object value, int line, int position, Exception innerException = null, params object[] additionalArgs)
+            : base(FormatMessage(error, path, line, position, value ?? "null", additionalArgs), innerException)
         {
+            _error = error;
             _path = path;
             _line = line;
             _position = position;
             _value = value;
         }
 
-        private static string FormatMessage(string message, string path, int line, int position, object value)
+        public MalformedDocumentError Error
         {
-            if (value != null)
-            {
-                return message + " Path: " + path + ", Value: " + value + ", Line: " + line + ", Position: " + position;
-            }
-
-            return message + " Path: " + path + ", Line: " + line + ", Position: " + position;
+            get { return _error; }
         }
 
         public string Path
@@ -54,6 +53,37 @@ namespace XSerializer
         public object Value
         {
             get { return _value; }
+        }
+
+        private static string FormatMessage(MalformedDocumentError error, string path, int line, int position, object value, object[] additionalArgs)
+        {
+            string message;
+
+            switch (error)
+            {
+                case MalformedDocumentError.StringMissingOpenQuote:
+                    message = "Missing open quote for string value.";
+                    break;
+                case MalformedDocumentError.StringMissingCloseQuote:
+                    message = "Missing close quote for string value.";
+                    break;
+                case MalformedDocumentError.StringUnexpectedNode:
+                    message = "Unexpected input for string value.";
+                    break;
+                case MalformedDocumentError.StringInvalidValue:
+                    Debug.Assert(additionalArgs.Length == 1);
+                    message = string.Format("Invalid value for '{0}'.", additionalArgs[0]);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException("error");
+            }
+
+            if (value != null)
+            {
+                return message + " Path: " + path + ", Value: " + value + ", Line: " + line + ", Position: " + position;
+            }
+
+            return message + " Path: " + path + ", Line: " + line + ", Position: " + position;
         }
     }
 }
