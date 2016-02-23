@@ -52,7 +52,7 @@ namespace XSerializer
             }
         }
 
-        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
+        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
             if (!reader.ReadContent())
             {

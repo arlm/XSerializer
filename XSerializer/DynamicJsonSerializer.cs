@@ -111,7 +111,7 @@ namespace XSerializer
             return CustomJsonSerializer.Get(concreteType, _encrypt, _mappings);
         }
 
-        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
+        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
             if (!reader.ReadContent())
             {
@@ -125,7 +125,7 @@ namespace XSerializer
 
                 try
                 {
-                    return Read(reader, info);
+                    return Read(reader, info, path);
                 }
                 finally
                 {
@@ -133,10 +133,10 @@ namespace XSerializer
                 }
             }
 
-            return Read(reader, info);
+            return Read(reader, info, path);
         }
 
-        private object Read(JsonReader reader, IJsonSerializeOperationInfo info)
+        private object Read(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
             switch (reader.NodeType)
             {
@@ -147,29 +147,31 @@ namespace XSerializer
                 case JsonNodeType.Number:
                     return new JsonNumber((string)reader.Value);
                 case JsonNodeType.OpenObject:
-                    return DeserializeJsonObject(reader, info);
+                    return DeserializeJsonObject(reader, info, path);
                 case JsonNodeType.OpenArray:
-                    return DeserializeJsonArray(reader, info);
+                    return DeserializeJsonArray(reader, info, path);
                 default:
                     throw new XSerializerException("Invalid json.");
             }
         }
 
-        private object DeserializeJsonObject(JsonReader reader, IJsonSerializeOperationInfo info)
+        private object DeserializeJsonObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
             var jsonObject = new JsonObject(info);
 
             foreach (var propertyName in reader.ReadProperties())
             {
-                jsonObject.Add(propertyName, DeserializeObject(reader, info));
+                jsonObject.Add(propertyName, DeserializeObject(reader, info, path.AppendProperty(propertyName)));
             }
 
             return jsonObject;
         }
 
-        private object DeserializeJsonArray(JsonReader reader, IJsonSerializeOperationInfo info)
+        private object DeserializeJsonArray(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
             var jsonArray = new JsonArray(info);
+
+            var index = 0;
 
             while (true)
             {
@@ -180,7 +182,7 @@ namespace XSerializer
                     return jsonArray;
                 }
 
-                jsonArray.Add(DeserializeObject(reader, info));
+                jsonArray.Add(DeserializeObject(reader, info, path + "[" + index++ + "]"));
 
                 if (!reader.ReadContent())
                 {
@@ -238,7 +240,7 @@ namespace XSerializer
                 writer.WriteCloseObject();
             }
 
-            public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
+            public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
             {
                 throw new NotImplementedException();
             }
@@ -278,7 +280,7 @@ namespace XSerializer
                 writer.WriteCloseArray();
             }
 
-            public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
+            public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
             {
                 throw new NotImplementedException();
             }

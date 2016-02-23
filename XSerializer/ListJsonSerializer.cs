@@ -103,7 +103,7 @@ namespace XSerializer
             writer.WriteCloseArray();
         }
 
-        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
+        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
             if (!reader.ReadContent())
             {
@@ -117,7 +117,7 @@ namespace XSerializer
 
                 try
                 {
-                    return Read(reader, info);
+                    return Read(reader, info, path);
                 }
                 finally
                 {
@@ -125,10 +125,10 @@ namespace XSerializer
                 }
             }
 
-            return Read(reader, info);
+            return Read(reader, info, path);
         }
 
-        private object Read(JsonReader reader, IJsonSerializeOperationInfo info)
+        private object Read(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
             if (reader.NodeType == JsonNodeType.Null)
             {
@@ -136,6 +136,8 @@ namespace XSerializer
             }
 
             var list = _createList();
+
+            var index = 0;
 
             while (true)
             {
@@ -146,7 +148,7 @@ namespace XSerializer
                     return list;
                 }
 
-                var item = _itemSerializer.DeserializeObject(reader, info);
+                var item = _itemSerializer.DeserializeObject(reader, info, path + "[" + index++ + "]");
                 _addItem(list, item);
 
                 if (!reader.ReadContent())

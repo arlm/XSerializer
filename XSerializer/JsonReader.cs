@@ -24,6 +24,12 @@ namespace XSerializer
         public JsonNodeType NodeType { get; private set; }
         public object Value { get; private set; }
 
+        private int _currentLine;
+        private int _currentPosition;
+
+        public int Line { get; private set; }
+        public int Position { get; private set; }
+
         public bool DecryptReads
         {
             get { return _decryptReads; }
@@ -272,7 +278,13 @@ namespace XSerializer
         /// <returns>true if the next node was read successfully; false if there are no more nodes to read.</returns>
         public bool Read()
         {
-            var read = _currentReader.Read();
+            if (ReferenceEquals(_currentReader, _primaryReader))
+            {
+                Line = _currentLine;
+                Position = _currentPosition;
+            }
+
+            var read = ReadCurrent();
 
             switch (read)
             {
@@ -283,7 +295,7 @@ namespace XSerializer
                 case '"':
                     Value = ReadString();
                     NodeType = JsonNodeType.String;
-                    break;
+                    return true;
                 case '-':
                 case '.':
                 case '0':
@@ -298,63 +310,65 @@ namespace XSerializer
                 case '9':
                     Value = ReadNumber((char)read);
                     NodeType = JsonNodeType.Number;
-                    break;
+                    return true;
                 case 't':
                     ReadLiteral("true", 'r', 'u', 'e');
                     Value = true;
                     NodeType = JsonNodeType.Boolean;
-                    break;
+                    return true;
                 case 'f':
                     ReadLiteral("false", 'a', 'l', 's', 'e');
                     Value = false;
                     NodeType = JsonNodeType.Boolean;
-                    break;
+                    return true;
                 case 'n':
                     ReadLiteral("null", 'u', 'l', 'l');
                     Value = null;
                     NodeType = JsonNodeType.Null;
-                    break;
+                    return true;
                 case '{':
                     Value = '{';
                     NodeType = JsonNodeType.OpenObject;
-                    break;
+                    return true;
                 case '}':
                     Value = '}';
                     NodeType = JsonNodeType.CloseObject;
-                    break;
+                    return true;
                 case ':':
                     Value = ':';
                     NodeType = JsonNodeType.NameValueSeparator;
-                    break;
+                    return true;
                 case ',':
                     Value = ',';
                     NodeType = JsonNodeType.ItemSeparator;
-                    break;
+                    return true;
                 case '[':
                     Value = '[';
                     NodeType = JsonNodeType.OpenArray;
-                    break;
+                    return true;
                 case ']':
                     Value = ']';
                     NodeType = JsonNodeType.CloseArray;
-                    break;
+                    return true;
                 case ' ':
                 case '\r':
                 case '\n':
                 case '\t':
                     Value = ReadWhitespace((char)read);
                     NodeType = JsonNodeType.Whitespace;
-                    break;
+                    return true;
             }
 
-            return true;
+            Value = (char)read;
+            NodeType = JsonNodeType.Invalid;
+            return false;
         }
 
         private void ReadLiteral(string value, params char[] literalMinusFirstChar)
         {
             for (int i = 0; i < literalMinusFirstChar.Length; i++)
             {
-                var read = _currentReader.Read();
+                var read = ReadCurrent();
 
                 if (read == -1)
                 {
@@ -374,7 +388,7 @@ namespace XSerializer
 
             while (true)
             {
-                var read = _currentReader.Read();
+                var read = ReadCurrent();
 
                 switch (read)
                 {
@@ -394,7 +408,7 @@ namespace XSerializer
 
         private char ReadEscapedChar()
         {
-            var read = _currentReader.Read();
+            var read = ReadCurrent();
 
             switch (read)
             {
@@ -452,7 +466,7 @@ namespace XSerializer
                         return sb.ToString();
                 }
 
-                sb.Append((char)_currentReader.Read());
+                sb.Append((char)ReadCurrent());
             }
         }
 
@@ -463,7 +477,7 @@ namespace XSerializer
 
             while (IsWhitespace(_currentReader.Peek()))
             {
-                sb.Append((char)_currentReader.Read());
+                sb.Append((char)ReadCurrent());
             }
 
             return sb.ToString();
@@ -481,6 +495,33 @@ namespace XSerializer
                 default:
                     return false;
             }
+        }
+
+        private int ReadCurrent()
+        {
+            var current = _currentReader.Read();
+
+            if (ReferenceEquals(_currentReader, _primaryReader))
+            {
+                if (current != -1)
+                {
+                    switch ((char)current)
+                    {
+                        case '\r':
+                            break;
+                        case '\n':
+                            _currentLine++;
+                            _currentPosition = 0;
+                            break;
+                        default:
+                            _currentPosition++;
+                            break;
+                    }
+                    
+                }
+            }
+
+            return current;
         }
     }
 }

@@ -194,6 +194,16 @@ namespace XSerializer
             public bool ShouldSerializeCharAsInt { get; set; }
         }
 
+        public static string AppendProperty(this string path, string property)
+        {
+            if (path == "")
+            {
+                return property;
+            }
+
+            return path + "." + property;
+        }
+
         /// <summary>
         /// Maybe sets the <see cref="XSerializerXmlTextWriter.IsEncryptionEnabled"/> property of 
         /// <paramref name="writer"/> to true. Returns true if the value was changed to true, false 

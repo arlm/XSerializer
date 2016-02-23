@@ -80,6 +80,7 @@
     <Compile Include="JsonStringTests.cs" />
     <Compile Include="JsonWriterTests.cs" />
     <Compile Include="ListJsonSerializerTests.cs" />
+    <Compile Include="MalformedJsonTests.cs" />
     <Compile Include="NilTests.cs" />
     <Compile Include="NumberJsonSerializerTests.cs" />
     <Compile Include="OptionsExtensions.cs" />

@@ -112,7 +112,7 @@ namespace XSerializer
             writer.WriteCloseObject();
         }
 
-        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
+        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
             if (!reader.ReadContent())
             {
@@ -131,7 +131,7 @@ namespace XSerializer
 
                 try
                 {
-                    return Read(reader, info);
+                    return Read(reader, info, path);
                 }
                 finally
                 {
@@ -139,16 +139,16 @@ namespace XSerializer
                 }
             }
 
-            return Read(reader, info);
+            return Read(reader, info, path);
         }
 
-        private object Read(JsonReader reader, IJsonSerializeOperationInfo info)
+        private object Read(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
             var factory = _createObjectFactory.Value.Invoke();
 
             foreach (var propertyName in reader.ReadProperties())
             {
-                if (!factory.SetValue(reader, propertyName, info))
+                if (!factory.SetValue(reader, propertyName, info, path.AppendProperty(propertyName)))
                 {
                     reader.Discard();
                 }
@@ -316,7 +316,7 @@ namespace XSerializer
 
         private interface IObjectFactory
         {
-            bool SetValue(JsonReader reader, string propertyName, IJsonSerializeOperationInfo info);
+            bool SetValue(JsonReader reader, string propertyName, IJsonSerializeOperationInfo info, string path);
             object GetInstance();
         }
 
@@ -333,13 +333,13 @@ namespace XSerializer
                 _instance = instance;
             }
 
-            public bool SetValue(JsonReader reader, string propertyName, IJsonSerializeOperationInfo info)
+            public bool SetValue(JsonReader reader, string propertyName, IJsonSerializeOperationInfo info, string path)
             {
                 SerializableJsonProperty property;
 
                 if (_serializablePropertiesMap.TryGetValue(propertyName, out property))
                 {
-                    property.SetValue(_instance, reader, info);
+                    property.SetValue(_instance, reader, info, path);
                     return true;
                 }
 
@@ -372,13 +372,13 @@ namespace XSerializer
                 _constructorArguments = new object[argumentsLength];
             }
 
-            public bool SetValue(JsonReader reader, string propertyName, IJsonSerializeOperationInfo info)
+            public bool SetValue(JsonReader reader, string propertyName, IJsonSerializeOperationInfo info, string path)
             {
                 var serializerAndArgIndex = _getSerializerAndArgIndex(propertyName);
 
                 if (serializerAndArgIndex != null)
                 {
-                    var value = serializerAndArgIndex.Item1.DeserializeObject(reader, info);
+                    var value = serializerAndArgIndex.Item1.DeserializeObject(reader, info, path + "." + propertyName);
                     _constructorArguments[serializerAndArgIndex.Item2] = value;
                     return true;
                 }
@@ -386,7 +386,7 @@ namespace XSerializer
                 SerializableJsonProperty property;
                 if (_serializablePropertiesMap.TryGetValue(propertyName, out property))
                 {
-                    var value = property.ReadValue(reader, info);
+                    var value = property.ReadValue(reader, info, path + "." + propertyName);
                     _setPropertyValueActions.Add(instance => property.SetValue(instance, value));
                     return true;
                 }

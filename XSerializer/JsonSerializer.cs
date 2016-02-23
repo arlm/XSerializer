@@ -240,7 +240,7 @@ namespace XSerializer
 
             using (var reader = new JsonReader(textReader, info))
             {
-                return _serializer.DeserializeObject(reader, info);
+                return _serializer.DeserializeObject(reader, info, "");
             }
         }
 
