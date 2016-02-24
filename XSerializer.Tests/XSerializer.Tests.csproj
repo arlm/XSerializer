@@ -57,6 +57,7 @@
     <Compile Include="BooleanJsonSerializerTests.cs" />
     <Compile Include="BooleanTests.cs" />
     <Compile Include="CharTests.cs" />
+    <Compile Include="DefaultDateTimeHandlerTests.cs" />
     <Compile Include="DeserializeEmptyStringIntoValueTypeTests.cs" />
     <Compile Include="DotNetXmlSerializerCompatabilityTest.cs" />
     <Compile Include="JsonArrayTests.cs" />
