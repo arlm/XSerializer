@@ -55,12 +55,12 @@ namespace XSerializer
             {
                 if (reader.NodeType == JsonNodeType.Invalid)
                 {
-                    throw new MalformedDocumentException(MalformedDocumentError.StringMissingOpenQuote, path, reader.Value, reader.Line, reader.Position);
+                    throw GetMissingOpenQuoteException(reader, path);
                 }
 
                 Debug.Assert(reader.NodeType == JsonNodeType.EndOfString);
 
-                throw new MalformedDocumentException(MalformedDocumentError.StringMissingCloseQuote, path, reader.Line, reader.Position);
+                throw GetMissingCloseQuoteException(reader, path);
             }
 
             if (_encrypt)
@@ -75,11 +75,9 @@ namespace XSerializer
                     case JsonNodeType.Boolean:
                         break;
                     case JsonNodeType.EndOfString:
-                        throw new MalformedDocumentException(MalformedDocumentError.StringMissingCloseQuote,
-                            path, reader.Line, reader.Position);
+                        throw GetMissingCloseQuoteException(reader, path);
                     default:
-                        throw new MalformedDocumentException(MalformedDocumentError.StringMissingOpenQuote,
-                            path, reader.Value, reader.Line, reader.Position);
+                        throw GetMissingOpenQuoteException(reader, path);
                 }
 
                 try
@@ -115,8 +113,7 @@ namespace XSerializer
                     }
                     else
                     {
-                        throw new MalformedDocumentException(MalformedDocumentError.StringMissingOpenQuote,
-                            path, reader.Value, reader.Line, reader.Position);
+                        throw GetMissingOpenQuoteException(reader, path);
                     }
                     break;
             }
@@ -207,6 +204,18 @@ namespace XSerializer
         private static string GetStringValue(Type type)
         {
             return type.FullName + ", " + type.Assembly.GetName().Name;
+        }
+
+        private static MalformedDocumentException GetMissingOpenQuoteException(JsonReader reader, string path)
+        {
+            return new MalformedDocumentException(MalformedDocumentError.StringMissingOpenQuote,
+                path, reader.Value, reader.Line, reader.Position);
+        }
+
+        private static MalformedDocumentException GetMissingCloseQuoteException(JsonReader reader, string path)
+        {
+            return new MalformedDocumentException(MalformedDocumentError.StringMissingCloseQuote,
+                path, reader.Line, reader.Position);
         }
     }
 }
