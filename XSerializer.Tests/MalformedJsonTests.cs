@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using NUnit.Framework;
+using XSerializer.Encryption;
 
 namespace XSerializer.Tests
 {
@@ -55,11 +56,72 @@ namespace XSerializer.Tests
             Assert.That(ex.Value, Is.EqualTo("abc"));
         }
 
-        private static MalformedDocumentException DeserializeFail(Type propertyType, string json)
+        [Test]
+        public void StringMissingOpenQuote_Encrypted()
         {
-            var type = GetFooType(propertyType);
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"abc"""));
+            var ex = DeserializeFail(typeof(string), json, true);
 
-            var serializer = JsonSerializer.Create(type);
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringMissingOpenQuote));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('a'));
+        }
+
+        [Test]
+        public void StringMissingCloseQuote_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"""abc"));
+            var ex = DeserializeFail(typeof(string), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringMissingCloseQuote));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void StringUnexpectedNode_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"[abc"));
+            var ex = DeserializeFail(typeof(string), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringUnexpectedNode));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('['));
+        }
+
+        [Test]
+        public void StringInvalidValue_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"""abc"""));
+            var ex = DeserializeFail(typeof(DateTime), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("abc"));
+        }
+
+        private static string Encrypt(string s)
+        {
+            return "\"" + EncryptionMechanism.Current.Encrypt(s, null, null) + "\"";
+        }
+
+        private static MalformedDocumentException DeserializeFail(
+            Type propertyType, string json, bool encrypt = false)
+        {
+            var type = GetFooType(propertyType, encrypt);
+
+            var serializer = JsonSerializer.Create(type, new JsonSerializerConfiguration
+            {
+                EncryptionMechanism = EncryptionMechanism.Current
+            });
 
             try
             {
@@ -88,7 +150,7 @@ namespace XSerializer.Tests
 
         private static readonly ConstructorInfo _objectConstructor = typeof(object).GetConstructor(Type.EmptyTypes);
 
-        private static Type GetFooType(Type propertyType)
+        private static Type GetFooType(Type propertyType, bool encrypted)
         {
             var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(
                 new AssemblyName("FooAssembly"), AssemblyBuilderAccess.Run);
@@ -103,18 +165,27 @@ namespace XSerializer.Tests
 
             var fieldBuilder = typeBuilder.DefineField("_bar", propertyType, FieldAttributes.Private);
 
-            CreateProperty(propertyType, typeBuilder, fieldBuilder);
+            CreateProperty(propertyType, typeBuilder, fieldBuilder, encrypted);
             CreateConstructor(typeBuilder);
 
             return typeBuilder.CreateType();
         }
 
-        private static void CreateProperty(Type propertyType, TypeBuilder typeBuilder, FieldBuilder fieldBuilder)
+        private static void CreateProperty(Type propertyType, TypeBuilder typeBuilder, FieldBuilder fieldBuilder, bool encrypt)
         {
             var propertyBuilder = typeBuilder.DefineProperty("Bar", PropertyAttributes.HasDefault, propertyType, null);
 
             propertyBuilder.SetGetMethod(GetGetMethodBuilder(propertyType, typeBuilder, fieldBuilder));
             propertyBuilder.SetSetMethod(GetSetMethodBuilder(propertyType, typeBuilder, fieldBuilder));
+
+            if (encrypt)
+            {
+                var ctor = typeof(EncryptAttribute).GetConstructor(Type.EmptyTypes);
+
+                var attributeBuilder = new CustomAttributeBuilder(ctor, new object[0]);
+
+                propertyBuilder.SetCustomAttribute(attributeBuilder);
+            }
         }
 
         private static MethodBuilder GetGetMethodBuilder(Type propertyType, TypeBuilder typeBuilder, FieldBuilder fieldBuilder)

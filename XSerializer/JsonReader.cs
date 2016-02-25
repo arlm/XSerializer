@@ -65,7 +65,7 @@ namespace XSerializer
 
                     _decryptedReader = new StringReader(_info.EncryptionMechanism.Decrypt((string)Value, _info.EncryptKey, _info.SerializationState));
                     _currentReader = _decryptedReader;
-                    Read();
+                    ReadContent();
                 }
                 else
                 {
