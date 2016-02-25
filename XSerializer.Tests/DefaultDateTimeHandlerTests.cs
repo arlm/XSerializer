@@ -171,8 +171,6 @@ namespace XSerializer.Tests
         {
             var handler = new DefaultDateTimeHandler();
 
-            Exception exception = null;
-
             TestDelegate f = () =>
             {
                 try
@@ -230,8 +228,6 @@ namespace XSerializer.Tests
         public void CannotParseDateOffsetTime(string s)
         {
             var handler = new DefaultDateTimeHandler();
-
-            Exception exception = null;
 
             TestDelegate f = () =>
             {
