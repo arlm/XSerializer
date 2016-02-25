@@ -67,9 +67,6 @@ namespace XSerializer
                 case MalformedDocumentError.StringMissingCloseQuote:
                     message = "Missing close quote for string value.";
                     break;
-                case MalformedDocumentError.StringUnexpectedNode:
-                    message = "Unexpected input for string value.";
-                    break;
                 case MalformedDocumentError.StringInvalidValue:
                     Debug.Assert(additionalArgs.Length == 1);
                     message = string.Format("Invalid value for '{0}'.", additionalArgs[0]);

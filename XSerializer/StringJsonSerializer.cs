@@ -74,14 +74,11 @@ namespace XSerializer
                     case JsonNodeType.String:
                     case JsonNodeType.Boolean:
                         break;
-                    case JsonNodeType.Invalid:
-                        throw new MalformedDocumentException(MalformedDocumentError.StringMissingOpenQuote,
-                            path, reader.Value, reader.Line, reader.Position);
                     case JsonNodeType.EndOfString:
                         throw new MalformedDocumentException(MalformedDocumentError.StringMissingCloseQuote,
                             path, reader.Line, reader.Position);
                     default:
-                        throw new MalformedDocumentException(MalformedDocumentError.StringUnexpectedNode,
+                        throw new MalformedDocumentException(MalformedDocumentError.StringMissingOpenQuote,
                             path, reader.Value, reader.Line, reader.Position);
                 }
 
@@ -118,7 +115,7 @@ namespace XSerializer
                     }
                     else
                     {
-                        throw new MalformedDocumentException(MalformedDocumentError.StringUnexpectedNode,
+                        throw new MalformedDocumentException(MalformedDocumentError.StringMissingOpenQuote,
                             path, reader.Value, reader.Line, reader.Position);
                     }
                     break;

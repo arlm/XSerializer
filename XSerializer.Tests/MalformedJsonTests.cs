@@ -37,7 +37,7 @@ namespace XSerializer.Tests
         {
             var ex = DeserializeFail(typeof(string), @"{""Bar"":[abc}");
 
-            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringUnexpectedNode));
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringMissingOpenQuote));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(7));
@@ -88,7 +88,7 @@ namespace XSerializer.Tests
             var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"[abc"));
             var ex = DeserializeFail(typeof(string), json, true);
 
-            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringUnexpectedNode));
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringMissingOpenQuote));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(7));

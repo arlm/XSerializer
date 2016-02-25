@@ -4,7 +4,6 @@ namespace XSerializer
     {
         StringMissingOpenQuote,
         StringMissingCloseQuote,
-        StringUnexpectedNode,
         StringInvalidValue,
     }
 }
