@@ -9,9 +9,118 @@ namespace XSerializer.Tests
     public class MalformedJsonTests
     {
         [Test]
+        public void ObjectMissingOpenCurlyBrace()
+        {
+            var ex = DeserializeFail(typeof(int), @"""Bar"":123}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingOpenCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void ObjectMissingCloseCurlyBrace()
+        {
+            var ex = DeserializeFail(typeof(int), @"{""Bar"":123");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingCloseCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(10));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void PropertyNameMissingOpenQuote()
+        {
+            var ex = DeserializeFail(typeof(int), @"{Bar"":123}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissingOpenQuote));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(1));
+            Assert.That(ex.Value, Is.EqualTo('B'));
+        }
+
+        [Test]
+        public void PropertyNameMissingCloseQuote()
+        {
+            var ex = DeserializeFail(typeof(int), @"{""Bar:123}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissingCloseQuote));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(1));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void PropertyInvalidName()
+        {
+            var ex = DeserializeFail(typeof(int), @"{123:456}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyInvalidName));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(1));
+            Assert.That(ex.Value, Is.EqualTo("123"));
+        }
+
+        [Test]
+        public void PropertyMissingSeparator1()
+        {
+            var ex = DeserializeFail(typeof(int), @"{""Bar""123}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingNameValueSeparator));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(6));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void PropertyMissingSeparator2()
+        {
+            var ex = DeserializeFail(typeof(int), @"{""Bar""wtf}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingNameValueSeparator));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(6));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void PropertyMissingNameValueSeparator()
+        {
+            var ex = DeserializeFail(typeof(int), @"{""Bar"":123""Baz"":456}", bazPropertyType:typeof(int));
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingItemSeparator));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(10));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
         public void StringMissingOpenQuote()
         {
             var ex = DeserializeFail(typeof(string), @"{""Bar"":abc""}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringMissingOpenQuote));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('a'));
+        }
+
+        [Test]
+        public void StringMissingOpenQuote_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"abc"""));
+            var ex = DeserializeFail(typeof(string), json, true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringMissingOpenQuote));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
@@ -33,9 +142,35 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void StringMissingCloseQuote_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"""abc"));
+            var ex = DeserializeFail(typeof(string), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringMissingCloseQuote));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
         public void StringUnexpectedNode()
         {
             var ex = DeserializeFail(typeof(string), @"{""Bar"":[abc}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringMissingOpenQuote));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('['));
+        }
+
+        [Test]
+        public void StringUnexpectedNode_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"[abc"));
+            var ex = DeserializeFail(typeof(string), json, true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringMissingOpenQuote));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
@@ -57,45 +192,6 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void StringMissingOpenQuote_Encrypted()
-        {
-            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"abc"""));
-            var ex = DeserializeFail(typeof(string), json, true);
-
-            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringMissingOpenQuote));
-            Assert.That(ex.Path, Is.EqualTo("Bar"));
-            Assert.That(ex.Line, Is.EqualTo(0));
-            Assert.That(ex.Position, Is.EqualTo(7));
-            Assert.That(ex.Value, Is.EqualTo('a'));
-        }
-
-        [Test]
-        public void StringMissingCloseQuote_Encrypted()
-        {
-            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"""abc"));
-            var ex = DeserializeFail(typeof(string), json, true);
-
-            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringMissingCloseQuote));
-            Assert.That(ex.Path, Is.EqualTo("Bar"));
-            Assert.That(ex.Line, Is.EqualTo(0));
-            Assert.That(ex.Position, Is.EqualTo(7));
-            Assert.That(ex.Value, Is.Null);
-        }
-
-        [Test]
-        public void StringUnexpectedNode_Encrypted()
-        {
-            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"[abc"));
-            var ex = DeserializeFail(typeof(string), json, true);
-
-            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringMissingOpenQuote));
-            Assert.That(ex.Path, Is.EqualTo("Bar"));
-            Assert.That(ex.Line, Is.EqualTo(0));
-            Assert.That(ex.Position, Is.EqualTo(7));
-            Assert.That(ex.Value, Is.EqualTo('['));
-        }
-
-        [Test]
         public void StringInvalidValue_Encrypted()
         {
             var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"""abc"""));
@@ -114,9 +210,9 @@ namespace XSerializer.Tests
         }
 
         private static MalformedDocumentException DeserializeFail(
-            Type propertyType, string json, bool encrypt = false)
+            Type barPropertyType, string json, bool encrypt = false, Type bazPropertyType = null)
         {
-            var type = GetFooType(propertyType, encrypt);
+            var type = GetFooType(barPropertyType, encrypt, bazPropertyType);
 
             var serializer = JsonSerializer.Create(type, new JsonSerializerConfiguration
             {
@@ -134,6 +230,7 @@ namespace XSerializer.Tests
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex);
                 throw new AssertionException("Expected MalformedDocumentException, but was: " + ex.GetType(), ex);
             }
 
@@ -150,7 +247,7 @@ namespace XSerializer.Tests
 
         private static readonly ConstructorInfo _objectConstructor = typeof(object).GetConstructor(Type.EmptyTypes);
 
-        private static Type GetFooType(Type propertyType, bool encrypted)
+        private static Type GetFooType(Type barPropertyType, bool encrypted, Type bazPropertyType)
         {
             var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(
                 new AssemblyName("FooAssembly"), AssemblyBuilderAccess.Run);
@@ -163,20 +260,26 @@ namespace XSerializer.Tests
 
             var typeBuilder = moduleBuilder.DefineType("Foo", classTypeAttributes);
 
-            var fieldBuilder = typeBuilder.DefineField("_bar", propertyType, FieldAttributes.Private);
+            var barFieldBuilder = typeBuilder.DefineField("_bar", barPropertyType, FieldAttributes.Private);
+            CreateProperty(barPropertyType, typeBuilder, barFieldBuilder, encrypted, "Bar");
 
-            CreateProperty(propertyType, typeBuilder, fieldBuilder, encrypted);
+            if (bazPropertyType != null)
+            {
+                var bazFieldBuilder = typeBuilder.DefineField("_baz", barPropertyType, FieldAttributes.Private);
+                CreateProperty(bazPropertyType, typeBuilder, bazFieldBuilder, encrypted, "Baz");
+            }
+
             CreateConstructor(typeBuilder);
 
             return typeBuilder.CreateType();
         }
 
-        private static void CreateProperty(Type propertyType, TypeBuilder typeBuilder, FieldBuilder fieldBuilder, bool encrypt)
+        private static void CreateProperty(Type propertyType, TypeBuilder typeBuilder, FieldBuilder fieldBuilder, bool encrypt, string name)
         {
-            var propertyBuilder = typeBuilder.DefineProperty("Bar", PropertyAttributes.HasDefault, propertyType, null);
+            var propertyBuilder = typeBuilder.DefineProperty(name, PropertyAttributes.HasDefault, propertyType, null);
 
-            propertyBuilder.SetGetMethod(GetGetMethodBuilder(propertyType, typeBuilder, fieldBuilder));
-            propertyBuilder.SetSetMethod(GetSetMethodBuilder(propertyType, typeBuilder, fieldBuilder));
+            propertyBuilder.SetGetMethod(GetGetMethodBuilder(propertyType, typeBuilder, fieldBuilder, name));
+            propertyBuilder.SetSetMethod(GetSetMethodBuilder(propertyType, typeBuilder, fieldBuilder, name));
 
             if (encrypt)
             {
@@ -188,10 +291,10 @@ namespace XSerializer.Tests
             }
         }
 
-        private static MethodBuilder GetGetMethodBuilder(Type propertyType, TypeBuilder typeBuilder, FieldBuilder fieldBuilder)
+        private static MethodBuilder GetGetMethodBuilder(Type propertyType, TypeBuilder typeBuilder, FieldBuilder fieldBuilder, string name)
         {
             var getMethodBuilder = typeBuilder.DefineMethod(
-                "get_Bar", _methodAttributes, _callingConventions, propertyType, Type.EmptyTypes);
+                "get_" + name, _methodAttributes, _callingConventions, propertyType, Type.EmptyTypes);
             
             var il = getMethodBuilder.GetILGenerator();
 
@@ -202,10 +305,10 @@ namespace XSerializer.Tests
             return getMethodBuilder;
         }
 
-        private static MethodBuilder GetSetMethodBuilder(Type propertyType, TypeBuilder typeBuilder, FieldBuilder fieldBuilder)
+        private static MethodBuilder GetSetMethodBuilder(Type propertyType, TypeBuilder typeBuilder, FieldBuilder fieldBuilder, string name)
         {
             var setMethodBuilder = typeBuilder.DefineMethod(
-                "set_Bar", _methodAttributes, _callingConventions, typeof(void), new[] { propertyType });
+                "set_" + name, _methodAttributes, _callingConventions, typeof(void), new[] { propertyType });
 
             var il = setMethodBuilder.GetILGenerator();
             

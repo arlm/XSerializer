@@ -159,7 +159,7 @@ namespace XSerializer
         {
             var jsonObject = new JsonObject(info);
 
-            foreach (var propertyName in reader.ReadProperties())
+            foreach (var propertyName in reader.ReadProperties(path))
             {
                 jsonObject.Add(propertyName, DeserializeObject(reader, info, path.AppendProperty(propertyName)));
             }

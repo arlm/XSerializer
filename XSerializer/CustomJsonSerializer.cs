@@ -146,7 +146,7 @@ namespace XSerializer
         {
             var factory = _createObjectFactory.Value.Invoke();
 
-            foreach (var propertyName in reader.ReadProperties())
+            foreach (var propertyName in reader.ReadProperties(path))
             {
                 if (!factory.SetValue(reader, propertyName, info, path.AppendProperty(propertyName)))
                 {

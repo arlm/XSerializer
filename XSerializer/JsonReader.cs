@@ -119,19 +119,33 @@ namespace XSerializer
         /// <see cref="Read"/> or <see cref="ReadContent"/> one or more times, before continuing to
         /// enumerate the collection.
         /// </summary>
+        /// <param name="path">
+        /// The path to the current object. Used for error reporting.
+        /// </param>
         /// <exception cref="XSerializerException">If the JSON object is malformed.</exception>
-        public IEnumerable<string> ReadProperties()
+        public IEnumerable<string> ReadProperties(string path)
         {
             if (NodeType != JsonNodeType.OpenObject)
             {
-                throw new XSerializerException("Unexpected node type found while attempting to parse '{' character: " + NodeType + ".");
+                throw new MalformedDocumentException(
+                    MalformedDocumentError.ObjectMissingOpenCurlyBrace, path, Line, Position);
             }
 
             while (true)
             {
                 if (!ReadContent())
                 {
-                    throw new XSerializerException("Unexpected end of input while attempting to parse property name.");
+                    if (NodeType == JsonNodeType.Invalid)
+                    {
+                        throw new MalformedDocumentException(
+                            MalformedDocumentError.PropertyNameMissingOpenQuote,
+                            path, Value, Line, Position);
+                    }
+
+                    Debug.Assert(NodeType == JsonNodeType.EndOfString);
+
+                    throw new MalformedDocumentException(
+                        MalformedDocumentError.PropertyNameMissingCloseQuote, path, Line, Position);
                 }
 
                 switch (NodeType)
@@ -141,19 +155,17 @@ namespace XSerializer
                     case JsonNodeType.String:
                         break;
                     default:
-                        throw new XSerializerException("Unexpected node type found while attempting to parse ':' character: " + NodeType + ".");
+                        throw new MalformedDocumentException(
+                            MalformedDocumentError.PropertyInvalidName, path, Value, Line, Position);
                 }
 
                 var name = (string)Value;
 
-                if (!ReadContent())
+                if (!ReadContent() || NodeType != JsonNodeType.NameValueSeparator)
                 {
-                    throw new XSerializerException("Unexpected end of input while attempting to parse ':' character.");
-                }
-
-                if (NodeType != JsonNodeType.NameValueSeparator)
-                {
-                    throw new XSerializerException("Unexpected node type found while attempting to parse ':' character: " + NodeType + ".");
+                    throw new MalformedDocumentException(
+                        MalformedDocumentError.PropertyMissingNameValueSeparator,
+                        path.AppendProperty(name), Line, Position);
                 }
 
                 yield return name;
@@ -162,7 +174,9 @@ namespace XSerializer
 
                 if (!ReadContent())
                 {
-                    throw new XSerializerException("Unexpected end of input while attempting to parse ',' or '}' character.");
+                    throw new MalformedDocumentException(
+                        MalformedDocumentError.ObjectMissingCloseCurlyBrace,
+                        path.AppendProperty(name), Line, Position);
                 }
 
                 switch (NodeType)
@@ -172,7 +186,9 @@ namespace XSerializer
                     case JsonNodeType.ItemSeparator:
                         break;
                     default:
-                        throw new XSerializerException("Unexpected node type found while attempting to parse ',' or '}' character: " + NodeType + ".");
+                        throw new MalformedDocumentException(
+                            MalformedDocumentError.PropertyMissingItemSeparator,
+                            path.AppendProperty(name), Line, Position);
                 }
             }
         }

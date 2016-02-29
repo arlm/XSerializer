@@ -132,7 +132,7 @@ namespace XSerializer
         {
             var dictionary = _createDictionary();
 
-            foreach (var keyString in reader.ReadProperties())
+            foreach (var keyString in reader.ReadProperties(path))
             {
                 var key = _deserializeKey(keyString, info, path);
                 var value = _valueSerializer.DeserializeObject(reader, info, path.AppendProperty(keyString));

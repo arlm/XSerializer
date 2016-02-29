@@ -61,6 +61,27 @@ namespace XSerializer
 
             switch (error)
             {
+                case MalformedDocumentError.ObjectMissingOpenCurlyBrace:
+                    message = "Missing object open curly brace.";
+                    break;
+                case MalformedDocumentError.ObjectMissingCloseCurlyBrace:
+                    message = "Missing object close curly brace.";
+                    break;
+                case MalformedDocumentError.PropertyNameMissingOpenQuote:
+                    message = "Missing open quote for property name.";
+                    break;
+                case MalformedDocumentError.PropertyNameMissingCloseQuote:
+                    message = "Missing close quote for property name.";
+                    break;
+                case MalformedDocumentError.PropertyInvalidName:
+                    message = "Invalid property name.";
+                    break;
+                case MalformedDocumentError.PropertyMissingNameValueSeparator:
+                    message = "Missing property name/value separator.";
+                    break;
+                case MalformedDocumentError.PropertyMissingItemSeparator:
+                    message = "Missing property item separator.";
+                    break;
                 case MalformedDocumentError.StringMissingOpenQuote:
                     message = "Missing open quote for string value.";
                     break;
@@ -77,6 +98,11 @@ namespace XSerializer
 
             if (value != null)
             {
+                if (value is bool)
+                {
+                    value = value.ToString().ToLower();
+                }
+
                 return message + " Path: " + path + ", Value: " + value + ", Line: " + line + ", Position: " + position;
             }
 
