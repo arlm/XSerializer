@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
 namespace XSerializer
 {
+    [DebuggerDisplay("{DebuggerDisplay,nq}")]
     internal class JsonReader : IDisposable
     {
         private readonly TextReader _primaryReader;
@@ -533,6 +535,56 @@ namespace XSerializer
             }
 
             return current;
+        }
+
+        private string DebuggerDisplay
+        {
+            get
+            {
+                string valueString;
+
+                if (Value == null)
+                {
+                    valueString = "[null]";
+                }
+                else if (Value is char)
+                {
+                    valueString = "'" + Value + "'";
+                }
+                else if (Value is bool)
+                {
+                    valueString = ((bool)Value) ? "true" : "false";
+                }
+                else
+                {
+                    valueString = (string)Value;
+
+                    if (valueString.Length > 0)
+                    {
+                        if (IsWhitespace(valueString[0]))
+                        {
+                            valueString = string.Format(@"""{0}""",
+                                valueString.Replace("\r", "\\r")
+                                    .Replace("\n", "\\n")
+                                    .Replace("\t", "\\t"));
+                        }
+                        else
+                        {
+                            double dummy;
+                            if (!double.TryParse(valueString, out dummy))
+                            {
+                                valueString = string.Format(@"""{0}""", valueString);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        valueString = @"""""";
+                    }
+                }
+
+                return string.Format("{0}: {1}", NodeType, valueString);
+            }
         }
     }
 }
