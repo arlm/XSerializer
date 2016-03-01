@@ -22,11 +22,11 @@ namespace XSerializer.Tests
 
             foreach (var expectedNodeType in expectedNodeTypes)
             {
-                reader.Read();
+                reader.Read("");
                 Assert.That(reader.NodeType, Is.EqualTo(expectedNodeType));
             }
 
-            reader.Read();
+            reader.Read("");
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.EndOfString));
         }
 
@@ -49,18 +49,18 @@ namespace XSerializer.Tests
             var reader = new JsonReader(new StringReader(cipherTextJson), info);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.None));
 
-            reader.Read();
+            reader.Read("");
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.String));
 
-            reader.DecryptReads = true;
+            reader.SetDecryptReads(true, "");
 
             foreach (var expectedNodeType in expectedNodeTypes)
             {
                 Assert.That(reader.NodeType, Is.EqualTo(expectedNodeType));
-                reader.Read();
+                reader.Read("");
             }
 
-            reader.DecryptReads = false;
+            reader.SetDecryptReads(false, "");
 
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.EndOfString));
         }
@@ -78,17 +78,17 @@ namespace XSerializer.Tests
             var reader = new JsonReader(new StringReader(cipherTextJson), info);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.None));
 
-            reader.Read();
+            reader.Read("");
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.String));
 
-            reader.DecryptReads = true;
+            reader.SetDecryptReads(true, "");
 
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.OpenObject));
 
-            reader.Read();
+            reader.Read("");
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.String));
 
-            Assert.That(() => reader.DecryptReads = false, Throws.InvalidOperationException);
+            Assert.That(() => reader.SetDecryptReads(false, ""), Throws.InvalidOperationException);
         }
 
         [Test]
@@ -102,17 +102,17 @@ namespace XSerializer.Tests
             var reader = new JsonReader(new StringReader(json), new JsonSerializeOperationInfo());
 
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.None));
-            Assert.That(reader.ReadContent(), Is.True);
+            Assert.That(reader.ReadContent(""), Is.True);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.OpenObject));
-            Assert.That(reader.ReadContent(), Is.True);
+            Assert.That(reader.ReadContent(""), Is.True);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.String));
-            Assert.That(reader.ReadContent(), Is.True);
+            Assert.That(reader.ReadContent(""), Is.True);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.NameValueSeparator));
-            Assert.That(reader.ReadContent(), Is.True);
+            Assert.That(reader.ReadContent(""), Is.True);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.Number));
-            Assert.That(reader.ReadContent(), Is.True);
+            Assert.That(reader.ReadContent(""), Is.True);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.CloseObject));
-            Assert.That(reader.ReadContent(), Is.False);
+            Assert.That(reader.ReadContent(""), Is.False);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.EndOfString));
         }
 
@@ -123,26 +123,26 @@ namespace XSerializer.Tests
 
             var reader = new JsonReader(new StringReader(json), new JsonSerializeOperationInfo());
 
-            Assert.That(reader.ReadContent(), Is.True);
+            Assert.That(reader.ReadContent(""), Is.True);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.OpenObject));
 
             var enumerator = reader.ReadProperties("").GetEnumerator();
 
             Assert.That(enumerator.MoveNext(), Is.True);
             Assert.That(enumerator.Current, Is.EqualTo("foo"));
-            Assert.That(reader.Read(), Is.True);
+            Assert.That(reader.Read(""), Is.True);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.Number));
             Assert.That(reader.Value, Is.EqualTo("123.45"));
 
             Assert.That(enumerator.MoveNext(), Is.True);
             Assert.That(enumerator.Current, Is.EqualTo("bar"));
-            Assert.That(reader.Read(), Is.True);
+            Assert.That(reader.Read(""), Is.True);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.Boolean));
             Assert.That(reader.Value, Is.True);
 
             Assert.That(enumerator.MoveNext(), Is.True);
             Assert.That(enumerator.Current, Is.EqualTo("baz"));
-            Assert.That(reader.Read(), Is.True);
+            Assert.That(reader.Read(""), Is.True);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.String));
             Assert.That(reader.Value, Is.EqualTo("abc"));
 
@@ -154,11 +154,11 @@ namespace XSerializer.Tests
         {
             var reader = new JsonReader(new StringReader("123"), new JsonSerializeOperationInfo());
 
-            Assert.That(reader.ReadContent(), Is.True);
+            Assert.That(reader.ReadContent(""), Is.True);
             Assert.That(reader.Value, Is.EqualTo("123"));
-            Assert.That(reader.ReadContent(), Is.False);
-            Assert.That(reader.ReadContent(), Is.False); // end of stream
-            Assert.That(reader.ReadContent(), Is.False); // end of stream
+            Assert.That(reader.ReadContent(""), Is.False);
+            Assert.That(reader.ReadContent(""), Is.False); // end of stream
+            Assert.That(reader.ReadContent(""), Is.False); // end of stream
         }
 
         [Test]
@@ -171,11 +171,11 @@ namespace XSerializer.Tests
                     EncryptionMechanism = new Base64EncryptionMechanism()
                 });
 
-            Assert.That(reader.Read(), Is.True);
+            Assert.That(reader.Read(""), Is.True);
             Assert.That(reader.NodeType, Is.EqualTo(JsonNodeType.Null));
 
-            Assert.That(() => reader.DecryptReads = true, Throws.Nothing);
-            Assert.That(() => reader.DecryptReads = false, Throws.Nothing);
+            Assert.That(() => reader.SetDecryptReads(true, ""), Throws.Nothing);
+            Assert.That(() => reader.SetDecryptReads(false, ""), Throws.Nothing);
         }
 
         [TestCase("null")]
@@ -192,10 +192,10 @@ namespace XSerializer.Tests
         {
             var reader = new JsonReader(new StringReader(json), new JsonSerializeOperationInfo());
 
-            reader.Discard();
+            reader.Discard("");
 
             // There should be nothing significant left
-            Assert.That(reader.ReadContent(), Is.False);
+            Assert.That(reader.ReadContent(""), Is.False);
         }
     }
 }

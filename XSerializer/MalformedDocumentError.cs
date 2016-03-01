@@ -12,5 +12,6 @@ namespace XSerializer
         StringMissingOpenQuote,
         StringMissingCloseQuote,
         StringInvalidValue,
+        LiteralInvalidValue,
     }
 }

@@ -44,46 +44,47 @@ namespace XSerializer
         public bool DecryptReads
         {
             get { return _decryptReads; }
-            set
+        }
+
+        public void SetDecryptReads(bool value, string path)
+        {
+            if (value == _decryptReads)
             {
-                if (value == _decryptReads)
+                return;
+            }
+
+            _decryptReads = value;
+
+            if (_decryptReads)
+            {
+                if (NodeType == JsonNodeType.Null)
                 {
                     return;
                 }
 
-                _decryptReads = value;
-
-                if (_decryptReads)
+                if (NodeType != JsonNodeType.String)
                 {
-                    if (NodeType == JsonNodeType.Null)
-                    {
-                        return;
-                    }
-
-                    if (NodeType != JsonNodeType.String)
-                    {
-                        throw new XSerializerException("Cannot decrypt non-string value.");
-                    }
-
-                    _decryptedReader = new StringReader(_info.EncryptionMechanism.Decrypt((string)Value, _info.EncryptKey, _info.SerializationState));
-                    _currentReader = _decryptedReader;
-                    ReadContent();
+                    throw new XSerializerException("Cannot decrypt non-string value.");
                 }
-                else
+
+                _decryptedReader = new StringReader(_info.EncryptionMechanism.Decrypt((string)Value, _info.EncryptKey, _info.SerializationState));
+                _currentReader = _decryptedReader;
+                ReadContent(path);
+            }
+            else
+            {
+                if (NodeType == JsonNodeType.Null)
                 {
-                    if (NodeType == JsonNodeType.Null)
-                    {
-                        return;
-                    }
-
-                    if (_decryptedReader.Peek() != -1)
-                    {
-                        throw new InvalidOperationException("Attempted to set DecryptReads to false before the encrypted stream has been consumed.");
-                    }
-
-                    _decryptedReader = null;
-                    _currentReader = _primaryReader;
+                    return;
                 }
+
+                if (_decryptedReader.Peek() != -1)
+                {
+                    throw new InvalidOperationException("Attempted to set DecryptReads to false before the encrypted stream has been consumed.");
+                }
+
+                _decryptedReader = null;
+                _currentReader = _primaryReader;
             }
         }
 
@@ -96,11 +97,11 @@ namespace XSerializer
         /// Reads the next non-whitespace node from the stream.
         /// </summary>
         /// <returns>true if the next node was read successfully; false if there are no more nodes to read.</returns>
-        public bool ReadContent()
+        public bool ReadContent(string path)
         {
             while (true)
             {
-                if (!Read())
+                if (!Read(path))
                 {
                     return false;
                 }
@@ -133,7 +134,7 @@ namespace XSerializer
 
             while (true)
             {
-                if (!ReadContent())
+                if (!ReadContent(path))
                 {
                     if (NodeType == JsonNodeType.Invalid)
                     {
@@ -161,7 +162,7 @@ namespace XSerializer
 
                 var name = (string)Value;
 
-                if (!ReadContent() || NodeType != JsonNodeType.NameValueSeparator)
+                if (!ReadContent(path) || NodeType != JsonNodeType.NameValueSeparator)
                 {
                     throw new MalformedDocumentException(
                         MalformedDocumentError.PropertyMissingNameValueSeparator,
@@ -172,7 +173,7 @@ namespace XSerializer
 
                 // The caller is expected to make one or more Read calls after receiving the yielded property name.
 
-                if (!ReadContent())
+                if (!ReadContent(path))
                 {
                     throw new MalformedDocumentException(
                         MalformedDocumentError.ObjectMissingCloseCurlyBrace,
@@ -199,29 +200,30 @@ namespace XSerializer
         /// the matching <see cref="JsonNodeType.CloseObject"/> or <see cref="JsonNodeType.CloseArray"/> content type
         /// is found. For all other content types, no additional reads are made.
         /// </summary>
-        public void Discard()
+        public void Discard(string path)
         {
-            if (!ReadContent())
+            if (!ReadContent(path))
             {
+                // TODO: throw exception? (since the discarded value isn't valid)
                 return;
             }
 
             switch (NodeType)
             {
                 case JsonNodeType.OpenObject:
-                    Consume(JsonNodeType.OpenObject, JsonNodeType.CloseObject);
+                    Consume(path, JsonNodeType.OpenObject, JsonNodeType.CloseObject);
                     break;
                 case JsonNodeType.OpenArray:
-                    Consume(JsonNodeType.OpenArray, JsonNodeType.CloseArray);
+                    Consume(path, JsonNodeType.OpenArray, JsonNodeType.CloseArray);
                     break;
             }
         }
 
-        private void Consume(JsonNodeType openNodeType, JsonNodeType closeNodeType)
+        private void Consume(string path, JsonNodeType openNodeType, JsonNodeType closeNodeType)
         {
             int nestLevel = 0;
 
-            while (Read())
+            while (Read(path))
             {
                 if (NodeType == closeNodeType)
                 {
@@ -303,7 +305,7 @@ namespace XSerializer
         /// Reads the next node from the stream.
         /// </summary>
         /// <returns>true if the next node was read successfully; false if there are no more nodes to read.</returns>
-        public bool Read()
+        public bool Read(string path)
         {
             if (ReferenceEquals(_currentReader, _primaryReader))
             {
@@ -337,17 +339,17 @@ namespace XSerializer
                     _nodeType = JsonNodeType.Number;
                     return true;
                 case 't':
-                    ReadLiteral("true", 'r', 'u', 'e');
+                    ReadLiteral(path, "true", 'r', 'u', 'e');
                     _value = true;
                     _nodeType = JsonNodeType.Boolean;
                     return true;
                 case 'f':
-                    ReadLiteral("false", 'a', 'l', 's', 'e');
+                    ReadLiteral(path, "false", 'a', 'l', 's', 'e');
                     _value = false;
                     _nodeType = JsonNodeType.Boolean;
                     return true;
                 case 'n':
-                    ReadLiteral("null", 'u', 'l', 'l');
+                    ReadLiteral(path, "null", 'u', 'l', 'l');
                     _value = null;
                     _nodeType = JsonNodeType.Null;
                     return true;
@@ -389,7 +391,7 @@ namespace XSerializer
             return false;
         }
 
-        private void ReadLiteral(string value, params char[] literalMinusFirstChar)
+        private void ReadLiteral(string path, string value, params char[] literalMinusFirstChar)
         {
             for (int i = 0; i < literalMinusFirstChar.Length; i++)
             {
@@ -397,12 +399,16 @@ namespace XSerializer
 
                 if (read == -1)
                 {
-                    throw new XSerializerException(string.Format("Reached end of input before literal '{0}' was parsed.", value));
+                    throw new MalformedDocumentException(
+                        MalformedDocumentError.LiteralInvalidValue,
+                        path, value.Substring(0, i + 1), Line, Position, null, value);
                 }
 
                 if (read != literalMinusFirstChar[i])
                 {
-                    throw new XSerializerException(string.Format("Invalid literal character '{0}' in literal '{1}.", (char)read, value));
+                    throw new MalformedDocumentException(
+                        MalformedDocumentError.LiteralInvalidValue,
+                        path, value.Substring(0, i + 1) + (char)read, Line, Position, null, value);
                 }
             }
         }

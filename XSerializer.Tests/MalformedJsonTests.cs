@@ -204,6 +204,78 @@ namespace XSerializer.Tests
             Assert.That(ex.Value, Is.EqualTo("abc"));
         }
 
+        [Test]
+        public void LiteralInvalidValue1()
+        {
+            var ex = DeserializeFail(typeof(bool), @"{""Bar"":tr");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("tr"));
+        }
+
+        [Test]
+        public void LiteralInvalidValue2()
+        {
+            var ex = DeserializeFail(typeof(bool), @"{""Bar"":twoo}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("tw"));
+        }
+
+        [Test]
+        public void LiteralInvalidValue3()
+        {
+            var ex = DeserializeFail(typeof(bool), @"{""Bar"":fal");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("fal"));
+        }
+
+        [Test]
+        public void LiteralInvalidValue4()
+        {
+            var ex = DeserializeFail(typeof(bool), @"{""Bar"":falce}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("falc"));
+        }
+
+        [Test]
+        public void LiteralInvalidValue5()
+        {
+            var ex = DeserializeFail(typeof(string), @"{""Bar"":nul");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("nul"));
+        }
+
+        [Test]
+        public void LiteralInvalidValue6()
+        {
+            var ex = DeserializeFail(typeof(string), @"{""Bar"":nun}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("nun"));
+        }
+
         private static string Encrypt(string s)
         {
             return "\"" + EncryptionMechanism.Current.Encrypt(s, null, null) + "\"";

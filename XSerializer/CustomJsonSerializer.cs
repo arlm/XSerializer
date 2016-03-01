@@ -114,7 +114,7 @@ namespace XSerializer
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
-            if (!reader.ReadContent())
+            if (!reader.ReadContent(path))
             {
                 throw new XSerializerException("Unexpected end of input while attempting to parse '{' character.");
             }
@@ -126,7 +126,7 @@ namespace XSerializer
 
             if (_encrypt)
             {
-                var toggler = new DecryptReadsToggler(reader);
+                var toggler = new DecryptReadsToggler(reader, path);
                 toggler.Toggle();
 
                 try
@@ -150,7 +150,7 @@ namespace XSerializer
             {
                 if (!factory.SetValue(reader, propertyName, info, path.AppendProperty(propertyName)))
                 {
-                    reader.Discard();
+                    reader.Discard(path);
                 }
             }
 

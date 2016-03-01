@@ -105,14 +105,14 @@ namespace XSerializer
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
-            if (!reader.ReadContent())
+            if (!reader.ReadContent(path))
             {
                 throw new XSerializerException("Unexpected end of input while attempting to parse '[' character.");
             }
 
             if (_encrypt)
             {
-                var toggler = new DecryptReadsToggler(reader);
+                var toggler = new DecryptReadsToggler(reader, path);
                 toggler.Toggle();
 
                 try
@@ -144,14 +144,14 @@ namespace XSerializer
                 if (reader.PeekNextNodeType() == JsonNodeType.CloseArray)
                 {
                     // If the next content is CloseArray, read it and return the empty list.
-                    reader.Read();
+                    reader.Read(path);
                     return list;
                 }
 
                 var item = _itemSerializer.DeserializeObject(reader, info, path + "[" + index++ + "]");
                 _addItem(list, item);
 
-                if (!reader.ReadContent())
+                if (!reader.ReadContent(path))
                 {
                     throw new XSerializerException("Unexpected end of input while attempting to parse ',' character.");
                 }

@@ -92,6 +92,10 @@ namespace XSerializer
                     Debug.Assert(additionalArgs.Length == 1);
                     message = string.Format("Invalid value for '{0}'.", additionalArgs[0]);
                     break;
+                case MalformedDocumentError.LiteralInvalidValue:
+                    Debug.Assert(additionalArgs.Length == 1);
+                    message = string.Format("Invalid literal value, expected '{0}'.", additionalArgs[0]);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException("error");
             }

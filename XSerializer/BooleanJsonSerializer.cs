@@ -54,14 +54,14 @@ namespace XSerializer
 
         public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
-            if (!reader.ReadContent())
+            if (!reader.ReadContent(path))
             {
                 throw new XSerializerException("Reached end of stream while parsing boolean value.");
             }
 
             if (_encrypt)
             {
-                var toggler = new DecryptReadsToggler(reader);
+                var toggler = new DecryptReadsToggler(reader, path);
                 toggler.Toggle();
 
                 try

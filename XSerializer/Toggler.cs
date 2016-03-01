@@ -84,8 +84,8 @@ namespace XSerializer
         /// </summary>
         /// <param name="reader">The <see cref="JsonReader"/> whose <see cref="JsonReader.DecryptReads"/>
         /// property is toggled.</param>
-        public DecryptReadsToggler(JsonReader reader)
-            : base(x => reader.DecryptReads = x, reader.DecryptReads, true)
+        public DecryptReadsToggler(JsonReader reader, string path)
+            : base(x => reader.SetDecryptReads(x, path), reader.DecryptReads, true)
         {
         }
     }
