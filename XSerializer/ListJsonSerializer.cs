@@ -17,7 +17,7 @@ namespace XSerializer
 
         private readonly Func<object> _createList;
         private readonly Action<object, object> _addItem;
-        private Func<object, object> _transformList;
+        private readonly Func<object, object> _transformList;
 
         private ListJsonSerializer(Type type, bool encrypt, JsonMappings mappings)
         {
@@ -122,13 +122,21 @@ namespace XSerializer
         {
             if (!reader.ReadContent(path))
             {
-                throw new XSerializerException("Unexpected end of input while attempting to parse '[' character.");
+                throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingValue,
+                    path, reader.Line, reader.Position);
             }
 
             if (_encrypt)
             {
                 var toggler = new DecryptReadsToggler(reader, path);
                 toggler.Toggle();
+
+                if (reader.NodeType != JsonNodeType.OpenArray
+                    && reader.NodeType != JsonNodeType.Null)
+                {
+                    throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingOpenSquareBracket,
+                        path, reader.Line, reader.Position);
+                }
 
                 try
                 {
@@ -138,6 +146,13 @@ namespace XSerializer
                 {
                     toggler.Revert();
                 }
+            }
+
+            if (reader.NodeType != JsonNodeType.OpenArray
+                && reader.NodeType != JsonNodeType.Null)
+            {
+                throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingOpenSquareBracket,
+                    path, reader.Line, reader.Position);
             }
 
             return Read(reader, info, path);
@@ -152,23 +167,25 @@ namespace XSerializer
 
             var list = _createList();
 
+            if (reader.PeekContent() == JsonNodeType.CloseArray)
+            {
+                // If the next content node is CloseArray, we're reading an empty
+                // array. Read the CloseArray node and return the empty list.
+                reader.Read(path);
+                return _transformList(list);
+            }
+
             var index = 0;
 
             while (true)
             {
-                if (reader.PeekNextNodeType() == JsonNodeType.CloseArray)
-                {
-                    // If the next content is CloseArray, read it and return the empty list.
-                    reader.Read(path);
-                    return list;
-                }
-
                 var item = _itemSerializer.DeserializeObject(reader, info, path + "[" + index++ + "]");
                 _addItem(list, item);
 
                 if (!reader.ReadContent(path))
                 {
-                    throw new XSerializerException("Unexpected end of input while attempting to parse ',' character.");
+                    throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingCommaOrCloseSquareBracket,
+                        path, reader.Line, reader.Position);
                 }
 
                 if (reader.NodeType == JsonNodeType.CloseArray)
@@ -178,8 +195,8 @@ namespace XSerializer
 
                 if (reader.NodeType != JsonNodeType.ItemSeparator)
                 {
-                    throw new XSerializerException("Unexpected node type found while attempting to parse ',' character: " +
-                                                   reader.NodeType + ".");
+                    throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingCommaOrCloseSquareBracket,
+                        path, reader.Value, reader.Line, reader.Position);
                 }
             }
 

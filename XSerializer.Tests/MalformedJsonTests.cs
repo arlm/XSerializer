@@ -557,6 +557,93 @@ namespace XSerializer.Tests
             Assert.That(ex.Value, Is.EqualTo("true"));
         }
 
+        [Test]
+        public void ArrayMissingValue()
+        {
+            var ex = DeserializeFail(typeof(double[]), @"{""Bar"":");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ArrayMissingValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void ArrayMissingOpenSquareBracket()
+        {
+            var ex = DeserializeFail(typeof(double[]), @"{""Bar"":1,2,3]}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ArrayMissingOpenSquareBracket));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void ArrayMissingOpenSquareBracket_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("1,2,3]"));
+            var ex = DeserializeFail(typeof(double[]), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ArrayMissingOpenSquareBracket));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void ArrayMissingCommaOrCloseSquareBracket1()
+        {
+            var ex = DeserializeFail(typeof(double[]), @"{""Bar"":[1,2,3}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ArrayMissingCommaOrCloseSquareBracket));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(13));
+            Assert.That(ex.Value, Is.EqualTo('}'));
+        }
+
+        [Test]
+        public void ArrayMissingCommaOrCloseSquareBracket1_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("[1,2,3"));
+            var ex = DeserializeFail(typeof(double[]), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ArrayMissingCommaOrCloseSquareBracket));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void ArrayMissingCommaOrCloseSquareBracket2()
+        {
+            var ex = DeserializeFail(typeof(double[]), @"{""Bar"":[1,2,3");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ArrayMissingCommaOrCloseSquareBracket));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(13));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void ArrayMissingCommaOrCloseSquareBracket2_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}", Encrypt("[1,2,3"));
+            var ex = DeserializeFail(typeof(double[]), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ArrayMissingCommaOrCloseSquareBracket));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
         private static string Encrypt(string s)
         {
             return "\"" + EncryptionMechanism.Current.Encrypt(s, null, null) + "\"";

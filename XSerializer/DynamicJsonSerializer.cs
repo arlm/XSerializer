@@ -175,7 +175,7 @@ namespace XSerializer
 
             while (true)
             {
-                if (reader.PeekNextNodeType() == JsonNodeType.CloseArray)
+                if (reader.PeekContent() == JsonNodeType.CloseArray)
                 {
                     // If the next content is CloseArray, read it and return the empty list.
                     reader.Read(path);

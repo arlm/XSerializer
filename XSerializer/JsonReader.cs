@@ -247,7 +247,7 @@ namespace XSerializer
         /// next node type is then returned, again without changing the state of the reader.
         /// </summary>
         /// <returns>The next non-whitespace node type in the stream.</returns>
-        public JsonNodeType PeekNextNodeType()
+        public JsonNodeType PeekContent()
         {
             while (true)
             {
@@ -261,8 +261,6 @@ namespace XSerializer
                     case '\t':
                         ReadWhitespace((char)peek);
                         continue;
-                    case -1:
-                        return JsonNodeType.EndOfString;
                     case '"':
                         return JsonNodeType.String;
                     case '-':
@@ -295,8 +293,10 @@ namespace XSerializer
                         return JsonNodeType.OpenArray;
                     case ']':
                         return JsonNodeType.CloseArray;
+                    case -1:
+                        return JsonNodeType.EndOfString;
                     default:
-                        throw new XSerializerException("Unknown character: " + (char)peek);
+                        return JsonNodeType.Invalid;
                 }
             }
         }

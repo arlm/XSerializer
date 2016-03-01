@@ -82,6 +82,15 @@ namespace XSerializer
                 case MalformedDocumentError.PropertyMissingItemSeparator:
                     message = "Missing property item separator.";
                     break;
+                case MalformedDocumentError.ArrayMissingValue:
+                    message = "Missing array value.";
+                    break;
+                case MalformedDocumentError.ArrayMissingOpenSquareBracket:
+                    message = "Missing array open square bracket.";
+                    break;
+                case MalformedDocumentError.ArrayMissingCommaOrCloseSquareBracket:
+                    message = "Missing array comma or close square bracket.";
+                    break;
                 case MalformedDocumentError.StringMissingOpenQuote:
                     message = "Missing open quote for string value.";
                     break;
