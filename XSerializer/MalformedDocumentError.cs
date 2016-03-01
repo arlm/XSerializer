@@ -13,5 +13,7 @@ namespace XSerializer
         StringMissingCloseQuote,
         StringInvalidValue,
         LiteralInvalidValue,
+        BooleanMissingValue,
+        BooleanInvalidValue,
     }
 }

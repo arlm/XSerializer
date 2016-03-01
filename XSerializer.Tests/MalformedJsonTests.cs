@@ -217,9 +217,35 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void LiteralInvalidValue1_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("tr"));
+            var ex = DeserializeFail(typeof(bool), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("tr"));
+        }
+
+        [Test]
         public void LiteralInvalidValue2()
         {
             var ex = DeserializeFail(typeof(bool), @"{""Bar"":twoo}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("tw"));
+        }
+
+        [Test]
+        public void LiteralInvalidValue2_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("twoo"));
+            var ex = DeserializeFail(typeof(bool), json, true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
@@ -241,9 +267,35 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void LiteralInvalidValue3_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("fal"));
+            var ex = DeserializeFail(typeof(bool), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("fal"));
+        }
+
+        [Test]
         public void LiteralInvalidValue4()
         {
             var ex = DeserializeFail(typeof(bool), @"{""Bar"":falce}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("falc"));
+        }
+
+        [Test]
+        public void LiteralInvalidValue4_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("falce"));
+            var ex = DeserializeFail(typeof(bool), json, true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
@@ -265,6 +317,19 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void LiteralInvalidValue5_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("nul"));
+            var ex = DeserializeFail(typeof(bool), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("nul"));
+        }
+
+        [Test]
         public void LiteralInvalidValue6()
         {
             var ex = DeserializeFail(typeof(string), @"{""Bar"":nun}");
@@ -274,6 +339,106 @@ namespace XSerializer.Tests
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(7));
             Assert.That(ex.Value, Is.EqualTo("nun"));
+        }
+
+        [Test]
+        public void LiteralInvalidValue6_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("nun"));
+            var ex = DeserializeFail(typeof(bool), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("nun"));
+        }
+
+        [Test]
+        public void BooleanMissingValue()
+        {
+            var ex = DeserializeFail(typeof(bool), @"{""Bar"":");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.BooleanMissingValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void BooleanInvalidValue1()
+        {
+            var ex = DeserializeFail(typeof(bool), @"{""Bar"":asdf");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.BooleanInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('a'));
+        }
+
+        [Test]
+        public void BooleanInvalidValue1_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("asdf"));
+            var ex = DeserializeFail(typeof(bool), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.BooleanInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('a'));
+        }
+
+        [Test]
+        public void BooleanInvalidValue2()
+        {
+            var ex = DeserializeFail(typeof(bool), @"{""Bar"":""twoo""");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.BooleanInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("twoo"));
+        }
+
+        [Test]
+        public void BooleanInvalidValue2_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"""twoo"""));
+            var ex = DeserializeFail(typeof(bool), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.BooleanInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("twoo"));
+        }
+
+        [Test]
+        public void BooleanInvalidValue3()
+        {
+            var ex = DeserializeFail(typeof(bool), @"{""Bar"":[true]");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.BooleanInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('['));
+        }
+
+        [Test]
+        public void BooleanInvalidValue3_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("[true]"));
+            var ex = DeserializeFail(typeof(bool), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.BooleanInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('['));
         }
 
         private static string Encrypt(string s)

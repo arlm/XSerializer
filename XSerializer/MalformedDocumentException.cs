@@ -96,6 +96,12 @@ namespace XSerializer
                     Debug.Assert(additionalArgs.Length == 1);
                     message = string.Format("Invalid literal value, expected '{0}'.", additionalArgs[0]);
                     break;
+                case MalformedDocumentError.BooleanInvalidValue:
+                    message = "Invalid boolean value.";
+                    break;
+                case MalformedDocumentError.BooleanMissingValue:
+                    message = "Missing boolean value.";
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException("error");
             }
