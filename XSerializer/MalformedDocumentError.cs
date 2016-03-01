@@ -15,5 +15,7 @@ namespace XSerializer
         LiteralInvalidValue,
         BooleanMissingValue,
         BooleanInvalidValue,
+        NumberMissingValue,
+        NumberInvalidValue,
     }
 }

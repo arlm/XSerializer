@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace XSerializer
 {
@@ -9,14 +10,16 @@ namespace XSerializer
 
         private readonly bool _encrypt;
         private readonly bool _nullable;
+        private readonly Type _type;
         private readonly Action<JsonWriter, object> _write;
-        private readonly Func<string, object> _read;
+        private readonly Func<string, string, int, int, object> _read;
 
         private NumberJsonSerializer(Type type, bool encrypt)
         {
             _encrypt = encrypt;
             _nullable = type.IsNullableType();
-            SetDelegates(type, out _write, out _read);
+            _type = type;
+            SetDelegates(out _write, out _read);
         }
 
         public static NumberJsonSerializer Get(Type type, bool encrypt)
@@ -52,7 +55,16 @@ namespace XSerializer
         {
             if (!reader.ReadContent(path))
             {
-                throw new XSerializerException("Reached end of stream while parsing number value.");
+                if (reader.NodeType == JsonNodeType.Invalid)
+                {
+                    throw new MalformedDocumentException(MalformedDocumentError.NumberInvalidValue,
+                        path, reader.Value, reader.Line, reader.Position, null, _type);
+                }
+
+                Debug.Assert(reader.NodeType == JsonNodeType.EndOfString);
+
+                throw new MalformedDocumentException(MalformedDocumentError.NumberMissingValue,
+                        path, reader.Value, reader.Line, reader.Position);
             }
 
             if (_encrypt)
@@ -60,9 +72,19 @@ namespace XSerializer
                 var toggler = new DecryptReadsToggler(reader, path);
                 toggler.Toggle();
 
+                switch (reader.NodeType)
+                {
+                    case JsonNodeType.Number:
+                    case JsonNodeType.String:
+                    case JsonNodeType.Null:
+                        break;
+                    default:
+                        throw GetNumberInvalidValueException(reader, path);
+                }
+
                 try
                 {
-                    return Read(reader);
+                    return Read(reader, path);
                 }
                 finally
                 {
@@ -70,97 +92,126 @@ namespace XSerializer
                 }
             }
 
-            return Read(reader);
+            return Read(reader, path);
         }
 
-        private object Read(JsonReader reader)
+        private object Read(JsonReader reader, string path)
         {
-            if (reader.NodeType != JsonNodeType.Number
-                && reader.NodeType != JsonNodeType.String)
+            if (reader.NodeType == JsonNodeType.Number || reader.NodeType == JsonNodeType.String)
             {
-                if (!_nullable && reader.NodeType != JsonNodeType.Null)
-                {
-                    throw new XSerializerException(string.Format(
-                        "Unexpected node type '{0}' encountered in '{1}.DeserializeObject' method.",
-                        reader.NodeType,
-                        typeof(NumberJsonSerializer)));
-                }
+                return _read((string)reader.Value, path, reader.Line, reader.Position);
             }
 
-            return _read((string)reader.Value);
+            if (_nullable && reader.NodeType == JsonNodeType.Null)
+            {
+                return null;
+            }
+
+            throw GetNumberInvalidValueException(reader, path);
         }
 
-        private static void SetDelegates(
-            Type type,
+        private void SetDelegates(
             out Action<JsonWriter, object> writeAction,
-            out Func<string, object> readFunc)
+            out Func<string, string, int, int, object> readFunc)
         {
             Func<string, object> readFuncLocal;
 
-            if (type == typeof(double) || type == typeof(double?))
+            if (_type == typeof(double) || _type == typeof(double?))
             {
                 writeAction = (writer, value) => writer.WriteValue((double)value);
                 readFuncLocal = value => double.Parse(value);
             }
-            else if(type == typeof(int) || type == typeof(int?))
+            else if(_type == typeof(int) || _type == typeof(int?))
             {
                 writeAction = (writer, value) => writer.WriteValue((int)value);
                 readFuncLocal = value => int.Parse(value);
             }
-            else if(type == typeof(long) || type == typeof(long?))
+            else if(_type == typeof(long) || _type == typeof(long?))
             {
                 writeAction = (writer, value) => writer.WriteValue((long)value);
                 readFuncLocal = value => long.Parse(value);
             }
-            else if(type == typeof(uint) || type == typeof(uint?))
+            else if(_type == typeof(uint) || _type == typeof(uint?))
             {
                 writeAction = (writer, value) => writer.WriteValue((uint)value);
                 readFuncLocal = value => uint.Parse(value);
             }
-            else if(type == typeof(byte) || type == typeof(byte?))
+            else if(_type == typeof(byte) || _type == typeof(byte?))
             {
                 writeAction = (writer, value) => writer.WriteValue((byte)value);
                 readFuncLocal = value => byte.Parse(value);
             }
-            else if(type == typeof(sbyte) || type == typeof(sbyte?))
+            else if(_type == typeof(sbyte) || _type == typeof(sbyte?))
             {
                 writeAction = (writer, value) => writer.WriteValue((sbyte)value);
                 readFuncLocal = value => sbyte.Parse(value);
             }
-            else if(type == typeof(short) || type == typeof(short?))
+            else if(_type == typeof(short) || _type == typeof(short?))
             {
                 writeAction = (writer, value) => writer.WriteValue((short)value);
                 readFuncLocal = value => short.Parse(value);
             }
-            else if(type == typeof(ushort) || type == typeof(ushort?))
+            else if(_type == typeof(ushort) || _type == typeof(ushort?))
             {
                 writeAction = (writer, value) => writer.WriteValue((ushort)value);
                 readFuncLocal = value => ushort.Parse(value);
             }
-            else if(type == typeof(ulong) || type == typeof(ulong?))
+            else if(_type == typeof(ulong) || _type == typeof(ulong?))
             {
                 writeAction = (writer, value) => writer.WriteValue((ulong)value);
                 readFuncLocal = value => ulong.Parse(value);
             }
-            else if(type == typeof(float) || type == typeof(float?))
+            else if(_type == typeof(float) || _type == typeof(float?))
             {
                 writeAction = (writer, value) => writer.WriteValue((float)value);
                 readFuncLocal = value => float.Parse(value);
             }
-            else if (type == typeof(decimal) || type == typeof(decimal?))
+            else if (_type == typeof(decimal) || _type == typeof(decimal?))
             {
                 writeAction = (writer, value) => writer.WriteValue((decimal)value);
                 readFuncLocal = value => decimal.Parse(value);
             }
             else
             {
-                throw new ArgumentException("Unknown number type: " + type, "type");
+                throw new InvalidOperationException("Unknown number type: " + _type);
             }
 
             readFunc =
-                !type.IsNullableType()
-                    ? readFuncLocal
-                    : value => string.IsNullOrEmpty(value) ? null : readFuncLocal(value);
+                !_type.IsNullableType()
+                    ? (Func<string, string, int, int, object>)
+                        ((value, path, line, position) =>
+                            Try(readFuncLocal, value, path, line, position))
+                    : (value, path, line, position) =>
+                        string.IsNullOrEmpty(value)
+                            ? null
+                            : Try(readFuncLocal, value, path, line, position);
+        }
+
+        private object Try(Func<string, object> parseFunc,
+            string value, string path, int line, int position)
+        {
+            try
+            {
+                return parseFunc(value);
+            }
+            catch (Exception ex)
+            {
+                throw new MalformedDocumentException(MalformedDocumentError.NumberInvalidValue,
+                    path, value, line, position, ex, _type);
+            }
+        }
+
+        private MalformedDocumentException GetNumberInvalidValueException(JsonReader reader, string path)
+        {
+            var invalidValue = reader.Value;
+
+            if (invalidValue is bool)
+            {
+                invalidValue = invalidValue.ToString().ToLower();
+            }
+
+            return new MalformedDocumentException(MalformedDocumentError.NumberInvalidValue,
+                path, invalidValue, reader.Line, reader.Position, null, _type);
         }
     }
 }

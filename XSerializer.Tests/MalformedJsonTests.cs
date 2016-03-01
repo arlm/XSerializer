@@ -441,6 +441,93 @@ namespace XSerializer.Tests
             Assert.That(ex.Value, Is.EqualTo('['));
         }
 
+        [Test]
+        public void NumberMissingValue()
+        {
+            var ex = DeserializeFail(typeof(double), @"{""Bar"":");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.NumberMissingValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void NumberInvalidValue1()
+        {
+            var ex = DeserializeFail(typeof(double), @"{""Bar"":wtf}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.NumberInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
+        public void NumberInvalidValue1_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("wtf"));
+            var ex = DeserializeFail(typeof(double), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.NumberInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
+        public void NumberInvalidValue2()
+        {
+            var ex = DeserializeFail(typeof(double), @"{""Bar"":1.2.3}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.NumberInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("1.2.3"));
+        }
+
+        [Test]
+        public void NumberInvalidValue2_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("1.2.3"));
+            var ex = DeserializeFail(typeof(double), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.NumberInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("1.2.3"));
+        }
+
+        [Test]
+        public void NumberInvalidValue3()
+        {
+            var ex = DeserializeFail(typeof(double), @"{""Bar"":true}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.NumberInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("true"));
+        }
+
+        [Test]
+        public void NumberInvalidValue3_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("true"));
+            var ex = DeserializeFail(typeof(double), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.NumberInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("true"));
+        }
+
         private static string Encrypt(string s)
         {
             return "\"" + EncryptionMechanism.Current.Encrypt(s, null, null) + "\"";

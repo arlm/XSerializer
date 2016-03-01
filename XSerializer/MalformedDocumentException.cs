@@ -102,6 +102,13 @@ namespace XSerializer
                 case MalformedDocumentError.BooleanMissingValue:
                     message = "Missing boolean value.";
                     break;
+                case MalformedDocumentError.NumberInvalidValue:
+                    Debug.Assert(additionalArgs.Length == 1);
+                    message = string.Format("Invalid value for '{0}'.", additionalArgs[0]);
+                    break;
+                case MalformedDocumentError.NumberMissingValue:
+                    message = "Missing number value.";
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException("error");
             }
