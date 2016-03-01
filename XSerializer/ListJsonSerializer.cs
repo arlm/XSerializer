@@ -17,6 +17,7 @@ namespace XSerializer
 
         private readonly Func<object> _createList;
         private readonly Action<object, object> _addItem;
+        private Func<object, object> _transformList;
 
         private ListJsonSerializer(Type type, bool encrypt, JsonMappings mappings)
         {
@@ -45,8 +46,22 @@ namespace XSerializer
                 }
             }
 
-            _createList = GetCreateListFunc(type);
-            _addItem = GetAddItemAction(type);
+            var listType = type;
+
+            if (type.IsArray)
+            {
+                if (type.GetArrayRank() > 1)
+                {
+                    throw new NotSupportedException("Only arrays with a rank of one are supported: " + type + ".");
+                }
+
+                var itemType = type.GetElementType();
+                listType = typeof(List<>).MakeGenericType(itemType);
+            }
+
+            _createList = GetCreateListFunc(listType);
+            _addItem = GetAddItemAction(listType);
+            _transformList = GetTransformListFunc(type, listType);
         }
 
         public static ListJsonSerializer Get(Type type, bool encrypt, JsonMappings mappings)
@@ -168,7 +183,7 @@ namespace XSerializer
                 }
             }
 
-            return list;
+            return _transformList(list);
         }
 
         private static Func<object> GetCreateListFunc(Type type)
@@ -228,6 +243,26 @@ namespace XSerializer
             }
 
             return false;
+        }
+
+        private static Func<object, object> GetTransformListFunc(Type type, Type listType)
+        {
+            if (type == listType)
+            {
+                return list => list;
+            }
+
+            var itemType = listType.GetGenericArguments()[0];
+            var enumerableType = typeof(IEnumerable<>).MakeGenericType(itemType);
+            var toArrayMethod = typeof(Enumerable).GetMethod("ToArray").MakeGenericMethod(itemType);
+
+            var listParameter = Expression.Parameter(typeof(object), "list");
+
+            var lambda = Expression.Lambda<Func<object, object>>(
+                Expression.Call(toArrayMethod, Expression.Convert(listParameter, enumerableType)),
+                listParameter);
+
+            return lambda.Compile();
         }
     }
 }

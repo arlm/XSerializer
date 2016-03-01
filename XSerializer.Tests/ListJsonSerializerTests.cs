@@ -9,6 +9,16 @@ namespace XSerializer.Tests
     public class ListJsonSerializerTests
     {
         [Test]
+        public void CanSerializeArray()
+        {
+            var serializer = new JsonSerializer<string[]>();
+
+            var json = serializer.Serialize(new[] { "abc", "xyz" });
+
+            Assert.That(json, Is.EqualTo(@"[""abc"",""xyz""]"));
+        }
+
+        [Test]
         public void CanSerializeGenericIEnumerable()
         {
             var serializer = new JsonSerializer<List<string>>();
@@ -128,6 +138,17 @@ namespace XSerializer.Tests
                 + @",""Baz"":false}]";
 
             Assert.That(json, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void CanDeserializeArray()
+        {
+            var serializer = new JsonSerializer<string[]>();
+
+            var result = serializer.Deserialize(@"[""abc"",""xyz""]");
+
+            Assert.That(result, Is.InstanceOf<string[]>());
+            Assert.That(result, Is.EqualTo(new[] { "abc", "xyz" }));
         }
 
         [Test]
