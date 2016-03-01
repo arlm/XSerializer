@@ -8,8 +8,13 @@ namespace XSerializer.Tests
 {
     public class MalformedJsonTests
     {
+        public class Bar
+        {
+            public int Baz { get; set; }
+        }
+
         [Test]
-        public void ObjectMissingOpenCurlyBrace()
+        public void ObjectMissingOpenCurlyBrace1()
         {
             var ex = DeserializeFail(typeof(int), @"""Bar"":123}");
 
@@ -21,7 +26,19 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void ObjectMissingCloseCurlyBrace()
+        public void ObjectMissingOpenCurlyBrace2()
+        {
+            var ex = DeserializeFail(typeof(Bar), @"{""Bar"":""Baz"":123}}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingOpenCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void ObjectMissingCloseCurlyBrace1()
         {
             var ex = DeserializeFail(typeof(int), @"{""Bar"":123");
 
@@ -29,6 +46,18 @@ namespace XSerializer.Tests
             Assert.That(ex.Path, Is.EqualTo("Bar"));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(10));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void ObjectMissingCloseCurlyBrace2()
+        {
+            var ex = DeserializeFail(typeof(Bar), @"{""Bar"":{""Baz"":123}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingCloseCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(18));
             Assert.That(ex.Value, Is.Null);
         }
 
