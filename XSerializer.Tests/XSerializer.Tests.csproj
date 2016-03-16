@@ -116,6 +116,7 @@
     <Compile Include="TestSerializeOptions.cs" />
     <Compile Include="TestXmlSerializerOptions.cs" />
     <Compile Include="TimeSpanTests.cs" />
+    <Compile Include="XmlBugTests.cs" />
     <Compile Include="XmlRootAttributeTests.cs" />
     <Compile Include="XmlSerializerFactoryTests.cs" />
     <Compile Include="XmlSerializerOfTypeUriTests.cs" />

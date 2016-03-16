@@ -239,7 +239,7 @@ namespace XSerializer
                         {
                             throw new InvalidOperationException("Cannot have non-empty Xml Element.");
                         }
-                        
+
                         if (derivedXmlElement.ElementName != baseXmlElement.ElementName)
                         {
                             throw new InvalidOperationException("Dervied Element cannot be different from Base element.");
@@ -292,7 +292,7 @@ namespace XSerializer
                 null, propertyInfo.PropertyType, arguments, null);
         }
 
-        private TAttribute GetAttribute<TAttribute>(PropertyInfo property) where TAttribute: Attribute
+        private TAttribute GetAttribute<TAttribute>(PropertyInfo property) where TAttribute : Attribute
         {
             return property.GetCustomAttributes(typeof(TAttribute), false).FirstOrDefault() as TAttribute;
         }
@@ -451,7 +451,13 @@ namespace XSerializer
                         }
                         else
                         {
-                            helper.SetElementPropertyValue(options, out shouldIssueRead);
+                            if (!helper.SetElementPropertyValue(options, out shouldIssueRead))
+                            {
+                                var subReader = reader.ReadSubtree();
+                                while (subReader.Read())
+                                {
+                                }
+                            }
                         }
                         break;
                     case XmlNodeType.Text:
@@ -502,7 +508,7 @@ namespace XSerializer
 
                 var properties = type.GetProperties();
 
-                var validConstructors = 
+                var validConstructors =
                     type.GetConstructors()
                         .Where(constructor =>
                             constructor.GetParameters()
@@ -595,7 +601,10 @@ namespace XSerializer
 
         private interface IHelper
         {
-            void SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead);
+            /// <summary>
+            /// Returns whether a property was found for the current element.
+            /// </summary>
+            bool SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead);
             void SetTextNodePropertyValue(ISerializeOptions options);
             void StageAttributeValue(ISerializeOptions options);
             void FlushAttributeValues();
@@ -610,7 +619,7 @@ namespace XSerializer
             {
             }
 
-            void IHelper.SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead)
+            bool IHelper.SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead)
             {
                 throw NotInitializedException();
             }
@@ -665,18 +674,18 @@ namespace XSerializer
                 _instance = createInstance();
             }
 
-            public void SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead)
+            public bool SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead)
             {
                 SerializableProperty property;
                 if (_caseSensitiveSerializableProperties.TryGetValue(_reader.Name, out property))
                 {
                     property.ReadValue(_reader, _instance, options);
                     shouldIssueRead = !property.ReadsPastLastElement;
+                    return true;
                 }
-                else
-                {
-                    shouldIssueRead = true;
-                }
+
+                shouldIssueRead = true;
+                return false;
             }
 
             public void SetTextNodePropertyValue(ISerializeOptions options)
@@ -743,7 +752,7 @@ namespace XSerializer
                 _reader = reader;
             }
 
-            public void SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead)
+            public bool SetElementPropertyValue(ISerializeOptions options, out bool shouldIssueRead)
             {
                 SerializableProperty property;
                 if (_caseSensitiveSerializableProperties.TryGetValue(_reader.Name, out property))
@@ -761,11 +770,11 @@ namespace XSerializer
                     }
 
                     shouldIssueRead = !property.ReadsPastLastElement;
+                    return true;
                 }
-                else
-                {
-                    shouldIssueRead = true;
-                }
+
+                shouldIssueRead = true;
+                return false;
             }
 
             private static void Combine(object existingValue, object value)
@@ -847,7 +856,7 @@ namespace XSerializer
             private readonly IList<ParameterInfo> _parameters;
             private readonly IList<string> _parameterNames;
 
-            private readonly Func<object[], object> _createInstance; 
+            private readonly Func<object[], object> _createInstance;
 
             public ConstructorWrapper(ConstructorInfo constructor)
             {
@@ -873,7 +882,7 @@ namespace XSerializer
 
                 if (typeof(T).IsValueType)
                 {
-                    body = Expression.Convert(body, typeof (object));
+                    body = Expression.Convert(body, typeof(object));
                 }
 
                 var lambda = Expression.Lambda<Func<object[], object>>(body, argsParameter);
