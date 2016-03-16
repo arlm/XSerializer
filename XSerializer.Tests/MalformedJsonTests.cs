@@ -14,6 +14,22 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void PathForNestedObjectIsCorrect()
+        {
+            var ex = DeserializeFail(typeof(Bar), @"{""Bar"":{""Baz"":123.45}}");
+
+            Assert.That(ex.Path, Is.EqualTo("Bar.Baz"));
+        }
+
+        [Test]
+        public void PathForArrayIsCorrect()
+        {
+            var ex = DeserializeFail(typeof(Bar[]), @"{""Bar"":[{""Baz"":123},{""Baz"":123.45},{""Baz"":123}]}");
+
+            Assert.That(ex.Path, Is.EqualTo("Bar[1].Baz"));
+        }
+
+        [Test]
         public void ObjectMissingOpenCurlyBrace1()
         {
             var ex = DeserializeFail(typeof(int), @"""Bar"":123}");
