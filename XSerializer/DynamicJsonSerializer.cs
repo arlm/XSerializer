@@ -171,17 +171,18 @@ namespace XSerializer
         {
             var jsonArray = new JsonArray(info);
 
+            if (reader.PeekContent() == JsonNodeType.CloseArray)
+            {
+                // If the next content node is CloseArray, we're reading an empty
+                // array. Read the CloseArray node and return the empty array.
+                reader.Read(path);
+                return jsonArray;
+            }
+
             var index = 0;
 
             while (true)
             {
-                if (reader.PeekContent() == JsonNodeType.CloseArray)
-                {
-                    // If the next content is CloseArray, read it and return the empty list.
-                    reader.Read(path);
-                    return jsonArray;
-                }
-
                 jsonArray.Add(DeserializeObject(reader, info, path + "[" + index++ + "]"));
 
                 if (!reader.ReadContent(path))
