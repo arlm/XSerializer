@@ -102,6 +102,18 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void PropertyNameMissing()
+        {
+            var ex = DeserializeFail(typeof(int), @"{");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissing));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(1));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
         public void PropertyNameMissingOpenQuote()
         {
             var ex = DeserializeFail(typeof(int), @"{Bar"":123}");
@@ -138,7 +150,7 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void PropertyMissingSeparator1()
+        public void PropertyMissingNameValueSeparator1()
         {
             var ex = DeserializeFail(typeof(int), @"{""Bar""123}");
 
@@ -150,7 +162,7 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void PropertyMissingSeparator2()
+        public void PropertyMissingNameValueSeparator2()
         {
             var ex = DeserializeFail(typeof(int), @"{""Bar""wtf}");
 
@@ -162,7 +174,7 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void PropertyMissingNameValueSeparator()
+        public void PropertyMissingItemSeparator()
         {
             var ex = DeserializeFail(typeof(int), @"{""Bar"":123""Baz"":456}", bazPropertyType:typeof(int));
 
@@ -207,7 +219,7 @@ namespace XSerializer.Tests
             Assert.That(ex.Path, Is.EqualTo("Bar"));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(7));
-            Assert.That(ex.Value, Is.Null);
+            Assert.That(ex.Value, Is.EqualTo(@"""abc}"));
         }
 
         [Test]
@@ -217,6 +229,31 @@ namespace XSerializer.Tests
             var ex = DeserializeFail(typeof(string), json, true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.StringMissingCloseQuote));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo(@"""abc"));
+        }
+
+        [Test]
+        public void StringMissingValue()
+        {
+            var ex = DeserializeFail(typeof(string), @"{""Bar"":");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void StringMissingValue_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(""));
+            var ex = DeserializeFail(typeof(string), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(7));
@@ -428,7 +465,7 @@ namespace XSerializer.Tests
         {
             var ex = DeserializeFail(typeof(bool), @"{""Bar"":");
 
-            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.BooleanMissingValue));
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(7));
@@ -515,7 +552,20 @@ namespace XSerializer.Tests
         {
             var ex = DeserializeFail(typeof(double), @"{""Bar"":");
 
-            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.NumberMissingValue));
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void NumberMissingValue_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(""));
+            var ex = DeserializeFail(typeof(double), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(7));
@@ -602,7 +652,7 @@ namespace XSerializer.Tests
         {
             var ex = DeserializeFail(typeof(double[]), @"{""Bar"":");
 
-            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ArrayMissingValue));
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(7));
@@ -610,7 +660,20 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void ArrayMissingOpenSquareBracket()
+        public void ArrayMissingValue_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(""));
+            var ex = DeserializeFail(typeof(double[]), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void ArrayMissingOpenSquareBracket1()
         {
             var ex = DeserializeFail(typeof(double[]), @"{""Bar"":1,2,3]}");
 
@@ -618,11 +681,11 @@ namespace XSerializer.Tests
             Assert.That(ex.Path, Is.EqualTo("Bar"));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(7));
-            Assert.That(ex.Value, Is.Null);
+            Assert.That(ex.Value, Is.EqualTo("1"));
         }
 
         [Test]
-        public void ArrayMissingOpenSquareBracket_Encrypted()
+        public void ArrayMissingOpenSquareBracket1_Encrypted()
         {
             var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("1,2,3]"));
             var ex = DeserializeFail(typeof(double[]), json, true);
@@ -631,7 +694,32 @@ namespace XSerializer.Tests
             Assert.That(ex.Path, Is.EqualTo("Bar"));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(7));
-            Assert.That(ex.Value, Is.Null);
+            Assert.That(ex.Value, Is.EqualTo("1"));
+        }
+
+        [Test]
+        public void ArrayMissingOpenSquareBracket2()
+        {
+            var ex = DeserializeFail(typeof(double[]), @"{""Bar"":wtf}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ArrayMissingOpenSquareBracket));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
+        public void ArrayMissingOpenSquareBracket2_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("wtf"));
+            var ex = DeserializeFail(typeof(double[]), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ArrayMissingOpenSquareBracket));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('w'));
         }
 
         [Test]

@@ -136,17 +136,25 @@ namespace XSerializer
             {
                 if (!ReadContent(path))
                 {
-                    if (NodeType == JsonNodeType.Invalid)
+                    if (NodeType == JsonNodeType.EndOfString)
                     {
                         throw new MalformedDocumentException(
-                            MalformedDocumentError.PropertyNameMissingOpenQuote,
-                            path, Value, Line, Position);
+                            MalformedDocumentError.PropertyNameMissing,
+                            path, Line, Position);
                     }
 
-                    Debug.Assert(NodeType == JsonNodeType.EndOfString);
+                    Debug.Assert(NodeType == JsonNodeType.Invalid);
+
+                    if (Value is string)
+                    {
+                        throw new MalformedDocumentException(
+                            MalformedDocumentError.PropertyNameMissingCloseQuote,
+                            path, Line, Position);
+                    }
 
                     throw new MalformedDocumentException(
-                        MalformedDocumentError.PropertyNameMissingCloseQuote, path, Line, Position);
+                        MalformedDocumentError.PropertyNameMissingOpenQuote,
+                        path, Value, Line, Position);
                 }
 
                 switch (NodeType)
@@ -431,8 +439,8 @@ namespace XSerializer
                         sb.Append(ReadEscapedChar());
                         break;
                     case -1:
-                        value = null;
-                        nodeType = JsonNodeType.EndOfString;
+                        value = sb.Insert(0, '"').ToString();
+                        nodeType = JsonNodeType.Invalid;
                         return false;
                     default:
                         sb.Append((char)read);

@@ -55,16 +55,17 @@ namespace XSerializer
         {
             if (!reader.ReadContent(path))
             {
-                if (reader.NodeType == JsonNodeType.Invalid)
+                if (reader.NodeType == JsonNodeType.EndOfString)
                 {
-                    throw new MalformedDocumentException(MalformedDocumentError.NumberInvalidValue,
-                        path, reader.Value, reader.Line, reader.Position, null, _type);
+                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                        path, reader.Value, reader.Line, reader.Position);
                 }
 
-                Debug.Assert(reader.NodeType == JsonNodeType.EndOfString);
+                Debug.Assert(reader.NodeType == JsonNodeType.Invalid);
 
-                throw new MalformedDocumentException(MalformedDocumentError.NumberMissingValue,
-                        path, reader.Value, reader.Line, reader.Position);
+                throw new MalformedDocumentException(MalformedDocumentError.NumberInvalidValue,
+                    path, reader.Value, reader.Line, reader.Position, null, _type);
+                
             }
 
             if (_encrypt)
@@ -78,6 +79,9 @@ namespace XSerializer
                     case JsonNodeType.String:
                     case JsonNodeType.Null:
                         break;
+                    case JsonNodeType.EndOfString:
+                        throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                            path, reader.Value, reader.Line, reader.Position);
                     default:
                         throw GetNumberInvalidValueException(reader, path);
                 }

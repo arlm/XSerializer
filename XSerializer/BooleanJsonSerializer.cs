@@ -65,7 +65,7 @@ namespace XSerializer
 
                 Debug.Assert(reader.NodeType == JsonNodeType.EndOfString);
 
-                throw new MalformedDocumentException(MalformedDocumentError.BooleanMissingValue,
+                throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
                     path, reader.Line, reader.Position);
             }
 
@@ -80,6 +80,9 @@ namespace XSerializer
                     case JsonNodeType.Null:
                     case JsonNodeType.String:
                         break;
+                    case JsonNodeType.EndOfString:
+                        throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                            path, reader.Line, reader.Position);
                     default:
                         throw new MalformedDocumentException(MalformedDocumentError.BooleanInvalidValue,
                             path, reader.Value, reader.Line, reader.Position);

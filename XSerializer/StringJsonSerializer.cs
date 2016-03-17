@@ -53,14 +53,20 @@ namespace XSerializer
         {
             if (!reader.ReadContent(path))
             {
-                if (reader.NodeType == JsonNodeType.Invalid)
+                if (reader.NodeType == JsonNodeType.EndOfString)
                 {
-                    throw GetMissingOpenQuoteException(reader, path);
+                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                        path, reader.Line, reader.Position);
                 }
 
-                Debug.Assert(reader.NodeType == JsonNodeType.EndOfString);
+                Debug.Assert(reader.NodeType == JsonNodeType.Invalid);
 
-                throw GetMissingCloseQuoteException(reader, path);
+                if (reader.Value is string)
+                {
+                    throw GetMissingCloseQuoteException(reader, path);
+                }
+
+                throw GetMissingOpenQuoteException(reader, path);
             }
 
             if (_encrypt)
@@ -75,7 +81,15 @@ namespace XSerializer
                     case JsonNodeType.Boolean:
                         break;
                     case JsonNodeType.EndOfString:
-                        throw GetMissingCloseQuoteException(reader, path);
+                        throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                            path, reader.Line, reader.Position);
+                    case JsonNodeType.Invalid:
+                        if (reader.Value is string)
+                        {
+                            throw GetMissingCloseQuoteException(reader, path);
+                        }
+
+                        throw GetMissingOpenQuoteException(reader, path);
                     default:
                         throw GetMissingOpenQuoteException(reader, path);
                 }
@@ -215,7 +229,7 @@ namespace XSerializer
         private static MalformedDocumentException GetMissingCloseQuoteException(JsonReader reader, string path)
         {
             return new MalformedDocumentException(MalformedDocumentError.StringMissingCloseQuote,
-                path, reader.Line, reader.Position);
+                path, reader.Value, reader.Line, reader.Position);
         }
     }
 }

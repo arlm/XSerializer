@@ -67,6 +67,9 @@ namespace XSerializer
                 case MalformedDocumentError.ObjectMissingCloseCurlyBrace:
                     message = "Missing object close curly brace.";
                     break;
+                case MalformedDocumentError.PropertyNameMissing:
+                    message = "Missing property name.";
+                    break;
                 case MalformedDocumentError.PropertyNameMissingOpenQuote:
                     message = "Missing open quote for property name.";
                     break;
@@ -81,9 +84,6 @@ namespace XSerializer
                     break;
                 case MalformedDocumentError.PropertyMissingItemSeparator:
                     message = "Missing property item separator.";
-                    break;
-                case MalformedDocumentError.ArrayMissingValue:
-                    message = "Missing array value.";
                     break;
                 case MalformedDocumentError.ArrayMissingOpenSquareBracket:
                     message = "Missing array open square bracket.";
@@ -108,15 +108,12 @@ namespace XSerializer
                 case MalformedDocumentError.BooleanInvalidValue:
                     message = "Invalid boolean value.";
                     break;
-                case MalformedDocumentError.BooleanMissingValue:
-                    message = "Missing boolean value.";
-                    break;
                 case MalformedDocumentError.NumberInvalidValue:
                     Debug.Assert(additionalArgs.Length == 1);
                     message = string.Format("Invalid value for '{0}'.", additionalArgs[0]);
                     break;
-                case MalformedDocumentError.NumberMissingValue:
-                    message = "Missing number value.";
+                case MalformedDocumentError.MissingValue:
+                    message = "Missing value.";
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("error");

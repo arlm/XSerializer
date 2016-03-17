@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -122,8 +123,16 @@ namespace XSerializer
         {
             if (!reader.ReadContent(path))
             {
-                throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingValue,
-                    path, reader.Line, reader.Position);
+                if (reader.NodeType == JsonNodeType.EndOfString)
+                {
+                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                        path, reader.Line, reader.Position);
+                }
+
+                Debug.Assert(reader.NodeType == JsonNodeType.Invalid);
+
+                throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingOpenSquareBracket,
+                        path, reader.Value, reader.Line, reader.Position);
             }
 
             if (_encrypt)
@@ -131,11 +140,17 @@ namespace XSerializer
                 var toggler = new DecryptReadsToggler(reader, path);
                 toggler.Toggle();
 
-                if (reader.NodeType != JsonNodeType.OpenArray
-                    && reader.NodeType != JsonNodeType.Null)
+                switch (reader.NodeType)
                 {
-                    throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingOpenSquareBracket,
-                        path, reader.Line, reader.Position);
+                    case JsonNodeType.OpenArray:
+                    case JsonNodeType.Null:
+                        break;
+                    case JsonNodeType.EndOfString:
+                        throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                            path, reader.Line, reader.Position);
+                    default:
+                        throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingOpenSquareBracket,
+                            path, reader.Value, reader.Line, reader.Position);
                 }
 
                 try
@@ -152,7 +167,7 @@ namespace XSerializer
                 && reader.NodeType != JsonNodeType.Null)
             {
                 throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingOpenSquareBracket,
-                    path, reader.Line, reader.Position);
+                    path, reader.Value, reader.Line, reader.Position);
             }
 
             return Read(reader, info, path);
@@ -184,6 +199,8 @@ namespace XSerializer
 
                 if (!reader.ReadContent(path))
                 {
+                    Debug.Assert(reader.NodeType == JsonNodeType.EndOfString);
+
                     throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingCommaOrCloseSquareBracket,
                         path, reader.Line, reader.Position);
                 }
