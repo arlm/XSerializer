@@ -102,6 +102,66 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void DictionaryMissingOpenCurlyBrace1()
+        {
+            var ex = DeserializeFail(typeof(Dictionary<string, int>), @"{""Bar"":""Baz"":123}}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingOpenCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DictionaryMissingOpenCurlyBrace2()
+        {
+            var ex = DeserializeFail<Dictionary<string, int>>(@"wtf");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingOpenCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
+        public void DictionaryMissingOpenCurlyBrace3()
+        {
+            var ex = DeserializeFail<Dictionary<string, int>>(@"");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingOpenCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DictionaryMissingCloseCurlyBrace1()
+        {
+            var ex = DeserializeFail<Dictionary<string, int>>(@"{""Bar"":123");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingCloseCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(10));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DictionaryMissingCloseCurlyBrace2()
+        {
+            var ex = DeserializeFail(typeof(Dictionary<string, int>), @"{""Bar"":{""Baz"":123}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingCloseCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(18));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
         public void PropertyNameMissing()
         {
             var ex = DeserializeFail(typeof(int), @"{");
@@ -783,6 +843,31 @@ namespace XSerializer.Tests
             var type = GetFooType(barPropertyType, encrypt, bazPropertyType);
 
             var serializer = JsonSerializer.Create(type, new JsonSerializerConfiguration
+            {
+                EncryptionMechanism = EncryptionMechanism.Current
+            });
+
+            try
+            {
+                serializer.Deserialize(json);
+            }
+            catch (MalformedDocumentException ex)
+            {
+                Console.WriteLine(ex);
+                return ex;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                throw new AssertionException("Expected MalformedDocumentException, but was: " + ex.GetType(), ex);
+            }
+
+            throw new AssertionException("Expected MalformedDocumentException, but no exception thrown");
+        }
+
+        private static MalformedDocumentException DeserializeFail<T>(string json)
+        {
+            var serializer = JsonSerializer.Create(typeof(T), new JsonSerializerConfiguration
             {
                 EncryptionMechanism = EncryptionMechanism.Current
             });
