@@ -54,6 +54,30 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void ObjectMissingOpenCurlyBrace3()
+        {
+            var ex = DeserializeFail(typeof(string), @"wtf");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingOpenCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
+        public void ObjectMissingOpenCurlyBrace4()
+        {
+            var ex = DeserializeFail(typeof(string), @"");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingOpenCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
         public void ObjectMissingCloseCurlyBrace1()
         {
             var ex = DeserializeFail(typeof(int), @"{""Bar"":123");

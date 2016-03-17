@@ -116,7 +116,8 @@ namespace XSerializer
         {
             if (!reader.ReadContent(path))
             {
-                throw new XSerializerException("Unexpected end of input while attempting to parse '{' character.");
+                throw new MalformedDocumentException(MalformedDocumentError.ObjectMissingOpenCurlyBrace,
+                    path, reader.Value, reader.Line, reader.Position);
             }
 
             if (reader.NodeType == JsonNodeType.Null)
