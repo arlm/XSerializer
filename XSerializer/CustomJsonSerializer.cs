@@ -130,13 +130,23 @@ namespace XSerializer
                 var toggler = new DecryptReadsToggler(reader, path);
                 toggler.Toggle();
 
+                var exception = false;
+
                 try
                 {
                     return Read(reader, info, path);
                 }
+                catch (MalformedDocumentException)
+                {
+                    exception = true;
+                    throw;
+                }
                 finally
                 {
-                    toggler.Revert();
+                    if (!exception)
+                    {
+                        toggler.Revert();
+                    }
                 }
             }
 

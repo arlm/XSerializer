@@ -13,6 +13,12 @@ namespace XSerializer.Tests
             public int Baz { get; set; }
         }
 
+        public class Bar2
+        {
+            public int Baz { get; set; }
+            public int Qux { get; set; }
+        }
+
         [Test]
         public void PathForNestedObjectIsCorrect()
         {
@@ -45,6 +51,19 @@ namespace XSerializer.Tests
         public void ObjectMissingOpenCurlyBrace2()
         {
             var ex = DeserializeFail(typeof(Bar), @"{""Bar"":""Baz"":123}}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingOpenCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void ObjectMissingOpenCurlyBrace2_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"""Baz"":123}"));
+            var ex = DeserializeFail(typeof(Bar), json, true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingOpenCurlyBrace));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
@@ -102,9 +121,35 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void ObjectMissingCloseCurlyBrace2_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{""Baz"":123"));
+            var ex = DeserializeFail(typeof(Bar), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingCloseCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo("Bar.Baz"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
         public void DictionaryMissingOpenCurlyBrace1()
         {
             var ex = DeserializeFail(typeof(Dictionary<string, int>), @"{""Bar"":""Baz"":123}}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingOpenCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DictionaryMissingOpenCurlyBrace1_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"""Baz"":123}"));
+            var ex = DeserializeFail(typeof(Dictionary<string, int>), json, true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingOpenCurlyBrace));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
@@ -162,6 +207,19 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void DictionaryMissingCloseCurlyBrace2_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{""Baz"":123"));
+            var ex = DeserializeFail(typeof(Dictionary<string, int>), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingCloseCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo("Bar.Baz"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
         public void PropertyNameMissing()
         {
             var ex = DeserializeFail(typeof(int), @"{");
@@ -170,6 +228,32 @@ namespace XSerializer.Tests
             Assert.That(ex.Path, Is.EqualTo(""));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(1));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void PropertyNameMissing_Encrypted1()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{"));
+            var ex = DeserializeFail(typeof(Bar), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissing));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void PropertyNameMissing_Encrypted2()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{"));
+            var ex = DeserializeFail(typeof(Dictionary<string, int>), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissing));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
             Assert.That(ex.Value, Is.Null);
         }
 
@@ -186,6 +270,32 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void PropertyNameMissingOpenQuote_Encrypted1()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{Baz"":123}"));
+            var ex = DeserializeFail(typeof(Bar), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissingOpenQuote));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('B'));
+        }
+
+        [Test]
+        public void PropertyNameMissingOpenQuote_Encrypted2()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{Baz"":123}"));
+            var ex = DeserializeFail(typeof(Dictionary<string, int>), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissingOpenQuote));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('B'));
+        }
+
+        [Test]
         public void PropertyNameMissingCloseQuote()
         {
             var ex = DeserializeFail(typeof(int), @"{""Bar:123}");
@@ -194,6 +304,32 @@ namespace XSerializer.Tests
             Assert.That(ex.Path, Is.EqualTo(""));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(1));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void PropertyNameMissingCloseQuote_Encrypted1()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{""Baz:123}"));
+            var ex = DeserializeFail(typeof(Bar), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissingCloseQuote));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void PropertyNameMissingCloseQuote_Encrypted2()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{""Baz:123}"));
+            var ex = DeserializeFail(typeof(Dictionary<string, int>), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissingCloseQuote));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
             Assert.That(ex.Value, Is.Null);
         }
 
@@ -210,6 +346,32 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void PropertyInvalidName_Encrypted1()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{123:456}"));
+            var ex = DeserializeFail(typeof(Bar), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyInvalidName));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("123"));
+        }
+
+        [Test]
+        public void PropertyInvalidName_Encrypted2()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{123:456}"));
+            var ex = DeserializeFail(typeof(Dictionary<string, int>), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyInvalidName));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo("123"));
+        }
+
+        [Test]
         public void PropertyMissingNameValueSeparator1()
         {
             var ex = DeserializeFail(typeof(int), @"{""Bar""123}");
@@ -218,6 +380,32 @@ namespace XSerializer.Tests
             Assert.That(ex.Path, Is.EqualTo("Bar"));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(6));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void PropertyMissingNameValueSeparator1_Encrypted1()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{""Baz""123}"));
+            var ex = DeserializeFail(typeof(Bar), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingNameValueSeparator));
+            Assert.That(ex.Path, Is.EqualTo("Bar.Baz"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void PropertyMissingNameValueSeparator1_Encrypted2()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{""Baz""123}"));
+            var ex = DeserializeFail(typeof(Dictionary<string, int>), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingNameValueSeparator));
+            Assert.That(ex.Path, Is.EqualTo("Bar.Baz"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
             Assert.That(ex.Value, Is.Null);
         }
 
@@ -234,6 +422,32 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void PropertyMissingNameValueSeparator2_Encrypted1()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{""Baz""wtf}"));
+            var ex = DeserializeFail(typeof(Bar), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingNameValueSeparator));
+            Assert.That(ex.Path, Is.EqualTo("Bar.Baz"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void PropertyMissingNameValueSeparator2_Encrypted2()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{""Baz""wtf}"));
+            var ex = DeserializeFail(typeof(Dictionary<string, int>), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingNameValueSeparator));
+            Assert.That(ex.Path, Is.EqualTo("Bar.Baz"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
         public void PropertyMissingItemSeparator()
         {
             var ex = DeserializeFail(typeof(int), @"{""Bar"":123""Baz"":456}", bazPropertyType:typeof(int));
@@ -242,6 +456,32 @@ namespace XSerializer.Tests
             Assert.That(ex.Path, Is.EqualTo("Bar"));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(10));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void PropertyMissingItemSeparator_Encrypted1()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{""Baz"":123""Qux"":456}"));
+            var ex = DeserializeFail(typeof(Bar2), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingItemSeparator));
+            Assert.That(ex.Path, Is.EqualTo("Bar.Baz"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void PropertyMissingItemSeparator_Encrypted2()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(@"{""Baz"":123""Qux"":456}"));
+            var ex = DeserializeFail(typeof(Dictionary<string, int>), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingItemSeparator));
+            Assert.That(ex.Path, Is.EqualTo("Bar.Baz"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
             Assert.That(ex.Value, Is.Null);
         }
 
