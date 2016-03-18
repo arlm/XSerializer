@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
@@ -22,7 +23,7 @@ namespace XSerializer
         private readonly IJsonSerializerInternal _valueSerializer;
 
         private readonly Func<object> _createDictionary;
-        private readonly Func<string, IJsonSerializeOperationInfo, object> _deserializeKey;
+        private readonly Func<string, IJsonSerializeOperationInfo, string, object> _deserializeKey;
         private readonly Action<object, object, object> _addToDictionary;
 
         private readonly bool _encrypt;
@@ -98,11 +99,20 @@ namespace XSerializer
             _write(writer, instance, info);
         }
 
-        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
+        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
-            if (!reader.ReadContent())
+            if (!reader.ReadContent(path))
             {
-                throw new XSerializerException("Unexpected end of input while attempting to parse '{' character.");
+                if (reader.NodeType == JsonNodeType.EndOfString)
+                {
+                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                        path, reader.Line, reader.Position);
+                }
+
+                Debug.Assert(reader.NodeType == JsonNodeType.Invalid);
+
+                throw new MalformedDocumentException(MalformedDocumentError.ObjectMissingOpenCurlyBrace,
+                    path, reader.Value, reader.Line, reader.Position);
             }
 
             if (reader.NodeType == JsonNodeType.Null)
@@ -112,30 +122,53 @@ namespace XSerializer
 
             if (_encrypt)
             {
-                var toggler = new DecryptReadsToggler(reader);
-                toggler.Toggle();
+                var toggler = new DecryptReadsToggler(reader, path);
+                if (toggler.Toggle())
+                {
+                    if (reader.NodeType == JsonNodeType.EndOfString)
+                    {
+                        throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                            path, reader.Line, reader.Position);
+                    }
 
-                try
-                {
-                    return Read(reader, info);
-                }
-                finally
-                {
-                    toggler.Revert();
+                    var exception = false;
+
+                    try
+                    {
+                        return Read(reader, info, path);
+                    }
+                    catch (MalformedDocumentException)
+                    {
+                        exception = true;
+                        throw;
+                    }
+                    finally
+                    {
+                        if (!exception)
+                        {
+                            if (reader.ReadContent(path) || reader.NodeType == JsonNodeType.Invalid)
+                            {
+                                throw new MalformedDocumentException(MalformedDocumentError.ExpectedEndOfDecryptedString,
+                                    path, reader.Value, reader.Line, reader.Position, null, reader.NodeType);
+                            }
+
+                            toggler.Revert();
+                        }
+                    }
                 }
             }
-
-            return Read(reader, info);
+            
+            return Read(reader, info, path);
         }
 
-        private object Read(JsonReader reader, IJsonSerializeOperationInfo info)
+        private object Read(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
             var dictionary = _createDictionary();
 
-            foreach (var keyString in reader.ReadProperties())
+            foreach (var keyString in reader.ReadProperties(path))
             {
-                var key = _deserializeKey(keyString, info);
-                var value = _valueSerializer.DeserializeObject(reader, info);
+                var key = _deserializeKey(keyString, info, path);
+                var value = _valueSerializer.DeserializeObject(reader, info, path.AppendProperty(keyString));
 
                 var jsonNumber = value as JsonNumber;
                 if (jsonNumber != null)
@@ -169,16 +202,16 @@ namespace XSerializer
             return lambda.Compile();
         }
 
-        private Func<string, IJsonSerializeOperationInfo, object> GetDeserializeKeyFunc(Type type)
+        private Func<string, IJsonSerializeOperationInfo, string, object> GetDeserializeKeyFunc(Type type)
         {
             if (type == typeof(string))
             {
-                return (keyString, info) => keyString;
+                return (keyString, info, path) => keyString;
             }
 
             var serializer = JsonSerializerFactory.GetSerializer(type, _encrypt, _mappings);
 
-            return (keyString, info) =>
+            return (keyString, info, path) =>
             {
                 try
                 {
@@ -186,7 +219,7 @@ namespace XSerializer
                     {
                         using (var reader = new JsonReader(stringReader, info))
                         {
-                            return serializer.DeserializeObject(reader, info);
+                            return serializer.DeserializeObject(reader, info, path);
                         }
                     }
                 }

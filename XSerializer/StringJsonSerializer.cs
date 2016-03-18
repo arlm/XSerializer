@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace XSerializer
 {
@@ -10,7 +11,7 @@ namespace XSerializer
         private readonly bool _encrypt;
         private readonly bool _nullable;
         private readonly Action<JsonWriter, object> _write;
-        private readonly Func<string, IJsonSerializeOperationInfo, object> _read;
+        private readonly Func<string, IJsonSerializeOperationInfo, string, int, int, object> _read;
 
         private StringJsonSerializer(Type type, bool encrypt)
         {
@@ -48,21 +49,54 @@ namespace XSerializer
             }
         }
 
-        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
+        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
-            if (!reader.ReadContent())
+            if (!reader.ReadContent(path))
             {
-                throw new XSerializerException("Reached end of stream while parsing string value.");
+                if (reader.NodeType == JsonNodeType.EndOfString)
+                {
+                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                        path, reader.Line, reader.Position);
+                }
+
+                Debug.Assert(reader.NodeType == JsonNodeType.Invalid);
+
+                if (reader.Value is string)
+                {
+                    throw GetMissingCloseQuoteException(reader, path);
+                }
+
+                throw GetMissingOpenQuoteException(reader, path);
             }
 
             if (_encrypt)
             {
-                var toggler = new DecryptReadsToggler(reader);
+                var toggler = new DecryptReadsToggler(reader, path);
                 toggler.Toggle();
+
+                switch (reader.NodeType)
+                {
+                    case JsonNodeType.Number:
+                    case JsonNodeType.String:
+                    case JsonNodeType.Boolean:
+                        break;
+                    case JsonNodeType.EndOfString:
+                        throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                            path, reader.Line, reader.Position);
+                    case JsonNodeType.Invalid:
+                        if (reader.Value is string)
+                        {
+                            throw GetMissingCloseQuoteException(reader, path);
+                        }
+
+                        throw GetMissingOpenQuoteException(reader, path);
+                    default:
+                        throw GetMissingOpenQuoteException(reader, path);
+                }
 
                 try
                 {
-                    return Read(reader, info);
+                    return Read(reader, info, path);
                 }
                 finally
                 {
@@ -70,10 +104,10 @@ namespace XSerializer
                 }
             }
 
-            return Read(reader, info);
+            return Read(reader, info, path);
         }
 
-        private object Read(JsonReader reader, IJsonSerializeOperationInfo info)
+        private object Read(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
             string value;
 
@@ -93,21 +127,18 @@ namespace XSerializer
                     }
                     else
                     {
-                        throw new XSerializerException(string.Format(
-                            "Unexpected node type '{0}' encountered in '{1}.DeserializeObject' method.",
-                            reader.NodeType,
-                            typeof(StringJsonSerializer)));
+                        throw GetMissingOpenQuoteException(reader, path);
                     }
                     break;
             }
 
-            return _read(value, info);
+            return _read(value, info, path, reader.Line, reader.Position);
         }
 
         private void SetDelegates(
             Type type,
             out Action<JsonWriter, object> writeAction,
-            out Func<string, IJsonSerializeOperationInfo, object> readFunc)
+            out Func<string, IJsonSerializeOperationInfo, string, int, int, object> readFunc)
         {
             Func<string, IJsonSerializeOperationInfo, object> readFuncLocal;
 
@@ -162,13 +193,43 @@ namespace XSerializer
 
             readFunc =
                 type == typeof(string) || !type.IsNullableType()
-                    ? readFuncLocal
-                    : (value, info) => value == null ? null : readFuncLocal(value, info);
+                    ? (Func<string, IJsonSerializeOperationInfo, string, int, int, object>)
+                        ((value, info, path, line, position) =>
+                            Try(readFuncLocal, value, info, type, path, line, position))
+                    : (value, info, path, line, position) =>
+                        value == null
+                            ? null
+                            : Try(readFuncLocal, value, info, type, path, line, position);
+        }
+
+        private static object Try(Func<string, IJsonSerializeOperationInfo, object> parseFunc,
+            string value, IJsonSerializeOperationInfo info, Type type, string path, int line, int position)
+        {
+            try
+            {
+                return parseFunc(value, info);
+            }
+            catch (Exception ex)
+            {
+                throw new MalformedDocumentException(MalformedDocumentError.StringInvalidValue, path, value, line, position, ex, type);
+            }
         }
 
         private static string GetStringValue(Type type)
         {
             return type.FullName + ", " + type.Assembly.GetName().Name;
+        }
+
+        private static MalformedDocumentException GetMissingOpenQuoteException(JsonReader reader, string path)
+        {
+            return new MalformedDocumentException(MalformedDocumentError.StringMissingOpenQuote,
+                path, reader.Value, reader.Line, reader.Position);
+        }
+
+        private static MalformedDocumentException GetMissingCloseQuoteException(JsonReader reader, string path)
+        {
+            return new MalformedDocumentException(MalformedDocumentError.StringMissingCloseQuote,
+                path, reader.Value, reader.Line, reader.Position);
         }
     }
 }

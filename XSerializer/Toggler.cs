@@ -19,8 +19,10 @@ namespace XSerializer
 
         /// <summary>
         /// Set the value if the new value is not equal to the original value.
+        /// Returns whether the value was toggled.
         /// </summary>
-        public void Toggle()
+        /// <returns>True, if the value was toggled, otherwise false.</returns>
+        public bool Toggle()
         {
             var bothNull =
                 ReferenceEquals(_originalValue, null)
@@ -33,11 +35,12 @@ namespace XSerializer
 
             if (bothNull || equal)
             {
-                return;
+                return false;
             }
 
             _setValue(_newValue);
             _wasToggled = true;
+            return true;
         }
 
         /// <summary>
@@ -84,8 +87,8 @@ namespace XSerializer
         /// </summary>
         /// <param name="reader">The <see cref="JsonReader"/> whose <see cref="JsonReader.DecryptReads"/>
         /// property is toggled.</param>
-        public DecryptReadsToggler(JsonReader reader)
-            : base(x => reader.DecryptReads = x, reader.DecryptReads, true)
+        public DecryptReadsToggler(JsonReader reader, string path)
+            : base(x => reader.SetDecryptReads(x, path), reader.DecryptReads, true)
         {
         }
     }

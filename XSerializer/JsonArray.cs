@@ -284,7 +284,7 @@ namespace XSerializer
                     {
                         using (var reader = new JsonReader(stringReader, _info))
                         {
-                            value = DynamicJsonSerializer.Get(false, JsonMappings.Empty).DeserializeObject(reader, _info);
+                            value = DynamicJsonSerializer.Get(false, JsonMappings.Empty).DeserializeObject(reader, _info, "[" + index + "]");
 
                             if (value == null
                                 || value is bool

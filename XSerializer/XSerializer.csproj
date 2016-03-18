@@ -101,6 +101,8 @@
     <Compile Include="JsonSerializerFactory.cs" />
     <Compile Include="JsonWriter.cs" />
     <Compile Include="ListJsonSerializer.cs" />
+    <Compile Include="MalformedDocumentError.cs" />
+    <Compile Include="MalformedDocumentException.cs" />
     <Compile Include="NumberJsonSerializer.cs" />
     <Compile Include="Rock.StaticDependencyInjection\CompositionRoot.cs" />
     <Compile Include="Rock.StaticDependencyInjection\ExportAttribute.cs" />

@@ -1,12 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Text;
 
 namespace XSerializer
 {
+    [DebuggerDisplay("{DebuggerDisplay,nq}")]
     internal class JsonReader : IDisposable
     {
+        private static readonly DynamicJsonSerializer _dynamicJsonSerializer = DynamicJsonSerializer.Get(false, JsonMappings.Empty);
+
         private readonly TextReader _primaryReader;
         private readonly IJsonSerializeOperationInfo _info;
 
@@ -21,52 +26,68 @@ namespace XSerializer
             _info = info;
         }
 
-        public JsonNodeType NodeType { get; private set; }
-        public object Value { get; private set; }
+        private JsonNodeType _nodeType;
+        public JsonNodeType NodeType
+        {
+            get { return _nodeType; }
+        }
+
+        private object _value;
+        public object Value
+        {
+            get { return _value; }
+        }
+
+        private int _currentLine;
+        private int _currentPosition;
+
+        public int Line { get; private set; }
+        public int Position { get; private set; }
 
         public bool DecryptReads
         {
             get { return _decryptReads; }
-            set
+        }
+
+        public void SetDecryptReads(bool value, string path)
+        {
+            if (value == _decryptReads)
             {
-                if (value == _decryptReads)
+                return;
+            }
+
+            _decryptReads = value;
+
+            if (_decryptReads)
+            {
+                if (NodeType == JsonNodeType.Null)
                 {
                     return;
                 }
 
-                _decryptReads = value;
-
-                if (_decryptReads)
+                if (NodeType != JsonNodeType.String)
                 {
-                    if (NodeType == JsonNodeType.Null)
-                    {
-                        return;
-                    }
-
-                    if (NodeType != JsonNodeType.String)
-                    {
-                        throw new XSerializerException("Cannot decrypt non-string value.");
-                    }
-
-                    _decryptedReader = new StringReader(_info.EncryptionMechanism.Decrypt((string)Value, _info.EncryptKey, _info.SerializationState));
-                    _currentReader = _decryptedReader;
-                    Read();
+                    throw new XSerializerException("Cannot decrypt non-string value.");
                 }
-                else
+
+                _decryptedReader = new StringReader(_info.EncryptionMechanism.Decrypt((string)Value, _info.EncryptKey, _info.SerializationState));
+                _currentReader = _decryptedReader;
+                ReadContent(path);
+            }
+            else
+            {
+                if (NodeType == JsonNodeType.Null)
                 {
-                    if (NodeType == JsonNodeType.Null)
-                    {
-                        return;
-                    }
-
-                    if (_decryptedReader.Peek() != -1)
-                    {
-                        throw new InvalidOperationException("Attempted to set DecryptReads to false before the encrypted stream has been consumed.");
-                    }
-
-                    _decryptedReader = null;
-                    _currentReader = _primaryReader;
+                    return;
                 }
+
+                if (_decryptedReader.Peek() != -1)
+                {
+                    throw new InvalidOperationException("Attempted to set DecryptReads to false before the encrypted stream has been consumed.");
+                }
+
+                _decryptedReader = null;
+                _currentReader = _primaryReader;
             }
         }
 
@@ -79,11 +100,11 @@ namespace XSerializer
         /// Reads the next non-whitespace node from the stream.
         /// </summary>
         /// <returns>true if the next node was read successfully; false if there are no more nodes to read.</returns>
-        public bool ReadContent()
+        public bool ReadContent(string path)
         {
             while (true)
             {
-                if (!Read())
+                if (!Read(path))
                 {
                     return false;
                 }
@@ -102,19 +123,41 @@ namespace XSerializer
         /// <see cref="Read"/> or <see cref="ReadContent"/> one or more times, before continuing to
         /// enumerate the collection.
         /// </summary>
+        /// <param name="path">
+        /// The path to the current object. Used for error reporting.
+        /// </param>
         /// <exception cref="XSerializerException">If the JSON object is malformed.</exception>
-        public IEnumerable<string> ReadProperties()
+        public IEnumerable<string> ReadProperties(string path)
         {
             if (NodeType != JsonNodeType.OpenObject)
             {
-                throw new XSerializerException("Unexpected node type found while attempting to parse '{' character: " + NodeType + ".");
+                throw new MalformedDocumentException(
+                    MalformedDocumentError.ObjectMissingOpenCurlyBrace, path, Line, Position);
             }
 
             while (true)
             {
-                if (!ReadContent())
+                if (!ReadContent(path))
                 {
-                    throw new XSerializerException("Unexpected end of input while attempting to parse property name.");
+                    if (NodeType == JsonNodeType.EndOfString)
+                    {
+                        throw new MalformedDocumentException(
+                            MalformedDocumentError.PropertyNameMissing,
+                            path, Line, Position);
+                    }
+
+                    Debug.Assert(NodeType == JsonNodeType.Invalid);
+
+                    if (Value is string)
+                    {
+                        throw new MalformedDocumentException(
+                            MalformedDocumentError.PropertyNameMissingCloseQuote,
+                            path, Line, Position);
+                    }
+
+                    throw new MalformedDocumentException(
+                        MalformedDocumentError.PropertyNameMissingOpenQuote,
+                        path, Value, Line, Position);
                 }
 
                 switch (NodeType)
@@ -124,28 +167,28 @@ namespace XSerializer
                     case JsonNodeType.String:
                         break;
                     default:
-                        throw new XSerializerException("Unexpected node type found while attempting to parse ':' character: " + NodeType + ".");
+                        throw new MalformedDocumentException(
+                            MalformedDocumentError.PropertyInvalidName, path, Value, Line, Position);
                 }
 
                 var name = (string)Value;
 
-                if (!ReadContent())
+                if (!ReadContent(path) || NodeType != JsonNodeType.NameValueSeparator)
                 {
-                    throw new XSerializerException("Unexpected end of input while attempting to parse ':' character.");
-                }
-
-                if (NodeType != JsonNodeType.NameValueSeparator)
-                {
-                    throw new XSerializerException("Unexpected node type found while attempting to parse ':' character: " + NodeType + ".");
+                    throw new MalformedDocumentException(
+                        MalformedDocumentError.PropertyMissingNameValueSeparator,
+                        path.AppendProperty(name), Line, Position);
                 }
 
                 yield return name;
 
                 // The caller is expected to make one or more Read calls after receiving the yielded property name.
 
-                if (!ReadContent())
+                if (!ReadContent(path))
                 {
-                    throw new XSerializerException("Unexpected end of input while attempting to parse ',' or '}' character.");
+                    throw new MalformedDocumentException(
+                        MalformedDocumentError.ObjectMissingCloseCurlyBrace,
+                        path.AppendProperty(name), Line, Position);
                 }
 
                 switch (NodeType)
@@ -154,8 +197,14 @@ namespace XSerializer
                         yield break;
                     case JsonNodeType.ItemSeparator:
                         break;
+                    case JsonNodeType.EndOfString:
+                        throw new MalformedDocumentException(
+                            MalformedDocumentError.PropertyMissingItemSeparator,
+                            path.AppendProperty(name), Line, Position);
                     default:
-                        throw new XSerializerException("Unexpected node type found while attempting to parse ',' or '}' character: " + NodeType + ".");
+                        throw new MalformedDocumentException(
+                            MalformedDocumentError.PropertyMissingItemSeparator,
+                            path.AppendProperty(name), Value, Line, Position);
                 }
             }
         }
@@ -166,44 +215,9 @@ namespace XSerializer
         /// the matching <see cref="JsonNodeType.CloseObject"/> or <see cref="JsonNodeType.CloseArray"/> content type
         /// is found. For all other content types, no additional reads are made.
         /// </summary>
-        public void Discard()
+        public void Discard(string path)
         {
-            if (!ReadContent())
-            {
-                return;
-            }
-
-            switch (NodeType)
-            {
-                case JsonNodeType.OpenObject:
-                    Consume(JsonNodeType.OpenObject, JsonNodeType.CloseObject);
-                    break;
-                case JsonNodeType.OpenArray:
-                    Consume(JsonNodeType.OpenArray, JsonNodeType.CloseArray);
-                    break;
-            }
-        }
-
-        private void Consume(JsonNodeType openNodeType, JsonNodeType closeNodeType)
-        {
-            int nestLevel = 0;
-
-            while (Read())
-            {
-                if (NodeType == closeNodeType)
-                {
-                    if (nestLevel == 0)
-                    {
-                        return;
-                    }
-
-                    nestLevel--;
-                }
-                else if (NodeType == openNodeType)
-                {
-                    nestLevel++;
-                }
-            }
+            _dynamicJsonSerializer.DeserializeObject(this, _info, path);
         }
 
         /// <summary>
@@ -212,7 +226,7 @@ namespace XSerializer
         /// next node type is then returned, again without changing the state of the reader.
         /// </summary>
         /// <returns>The next non-whitespace node type in the stream.</returns>
-        public JsonNodeType PeekNextNodeType()
+        public JsonNodeType PeekContent()
         {
             while (true)
             {
@@ -226,8 +240,6 @@ namespace XSerializer
                     case '\t':
                         ReadWhitespace((char)peek);
                         continue;
-                    case -1:
-                        return JsonNodeType.None;
                     case '"':
                         return JsonNodeType.String;
                     case '-':
@@ -260,8 +272,10 @@ namespace XSerializer
                         return JsonNodeType.OpenArray;
                     case ']':
                         return JsonNodeType.CloseArray;
+                    case -1:
+                        return JsonNodeType.EndOfString;
                     default:
-                        throw new XSerializerException("Unknown character: " + (char)peek);
+                        return JsonNodeType.Invalid;
                 }
             }
         }
@@ -270,20 +284,24 @@ namespace XSerializer
         /// Reads the next node from the stream.
         /// </summary>
         /// <returns>true if the next node was read successfully; false if there are no more nodes to read.</returns>
-        public bool Read()
+        public bool Read(string path)
         {
-            var read = _currentReader.Read();
+            if (ReferenceEquals(_currentReader, _primaryReader))
+            {
+                Line = _currentLine;
+                Position = _currentPosition;
+            }
+
+            var read = ReadCurrent();
 
             switch (read)
             {
                 case -1:
-                    Value = null;
-                    NodeType = JsonNodeType.None;
+                    _value = null;
+                    _nodeType = JsonNodeType.EndOfString;
                     return false;
                 case '"':
-                    Value = ReadString();
-                    NodeType = JsonNodeType.String;
-                    break;
+                    return TryReadString(out _value, out _nodeType);
                 case '-':
                 case '.':
                 case '0':
@@ -296,95 +314,105 @@ namespace XSerializer
                 case '7':
                 case '8':
                 case '9':
-                    Value = ReadNumber((char)read);
-                    NodeType = JsonNodeType.Number;
-                    break;
+                    _value = ReadNumber((char)read);
+                    _nodeType = JsonNodeType.Number;
+                    return true;
                 case 't':
-                    ReadLiteral("true", 'r', 'u', 'e');
-                    Value = true;
-                    NodeType = JsonNodeType.Boolean;
-                    break;
+                    ReadLiteral(path, "true", 'r', 'u', 'e');
+                    _value = true;
+                    _nodeType = JsonNodeType.Boolean;
+                    return true;
                 case 'f':
-                    ReadLiteral("false", 'a', 'l', 's', 'e');
-                    Value = false;
-                    NodeType = JsonNodeType.Boolean;
-                    break;
+                    ReadLiteral(path, "false", 'a', 'l', 's', 'e');
+                    _value = false;
+                    _nodeType = JsonNodeType.Boolean;
+                    return true;
                 case 'n':
-                    ReadLiteral("null", 'u', 'l', 'l');
-                    Value = null;
-                    NodeType = JsonNodeType.Null;
-                    break;
+                    ReadLiteral(path, "null", 'u', 'l', 'l');
+                    _value = null;
+                    _nodeType = JsonNodeType.Null;
+                    return true;
                 case '{':
-                    Value = '{';
-                    NodeType = JsonNodeType.OpenObject;
-                    break;
+                    _value = '{';
+                    _nodeType = JsonNodeType.OpenObject;
+                    return true;
                 case '}':
-                    Value = '}';
-                    NodeType = JsonNodeType.CloseObject;
-                    break;
+                    _value = '}';
+                    _nodeType = JsonNodeType.CloseObject;
+                    return true;
                 case ':':
-                    Value = ':';
-                    NodeType = JsonNodeType.NameValueSeparator;
-                    break;
+                    _value = ':';
+                    _nodeType = JsonNodeType.NameValueSeparator;
+                    return true;
                 case ',':
-                    Value = ',';
-                    NodeType = JsonNodeType.ItemSeparator;
-                    break;
+                    _value = ',';
+                    _nodeType = JsonNodeType.ItemSeparator;
+                    return true;
                 case '[':
-                    Value = '[';
-                    NodeType = JsonNodeType.OpenArray;
-                    break;
+                    _value = '[';
+                    _nodeType = JsonNodeType.OpenArray;
+                    return true;
                 case ']':
-                    Value = ']';
-                    NodeType = JsonNodeType.CloseArray;
-                    break;
+                    _value = ']';
+                    _nodeType = JsonNodeType.CloseArray;
+                    return true;
                 case ' ':
                 case '\r':
                 case '\n':
                 case '\t':
-                    Value = ReadWhitespace((char)read);
-                    NodeType = JsonNodeType.Whitespace;
-                    break;
+                    _value = ReadWhitespace((char)read);
+                    _nodeType = JsonNodeType.Whitespace;
+                    return true;
             }
 
-            return true;
+            _value = (char)read;
+            _nodeType = JsonNodeType.Invalid;
+            return false;
         }
 
-        private void ReadLiteral(string value, params char[] literalMinusFirstChar)
+        private void ReadLiteral(string path, string value, params char[] literalMinusFirstChar)
         {
             for (int i = 0; i < literalMinusFirstChar.Length; i++)
             {
-                var read = _currentReader.Read();
+                var read = ReadCurrent();
 
                 if (read == -1)
                 {
-                    throw new XSerializerException(string.Format("Reached end of input before literal '{0}' was parsed.", value));
+                    throw new MalformedDocumentException(
+                        MalformedDocumentError.LiteralInvalidValue,
+                        path, value.Substring(0, i + 1), Line, Position, null, value);
                 }
 
                 if (read != literalMinusFirstChar[i])
                 {
-                    throw new XSerializerException(string.Format("Invalid literal character '{0}' in literal '{1}.", (char)read, value));
+                    throw new MalformedDocumentException(
+                        MalformedDocumentError.LiteralInvalidValue,
+                        path, value.Substring(0, i + 1) + (char)read, Line, Position, null, value);
                 }
             }
         }
 
-        private string ReadString()
+        private bool TryReadString(out object value, out JsonNodeType nodeType)
         {
             var sb = new StringBuilder(38); // Large enough to read a DateTime or Guid.
 
             while (true)
             {
-                var read = _currentReader.Read();
+                var read = ReadCurrent();
 
                 switch (read)
                 {
                     case '"':
-                        return sb.ToString();
+                        value = sb.ToString();
+                        nodeType = JsonNodeType.String;
+                        return true;
                     case '\\':
                         sb.Append(ReadEscapedChar());
                         break;
                     case -1:
-                        throw new XSerializerException("Reached end of input before closing quote was found for string.");
+                        value = sb.Insert(0, '"').ToString();
+                        nodeType = JsonNodeType.Invalid;
+                        return false;
                     default:
                         sb.Append((char)read);
                         break;
@@ -394,7 +422,7 @@ namespace XSerializer
 
         private char ReadEscapedChar()
         {
-            var read = _currentReader.Read();
+            var read = ReadCurrent();
 
             switch (read)
             {
@@ -452,7 +480,7 @@ namespace XSerializer
                         return sb.ToString();
                 }
 
-                sb.Append((char)_currentReader.Read());
+                sb.Append((char)ReadCurrent());
             }
         }
 
@@ -463,7 +491,7 @@ namespace XSerializer
 
             while (IsWhitespace(_currentReader.Peek()))
             {
-                sb.Append((char)_currentReader.Read());
+                sb.Append((char)ReadCurrent());
             }
 
             return sb.ToString();
@@ -480,6 +508,83 @@ namespace XSerializer
                     return true;
                 default:
                     return false;
+            }
+        }
+
+        private int ReadCurrent()
+        {
+            var current = _currentReader.Read();
+
+            if (ReferenceEquals(_currentReader, _primaryReader))
+            {
+                if (current != -1)
+                {
+                    switch ((char)current)
+                    {
+                        case '\r':
+                            break;
+                        case '\n':
+                            _currentLine++;
+                            _currentPosition = 0;
+                            break;
+                        default:
+                            _currentPosition++;
+                            break;
+                    }
+                    
+                }
+            }
+
+            return current;
+        }
+
+        private string DebuggerDisplay
+        {
+            get
+            {
+                string valueString;
+
+                if (Value == null)
+                {
+                    valueString = "[null]";
+                }
+                else if (Value is char)
+                {
+                    valueString = "'" + Value + "'";
+                }
+                else if (Value is bool)
+                {
+                    valueString = ((bool)Value) ? "true" : "false";
+                }
+                else
+                {
+                    valueString = (string)Value;
+
+                    if (valueString.Length > 0)
+                    {
+                        if (IsWhitespace(valueString[0]))
+                        {
+                            valueString = string.Format(@"""{0}""",
+                                valueString.Replace("\r", "\\r")
+                                    .Replace("\n", "\\n")
+                                    .Replace("\t", "\\t"));
+                        }
+                        else
+                        {
+                            double dummy;
+                            if (!double.TryParse(valueString, out dummy))
+                            {
+                                valueString = string.Format(@"""{0}""", valueString);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        valueString = @"""""";
+                    }
+                }
+
+                return string.Format("{0}: {1}", NodeType, valueString);
             }
         }
     }

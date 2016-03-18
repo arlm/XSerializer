@@ -14,5 +14,7 @@ namespace XSerializer
         OpenArray,
         CloseArray,
         Whitespace,
+        Invalid,
+        EndOfString
     }
 }

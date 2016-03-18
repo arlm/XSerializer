@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 
 namespace XSerializer
 {
@@ -52,64 +53,97 @@ namespace XSerializer
             }
         }
 
-        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
+        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
-            if (!reader.ReadContent())
+            if (!reader.ReadContent(path))
             {
-                throw new XSerializerException("Reached end of stream while parsing boolean value.");
+                if (reader.NodeType == JsonNodeType.EndOfString)
+                {
+                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                        path, reader.Line, reader.Position);
+                }
+
+                Debug.Assert(reader.NodeType == JsonNodeType.Invalid);
+
+                throw new MalformedDocumentException(MalformedDocumentError.BooleanInvalidValue,
+                    path, reader.Value, reader.Line, reader.Position);
             }
 
             if (_encrypt)
             {
-                var toggler = new DecryptReadsToggler(reader);
-                toggler.Toggle();
+                var toggler = new DecryptReadsToggler(reader, path);
+                if (toggler.Toggle())
+                {
+                    if (reader.NodeType == JsonNodeType.EndOfString)
+                    {
+                        throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                            path, reader.Line, reader.Position);
+                    }
 
-                try
-                {
-                    return Read(reader);
-                }
-                finally
-                {
-                    toggler.Revert();
+                    var exception = false;
+
+                    try
+                    {
+                        return Read(reader, path);
+                    }
+                    catch (MalformedDocumentException)
+                    {
+                        exception = true;
+                        throw;
+                    }
+                    finally
+                    {
+                        if (!exception)
+                        {
+                            if (reader.ReadContent(path) || reader.NodeType == JsonNodeType.Invalid)
+                            {
+                                throw new MalformedDocumentException(MalformedDocumentError.ExpectedEndOfDecryptedString,
+                                    path, reader.Value, reader.Line, reader.Position, null, reader.NodeType);
+                            }
+
+                            toggler.Revert();
+                        }
+                    }
                 }
             }
-
-            return Read(reader);
+            
+            return Read(reader, path);
         }
 
-        private object Read(JsonReader reader)
+        private object Read(JsonReader reader, string path)
         {
-            if (reader.NodeType != JsonNodeType.Boolean)
+            if (reader.NodeType == JsonNodeType.Boolean)
             {
-                if (reader.NodeType == JsonNodeType.String)
+                return reader.Value;
+            }
+
+            if (_nullable && reader.NodeType == JsonNodeType.Null)
+            {
+                return null;
+            }
+
+            if (reader.NodeType == JsonNodeType.String)
+            {
+                var value = (string)reader.Value;
+
+                if (value == "true")
                 {
-                    var value = (string)reader.Value;
-
-                    if (value == "true")
-                    {
-                        return true;
-                    }
-
-                    if (value == "false")
-                    {
-                        return false;
-                    }
-
-                    if (_nullable && value == "")
-                    {
-                        return null;
-                    }
+                    return true;
                 }
-                else if (!_nullable && reader.NodeType != JsonNodeType.Null)
+
+                if (value == "false")
                 {
-                    throw new XSerializerException(string.Format(
-                        "Unexpected node type '{0}' encountered in '{1}.DeserializeObject' method.",
-                        reader.NodeType,
-                        typeof(BooleanJsonSerializer)));
+                    return false;
+                }
+
+                if (_nullable && value == "")
+                {
+                    return null;
                 }
             }
 
-            return reader.Value;
+            throw new MalformedDocumentException(MalformedDocumentError.BooleanInvalidValue,
+                path, reader.Value, reader.Line, reader.Position);
         }
     }
 }

@@ -207,14 +207,14 @@ namespace XSerializer
             _serializer.Value.SerializeObject(writer, value, info);
         }
 
-        public object ReadValue(JsonReader reader, IJsonSerializeOperationInfo info)
+        public object ReadValue(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
-            return _serializer.Value.DeserializeObject(reader, info);
+            return _serializer.Value.DeserializeObject(reader, info, path);
         }
 
-        public void SetValue(object instance, JsonReader reader, IJsonSerializeOperationInfo info)
+        public void SetValue(object instance, JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
-            var value = ReadValue(reader, info);
+            var value = ReadValue(reader, info, path);
             _setValue(instance, value);
         }
 

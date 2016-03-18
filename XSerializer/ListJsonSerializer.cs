@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -17,6 +18,7 @@ namespace XSerializer
 
         private readonly Func<object> _createList;
         private readonly Action<object, object> _addItem;
+        private readonly Func<object, object> _transformList;
 
         private ListJsonSerializer(Type type, bool encrypt, JsonMappings mappings)
         {
@@ -45,8 +47,22 @@ namespace XSerializer
                 }
             }
 
-            _createList = GetCreateListFunc(type);
-            _addItem = GetAddItemAction(type);
+            var listType = type;
+
+            if (type.IsArray)
+            {
+                if (type.GetArrayRank() > 1)
+                {
+                    throw new NotSupportedException("Only arrays with a rank of one are supported: " + type + ".");
+                }
+
+                var itemType = type.GetElementType();
+                listType = typeof(List<>).MakeGenericType(itemType);
+            }
+
+            _createList = GetCreateListFunc(listType);
+            _addItem = GetAddItemAction(listType);
+            _transformList = GetTransformListFunc(type, listType);
         }
 
         public static ListJsonSerializer Get(Type type, bool encrypt, JsonMappings mappings)
@@ -103,32 +119,78 @@ namespace XSerializer
             writer.WriteCloseArray();
         }
 
-        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info)
+        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
-            if (!reader.ReadContent())
+            if (!reader.ReadContent(path))
             {
-                throw new XSerializerException("Unexpected end of input while attempting to parse '[' character.");
+                if (reader.NodeType == JsonNodeType.EndOfString)
+                {
+                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                        path, reader.Line, reader.Position);
+                }
+
+                Debug.Assert(reader.NodeType == JsonNodeType.Invalid);
+
+                throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingOpenSquareBracket,
+                        path, reader.Value, reader.Line, reader.Position);
             }
 
             if (_encrypt)
             {
-                var toggler = new DecryptReadsToggler(reader);
-                toggler.Toggle();
+                var toggler = new DecryptReadsToggler(reader, path);
+                if (toggler.Toggle())
+                {
+                    if (reader.NodeType == JsonNodeType.EndOfString)
+                    {
+                        throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                            path, reader.Line, reader.Position);
+                    }
 
-                try
-                {
-                    return Read(reader, info);
-                }
-                finally
-                {
-                    toggler.Revert();
+                    if (reader.NodeType != JsonNodeType.OpenArray
+                        && reader.NodeType != JsonNodeType.Null)
+                    {
+                        throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingOpenSquareBracket,
+                            path, reader.Value, reader.Line, reader.Position);
+                    }
+
+                    var exception = false;
+
+                    try
+                    {
+                        return Read(reader, info, path);
+                    }
+                    catch (MalformedDocumentException)
+                    {
+                        exception = true;
+                        throw;
+                    }
+                    finally
+                    {
+                        if (!exception)
+                        {
+                            if (reader.ReadContent(path) || reader.NodeType == JsonNodeType.Invalid)
+                            {
+                                throw new MalformedDocumentException(MalformedDocumentError.ExpectedEndOfDecryptedString,
+                                    path, reader.Value, reader.Line, reader.Position, null, reader.NodeType);
+                            }
+
+                            toggler.Revert();
+                        }
+                    }
                 }
             }
+            
+            if (reader.NodeType != JsonNodeType.OpenArray
+                && reader.NodeType != JsonNodeType.Null)
+            {
+                throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingOpenSquareBracket,
+                    path, reader.Value, reader.Line, reader.Position);
+            }
 
-            return Read(reader, info);
+            return Read(reader, info, path);
         }
 
-        private object Read(JsonReader reader, IJsonSerializeOperationInfo info)
+        private object Read(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
             if (reader.NodeType == JsonNodeType.Null)
             {
@@ -137,21 +199,27 @@ namespace XSerializer
 
             var list = _createList();
 
+            if (reader.PeekContent() == JsonNodeType.CloseArray)
+            {
+                // If the next content node is CloseArray, we're reading an empty
+                // array. Read the CloseArray node and return the empty list.
+                reader.Read(path);
+                return _transformList(list);
+            }
+
+            var index = 0;
+
             while (true)
             {
-                if (reader.PeekNextNodeType() == JsonNodeType.CloseArray)
-                {
-                    // If the next content is CloseArray, read it and return the empty list.
-                    reader.Read();
-                    return list;
-                }
-
-                var item = _itemSerializer.DeserializeObject(reader, info);
+                var item = _itemSerializer.DeserializeObject(reader, info, path + "[" + index++ + "]");
                 _addItem(list, item);
 
-                if (!reader.ReadContent())
+                if (!reader.ReadContent(path))
                 {
-                    throw new XSerializerException("Unexpected end of input while attempting to parse ',' character.");
+                    Debug.Assert(reader.NodeType == JsonNodeType.EndOfString);
+
+                    throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingCommaOrCloseSquareBracket,
+                        path, reader.Line, reader.Position);
                 }
 
                 if (reader.NodeType == JsonNodeType.CloseArray)
@@ -161,12 +229,12 @@ namespace XSerializer
 
                 if (reader.NodeType != JsonNodeType.ItemSeparator)
                 {
-                    throw new XSerializerException("Unexpected node type found while attempting to parse ',' character: " +
-                                                   reader.NodeType + ".");
+                    throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingCommaOrCloseSquareBracket,
+                        path, reader.Value, reader.Line, reader.Position);
                 }
             }
 
-            return list;
+            return _transformList(list);
         }
 
         private static Func<object> GetCreateListFunc(Type type)
@@ -226,6 +294,26 @@ namespace XSerializer
             }
 
             return false;
+        }
+
+        private static Func<object, object> GetTransformListFunc(Type type, Type listType)
+        {
+            if (type == listType)
+            {
+                return list => list;
+            }
+
+            var itemType = listType.GetGenericArguments()[0];
+            var enumerableType = typeof(IEnumerable<>).MakeGenericType(itemType);
+            var toArrayMethod = typeof(Enumerable).GetMethod("ToArray").MakeGenericMethod(itemType);
+
+            var listParameter = Expression.Parameter(typeof(object), "list");
+
+            var lambda = Expression.Lambda<Func<object, object>>(
+                Expression.Call(toArrayMethod, Expression.Convert(listParameter, enumerableType)),
+                listParameter);
+
+            return lambda.Compile();
         }
     }
 }
