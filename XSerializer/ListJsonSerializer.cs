@@ -140,26 +140,36 @@ namespace XSerializer
                 var toggler = new DecryptReadsToggler(reader, path);
                 toggler.Toggle();
 
-                switch (reader.NodeType)
+                if (reader.NodeType == JsonNodeType.EndOfString)
                 {
-                    case JsonNodeType.OpenArray:
-                    case JsonNodeType.Null:
-                        break;
-                    case JsonNodeType.EndOfString:
-                        throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
-                            path, reader.Line, reader.Position);
-                    default:
-                        throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingOpenSquareBracket,
-                            path, reader.Value, reader.Line, reader.Position);
+                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                        path, reader.Line, reader.Position);
                 }
+
+                if (reader.NodeType != JsonNodeType.OpenArray
+                    && reader.NodeType != JsonNodeType.Null)
+                {
+                    throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingOpenSquareBracket,
+                        path, reader.Value, reader.Line, reader.Position);
+                }
+
+                var exception = false;
 
                 try
                 {
                     return Read(reader, info, path);
                 }
+                catch (MalformedDocumentException)
+                {
+                    exception = true;
+                    throw;
+                }
                 finally
                 {
-                    toggler.Revert();
+                    if (!exception)
+                    {
+                        toggler.Revert();
+                    }
                 }
             }
 

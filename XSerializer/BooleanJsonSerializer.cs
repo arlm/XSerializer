@@ -57,16 +57,16 @@ namespace XSerializer
         {
             if (!reader.ReadContent(path))
             {
-                if (reader.NodeType == JsonNodeType.Invalid)
+                if (reader.NodeType == JsonNodeType.EndOfString)
                 {
-                    throw new MalformedDocumentException(MalformedDocumentError.BooleanInvalidValue,
-                        path, reader.Value, reader.Line, reader.Position);
+                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                        path, reader.Line, reader.Position);
                 }
 
-                Debug.Assert(reader.NodeType == JsonNodeType.EndOfString);
+                Debug.Assert(reader.NodeType == JsonNodeType.Invalid);
 
-                throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
-                    path, reader.Line, reader.Position);
+                throw new MalformedDocumentException(MalformedDocumentError.BooleanInvalidValue,
+                    path, reader.Value, reader.Line, reader.Position);
             }
 
             if (_encrypt)
@@ -74,27 +74,29 @@ namespace XSerializer
                 var toggler = new DecryptReadsToggler(reader, path);
                 toggler.Toggle();
 
-                switch (reader.NodeType)
+                if (reader.NodeType == JsonNodeType.EndOfString)
                 {
-                    case JsonNodeType.Boolean:
-                    case JsonNodeType.Null:
-                    case JsonNodeType.String:
-                        break;
-                    case JsonNodeType.EndOfString:
-                        throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
-                            path, reader.Line, reader.Position);
-                    default:
-                        throw new MalformedDocumentException(MalformedDocumentError.BooleanInvalidValue,
-                            path, reader.Value, reader.Line, reader.Position);
+                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                        path, reader.Line, reader.Position);
                 }
+
+                var exception = false;
 
                 try
                 {
                     return Read(reader, path);
                 }
+                catch (MalformedDocumentException)
+                {
+                    exception = true;
+                    throw;
+                }
                 finally
                 {
-                    toggler.Revert();
+                    if (!exception)
+                    {
+                        toggler.Revert();
+                    }
                 }
             }
 

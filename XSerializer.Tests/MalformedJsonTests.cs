@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using NUnit.Framework;
@@ -85,14 +86,27 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void ObjectMissingOpenCurlyBrace4()
+        public void ObjectMissingValue()
         {
             var ex = DeserializeFail(typeof(string), @"");
 
-            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingOpenCurlyBrace));
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
             Assert.That(ex.Path, Is.EqualTo(""));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void ObjectMissingValue_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(""));
+            var ex = DeserializeFail(typeof(Bar), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
             Assert.That(ex.Value, Is.Null);
         }
 
@@ -171,14 +185,27 @@ namespace XSerializer.Tests
         }
 
         [Test]
-        public void DictionaryMissingOpenCurlyBrace3()
+        public void DictionaryMissingValue()
         {
             var ex = DeserializeFail<Dictionary<string, int>>(@"");
 
-            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingOpenCurlyBrace));
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
             Assert.That(ex.Path, Is.EqualTo(""));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DictionaryMissingValue_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(""));
+            var ex = DeserializeFail(typeof(Dictionary<string, int>), json, true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
             Assert.That(ex.Value, Is.Null);
         }
 
@@ -764,6 +791,19 @@ namespace XSerializer.Tests
         public void BooleanMissingValue()
         {
             var ex = DeserializeFail(typeof(bool), @"{""Bar"":");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void BooleanMissingValue_Encrypted()
+        {
+            var json = string.Format(@"{{""Bar"":{0}}}", Encrypt(""));
+            var ex = DeserializeFail(typeof(bool), json, true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
             Assert.That(ex.Path, Is.EqualTo("Bar"));

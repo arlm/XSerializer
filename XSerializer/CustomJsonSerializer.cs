@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -116,6 +117,14 @@ namespace XSerializer
         {
             if (!reader.ReadContent(path))
             {
+                if (reader.NodeType == JsonNodeType.EndOfString)
+                {
+                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                        path, reader.Line, reader.Position);
+                }
+
+                Debug.Assert(reader.NodeType == JsonNodeType.Invalid);
+
                 throw new MalformedDocumentException(MalformedDocumentError.ObjectMissingOpenCurlyBrace,
                     path, reader.Value, reader.Line, reader.Position);
             }
@@ -129,6 +138,12 @@ namespace XSerializer
             {
                 var toggler = new DecryptReadsToggler(reader, path);
                 toggler.Toggle();
+
+                if (reader.NodeType == JsonNodeType.EndOfString)
+                {
+                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                        path, reader.Line, reader.Position);
+                }
 
                 var exception = false;
 

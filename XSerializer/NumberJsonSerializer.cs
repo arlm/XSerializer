@@ -73,26 +73,29 @@ namespace XSerializer
                 var toggler = new DecryptReadsToggler(reader, path);
                 toggler.Toggle();
 
-                switch (reader.NodeType)
+                if (reader.NodeType == JsonNodeType.EndOfString)
                 {
-                    case JsonNodeType.Number:
-                    case JsonNodeType.String:
-                    case JsonNodeType.Null:
-                        break;
-                    case JsonNodeType.EndOfString:
-                        throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
-                            path, reader.Value, reader.Line, reader.Position);
-                    default:
-                        throw GetNumberInvalidValueException(reader, path);
+                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                        path, reader.Value, reader.Line, reader.Position);
                 }
+
+                var exception = false;
 
                 try
                 {
                     return Read(reader, path);
                 }
+                catch (MalformedDocumentException)
+                {
+                    exception = true;
+                    throw;
+                }
                 finally
                 {
-                    toggler.Revert();
+                    if (!exception)
+                    {
+                        toggler.Revert();
+                    }
                 }
             }
 
