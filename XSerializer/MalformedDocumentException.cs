@@ -115,6 +115,13 @@ namespace XSerializer
                 case MalformedDocumentError.MissingValue:
                     message = "Missing value.";
                     break;
+                case MalformedDocumentError.InvalidValue:
+                    message = "Invalid value.";
+                    break;
+                case MalformedDocumentError.ExpectedEndOfString:
+                    Debug.Assert(additionalArgs.Length == 1);
+                    message = string.Format("Expected end-of-string following legal value, but found '{0}'.", additionalArgs[0]);
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException("error");
             }
@@ -124,6 +131,10 @@ namespace XSerializer
                 if (value is bool)
                 {
                     value = value.ToString().ToLower();
+                }
+                else if (value is char)
+                {
+                    value = "'" + value + "'";
                 }
 
                 return message + " Path: " + path + ", Value: " + value + ", Line: " + line + ", Position: " + position;

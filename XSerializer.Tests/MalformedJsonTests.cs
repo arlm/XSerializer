@@ -13,7 +13,7 @@ namespace XSerializer.Tests
         {
             public int Baz { get; set; }
         }
-
+        
         public class Bar2
         {
             public int Baz { get; set; }
@@ -1109,6 +1109,258 @@ namespace XSerializer.Tests
             Assert.That(ex.Path, Is.EqualTo("Bar"));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DynamicMissingValue()
+        {
+            var ex = DeserializeFail<object>(@"");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DynamicInvalidValue()
+        {
+            var ex = DeserializeFail<object>(@"wtf");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.InvalidValue));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
+        public void DynamicStringMissingCloseQuote()
+        {
+            var ex = DeserializeFail<object>(@"""abc");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.InvalidValue));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo(@"""abc"));
+        }
+
+        [Test]
+        public void DynamicLiteralInvalidValue1()
+        {
+            var ex = DeserializeFail<object>("tr");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo("tr"));
+        }
+
+        [Test]
+        public void DynamicLiteralInvalidValue2()
+        {
+            var ex = DeserializeFail<object>("twoo");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo("tw"));
+        }
+
+        [Test]
+        public void DynamicLiteralInvalidValue3()
+        {
+            var ex = DeserializeFail<object>("fal");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo("fal"));
+        }
+
+        [Test]
+        public void DynamicLiteralInvalidValue4()
+        {
+            var ex = DeserializeFail<object>("falce");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo("falc"));
+        }
+
+        [Test]
+        public void DynamicLiteralInvalidValue5()
+        {
+            var ex = DeserializeFail<object>("nul");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo("nul"));
+        }
+
+        [Test]
+        public void DynamicLiteralInvalidValue6()
+        {
+            var ex = DeserializeFail<object>("nun");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo("nun"));
+        }
+
+        [Test]
+        public void DynamicNumberInvalidValue()
+        {
+            var ex = DeserializeFail<object>("1.2.3");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.InvalidValue));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo("1.2.3"));
+        }
+
+        [Test]
+        public void DynamicNumberArrayMissingOpenSquareBracket()
+        {
+            var ex = DeserializeFail<object>("1,2,3]");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(1));
+            Assert.That(ex.Value, Is.EqualTo(','));
+        }
+
+        [Test]
+        public void DynamicArrayMissingCommaOrCloseSquareBracket()
+        {
+            var ex = DeserializeFail<object>("[1,2,3");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ArrayMissingCommaOrCloseSquareBracket));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(6));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DynamicObjectMissingOpenCurlyBrace()
+        {
+            var ex = DeserializeFail<object>(@"""Bar"":123}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(5));
+            Assert.That(ex.Value, Is.EqualTo(':'));
+        }
+
+        [Test]
+        public void DynamicObjectMissingCloseCurlyBrace()
+        {
+            var ex = DeserializeFail<object>(@"{""Bar"":123");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingCloseCurlyBrace));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(10));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DynamicPropertyNameMissing()
+        {
+            var ex = DeserializeFail<object>(@"{");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissing));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(1));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DynamicPropertyNameMissingOpenQuote()
+        {
+            var ex = DeserializeFail<object>(@"{Bar"":123}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissingOpenQuote));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(1));
+            Assert.That(ex.Value, Is.EqualTo('B'));
+        }
+
+        [Test]
+        public void DynamicPropertyNameMissingCloseQuote()
+        {
+            var ex = DeserializeFail<object>(@"{""Bar:123}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissingCloseQuote));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(1));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DynamicPropertyInvalidName()
+        {
+            var ex = DeserializeFail<object>(@"{123:456}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyInvalidName));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(1));
+            Assert.That(ex.Value, Is.EqualTo("123"));
+        }
+
+        [Test]
+        public void DynamicPropertyMissingNameValueSeparator1()
+        {
+            var ex = DeserializeFail<object>(@"{""Bar""123}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingNameValueSeparator));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(6));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DynamicPropertyMissingNameValueSeparator2()
+        {
+            var ex = DeserializeFail<object>(@"{""Bar""wtf}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingNameValueSeparator));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(6));
+            Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DynamicPropertyMissingItemSeparator()
+        {
+            var ex = DeserializeFail<object>(@"{""Bar"":123""Baz"":456}");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingItemSeparator));
+            Assert.That(ex.Path, Is.EqualTo("Bar"));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(10));
             Assert.That(ex.Value, Is.Null);
         }
 

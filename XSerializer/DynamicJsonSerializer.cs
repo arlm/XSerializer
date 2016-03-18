@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace XSerializer
 {
@@ -111,12 +112,30 @@ namespace XSerializer
             return CustomJsonSerializer.Get(concreteType, _encrypt, _mappings);
         }
 
-        public object DeserializeObject(JsonReader reader, IJsonSerializeOperationInfo info, string path)
+        public object DeserializeObject(
+            JsonReader reader, IJsonSerializeOperationInfo info, string path)
+        {
+            return DeserializeObject(reader, info, path, false);
+        }
+
+        private object DeserializeObject(
+            JsonReader reader, IJsonSerializeOperationInfo info, string path, bool skipExpectedEndOfStringCheck)
         {
             if (!reader.ReadContent(path))
             {
-                throw new XSerializerException("Unexpected end of input while attempting to parse beginning of value.");
+                if (reader.NodeType == JsonNodeType.Invalid)
+                {
+                    throw new MalformedDocumentException(MalformedDocumentError.InvalidValue,
+                        path, reader.Value, reader.Line, reader.Position);
+                }
+
+                Debug.Assert(reader.NodeType == JsonNodeType.EndOfString);
+
+                throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                    path, reader.Value, reader.Line, reader.Position);
             }
+
+            object returnObject;
 
             if (_encrypt)
             {
@@ -125,15 +144,26 @@ namespace XSerializer
 
                 try
                 {
-                    return Read(reader, info, path);
+                    returnObject = Read(reader, info, path);
                 }
                 finally
                 {
                     toggler.Revert();
                 }
             }
+            else
+            {
+                returnObject = Read(reader, info, path);
+            }
 
-            return Read(reader, info, path);
+            if (!skipExpectedEndOfStringCheck
+                && (reader.ReadContent(path) || reader.NodeType == JsonNodeType.Invalid))
+            {
+                throw new MalformedDocumentException(MalformedDocumentError.ExpectedEndOfString,
+                    path, reader.Value, reader.Line, reader.Position, null, reader.NodeType);
+            }
+
+            return returnObject;
         }
 
         private object Read(JsonReader reader, IJsonSerializeOperationInfo info, string path)
@@ -145,7 +175,15 @@ namespace XSerializer
                 case JsonNodeType.Boolean:
                     return reader.Value;
                 case JsonNodeType.Number:
-                    return new JsonNumber((string)reader.Value);
+                    try
+                    {
+                        return new JsonNumber((string)reader.Value);
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        throw new MalformedDocumentException(MalformedDocumentError.InvalidValue,
+                            path, reader.Value, reader.Line, reader.Position, ex);
+                    }
                 case JsonNodeType.OpenObject:
                     return DeserializeJsonObject(reader, info, path);
                 case JsonNodeType.OpenArray:
@@ -161,7 +199,7 @@ namespace XSerializer
 
             foreach (var propertyName in reader.ReadProperties(path))
             {
-                jsonObject.Add(propertyName, DeserializeObject(reader, info, path.AppendProperty(propertyName)));
+                jsonObject.Add(propertyName, DeserializeObject(reader, info, path.AppendProperty(propertyName), true));
             }
 
             return jsonObject;
@@ -183,11 +221,12 @@ namespace XSerializer
 
             while (true)
             {
-                jsonArray.Add(DeserializeObject(reader, info, path + "[" + index++ + "]"));
+                jsonArray.Add(DeserializeObject(reader, info, path + "[" + index++ + "]", true));
 
                 if (!reader.ReadContent(path))
                 {
-                    throw new XSerializerException("Unexpected end of input while attempting to parse ',' character.");
+                    throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingCommaOrCloseSquareBracket,
+                        path, reader.Line, reader.Position);
                 }
 
                 if (reader.NodeType == JsonNodeType.CloseArray)
