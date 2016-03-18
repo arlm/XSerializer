@@ -250,8 +250,8 @@ namespace XSerializer
 
                 if (reader.NodeType != JsonNodeType.ItemSeparator)
                 {
-                    throw new XSerializerException("Unexpected node type found while attempting to parse ',' character: " +
-                                                   reader.NodeType + ".");
+                    throw new MalformedDocumentException(MalformedDocumentError.ArrayMissingCommaOrCloseSquareBracket,
+                        path, reader.Line, reader.Position);
                 }
             }
 

@@ -181,9 +181,11 @@ namespace XSerializer
 
             foreach (var propertyName in reader.ReadProperties(path))
             {
-                if (!factory.SetValue(reader, propertyName, info, path.AppendProperty(propertyName)))
+                var propertyPath = path.AppendProperty(propertyName);
+
+                if (!factory.SetValue(reader, propertyName, info, propertyPath))
                 {
-                    reader.Discard(path);
+                    reader.Discard(propertyPath);
                 }
             }
 

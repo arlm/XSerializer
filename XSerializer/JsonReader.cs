@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Text;
 
 namespace XSerializer
@@ -9,6 +10,8 @@ namespace XSerializer
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     internal class JsonReader : IDisposable
     {
+        private static readonly DynamicJsonSerializer _dynamicJsonSerializer = DynamicJsonSerializer.Get(false, JsonMappings.Empty);
+
         private readonly TextReader _primaryReader;
         private readonly IJsonSerializeOperationInfo _info;
 
@@ -194,10 +197,14 @@ namespace XSerializer
                         yield break;
                     case JsonNodeType.ItemSeparator:
                         break;
-                    default:
+                    case JsonNodeType.EndOfString:
                         throw new MalformedDocumentException(
                             MalformedDocumentError.PropertyMissingItemSeparator,
                             path.AppendProperty(name), Line, Position);
+                    default:
+                        throw new MalformedDocumentException(
+                            MalformedDocumentError.PropertyMissingItemSeparator,
+                            path.AppendProperty(name), Value, Line, Position);
                 }
             }
         }
@@ -210,43 +217,7 @@ namespace XSerializer
         /// </summary>
         public void Discard(string path)
         {
-            if (!ReadContent(path))
-            {
-                // TODO: throw exception? (since the discarded value isn't valid)
-                return;
-            }
-
-            switch (NodeType)
-            {
-                case JsonNodeType.OpenObject:
-                    Consume(path, JsonNodeType.OpenObject, JsonNodeType.CloseObject);
-                    break;
-                case JsonNodeType.OpenArray:
-                    Consume(path, JsonNodeType.OpenArray, JsonNodeType.CloseArray);
-                    break;
-            }
-        }
-
-        private void Consume(string path, JsonNodeType openNodeType, JsonNodeType closeNodeType)
-        {
-            int nestLevel = 0;
-
-            while (Read(path))
-            {
-                if (NodeType == closeNodeType)
-                {
-                    if (nestLevel == 0)
-                    {
-                        return;
-                    }
-
-                    nestLevel--;
-                }
-                else if (NodeType == openNodeType)
-                {
-                    nestLevel++;
-                }
-            }
+            _dynamicJsonSerializer.DeserializeObject(this, _info, path);
         }
 
         /// <summary>
