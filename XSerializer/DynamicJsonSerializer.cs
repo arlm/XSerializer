@@ -142,13 +142,36 @@ namespace XSerializer
                 var toggler = new DecryptReadsToggler(reader, path);
                 toggler.Toggle();
 
+                if (reader.NodeType == JsonNodeType.Invalid)
+                {
+                    throw new MalformedDocumentException(MalformedDocumentError.InvalidValue,
+                        path, reader.Value, reader.Line, reader.Position);
+                }
+
+                var exception = false;
+
                 try
                 {
                     returnObject = Read(reader, info, path);
                 }
+                catch (MalformedDocumentException)
+                {
+                    exception = true;
+                    throw;
+                }
                 finally
                 {
-                    toggler.Revert();
+                    if (!exception)
+                    {
+                        if (!skipExpectedEndOfStringCheck
+                            && (reader.ReadContent(path) || reader.NodeType == JsonNodeType.Invalid))
+                        {
+                            throw new MalformedDocumentException(MalformedDocumentError.ExpectedEndOfString,
+                                path, reader.Value, reader.Line, reader.Position, null, reader.NodeType);
+                        }
+
+                        toggler.Revert();
+                    }
                 }
             }
             else
@@ -188,8 +211,12 @@ namespace XSerializer
                     return DeserializeJsonObject(reader, info, path);
                 case JsonNodeType.OpenArray:
                     return DeserializeJsonArray(reader, info, path);
+                case JsonNodeType.EndOfString:
+                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                        path, reader.Line, reader.Position);
                 default:
-                    throw new XSerializerException("Invalid json.");
+                    throw new MalformedDocumentException(MalformedDocumentError.InvalidValue,
+                        path, reader.Value, reader.Line, reader.Position);
             }
         }
 
