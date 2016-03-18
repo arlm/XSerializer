@@ -115,12 +115,6 @@ namespace XSerializer
         public object DeserializeObject(
             JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
-            return DeserializeObject(reader, info, path, false);
-        }
-
-        private object DeserializeObject(
-            JsonReader reader, IJsonSerializeOperationInfo info, string path, bool skipExpectedEndOfStringCheck)
-        {
             if (!reader.ReadContent(path))
             {
                 if (reader.NodeType == JsonNodeType.Invalid)
@@ -213,7 +207,7 @@ namespace XSerializer
 
             foreach (var propertyName in reader.ReadProperties(path))
             {
-                jsonObject.Add(propertyName, DeserializeObject(reader, info, path.AppendProperty(propertyName), true));
+                jsonObject.Add(propertyName, DeserializeObject(reader, info, path.AppendProperty(propertyName)));
             }
 
             return jsonObject;
@@ -235,7 +229,7 @@ namespace XSerializer
 
             while (true)
             {
-                jsonArray.Add(DeserializeObject(reader, info, path + "[" + index++ + "]", true));
+                jsonArray.Add(DeserializeObject(reader, info, path + "[" + index++ + "]"));
 
                 if (!reader.ReadContent(path))
                 {
