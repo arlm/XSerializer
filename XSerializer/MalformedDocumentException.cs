@@ -120,7 +120,11 @@ namespace XSerializer
                     break;
                 case MalformedDocumentError.ExpectedEndOfString:
                     Debug.Assert(additionalArgs.Length == 1);
-                    message = string.Format("Expected end-of-string following legal value, but found '{0}'.", additionalArgs[0]);
+                    message = string.Format("Expected end of string following legal value, but found '{0}'.", additionalArgs[0]);
+                    break;
+                case MalformedDocumentError.ExpectedEndOfDecryptedString:
+                    Debug.Assert(additionalArgs.Length == 1);
+                    message = string.Format("Expected end of decrypted string following legal value, but found '{0}'.", additionalArgs[0]);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException("error");

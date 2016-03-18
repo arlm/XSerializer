@@ -21,5 +21,6 @@ namespace XSerializer
         MissingValue,
         InvalidValue,
         ExpectedEndOfString,
+        ExpectedEndOfDecryptedString,
     }
 }

@@ -135,58 +135,45 @@ namespace XSerializer
                     path, reader.Value, reader.Line, reader.Position);
             }
 
-            object returnObject;
-
             if (_encrypt)
             {
                 var toggler = new DecryptReadsToggler(reader, path);
-                toggler.Toggle();
-
-                if (reader.NodeType == JsonNodeType.Invalid)
+                if (toggler.Toggle())
                 {
-                    throw new MalformedDocumentException(MalformedDocumentError.InvalidValue,
-                        path, reader.Value, reader.Line, reader.Position);
-                }
-
-                var exception = false;
-
-                try
-                {
-                    returnObject = Read(reader, info, path);
-                }
-                catch (MalformedDocumentException)
-                {
-                    exception = true;
-                    throw;
-                }
-                finally
-                {
-                    if (!exception)
+                    if (reader.NodeType == JsonNodeType.Invalid)
                     {
-                        if (!skipExpectedEndOfStringCheck
-                            && (reader.ReadContent(path) || reader.NodeType == JsonNodeType.Invalid))
-                        {
-                            throw new MalformedDocumentException(MalformedDocumentError.ExpectedEndOfString,
-                                path, reader.Value, reader.Line, reader.Position, null, reader.NodeType);
-                        }
+                        throw new MalformedDocumentException(MalformedDocumentError.InvalidValue,
+                            path, reader.Value, reader.Line, reader.Position);
+                    }
 
-                        toggler.Revert();
+                    var exception = false;
+
+                    try
+                    {
+                        return Read(reader, info, path);
+                    }
+                    catch (MalformedDocumentException)
+                    {
+                        exception = true;
+                        throw;
+                    }
+                    finally
+                    {
+                        if (!exception)
+                        {
+                            if (reader.ReadContent(path) || reader.NodeType == JsonNodeType.Invalid)
+                            {
+                                throw new MalformedDocumentException(MalformedDocumentError.ExpectedEndOfDecryptedString,
+                                    path, reader.Value, reader.Line, reader.Position, null, reader.NodeType);
+                            }
+
+                            toggler.Revert();
+                        }
                     }
                 }
             }
-            else
-            {
-                returnObject = Read(reader, info, path);
-            }
-
-            if (!skipExpectedEndOfStringCheck
-                && (reader.ReadContent(path) || reader.NodeType == JsonNodeType.Invalid))
-            {
-                throw new MalformedDocumentException(MalformedDocumentError.ExpectedEndOfString,
-                    path, reader.Value, reader.Line, reader.Position, null, reader.NodeType);
-            }
-
-            return returnObject;
+            
+            return Read(reader, info, path);
         }
 
         private object Read(JsonReader reader, IJsonSerializeOperationInfo info, string path)

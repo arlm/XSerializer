@@ -19,8 +19,10 @@ namespace XSerializer
 
         /// <summary>
         /// Set the value if the new value is not equal to the original value.
+        /// Returns whether the value was toggled.
         /// </summary>
-        public void Toggle()
+        /// <returns>True, if the value was toggled, otherwise false.</returns>
+        public bool Toggle()
         {
             var bothNull =
                 ReferenceEquals(_originalValue, null)
@@ -33,11 +35,12 @@ namespace XSerializer
 
             if (bothNull || equal)
             {
-                return;
+                return false;
             }
 
             _setValue(_newValue);
             _wasToggled = true;
+            return true;
         }
 
         /// <summary>

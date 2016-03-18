@@ -240,7 +240,15 @@ namespace XSerializer
 
             using (var reader = new JsonReader(textReader, info))
             {
-                return _serializer.DeserializeObject(reader, info, "");
+                var returnObject = _serializer.DeserializeObject(reader, info, "");
+
+                if (reader.ReadContent("") || reader.NodeType == JsonNodeType.Invalid)
+                {
+                    throw new MalformedDocumentException(MalformedDocumentError.ExpectedEndOfString,
+                        "", reader.Value, reader.Line, reader.Position, null, reader.NodeType);
+                }
+
+                return returnObject;
             }
         }
 

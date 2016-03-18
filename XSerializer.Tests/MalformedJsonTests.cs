@@ -148,6 +148,54 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void ObjectExpectedEndOfString1()
+        {
+            var ex = DeserializeFail<Bar>(@"{""Baz"":123}true");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(11));
+            Assert.That(ex.Value, Is.True);
+        }
+
+        [Test]
+        public void ObjectExpectedEndOfDecryptedString1_Encrypted()
+        {
+            var ex = DeserializeFail<Bar>(Encrypt(@"{""Baz"":123}true"), true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfDecryptedString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.True);
+        }
+
+        [Test]
+        public void ObjectExpectedEndOfString2()
+        {
+            var ex = DeserializeFail<Bar>(@"{""Baz"":123}wtf");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(11));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
+        public void ObjectExpectedEndOfDecryptedString2_Encrypted()
+        {
+            var ex = DeserializeFail<Bar>(Encrypt(@"{""Baz"":123}wtf"), true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfDecryptedString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
         public void DictionaryMissingOpenCurlyBrace1()
         {
             var ex = DeserializeFail(typeof(Dictionary<string, int>), @"{""Bar"":""Baz"":123}}");
@@ -244,6 +292,54 @@ namespace XSerializer.Tests
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(7));
             Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DictionaryExpectedEndOfString1()
+        {
+            var ex = DeserializeFail<Dictionary<string, int>>(@"{""Baz"":123}true");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(11));
+            Assert.That(ex.Value, Is.True);
+        }
+
+        [Test]
+        public void DictionaryExpectedEndOfDecryptedString1_Encrypted()
+        {
+            var ex = DeserializeFail<Dictionary<string, int>>(Encrypt(@"{""Baz"":123}true"), true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfDecryptedString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.True);
+        }
+
+        [Test]
+        public void DictionaryExpectedEndOfString2()
+        {
+            var ex = DeserializeFail<Dictionary<string, int>>(@"{""Baz"":123}wtf");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(11));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
+        public void DictionaryExpectedEndOfDecryptedString2_Encrypted()
+        {
+            var ex = DeserializeFail<Dictionary<string, int>>(Encrypt(@"{""Baz"":123}wtf"), true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfDecryptedString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo('w'));
         }
 
         [Test]
@@ -740,7 +836,7 @@ namespace XSerializer.Tests
         [Test]
         public void LiteralInvalidValue5()
         {
-            var ex = DeserializeFail(typeof(string), @"{""Bar"":nul");
+            var ex = DeserializeFail(typeof(object), @"{""Bar"":nul");
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
@@ -753,7 +849,7 @@ namespace XSerializer.Tests
         public void LiteralInvalidValue5_Encrypted()
         {
             var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("nul"));
-            var ex = DeserializeFail(typeof(bool), json, true);
+            var ex = DeserializeFail(typeof(object), json, true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
@@ -765,7 +861,7 @@ namespace XSerializer.Tests
         [Test]
         public void LiteralInvalidValue6()
         {
-            var ex = DeserializeFail(typeof(string), @"{""Bar"":nun}");
+            var ex = DeserializeFail(typeof(object), @"{""Bar"":nun}");
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
@@ -778,7 +874,7 @@ namespace XSerializer.Tests
         public void LiteralInvalidValue6_Encrypted()
         {
             var json = string.Format(@"{{""Bar"":{0}}}", Encrypt("nun"));
-            var ex = DeserializeFail(typeof(bool), json, true);
+            var ex = DeserializeFail(typeof(object), json, true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
@@ -888,6 +984,54 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void BooleanExpectedEndOfString1()
+        {
+            var ex = DeserializeFail<bool>(@"truetrue");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(4));
+            Assert.That(ex.Value, Is.True);
+        }
+
+        [Test]
+        public void BooleanExpectedEndOfDecryptedString1_Encrypted()
+        {
+            var ex = DeserializeFail<bool>(Encrypt(@"truetrue"), true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfDecryptedString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.True);
+        }
+
+        [Test]
+        public void BooleanExpectedEndOfString2()
+        {
+            var ex = DeserializeFail<bool>(@"truewtf");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(4));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
+        public void BooleanExpectedEndOfDecryptedString2_Encrypted()
+        {
+            var ex = DeserializeFail<bool>(Encrypt(@"truewtf"), true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfDecryptedString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
         public void NumberMissingValue()
         {
             var ex = DeserializeFail(typeof(double), @"{""Bar"":");
@@ -985,6 +1129,54 @@ namespace XSerializer.Tests
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(7));
             Assert.That(ex.Value, Is.EqualTo("true"));
+        }
+
+        [Test]
+        public void NumberExpectedEndOfString1()
+        {
+            var ex = DeserializeFail<double>(@"123.45true");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(6));
+            Assert.That(ex.Value, Is.True);
+        }
+
+        [Test]
+        public void NumberExpectedEndOfDecryptedString1_Encrypted()
+        {
+            var ex = DeserializeFail<double>(Encrypt(@"123.45true"), true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfDecryptedString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.True);
+        }
+
+        [Test]
+        public void NumberExpectedEndOfString2()
+        {
+            var ex = DeserializeFail<double>(@"123.45wtf");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(6));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
+        public void NumberExpectedEndOfDecryptedString2_Encrypted()
+        {
+            var ex = DeserializeFail<double>(Encrypt(@"123.45wtf"), true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfDecryptedString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo('w'));
         }
 
         [Test]
@@ -1113,6 +1305,54 @@ namespace XSerializer.Tests
         }
 
         [Test]
+        public void ArrayExpectedEndOfString1()
+        {
+            var ex = DeserializeFail<double[]>(@"[1,2,3]true");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.True);
+        }
+
+        [Test]
+        public void ArrayExpectedEndOfDecryptedString1_Encrypted()
+        {
+            var ex = DeserializeFail<double[]>(Encrypt(@"[1,2,3]true"), true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfDecryptedString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.True);
+        }
+
+        [Test]
+        public void ArrayExpectedEndOfString2()
+        {
+            var ex = DeserializeFail<double[]>(@"[1,2,3]wtf");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(7));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
+        public void ArrayExpectedEndOfDecryptedString2_Encrypted()
+        {
+            var ex = DeserializeFail<double[]>(Encrypt(@"[1,2,3]wtf"), true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfDecryptedString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
         public void DynamicMissingValue()
         {
             var ex = DeserializeFail<object>(@"");
@@ -1127,7 +1367,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicMissingValue_Encrypted()
         {
-            var ex = DeserializeFail<object>(@"", true);
+            var ex = DeserializeFail<object>(Encrypt(@""), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.MissingValue));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1151,7 +1391,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicInvalidValue_Encrypted()
         {
-            var ex = DeserializeFail<object>(@"wtf", true);
+            var ex = DeserializeFail<object>(Encrypt(@"wtf"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.InvalidValue));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1175,7 +1415,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicStringMissingCloseQuote_Encrypted()
         {
-            var ex = DeserializeFail<object>(@"""abc", true);
+            var ex = DeserializeFail<object>(Encrypt(@"""abc"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.InvalidValue));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1199,7 +1439,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicLiteralInvalidValue1_Encrypted()
         {
-            var ex = DeserializeFail<object>("tr", true);
+            var ex = DeserializeFail<object>(Encrypt("tr"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1223,7 +1463,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicLiteralInvalidValue2_Encrypted()
         {
-            var ex = DeserializeFail<object>("twoo", true);
+            var ex = DeserializeFail<object>(Encrypt("twoo"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1247,7 +1487,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicLiteralInvalidValue3_Encrypted()
         {
-            var ex = DeserializeFail<object>("fal", true);
+            var ex = DeserializeFail<object>(Encrypt("fal"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1271,7 +1511,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicLiteralInvalidValue4_Encrypted()
         {
-            var ex = DeserializeFail<object>("falce", true);
+            var ex = DeserializeFail<object>(Encrypt("falce"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1295,7 +1535,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicLiteralInvalidValue5_Encrypted()
         {
-            var ex = DeserializeFail<object>("nul", true);
+            var ex = DeserializeFail<object>(Encrypt("nul"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1319,7 +1559,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicLiteralInvalidValue6_Encrypted()
         {
-            var ex = DeserializeFail<object>("nun", true);
+            var ex = DeserializeFail<object>(Encrypt("nun"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.LiteralInvalidValue));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1343,7 +1583,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicNumberInvalidValue_Encrypted()
         {
-            var ex = DeserializeFail<object>("1.2.3", true);
+            var ex = DeserializeFail<object>(Encrypt("1.2.3"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.InvalidValue));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1367,9 +1607,9 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicNumberArrayMissingOpenSquareBracket_Encrypted()
         {
-            var ex = DeserializeFail<object>("1,2,3]", true);
+            var ex = DeserializeFail<object>(Encrypt("1,2,3]"), true);
 
-            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfDecryptedString));
             Assert.That(ex.Path, Is.EqualTo(""));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(0));
@@ -1391,7 +1631,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicArrayMissingCommaOrCloseSquareBracket_Encrypted()
         {
-            var ex = DeserializeFail<object>("[1,2,3", true);
+            var ex = DeserializeFail<object>(Encrypt("[1,2,3"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ArrayMissingCommaOrCloseSquareBracket));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1415,9 +1655,9 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicObjectMissingOpenCurlyBrace_Encrypted()
         {
-            var ex = DeserializeFail<object>(@"""Bar"":123}", true);
+            var ex = DeserializeFail<object>(Encrypt(@"""Bar"":123}"), true);
 
-            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfDecryptedString));
             Assert.That(ex.Path, Is.EqualTo(""));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(0));
@@ -1439,7 +1679,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicObjectMissingCloseCurlyBrace_Encrypted()
         {
-            var ex = DeserializeFail<object>(@"{""Bar"":123", true);
+            var ex = DeserializeFail<object>(Encrypt(@"{""Bar"":123"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ObjectMissingCloseCurlyBrace));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
@@ -1463,7 +1703,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicPropertyNameMissing_Encrypted()
         {
-            var ex = DeserializeFail<object>(@"{", true);
+            var ex = DeserializeFail<object>(Encrypt(@"{"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissing));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1487,7 +1727,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicPropertyNameMissingOpenQuote_Encrypted()
         {
-            var ex = DeserializeFail<object>(@"{Bar"":123}", true);
+            var ex = DeserializeFail<object>(Encrypt(@"{Bar"":123}"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissingOpenQuote));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1511,7 +1751,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicPropertyNameMissingCloseQuote_Encrypted()
         {
-            var ex = DeserializeFail<object>(@"{""Bar:123}", true);
+            var ex = DeserializeFail<object>(Encrypt(@"{""Bar:123}"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyNameMissingCloseQuote));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1535,7 +1775,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicPropertyInvalidName_Encrypted()
         {
-            var ex = DeserializeFail<object>(@"{123:456}", true);
+            var ex = DeserializeFail<object>(Encrypt(@"{123:456}"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyInvalidName));
             Assert.That(ex.Path, Is.EqualTo(""));
@@ -1559,7 +1799,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicPropertyMissingNameValueSeparator1_Encrypted()
         {
-            var ex = DeserializeFail<object>(@"{""Bar""123}", true);
+            var ex = DeserializeFail<object>(Encrypt(@"{""Bar""123}"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingNameValueSeparator));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
@@ -1583,7 +1823,7 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicPropertyMissingNameValueSeparator2_Encrypted()
         {
-            var ex = DeserializeFail<object>(@"{""Bar""wtf}", true);
+            var ex = DeserializeFail<object>(Encrypt(@"{""Bar""wtf}"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingNameValueSeparator));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
@@ -1607,13 +1847,61 @@ namespace XSerializer.Tests
         [Test]
         public void DynamicPropertyMissingItemSeparator_Encrypted()
         {
-            var ex = DeserializeFail<object>(@"{""Bar"":123""Baz"":456}", true);
+            var ex = DeserializeFail<object>(Encrypt(@"{""Bar"":123""Baz"":456}"), true);
 
             Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.PropertyMissingItemSeparator));
             Assert.That(ex.Path, Is.EqualTo("Bar"));
             Assert.That(ex.Line, Is.EqualTo(0));
             Assert.That(ex.Position, Is.EqualTo(0));
             Assert.That(ex.Value, Is.Null);
+        }
+
+        [Test]
+        public void DynamicExpectedEndOfString1()
+        {
+            var ex = DeserializeFail<object>(@"{""Bar"":123}true");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(11));
+            Assert.That(ex.Value, Is.True);
+        }
+
+        [Test]
+        public void DynamicExpectedEndOfDecryptedString1_Encrypted()
+        {
+            var ex = DeserializeFail<object>(Encrypt(@"{""Bar"":123}true"), true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfDecryptedString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.True);
+        }
+
+        [Test]
+        public void DynamicExpectedEndOfString2()
+        {
+            var ex = DeserializeFail<object>(@"{""Bar"":123}wtf");
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(11));
+            Assert.That(ex.Value, Is.EqualTo('w'));
+        }
+
+        [Test]
+        public void DynamicExpectedEndOfDecryptedString2_Encrypted()
+        {
+            var ex = DeserializeFail<object>(Encrypt(@"{""Bar"":123}wtf"), true);
+
+            Assert.That(ex.Error, Is.EqualTo(MalformedDocumentError.ExpectedEndOfDecryptedString));
+            Assert.That(ex.Path, Is.EqualTo(""));
+            Assert.That(ex.Line, Is.EqualTo(0));
+            Assert.That(ex.Position, Is.EqualTo(0));
+            Assert.That(ex.Value, Is.EqualTo('w'));
         }
 
         private static string Encrypt(string s)
@@ -1651,11 +1939,6 @@ namespace XSerializer.Tests
 
         private static MalformedDocumentException DeserializeFail<T>(string json, bool encrypt = false)
         {
-            if (encrypt)
-            {
-                json = Encrypt(json);
-            }
-
             var serializer = JsonSerializer.Create(typeof(T), new JsonSerializerConfiguration
             {
                 EncryptionMechanism = EncryptionMechanism.Current,

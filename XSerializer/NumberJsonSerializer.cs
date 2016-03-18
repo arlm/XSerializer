@@ -71,30 +71,37 @@ namespace XSerializer
             if (_encrypt)
             {
                 var toggler = new DecryptReadsToggler(reader, path);
-                toggler.Toggle();
-
-                if (reader.NodeType == JsonNodeType.EndOfString)
+                if (toggler.Toggle())
                 {
-                    throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
-                        path, reader.Value, reader.Line, reader.Position);
-                }
-
-                var exception = false;
-
-                try
-                {
-                    return Read(reader, path);
-                }
-                catch (MalformedDocumentException)
-                {
-                    exception = true;
-                    throw;
-                }
-                finally
-                {
-                    if (!exception)
+                    if (reader.NodeType == JsonNodeType.EndOfString)
                     {
-                        toggler.Revert();
+                        throw new MalformedDocumentException(MalformedDocumentError.MissingValue,
+                            path, reader.Value, reader.Line, reader.Position);
+                    }
+
+                    var exception = false;
+
+                    try
+                    {
+                        return Read(reader, path);
+                    }
+                    catch (MalformedDocumentException)
+                    {
+                        exception = true;
+                        throw;
+                    }
+                    finally
+                    {
+                        if (!exception)
+                        {
+                            if (reader.ReadContent(path) || reader.NodeType == JsonNodeType.Invalid)
+                            {
+                                throw new MalformedDocumentException(MalformedDocumentError.ExpectedEndOfDecryptedString,
+                                    path, reader.Value, reader.Line, reader.Position, null, reader.NodeType);
+                            }
+
+                            toggler.Revert();
+                        }
                     }
                 }
             }
