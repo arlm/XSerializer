@@ -265,8 +265,8 @@ namespace XSerializer
                 return true;
             }
 
-            if (Attribute.IsDefined(property, typeof(JsonIgnoreAttribute))
-                || Attribute.GetCustomAttributes(property).Any(attribute =>
+            if (Attribute.IsDefined(property, typeof(JsonIgnoreAttribute), true)
+                || Attribute.GetCustomAttributes(property, true).Any(attribute =>
                     attribute.GetType().FullName == "Newtonsoft.Json.JsonIgnoreAttribute"))
             {
                 return false;
@@ -284,13 +284,23 @@ namespace XSerializer
 
         private static bool IsJsonPropertyAttributeDefined(this PropertyInfo property)
         {
-            if (Attribute.IsDefined(property, typeof(JsonPropertyAttribute)))
+            if (Attribute.IsDefined(property, typeof(JsonPropertyAttribute), true))
+            {
+                return true;
+            }
+
+            if (property.GetCustomAttributes(typeof(JsonPropertyAttribute), true).Any())
+            {
+                return true;
+            }
+
+            if (Attribute.GetCustomAttributes(property, typeof(JsonPropertyAttribute), true).Any())
             {
                 return true;
             }
 
             var newtonsoftJsonPropertyAttribute =
-                Attribute.GetCustomAttributes(property).FirstOrDefault(attribute =>
+                Attribute.GetCustomAttributes(property, true).FirstOrDefault(attribute =>
                     attribute.GetType().FullName == "Newtonsoft.Json.JsonPropertyAttribute");
 
             return newtonsoftJsonPropertyAttribute != null;
@@ -354,14 +364,14 @@ namespace XSerializer
 
         internal static string GetName(this PropertyInfo property)
         {
-            var jsonPropertyAttribute = (JsonPropertyAttribute)Attribute.GetCustomAttribute(property, typeof(JsonPropertyAttribute));
+            var jsonPropertyAttribute = (JsonPropertyAttribute)Attribute.GetCustomAttribute(property, typeof(JsonPropertyAttribute), true);
             if (jsonPropertyAttribute != null && !string.IsNullOrEmpty(jsonPropertyAttribute.Name))
             {
                 return jsonPropertyAttribute.Name;
             }
 
             var newtonsoftJsonPropertyAttribute =
-                Attribute.GetCustomAttributes(property).FirstOrDefault(attribute =>
+                Attribute.GetCustomAttributes(property, true).FirstOrDefault(attribute =>
                     attribute.GetType().FullName == "Newtonsoft.Json.JsonPropertyAttribute");
 
             if (newtonsoftJsonPropertyAttribute != null)

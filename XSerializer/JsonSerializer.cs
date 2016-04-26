@@ -93,7 +93,7 @@ namespace XSerializer
             _configuration = configuration;
 
             var encrypt =
-                Attribute.GetCustomAttribute(typeof(T), typeof(EncryptAttribute)) != null
+                Attribute.GetCustomAttribute(typeof(T), typeof(EncryptAttribute), true) != null
                 || configuration.EncryptRootObject;
 
             _serializer = JsonSerializerFactory.GetSerializer(typeof(T), encrypt, _configuration.MappingsByType, _configuration.MappingsByProperty);

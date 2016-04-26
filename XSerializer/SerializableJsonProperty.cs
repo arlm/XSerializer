@@ -36,7 +36,7 @@ namespace XSerializer
             }
             else
             {
-                var mappingAttribute = (JsonMappingAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(JsonMappingAttribute));
+                var mappingAttribute = (JsonMappingAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(JsonMappingAttribute), true);
                 if (mappingAttribute != null)
                 {
                     propertyType = mappingAttribute.Type;
