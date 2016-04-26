@@ -32,14 +32,14 @@ namespace XSerializer
             }
             else
             {
-                var mappingAttribute = (JsonMappingAttribute)Attribute.GetCustomAttribute(_type, typeof(JsonMappingAttribute));
+                var mappingAttribute = (JsonMappingAttribute)Attribute.GetCustomAttribute(_type, typeof(JsonMappingAttribute), true);
                 if (mappingAttribute != null)
                 {
                     _type = mappingAttribute.Type;
                 }
             }
 
-            _encrypt = encrypt || Attribute.GetCustomAttribute(type, typeof(EncryptAttribute)) != null;
+            _encrypt = encrypt || Attribute.GetCustomAttribute(type, typeof(EncryptAttribute), true) != null;
 
             var serializableProperties = GetSerializableProperties(_type);
             _deserializingPropertiesMap = serializableProperties.ToDictionary(p => p.Name);

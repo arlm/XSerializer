@@ -105,6 +105,20 @@ namespace XSerializer.Tests
             Assert.That(() => serializer.Deserialize(json), Throws.Nothing);
         }
 
+        [Test]
+        public void ReadonlyPropertyInBaseClassIsOptInSerialized()
+        {
+            var serializer = new JsonSerializer<Foo>();
+
+            var foo = new Foo();
+
+            var json = serializer.Serialize(foo);
+
+            Assert.That(json, Is.StringContaining("\"Bar\":"));
+
+            Assert.That(() => serializer.Deserialize(json), Throws.Nothing);
+        }
+
         public class FooNoAttribute<T>
         {
             public T Bar { get { return default(T); } }
@@ -119,6 +133,27 @@ namespace XSerializer.Tests
         public enum Baz
         {
             Waldo, Fred
+        }
+
+        public abstract class FooBase
+        {
+            private readonly string _bar;
+
+            protected FooBase(string bar)
+            {
+                _bar = bar;
+            }
+
+            [JsonProperty]
+            public string Bar { get { return _bar; } }
+        }
+
+        public class Foo : FooBase
+        {
+            public Foo()
+                : base("baz")
+            {
+            }
         }
     }
 }
