@@ -192,6 +192,10 @@ namespace XSerializer
                     }
                 }
             }
+            else
+            {
+                _setValue = (instance, value) => {};
+            }
         }
 
         public string Name

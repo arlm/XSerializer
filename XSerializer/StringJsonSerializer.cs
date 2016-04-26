@@ -212,6 +212,11 @@ namespace XSerializer
         private static object Try(Func<string, IJsonSerializeOperationInfo, object> parseFunc,
             string value, IJsonSerializeOperationInfo info, Type type, string path, int line, int position)
         {
+            if (value == null)
+            {
+                return null;
+            }
+
             try
             {
                 return parseFunc(value, info);

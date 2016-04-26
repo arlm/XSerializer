@@ -77,6 +77,7 @@
     <Compile Include="Encryption\SerializationStateTests.cs" />
     <Compile Include="GuidTests.cs" />
     <Compile Include="JsonReaderTests.cs" />
+    <Compile Include="JsonReadonlyPropertyTests.cs" />
     <Compile Include="JsonSerializerFactoryTests.cs" />
     <Compile Include="JsonStringTests.cs" />
     <Compile Include="JsonWriterTests.cs" />
