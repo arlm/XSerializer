@@ -41,6 +41,8 @@ namespace XSerializer
                         || type == typeof(DateTime?)
                         || type == typeof(DateTimeOffset)
                         || type == typeof(DateTimeOffset?)
+                        || type == typeof(TimeSpan)
+                        || type == typeof(TimeSpan?)
                         || type == typeof(Guid)
                         || type == typeof(Guid?)
                         || type.IsEnum

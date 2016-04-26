@@ -94,6 +94,13 @@ namespace XSerializer
             _currentWriter.Write('"');
         }
 
+        public void WriteValue(TimeSpan value)
+        {
+            _currentWriter.Write('"');
+            _currentWriter.Write(value.ToString("c", CultureInfo.InvariantCulture));
+            _currentWriter.Write('"');
+        }
+
         public void WriteValue(Guid value)
         {
             _currentWriter.Write('"');

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace XSerializer
 {
@@ -158,6 +159,12 @@ namespace XSerializer
             {
                 writeAction = (writer, value) => writer.WriteValue((DateTimeOffset)value);
                 readFuncLocal = (value, info) => info.DateTimeHandler.ParseDateTimeOffset(value);
+            }
+            else if (type == typeof(TimeSpan)
+                || type == typeof(TimeSpan?))
+            {
+                writeAction = (writer, value) => writer.WriteValue((TimeSpan)value);
+                readFuncLocal = (value, info) => TimeSpan.ParseExact(value, "c", CultureInfo.InvariantCulture);
             }
             else if (type == typeof(Guid)
                      || type == typeof(Guid?))
