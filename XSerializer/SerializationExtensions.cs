@@ -272,8 +272,84 @@ namespace XSerializer
                 return false;
             }
 
-            var isSerializable = property.GetIndexParameters().Length == 0 && (property.IsReadWriteProperty() || property.IsJsonSerializableReadOnlyProperty(constructorParameters));
+            var isSerializable =
+                property.GetIndexParameters().Length == 0
+                && (property.IsReadWriteProperty()
+                    || property.IsJsonSerializableReadOnlyProperty(constructorParameters)
+                    || (property.IsReadOnlyProperty()
+                        && property.IsJsonPropertyAttributeDefined()
+                        && property.IsJsonPrimitive()));
             return isSerializable;
+        }
+
+        private static bool IsJsonPropertyAttributeDefined(this PropertyInfo property)
+        {
+            if (Attribute.IsDefined(property, typeof(JsonPropertyAttribute)))
+            {
+                return true;
+            }
+
+            var newtonsoftJsonPropertyAttribute =
+                Attribute.GetCustomAttributes(property).FirstOrDefault(attribute =>
+                    attribute.GetType().FullName == "Newtonsoft.Json.JsonPropertyAttribute");
+
+            return newtonsoftJsonPropertyAttribute != null;
+        }
+
+        internal static bool IsJsonPrimitive(this PropertyInfo property)
+        {
+            return property.PropertyType.IsJsonStringType()
+                || property.PropertyType.IsJsonNumericType()
+                || property.PropertyType.IsJsonBooleanType();
+        }
+
+        internal static bool IsJsonStringType(this Type type)
+        {
+            return type == typeof(string)
+                   || type == typeof(DateTime)
+                   || type == typeof(DateTime?)
+                   || type == typeof(DateTimeOffset)
+                   || type == typeof(DateTimeOffset?)
+                   || type == typeof(TimeSpan)
+                   || type == typeof(TimeSpan?)
+                   || type == typeof(Guid)
+                   || type == typeof(Guid?)
+                   || type.IsEnum
+                   || (type.IsNullableType() && Nullable.GetUnderlyingType(type).IsEnum)
+                   || type == typeof(Type)
+                   || type == typeof(Uri);
+        }
+
+        internal static bool IsJsonNumericType(this Type type)
+        {
+            return type == typeof(double)
+                   || type == typeof(double?)
+                   || type == typeof(int)
+                   || type == typeof(int?)
+                   || type == typeof(float)
+                   || type == typeof(float?)
+                   || type == typeof(long)
+                   || type == typeof(long?)
+                   || type == typeof(decimal)
+                   || type == typeof(decimal?)
+                   || type == typeof(byte)
+                   || type == typeof(byte?)
+                   || type == typeof(sbyte)
+                   || type == typeof(sbyte?)
+                   || type == typeof(short)
+                   || type == typeof(short?)
+                   || type == typeof(ushort)
+                   || type == typeof(ushort?)
+                   || type == typeof(uint)
+                   || type == typeof(uint?)
+                   || type == typeof(ulong)
+                   || type == typeof(ulong?); // TODO: handle more number types.
+        }
+
+        internal static bool IsJsonBooleanType(this Type type)
+        {
+            return type == typeof(bool)
+                   || type == typeof(bool?);
         }
 
         internal static string GetName(this PropertyInfo property)

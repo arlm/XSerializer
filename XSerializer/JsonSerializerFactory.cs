@@ -36,51 +36,17 @@ namespace XSerializer
                         return DynamicJsonSerializer.Get(encrypt, mappings);
                     }
 
-                    if (type == typeof(string)
-                        || type == typeof(DateTime)
-                        || type == typeof(DateTime?)
-                        || type == typeof(DateTimeOffset)
-                        || type == typeof(DateTimeOffset?)
-                        || type == typeof(TimeSpan)
-                        || type == typeof(TimeSpan?)
-                        || type == typeof(Guid)
-                        || type == typeof(Guid?)
-                        || type.IsEnum
-                        || (type.IsNullableType() && Nullable.GetUnderlyingType(type).IsEnum)
-                        || type == typeof(Type)
-                        || type == typeof(Uri))
+                    if (type.IsJsonStringType())
                     {
                         return StringJsonSerializer.Get(type, encrypt);
                     }
 
-                    if (type == typeof(double)
-                        || type == typeof(double?)
-                        || type == typeof(int)
-                        || type == typeof(int?)
-                        || type == typeof(float)
-                        || type == typeof(float?)
-                        || type == typeof(long)
-                        || type == typeof(long?)
-                        || type == typeof(decimal)
-                        || type == typeof(decimal?)
-                        || type == typeof(byte)
-                        || type == typeof(byte?)
-                        || type == typeof(sbyte)
-                        || type == typeof(sbyte?)
-                        || type == typeof(short)
-                        || type == typeof(short?)
-                        || type == typeof(ushort)
-                        || type == typeof(ushort?)
-                        || type == typeof(uint)
-                        || type == typeof(uint?)
-                        || type == typeof(ulong)
-                        || type == typeof(ulong?)) // TODO: handle more number types.
+                    if (type.IsJsonNumericType())
                     {
                         return NumberJsonSerializer.Get(type, encrypt);
                     }
 
-                    if (type == typeof(bool)
-                        || type == typeof(bool?))
+                    if (type.IsJsonBooleanType())
                     {
                         return BooleanJsonSerializer.Get(encrypt, type == typeof(bool?));
                     }
