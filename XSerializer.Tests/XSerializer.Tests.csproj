@@ -60,6 +60,7 @@
     <Compile Include="DefaultDateTimeHandlerTests.cs" />
     <Compile Include="DeserializeEmptyStringIntoValueTypeTests.cs" />
     <Compile Include="DotNetXmlSerializerCompatabilityTest.cs" />
+    <Compile Include="GetCustomAttributeExtensionMethodTests.cs" />
     <Compile Include="JsonArrayTests.cs" />
     <Compile Include="JsonBooleanTests.cs" />
     <Compile Include="JsonMiscellaneousTypesTests.cs" />

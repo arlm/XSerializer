@@ -237,6 +237,152 @@ namespace XSerializer
             return false;
         }
 
+        public static TAttribute[] GetCustomAttributes<TAttribute>(
+            this Type type, IXmlSerializerOptions options)
+            where TAttribute : Attribute
+        {
+            return GetCustomAttributes<TAttribute>(type, options.ShouldUseAttributeDefinedInInterface);
+        }
+
+        public static TAttribute GetCustomAttribute<TAttribute>(
+            this Type type, IXmlSerializerOptions options)
+            where TAttribute : Attribute
+        {
+            return GetCustomAttribute<TAttribute>(type, options.ShouldUseAttributeDefinedInInterface);
+        }
+
+        public static TAttribute[] GetCustomAttributes<TAttribute>(
+            this Type type, IJsonSerializerConfiguration configuration)
+            where TAttribute : Attribute
+        {
+            return GetCustomAttributes<TAttribute>(type, configuration.ShouldUseAttributeDefinedInInterface);
+        }
+
+        public static TAttribute GetCustomAttribute<TAttribute>(
+            this Type type, IJsonSerializerConfiguration configuration)
+            where TAttribute : Attribute
+        {
+            return GetCustomAttribute<TAttribute>(type, configuration.ShouldUseAttributeDefinedInInterface);
+        }
+
+        public static TAttribute[] GetCustomAttributes<TAttribute>(
+            this Type type, bool shouldUseAttributeDefinedInInterface)
+            where TAttribute : Attribute
+        {
+            return type
+                .GetCustomAttributesImpl<TAttribute>(shouldUseAttributeDefinedInInterface)
+                .ToArray();
+        }
+
+        public static TAttribute GetCustomAttribute<TAttribute>(
+            this Type type, bool shouldUseAttributeDefinedInInterface)
+            where TAttribute : Attribute
+        {
+            return type
+                .GetCustomAttributesImpl<TAttribute>(shouldUseAttributeDefinedInInterface)
+                .FirstOrDefault();
+        }
+
+        private static IEnumerable<TAttribute> GetCustomAttributesImpl<TAttribute>(
+            this Type type, bool shouldUseAttributeDefinedInInterface)
+            where TAttribute : Attribute
+        {
+            var attributeType = typeof(TAttribute);
+
+            var attributes =
+                Attribute.GetCustomAttributes(type, attributeType, true)
+                .Cast<TAttribute>();
+
+            if (shouldUseAttributeDefinedInInterface)
+            {
+                var decoratedInterfaceAttributes =
+                    type.GetInterfaces()
+                        .SelectMany(interfaceType =>
+                            Attribute.GetCustomAttributes(interfaceType, attributeType, true))
+                        .Cast<TAttribute>();
+
+                attributes = attributes.Concat(decoratedInterfaceAttributes).Distinct();
+            }
+
+            return attributes;
+        }
+
+        public static TAttribute[] GetCustomAttributes<TAttribute>(
+            this PropertyInfo property, IXmlSerializerOptions options)
+            where TAttribute : Attribute
+        {
+            return GetCustomAttributes<TAttribute>(property, options.ShouldUseAttributeDefinedInInterface);
+        }
+
+        public static TAttribute GetCustomAttribute<TAttribute>(
+            this PropertyInfo property, IXmlSerializerOptions options)
+            where TAttribute : Attribute
+        {
+            return GetCustomAttribute<TAttribute>(property, options.ShouldUseAttributeDefinedInInterface);
+        }
+
+        public static TAttribute[] GetCustomAttributes<TAttribute>(
+            this PropertyInfo property, IJsonSerializerConfiguration options)
+            where TAttribute : Attribute
+        {
+            return GetCustomAttributes<TAttribute>(property, options.ShouldUseAttributeDefinedInInterface);
+        }
+
+        public static TAttribute GetCustomAttribute<TAttribute>(
+            this PropertyInfo property, IJsonSerializerConfiguration options)
+            where TAttribute : Attribute
+        {
+            return GetCustomAttribute<TAttribute>(property, options.ShouldUseAttributeDefinedInInterface);
+        }
+
+        public static TAttribute[] GetCustomAttributes<TAttribute>(
+            this PropertyInfo property, bool shouldUseAttributeDefinedInInterface)
+            where TAttribute : Attribute
+        {
+            return property
+                .GetCustomAttributesImpl<TAttribute>(shouldUseAttributeDefinedInInterface)
+                .ToArray();
+        }
+
+        public static TAttribute GetCustomAttribute<TAttribute>(
+            this PropertyInfo property, bool shouldUseAttributeDefinedInInterface)
+            where TAttribute : Attribute
+        {
+            return property
+                .GetCustomAttributesImpl<TAttribute>(shouldUseAttributeDefinedInInterface)
+                .FirstOrDefault();
+        }
+
+        private static IEnumerable<TAttribute> GetCustomAttributesImpl<TAttribute>(
+            this PropertyInfo property, bool shouldUseAttributeDefinedInInterface)
+            where TAttribute : Attribute
+        {
+            var attributeType = typeof(TAttribute);
+
+            var attributes =
+                Attribute.GetCustomAttributes(property, attributeType, true)
+                .Cast<TAttribute>();
+
+            if (shouldUseAttributeDefinedInInterface
+                && property.DeclaringType != null)
+            {
+                var decoratedInterfaceAttributes =
+                    (from interfaceType in property.DeclaringType.GetInterfaces()
+                     let interfaceProperty = interfaceType.GetProperty(property.Name, property.PropertyType)
+                     where interfaceProperty != null
+                     let map = property.DeclaringType.GetInterfaceMap(interfaceType)
+                     let interfaceMethodsIndex = Array.IndexOf(map.InterfaceMethods, interfaceProperty.GetGetMethod())
+                     where interfaceMethodsIndex != -1 && property.GetGetMethod() == map.TargetMethods[interfaceMethodsIndex]
+                     select Attribute.GetCustomAttributes(interfaceProperty, attributeType, true))
+                    .SelectMany(x => x)
+                    .Cast<TAttribute>();
+
+                attributes = attributes.Concat(decoratedInterfaceAttributes).Distinct();
+            }
+
+            return attributes;
+        }
+    
         internal static bool HasDefaultConstructor(this Type type)
         {
             return type.GetConstructor(Type.EmptyTypes) != null;

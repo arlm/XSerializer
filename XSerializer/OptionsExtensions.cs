@@ -15,7 +15,8 @@ namespace XSerializer
                 RootElementName = rootElementName,
                 RedactAttribute = options.RedactAttribute,
                 TreatEmptyElementAsString = options.TreatEmptyElementAsString,
-                ShouldAlwaysEmitNil = options.ShouldAlwaysEmitNil
+                ShouldAlwaysEmitNil = options.ShouldAlwaysEmitNil,
+                ShouldUseAttributeDefinedInInterface = options.ShouldUseAttributeDefinedInInterface
             };
         }
 
@@ -33,7 +34,8 @@ namespace XSerializer
                 RootElementName = options.RootElementName,
                 RedactAttribute = options.RedactAttribute,
                 TreatEmptyElementAsString = options.TreatEmptyElementAsString,
-                ShouldAlwaysEmitNil = options.ShouldAlwaysEmitNil
+                ShouldAlwaysEmitNil = options.ShouldAlwaysEmitNil,
+                ShouldUseAttributeDefinedInInterface = options.ShouldUseAttributeDefinedInInterface
             };
         }
 
@@ -46,7 +48,8 @@ namespace XSerializer
                 RootElementName = options.RootElementName,
                 RedactAttribute = redactAttribute,
                 TreatEmptyElementAsString = options.TreatEmptyElementAsString,
-                ShouldAlwaysEmitNil = options.ShouldAlwaysEmitNil
+                ShouldAlwaysEmitNil = options.ShouldAlwaysEmitNil,
+                ShouldUseAttributeDefinedInInterface = options.ShouldUseAttributeDefinedInInterface
             };
         }
 
@@ -59,7 +62,8 @@ namespace XSerializer
                 RootElementName = options.RootElementName,
                 RedactAttribute = options.RedactAttribute,
                 TreatEmptyElementAsString = options.TreatEmptyElementAsString,
-                ShouldAlwaysEmitNil = true
+                ShouldAlwaysEmitNil = true,
+                ShouldUseAttributeDefinedInInterface = options.ShouldUseAttributeDefinedInInterface
             };
         }
 
@@ -71,6 +75,7 @@ namespace XSerializer
             public RedactAttribute RedactAttribute { get; set; }
             public bool TreatEmptyElementAsString { get; set; }
             public bool ShouldAlwaysEmitNil { get; set; }
+            public bool ShouldUseAttributeDefinedInInterface { get; set; }
         }
     }
 }

@@ -10,5 +10,6 @@ namespace XSerializer
         RedactAttribute RedactAttribute { get; }
         bool TreatEmptyElementAsString { get; }
         bool ShouldAlwaysEmitNil { get; }
+        bool ShouldUseAttributeDefinedInInterface { get; }
     }
 }
