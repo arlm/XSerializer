@@ -508,9 +508,9 @@ namespace XSerializer
                    || type == typeof(bool?);
         }
 
-        internal static string GetName(this PropertyInfo property)
+        internal static string GetName(this PropertyInfo property, bool shouldUseAttributeDefinedInInterface)
         {
-            var jsonPropertyAttribute = (JsonPropertyAttribute)Attribute.GetCustomAttribute(property, typeof(JsonPropertyAttribute), true);
+            var jsonPropertyAttribute = property.GetCustomAttribute<JsonPropertyAttribute>(shouldUseAttributeDefinedInInterface);
             if (jsonPropertyAttribute != null && !string.IsNullOrEmpty(jsonPropertyAttribute.Name))
             {
                 return jsonPropertyAttribute.Name;

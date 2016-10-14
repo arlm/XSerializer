@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Reflection;
 using System.Text;
 
 namespace XSerializer
@@ -10,7 +9,7 @@ namespace XSerializer
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
     internal class JsonReader : IDisposable
     {
-        private static readonly DynamicJsonSerializer _dynamicJsonSerializer = DynamicJsonSerializer.Get(false, JsonMappings.Empty);
+        private static readonly DynamicJsonSerializer _dynamicJsonSerializer = DynamicJsonSerializer.Get(false, JsonMappings.Empty, false);
 
         private readonly TextReader _primaryReader;
         private readonly IJsonSerializeOperationInfo _info;

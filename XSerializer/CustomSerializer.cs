@@ -68,13 +68,14 @@ namespace XSerializer
             _encryptAttribute = encryptAttribute;
 
             _options = options.WithAdditionalExtraTypes(
-                type.GetCustomAttributes(typeof(XmlIncludeAttribute), true)
-                    .Cast<XmlIncludeAttribute>()
+                type.GetCustomAttributes<XmlIncludeAttribute>(options)
                     .Select(a => a.Type));
 
             if (string.IsNullOrWhiteSpace(_options.RootElementName))
             {
-                _options = _options.WithRootElementName(GetRootElement(type));
+                // NOTE: I don't think it's possible to get here when creating an XmlSerializer<T>.
+                // It seems that we only ever get here from tests that manually create a CustomSerializer.
+                _options = _options.WithRootElementName(GetRootElement(type, _options.ShouldUseAttributeDefinedInInterface));
             }
 
             var types = _options.ExtraTypes.ToList();
@@ -294,12 +295,12 @@ namespace XSerializer
 
         private TAttribute GetAttribute<TAttribute>(PropertyInfo property) where TAttribute : Attribute
         {
-            return property.GetCustomAttributes(typeof(TAttribute), false).FirstOrDefault() as TAttribute;
+            return Attribute.GetCustomAttributes(property, typeof(TAttribute), false).FirstOrDefault() as TAttribute;
         }
 
-        private static string GetRootElement(Type type)
+        private static string GetRootElement(Type type, bool shouldUseAttributeDefinedInInterface)
         {
-            var xmlRootAttribute = (XmlRootAttribute)type.GetCustomAttributes(typeof(XmlRootAttribute), true).FirstOrDefault();
+            var xmlRootAttribute = type.GetCustomAttribute<XmlRootAttribute>(shouldUseAttributeDefinedInInterface);
             if (xmlRootAttribute != null && !string.IsNullOrWhiteSpace(xmlRootAttribute.ElementName))
             {
                 return xmlRootAttribute.ElementName;

@@ -13,7 +13,7 @@ namespace XSerializer
 {
     internal sealed class DictionaryJsonSerializer : IJsonSerializerInternal
     {
-        private static readonly ConcurrentDictionary<Tuple<Type, bool, JsonMappings>, DictionaryJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool, JsonMappings>, DictionaryJsonSerializer>();
+        private static readonly ConcurrentDictionary<Tuple<Type, bool, JsonMappings, bool>, DictionaryJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool, JsonMappings, bool>, DictionaryJsonSerializer>();
 
         private static readonly ConcurrentDictionary<Type, Func<object, object>> _getKeyFuncCache = new ConcurrentDictionary<Type, Func<object, object>>();
         private static readonly ConcurrentDictionary<Type, Func<object, object>> _getValueFuncCache = new ConcurrentDictionary<Type, Func<object, object>>();
@@ -28,11 +28,13 @@ namespace XSerializer
 
         private readonly bool _encrypt;
         private readonly JsonMappings _mappings;
+        private readonly bool _shouldUseAttributeDefinedInInterface;
 
-        private DictionaryJsonSerializer(Type type, bool encrypt, JsonMappings mappings)
+        private DictionaryJsonSerializer(Type type, bool encrypt, JsonMappings mappings, bool shouldUseAttributeDefinedInInterface)
         {
             _encrypt = encrypt;
             _mappings = mappings;
+            _shouldUseAttributeDefinedInInterface = shouldUseAttributeDefinedInInterface;
 
             Type keyType;
 
@@ -43,18 +45,18 @@ namespace XSerializer
 
                 if (typeof(IDictionary<string, object>).IsAssignableFrom(type))
                 {
-                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt, _mappings);
+                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt, _mappings, shouldUseAttributeDefinedInInterface);
                     _write = GetIDictionaryOfStringToObjectWriteAction();
                 }
                 else if (type.IsAssignableToGenericIDictionaryOfStringToAnything())
                 {
-                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt, _mappings);
+                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt, _mappings, shouldUseAttributeDefinedInInterface);
                     _write = GetIDictionaryOfStringToAnythingWriteAction();
                 }
                 else
                 {
-                    _keySerializer = JsonSerializerFactory.GetSerializer(genericArguments[0], _encrypt, _mappings);
-                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt, _mappings);
+                    _keySerializer = JsonSerializerFactory.GetSerializer(genericArguments[0], _encrypt, _mappings, shouldUseAttributeDefinedInInterface);
+                    _valueSerializer = JsonSerializerFactory.GetSerializer(genericArguments[1], _encrypt, _mappings, shouldUseAttributeDefinedInInterface);
                     _write = GetIDictionaryOfAnythingToAnythingWriteAction();
                 }
             }
@@ -62,7 +64,7 @@ namespace XSerializer
             {
                 keyType = typeof(object);
 
-                _keySerializer = JsonSerializerFactory.GetSerializer(typeof(object), _encrypt, _mappings);
+                _keySerializer = JsonSerializerFactory.GetSerializer(typeof(object), _encrypt, _mappings, shouldUseAttributeDefinedInInterface);
                 _valueSerializer = _keySerializer;
                 _write = GetIDictionaryOfAnythingToAnythingWriteAction();
             }
@@ -89,9 +91,9 @@ namespace XSerializer
             _addToDictionary = GetAddToDictionaryAction(type);
         }
 
-        public static DictionaryJsonSerializer Get(Type type, bool encrypt, JsonMappings mappings)
+        public static DictionaryJsonSerializer Get(Type type, bool encrypt, JsonMappings mappings, bool shouldUseAttributeDefinedInInterface)
         {
-            return _cache.GetOrAdd(Tuple.Create(type, encrypt, mappings), t => new DictionaryJsonSerializer(t.Item1, t.Item2, t.Item3));
+            return _cache.GetOrAdd(Tuple.Create(type, encrypt, mappings, shouldUseAttributeDefinedInInterface), t => new DictionaryJsonSerializer(t.Item1, t.Item2, t.Item3, t.Item4));
         }
 
         public void SerializeObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
@@ -209,7 +211,7 @@ namespace XSerializer
                 return (keyString, info, path) => keyString;
             }
 
-            var serializer = JsonSerializerFactory.GetSerializer(type, _encrypt, _mappings);
+            var serializer = JsonSerializerFactory.GetSerializer(type, _encrypt, _mappings, _shouldUseAttributeDefinedInInterface);
 
             return (keyString, info, path) =>
             {

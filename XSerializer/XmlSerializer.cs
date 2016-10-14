@@ -113,7 +113,7 @@ namespace XSerializer
         private readonly ISerializeOptions _serializeOptions;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="JsonSerializer{T}"/> class using a
+        /// Initializes a new instance of the <see cref="XmlSerializer{T}"/> class using a
         /// default configuration.
         /// </summary>
         /// <param name="extraTypes">Extra types that can be serialized.</param>
@@ -123,7 +123,7 @@ namespace XSerializer
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="JsonSerializer{T}"/> class using a
+        /// Initializes a new instance of the <see cref="XmlSerializer{T}"/> class using a
         /// default configuration.
         /// </summary>
         /// <param name="setOptions">A callback for setting options.</param>
@@ -134,7 +134,7 @@ namespace XSerializer
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="JsonSerializer{T}"/> class using a
+        /// Initializes a new instance of the <see cref="XmlSerializer{T}"/> class using a
         /// default configuration.
         /// </summary>
         /// <param name="options">Options.</param>
@@ -143,7 +143,7 @@ namespace XSerializer
         {
             if (((IXmlSerializerOptions)options).RootElementName == null)
             {
-                var xmlRootAttribute = typeof(T).GetCustomAttributes(typeof(XmlRootAttribute), false).FirstOrDefault() as XmlRootAttribute;
+                var xmlRootAttribute = typeof(T).GetCustomAttribute<XmlRootAttribute>(options);
 
                 var rootElementName =
                     xmlRootAttribute != null && !string.IsNullOrWhiteSpace(xmlRootAttribute.ElementName)
@@ -156,7 +156,7 @@ namespace XSerializer
             options.SetExtraTypes(extraTypes);
 
             EncryptAttribute encryptAttributeOrNull =
-                ((EncryptAttribute)Attribute.GetCustomAttribute(typeof(T), typeof(EncryptAttribute)))
+                typeof(T).GetCustomAttribute<EncryptAttribute>(options)
                 ?? (options.ShouldEncryptRootObject
                     ? new EncryptAttribute()
                     : null);
