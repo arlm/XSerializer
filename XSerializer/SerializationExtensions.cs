@@ -238,73 +238,32 @@ namespace XSerializer
         }
 
         public static TAttribute[] GetCustomAttributes<TAttribute>(
-            this Type type, IXmlSerializerOptions options)
-            where TAttribute : Attribute
-        {
-            return GetCustomAttributes<TAttribute>(type, options.ShouldUseAttributeDefinedInInterface);
-        }
-
-        public static TAttribute GetCustomAttribute<TAttribute>(
-            this Type type, IXmlSerializerOptions options)
-            where TAttribute : Attribute
-        {
-            return GetCustomAttribute<TAttribute>(type, options.ShouldUseAttributeDefinedInInterface);
-        }
-
-        public static TAttribute[] GetCustomAttributes<TAttribute>(
-            this Type type, IJsonSerializerConfiguration configuration)
-            where TAttribute : Attribute
-        {
-            return GetCustomAttributes<TAttribute>(type, configuration.ShouldUseAttributeDefinedInInterface);
-        }
-
-        public static TAttribute GetCustomAttribute<TAttribute>(
-            this Type type, IJsonSerializerConfiguration configuration)
-            where TAttribute : Attribute
-        {
-            return GetCustomAttribute<TAttribute>(type, configuration.ShouldUseAttributeDefinedInInterface);
-        }
-
-        public static TAttribute[] GetCustomAttributes<TAttribute>(
-            this Type type, bool shouldUseAttributeDefinedInInterface)
+            this Type type)
             where TAttribute : Attribute
         {
             return type
-                .GetCustomAttributesImpl<TAttribute>(shouldUseAttributeDefinedInInterface)
+                .GetCustomAttributesImpl<TAttribute>()
                 .ToArray();
         }
 
         public static TAttribute GetCustomAttribute<TAttribute>(
-            this Type type, bool shouldUseAttributeDefinedInInterface)
+            this Type type)
             where TAttribute : Attribute
         {
             return type
-                .GetCustomAttributesImpl<TAttribute>(shouldUseAttributeDefinedInInterface)
+                .GetCustomAttributesImpl<TAttribute>()
                 .FirstOrDefault();
         }
 
         private static IEnumerable<TAttribute> GetCustomAttributesImpl<TAttribute>(
-            this Type type, bool shouldUseAttributeDefinedInInterface)
+            this Type type)
             where TAttribute : Attribute
         {
             var attributeType = typeof(TAttribute);
 
-            var attributes =
+            return
                 Attribute.GetCustomAttributes(type, attributeType, true)
                 .Cast<TAttribute>();
-
-            if (shouldUseAttributeDefinedInInterface)
-            {
-                var decoratedInterfaceAttributes =
-                    type.GetInterfaces()
-                        .SelectMany(interfaceType =>
-                            Attribute.GetCustomAttributes(interfaceType, attributeType, true))
-                        .Cast<TAttribute>();
-
-                attributes = attributes.Concat(decoratedInterfaceAttributes).Distinct();
-            }
-
-            return attributes;
         }
 
         public static TAttribute[] GetCustomAttributes<TAttribute>(

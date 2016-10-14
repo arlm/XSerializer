@@ -143,7 +143,7 @@ namespace XSerializer
         {
             if (((IXmlSerializerOptions)options).RootElementName == null)
             {
-                var xmlRootAttribute = typeof(T).GetCustomAttribute<XmlRootAttribute>(options);
+                var xmlRootAttribute = typeof(T).GetCustomAttribute<XmlRootAttribute>();
 
                 var rootElementName =
                     xmlRootAttribute != null && !string.IsNullOrWhiteSpace(xmlRootAttribute.ElementName)
@@ -156,7 +156,7 @@ namespace XSerializer
             options.SetExtraTypes(extraTypes);
 
             EncryptAttribute encryptAttributeOrNull =
-                typeof(T).GetCustomAttribute<EncryptAttribute>(options)
+                typeof(T).GetCustomAttribute<EncryptAttribute>()
                 ?? (options.ShouldEncryptRootObject
                     ? new EncryptAttribute()
                     : null);
