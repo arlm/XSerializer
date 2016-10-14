@@ -58,7 +58,7 @@ namespace XSerializer
         {
             return type.GetProperties()
                 .Where(p => p.IsJsonSerializable(type.GetConstructors().SelectMany(c => c.GetParameters())))
-                .Select(p => new SerializableJsonProperty(p, _encrypt || p.GetCustomAttributes<EncryptAttribute>(_shouldUseAttributeDefinedInInterface).Any(), _mappings, _shouldUseAttributeDefinedInInterface)).ToList();
+                .Select(p => new SerializableJsonProperty(p, _encrypt || p.GetCustomAttribute<EncryptAttribute>(_shouldUseAttributeDefinedInInterface) != null, _mappings, _shouldUseAttributeDefinedInInterface)).ToList();
         }
 
         public static CustomJsonSerializer Get(Type type, bool encrypt, JsonMappings mappings, bool shouldUseAttributeDefinedInInterface)
