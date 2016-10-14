@@ -266,29 +266,8 @@ namespace XSerializer
                 .Cast<TAttribute>();
         }
 
-        public static TAttribute[] GetCustomAttributes<TAttribute>(
-            this PropertyInfo property, IXmlSerializerOptions options)
-            where TAttribute : Attribute
-        {
-            return GetCustomAttributes<TAttribute>(property, options.ShouldUseAttributeDefinedInInterface);
-        }
-
         public static TAttribute GetCustomAttribute<TAttribute>(
             this PropertyInfo property, IXmlSerializerOptions options)
-            where TAttribute : Attribute
-        {
-            return GetCustomAttribute<TAttribute>(property, options.ShouldUseAttributeDefinedInInterface);
-        }
-
-        public static TAttribute[] GetCustomAttributes<TAttribute>(
-            this PropertyInfo property, IJsonSerializerConfiguration options)
-            where TAttribute : Attribute
-        {
-            return GetCustomAttributes<TAttribute>(property, options.ShouldUseAttributeDefinedInInterface);
-        }
-
-        public static TAttribute GetCustomAttribute<TAttribute>(
-            this PropertyInfo property, IJsonSerializerConfiguration options)
             where TAttribute : Attribute
         {
             return GetCustomAttribute<TAttribute>(property, options.ShouldUseAttributeDefinedInInterface);
