@@ -26,12 +26,12 @@ namespace XSerializer
         public SerializableProperty(PropertyInfo propertyInfo, IXmlSerializerOptions options)
         {
             _encryptAttribute =
-                (EncryptAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(EncryptAttribute))
-                ?? (EncryptAttribute)Attribute.GetCustomAttribute(propertyInfo.PropertyType, typeof(EncryptAttribute));
+                propertyInfo.GetCustomAttribute<EncryptAttribute>(options)
+                ?? propertyInfo.PropertyType.GetCustomAttribute<EncryptAttribute>();
             _isListDecoratedWithXmlElement =
                 typeof(IEnumerable).IsAssignableFrom(propertyInfo.PropertyType)
                 && !(propertyInfo.PropertyType == typeof(string))
-                && Attribute.GetCustomAttributes(propertyInfo, typeof(XmlElementAttribute)).Any();
+                && propertyInfo.GetCustomAttribute<XmlElementAttribute>(options) != null;
 
             _getValueFunc = DynamicMethodFactory.CreateFunc<object>(propertyInfo.GetGetMethod());
 
@@ -132,13 +132,13 @@ namespace XSerializer
 
         private Func<IXmlSerializerInternal> GetCreateSerializerFunc(PropertyInfo propertyInfo, IXmlSerializerOptions options)
         {
-            var redactAttribute = (RedactAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(RedactAttribute));
+            var redactAttribute = propertyInfo.GetCustomAttribute<RedactAttribute>(options);
             if (redactAttribute == null)
             {
                 redactAttribute = options.RedactAttribute;
             }
 
-            var attributeAttribute = (XmlAttributeAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlAttributeAttribute));
+            var attributeAttribute = propertyInfo.GetCustomAttribute<XmlAttributeAttribute>(options);
             if (attributeAttribute != null)
             {
                 var attributeName = !string.IsNullOrWhiteSpace(attributeAttribute.AttributeName) ? attributeAttribute.AttributeName : propertyInfo.Name;
@@ -147,7 +147,7 @@ namespace XSerializer
                 return () => new XmlAttributeSerializer(propertyInfo.PropertyType, attributeName, redactAttribute, _encryptAttribute, options);
             }
 
-            var textAttribute = (XmlTextAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlTextAttribute));
+            var textAttribute = propertyInfo.GetCustomAttribute<XmlTextAttribute>(options);
             if (textAttribute != null)
             {
                 NodeType = NodeType.Text;
@@ -159,14 +159,14 @@ namespace XSerializer
             {
                 options = options.WithRedactAttribute(redactAttribute);
             }
-            
-            var elementAttribute = (XmlElementAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlElementAttribute), false);
+
+            var elementAttribute = propertyInfo.GetCustomAttribute<XmlElementAttribute>(options);
             string rootElementName;
 
             if (IsListProperty(propertyInfo))
             {
-                var arrayAttribute = (XmlArrayAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlArrayAttribute), false);
-                var arrayItemAttribute = (XmlArrayItemAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(XmlArrayItemAttribute), false);
+                var arrayAttribute = propertyInfo.GetCustomAttribute<XmlArrayAttribute>(options);
+                var arrayItemAttribute = propertyInfo.GetCustomAttribute<XmlArrayItemAttribute>(options);
 
                 if (elementAttribute != null && (arrayAttribute != null || arrayItemAttribute != null))
                 {

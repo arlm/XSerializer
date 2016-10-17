@@ -15,17 +15,20 @@ namespace XSerializer
             Type type,
             bool encrypt,
             IDictionary<Type, Type> mappingsByType,
-            IDictionary<PropertyInfo, Type> mappingsByProperty)
+            IDictionary<PropertyInfo, Type> mappingsByProperty,
+            bool shouldUseAttributeDefinedInInterface)
         {
             return GetSerializer(
                 type, encrypt,
-                new JsonMappings(mappingsByType, mappingsByProperty));
+                new JsonMappings(mappingsByType, mappingsByProperty),
+                shouldUseAttributeDefinedInInterface);
         }
 
         public static IJsonSerializerInternal GetSerializer(
             Type type,
             bool encrypt,
-            JsonMappings mappings)
+            JsonMappings mappings,
+            bool shouldUseAttributeDefinedInInterface)
         {
             return _cache.GetOrAdd(
                 Tuple.Create(type, encrypt, mappings),
@@ -33,7 +36,7 @@ namespace XSerializer
                 {
                     if (type == typeof(object))
                     {
-                        return DynamicJsonSerializer.Get(encrypt, mappings);
+                        return DynamicJsonSerializer.Get(encrypt, mappings, shouldUseAttributeDefinedInInterface);
                     }
 
                     if (type.IsJsonStringType())
@@ -54,17 +57,17 @@ namespace XSerializer
                     if (type.IsAssignableToGenericIDictionary()
                         || typeof(IDictionary).IsAssignableFrom(type))
                     {
-                        return DictionaryJsonSerializer.Get(type, encrypt, mappings);
+                        return DictionaryJsonSerializer.Get(type, encrypt, mappings, shouldUseAttributeDefinedInInterface);
                     }
 
                     if (typeof(IEnumerable).IsAssignableFrom(type))
                     {
-                        return ListJsonSerializer.Get(type, encrypt, mappings);
+                        return ListJsonSerializer.Get(type, encrypt, mappings, shouldUseAttributeDefinedInInterface);
                     }
 
                     // TODO: Handle more types or possibly black-list some types or types of types.
 
-                    return CustomJsonSerializer.Get(type, encrypt, mappings);
+                    return CustomJsonSerializer.Get(type, encrypt, mappings, shouldUseAttributeDefinedInInterface);
                 });
         }
     }

@@ -11,7 +11,7 @@ namespace XSerializer
 {
     internal sealed class ListJsonSerializer : IJsonSerializerInternal
     {
-        private static readonly ConcurrentDictionary<Tuple<Type, bool, JsonMappings>, ListJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool, JsonMappings>, ListJsonSerializer>();
+        private static readonly ConcurrentDictionary<Tuple<Type, bool, JsonMappings, bool>, ListJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool, JsonMappings, bool>, ListJsonSerializer>();
 
         private readonly bool _encrypt;
         private readonly IJsonSerializerInternal _itemSerializer;
@@ -20,18 +20,18 @@ namespace XSerializer
         private readonly Action<object, object> _addItem;
         private readonly Func<object, object> _transformList;
 
-        private ListJsonSerializer(Type type, bool encrypt, JsonMappings mappings)
+        private ListJsonSerializer(Type type, bool encrypt, JsonMappings mappings, bool shouldUseAttributeDefinedInInterface)
         {
             _encrypt = encrypt;
 
             if (type.IsAssignableToGenericIEnumerable())
             {
                 var itemType = type.GetGenericIEnumerableType().GetGenericArguments()[0];
-                _itemSerializer = JsonSerializerFactory.GetSerializer(itemType, _encrypt, mappings);
+                _itemSerializer = JsonSerializerFactory.GetSerializer(itemType, _encrypt, mappings, shouldUseAttributeDefinedInInterface);
             }
             else
             {
-                _itemSerializer = JsonSerializerFactory.GetSerializer(typeof(object), _encrypt, mappings);
+                _itemSerializer = JsonSerializerFactory.GetSerializer(typeof(object), _encrypt, mappings, shouldUseAttributeDefinedInInterface);
             }
 
             if (type.IsInterface)
@@ -65,9 +65,9 @@ namespace XSerializer
             _transformList = GetTransformListFunc(type, listType);
         }
 
-        public static ListJsonSerializer Get(Type type, bool encrypt, JsonMappings mappings)
+        public static ListJsonSerializer Get(Type type, bool encrypt, JsonMappings mappings, bool shouldUseAttributeDefinedInInterface)
         {
-            return _cache.GetOrAdd(Tuple.Create(type, encrypt, mappings), t => new ListJsonSerializer(t.Item1, t.Item2, t.Item3));
+            return _cache.GetOrAdd(Tuple.Create(type, encrypt, mappings, shouldUseAttributeDefinedInInterface), t => new ListJsonSerializer(t.Item1, t.Item2, t.Item3, t.Item4));
         }
 
         public void SerializeObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)

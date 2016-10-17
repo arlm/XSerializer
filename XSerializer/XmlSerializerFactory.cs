@@ -100,6 +100,8 @@ namespace XSerializer
                 key = (key * 397) ^ (encryptAttribute != null).GetHashCode();
 
                 key = (key * 397) ^ options.TreatEmptyElementAsString.GetHashCode();
+                
+                key = (key * 397) ^ options.ShouldUseAttributeDefinedInInterface.GetHashCode();
 
                 return key;
             }

@@ -68,12 +68,13 @@ namespace XSerializer
             _encryptAttribute = encryptAttribute;
 
             _options = options.WithAdditionalExtraTypes(
-                type.GetCustomAttributes(typeof(XmlIncludeAttribute), true)
-                    .Cast<XmlIncludeAttribute>()
+                type.GetCustomAttributes<XmlIncludeAttribute>()
                     .Select(a => a.Type));
 
             if (string.IsNullOrWhiteSpace(_options.RootElementName))
             {
+                // NOTE: I don't think it's possible to get here when creating an XmlSerializer<T>.
+                // It seems that we only ever get here from tests that manually create a CustomSerializer.
                 _options = _options.WithRootElementName(GetRootElement(type));
             }
 
@@ -294,12 +295,12 @@ namespace XSerializer
 
         private TAttribute GetAttribute<TAttribute>(PropertyInfo property) where TAttribute : Attribute
         {
-            return property.GetCustomAttributes(typeof(TAttribute), false).FirstOrDefault() as TAttribute;
+            return Attribute.GetCustomAttributes(property, typeof(TAttribute), false).FirstOrDefault() as TAttribute;
         }
 
         private static string GetRootElement(Type type)
         {
-            var xmlRootAttribute = (XmlRootAttribute)type.GetCustomAttributes(typeof(XmlRootAttribute), true).FirstOrDefault();
+            var xmlRootAttribute = type.GetCustomAttribute<XmlRootAttribute>();
             if (xmlRootAttribute != null && !string.IsNullOrWhiteSpace(xmlRootAttribute.ElementName))
             {
                 return xmlRootAttribute.ElementName;

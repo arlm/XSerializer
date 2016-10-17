@@ -23,7 +23,7 @@ namespace XSerializer
 
         protected ListSerializer(EncryptAttribute encryptAttribute, IXmlSerializerOptions options, string itemElementName)                                                             // ReSharper disable DoNotCallOverridableMethodsInConstructor
         {
-            _encryptAttribute = encryptAttribute ?? (EncryptAttribute)Attribute.GetCustomAttribute(ItemType, typeof(EncryptAttribute));
+            _encryptAttribute = encryptAttribute ?? ItemType.GetCustomAttribute<EncryptAttribute>();
             _options = options;
             _itemElementName = string.IsNullOrEmpty(itemElementName) ? DefaultItemElementName : itemElementName;
             _itemSerializer = XmlSerializerFactory.Instance.GetSerializer(ItemType, null, _options.WithRootElementName(_itemElementName).AlwaysEmitNil());

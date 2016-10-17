@@ -14,7 +14,7 @@ namespace XSerializer
         private readonly Func<object, object> _getValue;
         private readonly Action<object, object> _setValue;
 
-        public SerializableJsonProperty(PropertyInfo propertyInfo, bool encrypt, JsonMappings mappings)
+        public SerializableJsonProperty(PropertyInfo propertyInfo, bool encrypt, JsonMappings mappings, bool shouldUseAttributeDefinedInInterface)
         {
             if (propertyInfo.DeclaringType == null)
             {
@@ -22,7 +22,7 @@ namespace XSerializer
             }
 
             _mappings = mappings;
-            _name = propertyInfo.GetName();
+            _name = propertyInfo.GetName(shouldUseAttributeDefinedInInterface);
 
             var propertyType = propertyInfo.PropertyType;
 
@@ -36,14 +36,14 @@ namespace XSerializer
             }
             else
             {
-                var mappingAttribute = (JsonMappingAttribute)Attribute.GetCustomAttribute(propertyInfo, typeof(JsonMappingAttribute), true);
+                var mappingAttribute = propertyInfo.GetCustomAttribute<JsonMappingAttribute>(shouldUseAttributeDefinedInInterface);
                 if (mappingAttribute != null)
                 {
                     propertyType = mappingAttribute.Type;
                 }
             }
 
-            _serializer = new Lazy<IJsonSerializerInternal>(() => JsonSerializerFactory.GetSerializer(propertyType, encrypt, _mappings));
+            _serializer = new Lazy<IJsonSerializerInternal>(() => JsonSerializerFactory.GetSerializer(propertyType, encrypt, _mappings, shouldUseAttributeDefinedInInterface));
 
             _getValue = GetGetValueFunc(propertyInfo, propertyInfo.DeclaringType);
 

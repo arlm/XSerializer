@@ -17,5 +17,6 @@ namespace XSerializer.Tests
         public RedactAttribute RedactAttribute { get; set; }
         public bool TreatEmptyElementAsString { get; set; }
         public bool ShouldAlwaysEmitNil { get; set; }
+        public bool ShouldUseAttributeDefinedInInterface { get; set; }
     }
 }

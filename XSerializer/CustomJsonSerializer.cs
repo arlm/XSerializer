@@ -11,19 +11,21 @@ namespace XSerializer
 {
     internal sealed class CustomJsonSerializer : IJsonSerializerInternal
     {
-        private static readonly ConcurrentDictionary<Tuple<Type, bool, JsonMappings>, CustomJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool, JsonMappings>, CustomJsonSerializer>();
+        private static readonly ConcurrentDictionary<Tuple<Type, bool, JsonMappings, bool>, CustomJsonSerializer> _cache = new ConcurrentDictionary<Tuple<Type, bool, JsonMappings, bool>, CustomJsonSerializer>();
 
         private readonly ConcurrentDictionary<Type, List<SerializableJsonProperty>> _serializingPropertiesMap = new ConcurrentDictionary<Type, List<SerializableJsonProperty>>();
         private readonly Dictionary<string, SerializableJsonProperty> _deserializingPropertiesMap;
 
         private readonly Type _type;
         private readonly JsonMappings _mappings;
+        private readonly bool _shouldUseAttributeDefinedInInterface;
         private readonly bool _encrypt;
         private readonly Lazy<Func<IObjectFactory>> _createObjectFactory;
 
-        private CustomJsonSerializer(Type type, bool encrypt, JsonMappings mappings)
+        private CustomJsonSerializer(Type type, bool encrypt, JsonMappings mappings, bool shouldUseAttributeDefinedInInterface)
         {
             _mappings = mappings;
+            _shouldUseAttributeDefinedInInterface = shouldUseAttributeDefinedInInterface;
             _type = type;
 
             if (_mappings.MappingsByType.ContainsKey(type))
@@ -32,14 +34,14 @@ namespace XSerializer
             }
             else
             {
-                var mappingAttribute = (JsonMappingAttribute)Attribute.GetCustomAttribute(_type, typeof(JsonMappingAttribute), true);
+                var mappingAttribute = _type.GetCustomAttribute<JsonMappingAttribute>();
                 if (mappingAttribute != null)
                 {
                     _type = mappingAttribute.Type;
                 }
             }
 
-            _encrypt = encrypt || Attribute.GetCustomAttribute(type, typeof(EncryptAttribute), true) != null;
+            _encrypt = encrypt || type.GetCustomAttribute<EncryptAttribute>() != null;
 
             var serializableProperties = GetSerializableProperties(_type);
             _deserializingPropertiesMap = serializableProperties.ToDictionary(p => p.Name);
@@ -56,12 +58,12 @@ namespace XSerializer
         {
             return type.GetProperties()
                 .Where(p => p.IsJsonSerializable(type.GetConstructors().SelectMany(c => c.GetParameters())))
-                .Select(p => new SerializableJsonProperty(p, _encrypt || p.GetCustomAttributes(typeof(EncryptAttribute), false).Any(), _mappings)).ToList();
+                .Select(p => new SerializableJsonProperty(p, _encrypt || p.GetCustomAttribute<EncryptAttribute>(_shouldUseAttributeDefinedInInterface) != null, _mappings, _shouldUseAttributeDefinedInInterface)).ToList();
         }
 
-        public static CustomJsonSerializer Get(Type type, bool encrypt, JsonMappings mappings)
+        public static CustomJsonSerializer Get(Type type, bool encrypt, JsonMappings mappings, bool shouldUseAttributeDefinedInInterface)
         {
-            return _cache.GetOrAdd(Tuple.Create(type, encrypt, mappings), t => new CustomJsonSerializer(t.Item1, t.Item2, t.Item3));
+            return _cache.GetOrAdd(Tuple.Create(type, encrypt, mappings, shouldUseAttributeDefinedInInterface), t => new CustomJsonSerializer(t.Item1, t.Item2, t.Item3, t.Item4));
         }
 
         public void SerializeObject(JsonWriter writer, object instance, IJsonSerializeOperationInfo info)
@@ -269,14 +271,14 @@ namespace XSerializer
 
             for (int i = 0; i < parameters.Length; i++)
             {
-                var serializer = JsonSerializerFactory.GetSerializer(parameters[i].ParameterType, _encrypt, _mappings);
+                var serializer = JsonSerializerFactory.GetSerializer(parameters[i].ParameterType, _encrypt, _mappings, _shouldUseAttributeDefinedInInterface);
                 var serializerAndArgIndex = Tuple.Create(serializer, i);
 
                 var matchingProperties =
                     _type.GetProperties().Where(p =>
                         p.Name.Equals(parameters[i].Name, StringComparison.OrdinalIgnoreCase)).ToList();
                 
-                var switchLabel = matchingProperties.Count == 1 ? matchingProperties[0].GetName() : parameters[i].Name;
+                var switchLabel = matchingProperties.Count == 1 ? matchingProperties[0].GetName(_shouldUseAttributeDefinedInInterface) : parameters[i].Name;
 
                 switchCases[i] = Expression.SwitchCase(
                     Expression.Constant(serializerAndArgIndex),

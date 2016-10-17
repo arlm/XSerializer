@@ -28,8 +28,8 @@ namespace XSerializer
 
             _encryptAttribute =
                 encryptAttribute
-                ?? (EncryptAttribute)Attribute.GetCustomAttribute(KeyType, typeof(EncryptAttribute))
-                ?? (EncryptAttribute)Attribute.GetCustomAttribute(ValueType, typeof(EncryptAttribute));
+                ?? KeyType.GetCustomAttribute<EncryptAttribute>()
+                ?? ValueType.GetCustomAttribute<EncryptAttribute>();
 
             _options = options;
             _keySerializer = XmlSerializerFactory.Instance.GetSerializer(KeyType, null, _options.WithRootElementName("Key").WithRedactAttribute(null));

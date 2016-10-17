@@ -52,5 +52,11 @@ namespace XSerializer
         /// is also possible.
         /// </summary>
         IDictionary<PropertyInfo, Type> MappingsByProperty { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether attributes defined on an interface property
+        /// should be considered when retrieving attributes.
+        /// </summary>
+        bool ShouldUseAttributeDefinedInInterface { get; }
     }
 }

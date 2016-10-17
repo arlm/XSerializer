@@ -71,5 +71,11 @@ namespace XSerializer
         /// </summary>
         /// <remarks>The default value is a new <see cref="Dictionary{TKey,TValue}"/>.</remarks>
         public IDictionary<PropertyInfo, Type> MappingsByProperty { get; set; }
+
+        /// <summary>
+        /// Gets a value indicating whether attributes defined on an interface property
+        /// should be considered when retrieving attributes.
+        /// </summary>
+        public bool ShouldUseAttributeDefinedInInterface { get; set; }
     }
 }
