@@ -26,29 +26,6 @@ namespace XSerializer
         private bool _shouldUseAttributeDefinedInInterface;
 
         public XmlSerializationOptions(
-            XmlSerializerNamespaces namespaces = null,
-            Encoding encoding = null,
-            bool shouldEncryptRootObject = false,
-            string defaultNamespace = null,
-            bool shouldIndent = false,
-            string rootElementName = null,
-            bool shouldAlwaysEmitTypes = false,
-            bool shouldRedact = true,
-            bool shouldEncrypt = true,
-            bool treatEmptyElementAsString = false,
-            bool emitNil = false,
-            IEncryptionMechanism encryptionMechanism = null,
-            object encryptKey = null,
-            bool shouldIgnoreCaseForEnum = false,
-            bool shouldSerializeCharAsInt = false)
-            : this(namespaces, encoding, shouldEncryptRootObject, defaultNamespace,
-                    shouldIndent, rootElementName, shouldAlwaysEmitTypes, shouldRedact,
-                    shouldEncrypt, treatEmptyElementAsString, emitNil, encryptionMechanism,
-                    encryptKey, shouldIgnoreCaseForEnum, shouldSerializeCharAsInt, false)
-        {
-        }
-
-        private XmlSerializationOptions(
             XmlSerializerNamespaces namespaces,
             Encoding encoding,
             bool shouldEncryptRootObject,
@@ -63,8 +40,31 @@ namespace XSerializer
             IEncryptionMechanism encryptionMechanism,
             object encryptKey,
             bool shouldIgnoreCaseForEnum,
-            bool shouldSerializeCharAsInt,
-            bool shouldUseAttributeDefinedInInterface)
+            bool shouldSerializeCharAsInt)
+            : this(namespaces, encoding, shouldEncryptRootObject, defaultNamespace,
+                    shouldIndent, rootElementName, shouldAlwaysEmitTypes, shouldRedact,
+                    shouldEncrypt, treatEmptyElementAsString, emitNil, encryptionMechanism,
+                    encryptKey, shouldIgnoreCaseForEnum, shouldSerializeCharAsInt, false)
+        {
+        }
+
+        public XmlSerializationOptions(
+            XmlSerializerNamespaces namespaces = null,
+            Encoding encoding = null,
+            bool shouldEncryptRootObject = false,
+            string defaultNamespace = null,
+            bool shouldIndent = false,
+            string rootElementName = null,
+            bool shouldAlwaysEmitTypes = false,
+            bool shouldRedact = true,
+            bool shouldEncrypt = true,
+            bool treatEmptyElementAsString = false,
+            bool emitNil = false,
+            IEncryptionMechanism encryptionMechanism = null,
+            object encryptKey = null,
+            bool shouldIgnoreCaseForEnum = false,
+            bool shouldSerializeCharAsInt = false,
+            bool shouldUseAttributeDefinedInInterface = false)
         {
             _namespaces = namespaces ?? new XmlSerializerNamespaces();
             _encoding = encoding ?? Encoding.UTF8;
