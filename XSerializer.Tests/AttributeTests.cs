@@ -175,7 +175,7 @@ namespace XSerializer.Tests
         public void TheJsonMappingAttributeDefinedInInterfaceIsUsed()
         {
             var serializer =
-                new JsonSerializer<Corge>(new JsonSerializerConfiguration
+                new JsonSerializer<HasJsonMappingAttribute>(new JsonSerializerConfiguration
                 {
                     ShouldUseAttributeDefinedInInterface = true
                 });
@@ -329,22 +329,11 @@ namespace XSerializer.Tests
 
         public interface IHasJsonMappingAttribute
         {
-            [Redact]
-            string Foo { get; set; }
-        }
-
-        public class HasJsonMappingAttribute : IHasRedactAttribute
-        {
-            public string Foo { get; set; }
-        }
-
-        public interface ICorge
-        {
             [JsonMapping(typeof(Garply))]
             Grault Grault { get; set; }
         }
 
-        public class Corge : ICorge
+        public class HasJsonMappingAttribute : IHasJsonMappingAttribute
         {
             public Grault Grault { get; set; }
         }
