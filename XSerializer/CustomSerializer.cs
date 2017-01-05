@@ -10,17 +10,18 @@ using System.Runtime.Serialization;
 using System.Xml;
 using System.Xml.Serialization;
 using XSerializer.Encryption;
+using CacheKey = System.Tuple<System.Type, XSerializer.Encryption.EncryptAttribute, XSerializer.IXmlSerializerOptions>;
 
 namespace XSerializer
 {
     internal class CustomSerializer
     {
-        private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
+        private static readonly ConcurrentDictionary<CacheKey, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<CacheKey, IXmlSerializerInternal>(new CacheKeyEqualityComparer());
 
         public static IXmlSerializerInternal GetSerializer(Type type, EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             return _serializerCache.GetOrAdd(
-                XmlSerializerFactory.Instance.CreateKey(type, encryptAttribute, options),
+                Tuple.Create(type, encryptAttribute, options),
                 _ =>
                 {
                     try

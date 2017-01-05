@@ -6,12 +6,13 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Xml;
 using XSerializer.Encryption;
+using CacheKey = System.Tuple<System.Type, XSerializer.Encryption.EncryptAttribute, XSerializer.IXmlSerializerOptions>;
 
 namespace XSerializer
 {
     internal abstract class DictionarySerializer : IXmlSerializerInternal
     {
-        private static readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
+        private static readonly ConcurrentDictionary<CacheKey, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<CacheKey, IXmlSerializerInternal>(new CacheKeyEqualityComparer());
 
         protected readonly EncryptAttribute _encryptAttribute;
         private readonly IXmlSerializerOptions _options;
@@ -256,7 +257,7 @@ namespace XSerializer
         public static IXmlSerializerInternal GetSerializer(Type type, EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             return _serializerCache.GetOrAdd(
-                XmlSerializerFactory.Instance.CreateKey(type, encryptAttribute, options),
+                Tuple.Create(type, encryptAttribute, options),
                 _ =>
                 {
                     Func<Type, IXmlSerializerInternal> createDictionarySerializer =

@@ -6,7 +6,7 @@ namespace XSerializer
 {
     internal class SimpleTypeValueConverter : IValueConverter
     {
-        private static readonly ConcurrentDictionary<int, SimpleTypeValueConverter> _map = new ConcurrentDictionary<int, SimpleTypeValueConverter>();
+        private static readonly ConcurrentDictionary<Tuple<Type, bool>, SimpleTypeValueConverter> _map = new ConcurrentDictionary<Tuple<Type, bool>, SimpleTypeValueConverter>();
 
         private readonly Func<string, ISerializeOptions, object> _parseString;
         private readonly Func<object, ISerializeOptions, string> _getString;
@@ -28,7 +28,7 @@ namespace XSerializer
         public static SimpleTypeValueConverter Create(Type type, RedactAttribute redactAttribute)
         {
             return _map.GetOrAdd(
-                CreateKey(type, redactAttribute),
+                Tuple.Create(type, redactAttribute != null),
                 _ => new SimpleTypeValueConverter(type, redactAttribute));
         }
 
@@ -502,21 +502,6 @@ namespace XSerializer
         private static string GetStringFromNullableChar(object value, ISerializeOptions options)
         {
             return value == null ? null : GetStringFromChar(value, options);
-        }
-
-        private static int CreateKey(Type type, RedactAttribute redactAttribute)
-        {
-            unchecked
-            {
-                var key = type.GetHashCode();
-
-                if (redactAttribute != null)
-                {
-                    key = (key * 397) ^ redactAttribute.GetHashCode();
-                }
-
-                return key;
-            }
         }
     }
 }
