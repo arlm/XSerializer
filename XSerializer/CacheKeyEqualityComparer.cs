@@ -53,6 +53,8 @@ namespace XSerializer
 
             if (lhsOptions.TreatEmptyElementAsString != rhsOptions.TreatEmptyElementAsString) return false;
 
+            if (lhsOptions.ShouldAlwaysEmitNil != rhsOptions.ShouldAlwaysEmitNil) return false;
+
             if (lhsOptions.ShouldUseAttributeDefinedInInterface != rhsOptions.ShouldUseAttributeDefinedInInterface) return false;
 
             return true;
