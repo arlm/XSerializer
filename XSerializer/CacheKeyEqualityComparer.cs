@@ -83,10 +83,7 @@ namespace XSerializer
 
                 key = (key * 397) ^ (string.IsNullOrWhiteSpace(options.RootElementName) ? type.Name : options.RootElementName).GetHashCode();
 
-                if (options.RedactAttribute != null)
-                {
-                    key = (key * 397) ^ options.RedactAttribute.GetHashCode();
-                }
+                key = (key * 397) ^ (options.RedactAttribute != null).GetHashCode();
 
                 key = (key * 397) ^ (encryptAttribute != null).GetHashCode();
 
