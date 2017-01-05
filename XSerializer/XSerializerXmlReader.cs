@@ -131,7 +131,7 @@ namespace XSerializer
             }
 
             return
-                IsDecryptionEnabled
+                IsDecryptionEnabled && !string.IsNullOrEmpty(value)
                     ? _encryptionMechanism.Decrypt(value, _encryptKey, _serializationState)
                     : value;
         }
