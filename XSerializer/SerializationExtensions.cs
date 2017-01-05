@@ -30,7 +30,7 @@ namespace XSerializer
 
         private static readonly Dictionary<Type, string> _typeToXsdTypeMap = new Dictionary<Type, string>();
         private static readonly Dictionary<string, Type> _xsdTypeToTypeMap = new Dictionary<string, Type>();
-        private static readonly ConcurrentDictionary<int, Type> _xsdTypeToTypeCache = new ConcurrentDictionary<int, Type>();
+        private static readonly ConcurrentDictionary<Tuple<Type, string>, Type> _xsdTypeToTypeCache = new ConcurrentDictionary<Tuple<Type, string>, Type>();
 
         static SerializationExtensions()
         {
@@ -1088,7 +1088,7 @@ namespace XSerializer
             }
 
             return _xsdTypeToTypeCache.GetOrAdd(
-                CreateTypeCacheKey<T>(typeName),
+                Tuple.Create(typeof(T), typeName),
                 _ =>
                 {
                     Type type = null;
@@ -1199,16 +1199,6 @@ namespace XSerializer
 
                     return type;
                 });
-        }
-
-        private static int CreateTypeCacheKey<T>(string typeName)
-        {
-            unchecked
-            {
-                var key = typeof(T).GetHashCode();
-                key = (key * 397) ^ typeName.GetHashCode();
-                return key;
-            }
         }
     }
 }

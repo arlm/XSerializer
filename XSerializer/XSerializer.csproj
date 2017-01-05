@@ -62,6 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BooleanJsonSerializer.cs" />
+    <Compile Include="CacheKeyEqualityComparer.cs" />
     <Compile Include="JsonMappingAttribute.cs" />
     <Compile Include="CustomJsonSerializer.cs" />
     <Compile Include="DateTimeHandler.cs" />

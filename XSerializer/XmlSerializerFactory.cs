@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Dynamic;
-using System.Linq;
 using XSerializer.Encryption;
+using CacheKey = System.Tuple<System.Type, XSerializer.Encryption.EncryptAttribute, XSerializer.IXmlSerializerOptions>;
 
 namespace XSerializer
 {
     internal class XmlSerializerFactory
     {
         private readonly ConcurrentDictionary<Type, Func<EncryptAttribute, IXmlSerializerOptions, IXmlSerializerInternal>> _getSerializerMap = new ConcurrentDictionary<Type, Func<EncryptAttribute, IXmlSerializerOptions, IXmlSerializerInternal>>();
-        private readonly ConcurrentDictionary<int, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<int, IXmlSerializerInternal>();
+        private readonly ConcurrentDictionary<CacheKey, IXmlSerializerInternal> _serializerCache = new ConcurrentDictionary<CacheKey, IXmlSerializerInternal>(new CacheKeyEqualityComparer());
 
         public static readonly XmlSerializerFactory Instance = new XmlSerializerFactory();
 
@@ -38,7 +37,7 @@ namespace XSerializer
         public IXmlSerializerInternal GetSerializer<T>(EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
         {
             return _serializerCache.GetOrAdd(
-                CreateKey(typeof(T), encryptAttribute, options),
+                Tuple.Create(typeof(T), encryptAttribute, options),
                 _ =>
                 {
                     var type = typeof(T);
@@ -71,42 +70,6 @@ namespace XSerializer
 
                     return serializer;
                 });
-        }
-
-        internal int CreateKey(Type type, EncryptAttribute encryptAttribute, IXmlSerializerOptions options)
-        {
-            unchecked
-            {
-                var key = type.GetHashCode();
-
-                key = (key * 397) ^ (string.IsNullOrWhiteSpace(options.DefaultNamespace) ? "" : options.DefaultNamespace).GetHashCode();
-
-                if (options.ExtraTypes != null)
-                {
-                    key = options.ExtraTypes
-                        .Where(extraType => extraType != null)
-                        .Distinct(EqualityComparer<Type>.Default)
-                        .OrderBy(extraType => extraType.FullName)
-                        .Aggregate(key, (current, extraType) => (current * 397) ^ extraType.GetHashCode());
-                }
-
-                key = (key * 397) ^ (string.IsNullOrWhiteSpace(options.RootElementName) ? type.Name : options.RootElementName).GetHashCode();
-
-                if (options.RedactAttribute != null)
-                {
-                    key = (key * 397) ^ options.RedactAttribute.GetHashCode();
-                }
-
-                key = (key * 397) ^ (encryptAttribute != null).GetHashCode();
-
-                key = (key * 397) ^ options.TreatEmptyElementAsString.GetHashCode();
-
-                key = (key * 397) ^ options.ShouldAlwaysEmitNil.GetHashCode();
-
-                key = (key * 397) ^ options.ShouldUseAttributeDefinedInInterface.GetHashCode();
-
-                return key;
-            }
         }
     }
 }
