@@ -8,7 +8,7 @@ namespace XSerializer
     public class XSerializerXmlReader : XmlReader
     {
         private const string _dummyNodeName = "___w__0_0__T___";
-        private const string _dummyNodeStartElement = "<" + _dummyNodeName + ">";
+        private const string _dummyNodeStartElement = "<" + _dummyNodeName + @" xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">";
         private const string _dummyNodeEndElement = "</" + _dummyNodeName + ">";
 
         private static readonly Regex _isStartElementRegex = new Regex(@"^\s*<", RegexOptions.Compiled);

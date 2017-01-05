@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using System.Collections.Generic;
 using XSerializer.Encryption;
 
 namespace XSerializer.Tests
@@ -12,6 +13,22 @@ namespace XSerializer.Tests
             [Encrypt]
             public string Bar { get; set; }
         }
+        
+        public class Baz
+        {
+            public Baz()
+            {
+                Quxes = new List<Qux>();
+            }
+
+            public List<Qux> Quxes { get; set; }
+        }
+
+        [Encrypt]
+        public class Qux
+        { 
+            public int? Grault { get; set; }
+        }
 
         [Test]
         public void EmptyElementWithPropertyMarkedWithEncryptAttributeDoesNotThrow()
@@ -21,6 +38,18 @@ namespace XSerializer.Tests
             var serializer = new XmlSerializer<Foo>(x => x
                 .WithEncryptionMechanism(_encryptionMechanism)
                 .WithEncryptKey(typeof(Foo)));
+
+            Assert.That(() => serializer.Deserialize(xml), Throws.Nothing);
+        }
+
+        [Test]
+        public void ClassMarkedWithEncryptAttributeWithNullablePropertySetToNullDoesNotThrowOnDeserialization()
+        {
+            var serializer = new XmlSerializer<Baz>(x => x
+                .WithEncryptionMechanism(_encryptionMechanism)
+                .WithEncryptKey(typeof(Baz)));
+
+            var xml = serializer.Serialize(new Baz { Quxes = { new Qux { Grault = null } } });
 
             Assert.That(() => serializer.Deserialize(xml), Throws.Nothing);
         }
