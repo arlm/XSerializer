@@ -11,7 +11,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Quicken Loans")]
 [assembly: AssemblyProduct("XSerializer")]
-[assembly: AssemblyCopyright("Copyright © Quicken Loans 2013-2015")]
+[assembly: AssemblyCopyright("Copyright © Quicken Loans 2013-2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
