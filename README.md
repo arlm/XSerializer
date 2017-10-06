@@ -1,4 +1,4 @@
-#XSerializer - serialize *anything*#
+# XSerializer - serialize *anything*
 
 
 XSerializer is a library that provides advanced, high-performance XML and JSON serializers.
@@ -43,7 +43,7 @@ public class Foo
 }
 ```
 
-##Typical Usage##
+## Typical Usage
 
 You can serialize/deserialize like this:
 
