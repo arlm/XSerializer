@@ -14,7 +14,6 @@
     <TargetFrameworkProfile />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
-    <UseInjectModuleInitializer Condition="'$(UseInjectModuleInitializer)' == ''">true</UseInjectModuleInitializer>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -77,7 +76,6 @@
     <Compile Include="Encryption\EncryptAttribute.cs" />
     <Compile Include="Encryption\EncryptionMechanism.cs" />
     <Compile Include="Encryption\EncryptionMechanismAttribute.cs" />
-    <Compile Include="Encryption\IEncryptionMechanismFactory.cs" />
     <Compile Include="EnumTypeValueConverter.cs" />
     <Compile Include="Encryption\IEncryptionMechanism.cs" />
     <Compile Include="IDateTimeHandler.cs" />
@@ -105,10 +103,6 @@
     <Compile Include="MalformedDocumentError.cs" />
     <Compile Include="MalformedDocumentException.cs" />
     <Compile Include="NumberJsonSerializer.cs" />
-    <Compile Include="Rock.StaticDependencyInjection\CompositionRoot.cs" />
-    <Compile Include="Rock.StaticDependencyInjection\ExportAttribute.cs" />
-    <Compile Include="Rock.StaticDependencyInjection\ModuleInitializer.cs" />
-    <Compile Include="Rock.StaticDependencyInjection\StaticDependencyInjection.Generated.cs" />
     <Compile Include="SerializableJsonProperty.cs" />
     <Compile Include="SerializationState.cs" />
     <Compile Include="StringJsonSerializer.cs" />
@@ -139,7 +133,6 @@
     <Compile Include="XmlTextSerializer.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="XSerializer.snk" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
@@ -149,9 +142,6 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
-  </Target>
-  <Target Name="InjectModuleInitializer" AfterTargets="AfterBuild" Condition="'$(UseInjectModuleInitializer)' == 'true'">
-    <Exec Command="..\packages\Rock.StaticDependencyInjection.1.1.4\tools\InjectModuleInitializer.exe &quot;$(TargetPath)&quot;" />
   </Target>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
