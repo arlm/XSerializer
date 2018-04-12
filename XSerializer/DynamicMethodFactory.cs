@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Reflection.Emit;
 
 namespace XSerializer
 {
@@ -85,32 +84,20 @@ namespace XSerializer
             var p1 = parameters[0];
             var p2 = parameters[1];
 
-            var dynamicMethod = new DynamicMethod(
-                method.Name + "_Invoker",
-                typeof(void),
-                new[] { typeof(object), typeof(object), typeof(object) },
-                typeof(DynamicMethodFactory));
+            var instanceParameter = Expression.Parameter(typeof(object), "instance");
+            var parameter1 = Expression.Parameter(typeof(object), p1.Name);
+            var parameter2 = Expression.Parameter(typeof(object), p2.Name);
 
-            var il = dynamicMethod.GetILGenerator();
+            Expression body = Expression.Call(
+                Expression.Convert(instanceParameter, method.DeclaringType),
+                method,
+                Expression.Convert(parameter1, p1.ParameterType),
+                Expression.Convert(parameter2, p2.ParameterType));
 
-            il.Emit(OpCodes.Ldarg, 0);
+            var lambda =
+                Expression.Lambda<Action<object, object, object>>(body, instanceParameter, parameter1, parameter2);
 
-            il.Emit(OpCodes.Ldarg, 1);
-            if (p1.ParameterType.IsValueType)
-            {
-                il.Emit(OpCodes.Unbox_Any, p1.ParameterType);
-            }
-
-            il.Emit(OpCodes.Ldarg, 2);
-            if (p2.ParameterType.IsValueType)
-            {
-                il.Emit(OpCodes.Unbox_Any, p2.ParameterType);
-            }
-
-            il.EmitCall(OpCodes.Callvirt, method, null);
-            il.Emit(OpCodes.Ret);
-
-            return (Action<object, object, object>)dynamicMethod.CreateDelegate(typeof(Action<object, object, object>));
+            return lambda.Compile();
         }
     }
 }
