@@ -1,0 +1,87 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>05fc30b7-6c7c-4abf-9feb-a1d4dbcc79ce</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>XSerializer.Tests</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)ArrayTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)AttributedPropertyTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)AttributeTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BclXmlSerializerExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BooleanJsonSerializerTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BooleanTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CharTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ConditionalSerializationTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CustomJsonSerializerTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DateTimeOffsetTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DefaultDateTimeHandlerTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DefaultDocumentNamespaceTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DerivedTypeTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DeserializeEmptyStringIntoValueTypeTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DictionaryJsonSerializerTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DictionaryTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DotNetXmlSerializerCompatabilityTest.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DynamicJsonSerializerTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DynamicTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)EncryptionBugs.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)EncryptionTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Encryption\Base64EncryptionMechanism.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Encryption\EncryptionTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Encryption\SerializationStateExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Encryption\SerializationStateTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)EnumTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GetCustomAttributeExtensionMethodTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GuidTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)IgnoreAttributeTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonArrayTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonBooleanTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonMiscellaneousTypesTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonNumberTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonObjectTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonReaderTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonReadonlyPropertyTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonSerializerFactoryTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonStringTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JsonWriterTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ListJsonSerializerTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ListTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)MalformedJsonTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)NilTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)NonAbstractClassesWithOnlySimpleElements.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)NonDefaultConstructorTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)NumberJsonSerializerTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)NUnit\Has.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)OptionsExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PrimitiveArrayTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PropertyNameCycleTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ReadOnlyCollectionTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)RedactAttributeTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)RedactTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)RedactTestsForXmlAttributes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)RedactTestsForXmlElements.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)RedactTestsForXmlText.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)RoundTripTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SerializationTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SerializerOfNestedGenericTypeTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SerializeToStreamTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SimpleTypeValueConverterTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)StringJsonSerializerTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)StripXsiXsdExtension.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TestClasses.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TestSerializeOptions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TestXmlSerializerOptions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TimeSpanTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)XmlBugTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)XmlRootAttributeTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)XmlSerializerFactoryTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)XmlSerializerOfTypeTypeTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)XmlSerializerOfTypeUriTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)XsdTypeTests.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)XSerializerXmlReaderWriterTests.cs" />
+  </ItemGroup>
+</Project>
