@@ -50,7 +50,7 @@ namespace XSerializer.Tests
             Assert.That(customXml, Is.EqualTo(defaultXml));
         }
 
-        public TestCaseData[] NoInterfaceTestSource = new[]
+        private static TestCaseData[] NoInterfaceTestSource = new[]
         {
             new TestCaseData(new FooWithAbstract { Bar = new Barnicle { IsAttached = true, Chantey = "yohoho!"} }, null, new[] { typeof(Barnicle) }, null, Encoding.UTF8, Formatting.Indented, new XmlSerializerNamespaces()),
             new TestCaseData(new Food { Barnicle = new Barnicle { IsAttached = true, Chantey = "yohoho!"} }, null, null, null, Encoding.UTF8, Formatting.Indented, new XmlSerializerNamespaces()),
@@ -109,7 +109,7 @@ namespace XSerializer.Tests
             Assert.That(customXml, Is.EqualTo(defaultXml));
         }
 
-        public TestCaseData[] InterfaceVersusAbstractTestSource = new[]
+        private static TestCaseData[] InterfaceVersusAbstractTestSource = new[]
         {
             new TestCaseData(
                 new ContainerWithInterface

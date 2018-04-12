@@ -102,9 +102,6 @@
     <Compile Include="ListTests.cs" />
     <Compile Include="NonAbstractClassesWithOnlySimpleElements.cs" />
     <Compile Include="NonDefaultConstructorTests.cs" />
-    <Compile Include="ObjectToXml.cs" />
-    <Compile Include="ObjectToXmlToObjectWithDefaultComparison.cs" />
-    <Compile Include="ObjectToXmlWithDefaultComparison.cs" />
     <Compile Include="PropertyNameCycleTests.cs" />
     <Compile Include="ReadOnlyCollectionTests.cs" />
     <Compile Include="RedactAttributeTests.cs" />
@@ -130,7 +127,6 @@
     <Compile Include="XmlSerializerFactoryTests.cs" />
     <Compile Include="XmlSerializerOfTypeUriTests.cs" />
     <Compile Include="XmlSerializerOfTypeTypeTests.cs" />
-    <Compile Include="XmlToObject.cs" />
     <Compile Include="XsdTypeTests.cs" />
     <Compile Include="XSerializerXmlReaderWriterTests.cs" />
   </ItemGroup>

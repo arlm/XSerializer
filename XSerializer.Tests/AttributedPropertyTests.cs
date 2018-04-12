@@ -51,7 +51,7 @@ namespace XSerializer.Tests
             }
         }
 
-        public IEnumerable<TestCaseData> TestCaseData
+        private static IEnumerable<TestCaseData> TestCaseData
         {
             get { return GetTypes()
                 .Select(t => new TestCaseData(t).SetName(
@@ -68,7 +68,7 @@ namespace XSerializer.Tests
             }
         }
 
-        private IEnumerable<Type> GetTypes()
+        private static IEnumerable<Type> GetTypes()
         {
             yield return typeof(DerivedWithEmptyXmlElementDecorationInheritingFromBaseWithEmptyXmlElementDecoration);
             yield return typeof(DerivedWithEmptyXmlElementDecorationInheritingFromBaseWithEmptyXmlAttributeDecoration);

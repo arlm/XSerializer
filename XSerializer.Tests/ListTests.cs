@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Text;
+using System.Xml;
 using System.Xml.Serialization;
 using NUnit.Framework;
 
@@ -165,9 +167,59 @@ namespace XSerializer.Tests
             return expando;
         }
 
-        internal class ListSerializationTests : ObjectToXml
+        internal class ListSerializationTests
         {
-            protected override IEnumerable<TestCaseData> GetTestCaseData()
+            [TestCaseSource("TestCaseData")]
+            public void SerializesCorrectly(object instance, Type type, string expectedXml)
+            {
+                var customSerializer = GetSerializer(type);
+
+                var customXml = customSerializer.SerializeObject(instance, Encoding.UTF8, Formatting.Indented, new TestSerializeOptions(shouldAlwaysEmitTypes: AlwaysEmitTypes));
+
+                Console.WriteLine("Expected XML:");
+                Console.WriteLine(expectedXml);
+                Console.WriteLine();
+                Console.WriteLine("Actual XML:");
+                Console.WriteLine(customXml);
+
+                Assert.That(customXml, Is.EqualTo(expectedXml));
+            }
+
+            private static IXmlSerializerInternal GetSerializer(Type type)
+            {
+                if (typeof(IEnumerable).IsAssignableFrom(type))
+                {
+                    return ListSerializer.GetSerializer(type, null, new TestXmlSerializerOptions { RootElementName = "MyCollection" }, "MyItem");
+                }
+
+                return XmlSerializerFactory.Instance.GetSerializer(type, null, new TestXmlSerializerOptions { RootElementName = "MyContainer" });
+            }
+
+            private static bool AlwaysEmitTypes
+            {
+                get { return true; }
+            }
+
+            private static IEnumerable<TestCaseData> TestCaseData
+            {
+                get
+                {
+                    return GetTestCaseData().Select(testCaseData =>
+                    {
+                        if (string.IsNullOrWhiteSpace(testCaseData.TestName))
+                        {
+                            var instanceType = testCaseData.Arguments[0].GetType();
+                            var type = (Type)testCaseData.Arguments[1];
+
+                            return testCaseData.SetName(type == instanceType ? type.Name : string.Format("{0} as {1}", instanceType.Name, type.Name));
+                        }
+
+                        return testCaseData;
+                    });
+                }
+            }
+
+            private static IEnumerable<TestCaseData> GetTestCaseData()
             {
                 yield return new TestCaseData(
                     new List<ListTests_ClassWithDynamicProperty> { Item },
@@ -337,26 +389,43 @@ namespace XSerializer.Tests
                     ContainerXmlWithElementAttributeWithTypeHint)
                         .SetName("Container with read-write Custom collection inheriting from IEnumerable with xml element attribute");
             }
-
-            protected override IXmlSerializerInternal GetSerializer(Type type)
-            {
-                if (typeof(IEnumerable).IsAssignableFrom(type))
-                {
-                    return ListSerializer.GetSerializer(type, null, new TestXmlSerializerOptions { RootElementName = "MyCollection" }, "MyItem");
-                }
-
-                return XmlSerializerFactory.Instance.GetSerializer(type, null, new TestXmlSerializerOptions { RootElementName = "MyContainer" });
-            }
-
-            protected override bool AlwaysEmitTypes
-            {
-                get { return true; }
-            }
         }
 
-        internal class ListDeserializationTests : XmlToObject
+        internal class ListDeserializationTests// : XmlToObject
         {
-            protected override IEnumerable<TestCaseData> GetTestCaseData()
+            [TestCaseSource("TestCaseData")]
+            public void DeserializesCorrectly(string xml, Type type, object expectedObject)
+            {
+                Console.WriteLine("Input XML:");
+                Console.WriteLine(xml);
+
+                var customSerializer = GetSerializer(type);
+
+                var customObject = customSerializer.DeserializeObject(xml);
+
+                Assert.That(customObject, Has.PropertiesEqualTo(expectedObject));
+            }
+
+            private static IEnumerable<TestCaseData> TestCaseData
+            {
+                get
+                {
+                    return GetTestCaseData().Select(testCaseData =>
+                    {
+                        if (string.IsNullOrWhiteSpace(testCaseData.TestName))
+                        {
+                            var instanceType = testCaseData.Arguments[0].GetType();
+                            var type = (Type)testCaseData.Arguments[1];
+
+                            return testCaseData.SetName(type == instanceType ? type.Name : string.Format("{0} as {1}", instanceType.Name, type.Name));
+                        }
+
+                        return testCaseData;
+                    });
+                }
+            }
+
+            private static IEnumerable<TestCaseData> GetTestCaseData()
             {
                 yield return new TestCaseData(
                     MyCollectionXmlWithoutTypeHint,
@@ -521,7 +590,7 @@ namespace XSerializer.Tests
                         .SetName("Container with read-only collection with xml element attribute and out-of-order xml input");
             }
 
-            protected override IXmlSerializerInternal GetSerializer(Type type)
+            private static IXmlSerializerInternal GetSerializer(Type type)
             {
                 if (typeof(IEnumerable).IsAssignableFrom(type))
                 {

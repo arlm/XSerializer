@@ -18,7 +18,7 @@ namespace XSerializer.Tests
             Assert.That(roundTrip.Data, Is.EqualTo(item.Data));
         }
 
-        private IEnumerable<TestCaseData> GetTestCases()
+        private static IEnumerable<TestCaseData> GetTestCases()
         {
             yield return new TestCaseData(new ByteArrayContainer
             {
