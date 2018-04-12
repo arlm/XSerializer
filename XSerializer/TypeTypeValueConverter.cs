@@ -48,7 +48,7 @@ namespace XSerializer
         private static string GetStringValue(Type type)
         {
             return
-                type.Assembly.GetName().Name == "mscorlib"
+                type.Assembly == typeof(string).Assembly
                     ? type.FullName
                     : type.AssemblyQualifiedName;
         }

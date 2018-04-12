@@ -26,6 +26,18 @@ namespace XSerializer.Tests
   <Z>End</Z>
 </{0}>";
 
+        private const string NonGenericDictionaryXmlFormat = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<{0} xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"">
+  <A>Start</A>
+  <Map>
+    <Item>
+      <Key{1}>foo</Key>
+      <Value{2}>bar</Value>
+    </Item>
+  </Map>
+  <Z>End</Z>
+</{0}>";
+
         [Test]
         public void CanHandleEmptyDictionary()
         {
@@ -107,15 +119,15 @@ namespace XSerializer.Tests
                         .SetName("Generic Read-Only Dictionary");
 
                 yield return new TestCaseData(
-                    new ReadWriteNonGenericDictionaryClass { Map = new Hashtable { { "foo", "bar" }, { "baz", "qux" } }, A = "Start", Z = "End" },
+                    new ReadWriteNonGenericDictionaryClass { Map = new Hashtable { { "foo", "bar" } }, A = "Start", Z = "End" },
                     typeof(ReadWriteNonGenericDictionaryClass),
-                    string.Format(GenericDictionaryXmlFormat, typeof(ReadWriteNonGenericDictionaryClass).Name, " xsi:type=\"xsd:string\"", " xsi:type=\"xsd:string\""))
+                    string.Format(NonGenericDictionaryXmlFormat, typeof(ReadWriteNonGenericDictionaryClass).Name, " xsi:type=\"xsd:string\"", " xsi:type=\"xsd:string\""))
                         .SetName("Non-Generic Read-Write Dictionary");
 
                 yield return new TestCaseData(
-                    new ReadOnlyNonGenericDictionaryClass(new Hashtable { { "foo", "bar" }, { "baz", "qux" } }) { A = "Start", Z = "End" },
+                    new ReadOnlyNonGenericDictionaryClass(new Hashtable { { "foo", "bar" } }) { A = "Start", Z = "End" },
                     typeof(ReadOnlyNonGenericDictionaryClass),
-                    string.Format(GenericDictionaryXmlFormat, typeof(ReadOnlyNonGenericDictionaryClass).Name, " xsi:type=\"xsd:string\"", " xsi:type=\"xsd:string\""))
+                    string.Format(NonGenericDictionaryXmlFormat, typeof(ReadOnlyNonGenericDictionaryClass).Name, " xsi:type=\"xsd:string\"", " xsi:type=\"xsd:string\""))
                         .SetName("Non-Generic Read-Only Dictionary");
 
                 yield return new TestCaseData(
@@ -131,15 +143,15 @@ namespace XSerializer.Tests
                         .SetName("Generic Read-Only IDictionary");
 
                 yield return new TestCaseData(
-                    new ReadWriteNonGenericIDictionaryClass { Map = new Hashtable { { "foo", "bar" }, { "baz", "qux" } }, A = "Start", Z = "End" },
+                    new ReadWriteNonGenericIDictionaryClass { Map = new Hashtable { { "foo", "bar" } }, A = "Start", Z = "End" },
                     typeof(ReadWriteNonGenericIDictionaryClass),
-                    string.Format(GenericDictionaryXmlFormat, typeof(ReadWriteNonGenericIDictionaryClass).Name, " xsi:type=\"xsd:string\"", " xsi:type=\"xsd:string\""))
+                    string.Format(NonGenericDictionaryXmlFormat, typeof(ReadWriteNonGenericIDictionaryClass).Name, " xsi:type=\"xsd:string\"", " xsi:type=\"xsd:string\""))
                         .SetName("Non-Generic Read-Write IDictionary");
 
                 yield return new TestCaseData(
-                    new ReadOnlyNonGenericIDictionaryClass(new Hashtable { { "foo", "bar" }, { "baz", "qux" } }) { A = "Start", Z = "End" },
+                    new ReadOnlyNonGenericIDictionaryClass(new Hashtable { { "foo", "bar" } }) { A = "Start", Z = "End" },
                     typeof(ReadOnlyNonGenericIDictionaryClass),
-                    string.Format(GenericDictionaryXmlFormat, typeof(ReadOnlyNonGenericIDictionaryClass).Name, " xsi:type=\"xsd:string\"", " xsi:type=\"xsd:string\""))
+                    string.Format(NonGenericDictionaryXmlFormat, typeof(ReadOnlyNonGenericIDictionaryClass).Name, " xsi:type=\"xsd:string\"", " xsi:type=\"xsd:string\""))
                         .SetName("Non-Generic Read-Only IDictionary");
             }
         }

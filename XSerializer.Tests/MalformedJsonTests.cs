@@ -2053,7 +2053,7 @@ namespace XSerializer.Tests
 
         private static Type GetFooType(Type barPropertyType, bool encrypted, Type bazPropertyType)
         {
-            var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(
+            var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
                 new AssemblyName("FooAssembly"), AssemblyBuilderAccess.Run);
 
             var moduleBuilder = assemblyBuilder.DefineDynamicModule("FooModule");
