@@ -7,6 +7,11 @@ namespace XSerializer.Tests.Encryption
 {
     public class SerializationStateTests
     {
+        static SerializationStateTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         public class TheGetMethod
         {
             [Test]

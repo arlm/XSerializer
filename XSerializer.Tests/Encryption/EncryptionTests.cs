@@ -11,6 +11,11 @@ namespace XSerializer.Tests.Encryption
     [TestFixture]
     public class EncryptionTests
     {
+        static EncryptionTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         private SerializationState _serializationState;
 
         [SetUp]

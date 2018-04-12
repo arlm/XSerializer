@@ -8,6 +8,11 @@ namespace XSerializer.Tests
 {
     public class CustomJsonSerializerTests
     {
+        static CustomJsonSerializerTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         [Test]
         public void CanSerializeReadWriteProperties()
         {

@@ -2,12 +2,18 @@
 using System.IO;
 using System.Text;
 using NUnit.Framework;
+using XSerializer.Encryption;
 using XSerializer.Tests.Encryption;
 
 namespace XSerializer.Tests
 {
     internal class JsonReaderTests
     {
+        static JsonReaderTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         [TestCase("true", new[] { JsonNodeType.Boolean })]
         [TestCase("false", new[] { JsonNodeType.Boolean })]
         [TestCase("null", new[] { JsonNodeType.Null })]

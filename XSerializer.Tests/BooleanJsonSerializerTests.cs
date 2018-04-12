@@ -1,10 +1,16 @@
 ﻿using NUnit.Framework;
+using XSerializer.Encryption;
 using XSerializer.Tests.Encryption;
 
 namespace XSerializer.Tests
 {
     public class BooleanJsonSerializerTests
     {
+        static BooleanJsonSerializerTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         [TestCase(true, "true")]
         [TestCase(false, "false")]
         public void CanSerialize(bool value, string expected)

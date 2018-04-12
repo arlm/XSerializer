@@ -1,12 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using XSerializer.Encryption;
 using XSerializer.Tests.Encryption;
 
 namespace XSerializer.Tests
 {
     public class JsonObjectTests
     {
+        static JsonObjectTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         [TestCase(true)]
         [TestCase("abc")]
         [TestCase(null)]

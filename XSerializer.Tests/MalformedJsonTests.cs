@@ -4,11 +4,17 @@ using System.Reflection;
 using System.Reflection.Emit;
 using NUnit.Framework;
 using XSerializer.Encryption;
+using XSerializer.Tests.Encryption;
 
 namespace XSerializer.Tests
 {
     public class MalformedJsonTests
     {
+        static MalformedJsonTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         public class Bar
         {
             public int Baz { get; set; }

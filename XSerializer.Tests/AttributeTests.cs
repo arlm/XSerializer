@@ -9,6 +9,11 @@ namespace XSerializer.Tests
 {
     public class AttributeTests
     {
+        static AttributeTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         [Test]
         public void XmlAttributeDeserializesIntoProperty()
         {
