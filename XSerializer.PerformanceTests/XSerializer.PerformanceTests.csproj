@@ -66,9 +66,9 @@
     <Compile Include="TestClasses.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\XSerializer.Tests\XSerializer.Tests.csproj">
-      <Project>{40455034-71f3-4215-87a6-6898e9677836}</Project>
-      <Name>XSerializer.Tests</Name>
+    <ProjectReference Include="..\XSerializer.Tests\net40\XSerializer.Tests.net45.csproj">
+      <Project>{1740c5ea-5791-4f17-9a37-f9dd45bc44c9}</Project>
+      <Name>XSerializer.Tests.net45</Name>
     </ProjectReference>
     <ProjectReference Include="..\XSerializer\XSerializer.csproj">
       <Project>{5ac7bbcb-50ef-4c71-a4f1-626617a2af50}</Project>
@@ -77,6 +77,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
