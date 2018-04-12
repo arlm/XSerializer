@@ -6,12 +6,6 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("XSerializer")]
-[assembly: AssemblyDescription("Advanced, high-performance XML and JSON serializers")]
-[assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Quicken Loans")]
-[assembly: AssemblyProduct("XSerializer")]
-[assembly: AssemblyCopyright("Copyright © Quicken Loans 2013-2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -35,9 +29,6 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers 
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.3.8")]
-[assembly: AssemblyInformationalVersion("0.3.8")]
 
 #if !BUILD
 [assembly: InternalsVisibleTo("XSerializer.Tests")]
