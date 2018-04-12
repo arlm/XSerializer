@@ -24,7 +24,7 @@ namespace XSerializer.Tests
                 _expected = expected;
             }
 
-            public Constraint Resolve()
+            public IConstraint Resolve()
             {
                 return new EqualPropertiesConstraint(_expected);
             }
@@ -33,6 +33,7 @@ namespace XSerializer.Tests
         private class EqualPropertiesConstraint : Constraint
         {
             private readonly object _expectedValue;
+
             private object _failedExpectedValue;
             private object _failedActualValue;
 
@@ -41,9 +42,37 @@ namespace XSerializer.Tests
                 _expectedValue = expectedValue;
             }
 
-            public override bool Matches(object actualValue)
+            public override ConstraintResult ApplyTo<TActual>(TActual actual)
             {
-                return Matches(actualValue, _expectedValue, null);
+                if (Matches(actual, _expectedValue, null))
+                {
+                    return new ConstraintResult(this, actual, true);
+                }
+
+                return new FailedConstraintResult(this, actual, _failedExpectedValue, _failedActualValue);
+            }
+
+            private class FailedConstraintResult : ConstraintResult
+            {
+                private readonly object _failedExpectedValue;
+                private readonly object _failedActualValue;
+
+                public FailedConstraintResult(IConstraint constraint, object actualValue, object failedExpectedValue, object failedActualValue)
+                    : base(constraint, actualValue, false)
+                {
+                    _failedExpectedValue = failedExpectedValue;
+                    _failedActualValue = failedActualValue;
+                }
+
+                public override void WriteMessageTo(MessageWriter writer)
+                {
+                    writer.Write(_failedExpectedValue);
+                }
+
+                public override void WriteActualValueTo(MessageWriter writer)
+                {
+                    writer.Write(_failedActualValue);
+                }
             }
 
             private bool Matches(object actualValue, object expectedValue, string path)
@@ -340,16 +369,6 @@ namespace XSerializer.Tests
                 }
 
                 return true;
-            }
-
-            public override void WriteDescriptionTo(MessageWriter writer)
-            {
-                writer.Write(_failedExpectedValue);
-            }
-
-            public override void WriteActualValueTo(MessageWriter writer)
-            {
-                writer.Write(_failedActualValue);
             }
         }
     }

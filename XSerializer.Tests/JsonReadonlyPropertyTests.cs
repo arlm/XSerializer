@@ -100,7 +100,7 @@ namespace XSerializer.Tests
 
             var json = serializer.Serialize(foo);
 
-            Assert.That(json, Is.StringContaining("\"Bar\":"));
+            Assert.That(json, Does.Contain("\"Bar\":"));
 
             Assert.That(() => serializer.Deserialize(json), Throws.Nothing);
         }
@@ -114,7 +114,7 @@ namespace XSerializer.Tests
 
             var json = serializer.Serialize(foo);
 
-            Assert.That(json, Is.StringContaining("\"Bar\":"));
+            Assert.That(json, Does.Contain("\"Bar\":"));
 
             Assert.That(() => serializer.Deserialize(json), Throws.Nothing);
         }

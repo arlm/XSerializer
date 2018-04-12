@@ -169,7 +169,7 @@ namespace XSerializer.Tests
 
             var xml = serializer.Serialize(e);
 
-            Assert.That(xml, Is.StringMatching("<Enum[^>]*>MyEnum.Value3</Enum>"));
+            Assert.That(xml, Does.Match("<Enum[^>]*>MyEnum.Value3</Enum>"));
         }
 
         [Test]
