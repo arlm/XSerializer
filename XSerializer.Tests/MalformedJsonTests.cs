@@ -1984,7 +1984,7 @@ namespace XSerializer.Tests
 
         private static string Encrypt(string s)
         {
-            return "\"" + EncryptionMechanism.Current.Encrypt(s, null, null) + "\"";
+            return "\"" + EncryptionMechanism.Current.Encrypt(s, null, new SerializationState()) + "\"";
         }
 
         private static MalformedDocumentException DeserializeFail(

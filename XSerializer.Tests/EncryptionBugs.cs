@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using XSerializer.Encryption;
 using XSerializer.Tests.Encryption;
@@ -71,6 +72,7 @@ namespace XSerializer.Tests
 
             string IEncryptionMechanism.Encrypt(string plainText, object encryptKey, SerializationState serializationState)
             {
+                if (serializationState == null) throw new ArgumentNullException(nameof(serializationState));
                 return Encrypt(plainText);
             }
 
@@ -83,6 +85,7 @@ namespace XSerializer.Tests
 
             string IEncryptionMechanism.Decrypt(string cipherText, object encryptKey, SerializationState serializationState)
             {
+                if (serializationState == null) throw new ArgumentNullException(nameof(serializationState));
                 return Decrypt(cipherText);
             }
         }

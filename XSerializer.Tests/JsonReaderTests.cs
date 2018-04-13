@@ -50,6 +50,7 @@ namespace XSerializer.Tests
             var info = new JsonSerializeOperationInfo
             {
                 EncryptionMechanism = new Base64EncryptionMechanism(),
+                SerializationState = new SerializationState()
             };
 
             var reader = new JsonReader(new StringReader(cipherTextJson), info);
@@ -79,6 +80,7 @@ namespace XSerializer.Tests
             var info = new JsonSerializeOperationInfo
             {
                 EncryptionMechanism = new Base64EncryptionMechanism(),
+                SerializationState = new SerializationState()
             };
 
             var reader = new JsonReader(new StringReader(cipherTextJson), info);
@@ -174,7 +176,8 @@ namespace XSerializer.Tests
                 new StringReader("null"),
                 new JsonSerializeOperationInfo
                 {
-                    EncryptionMechanism = new Base64EncryptionMechanism()
+                    EncryptionMechanism = new Base64EncryptionMechanism(),
+                    SerializationState = new SerializationState()
                 });
 
             Assert.That(reader.Read(""), Is.True);
