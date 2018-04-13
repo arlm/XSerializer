@@ -9,7 +9,7 @@
     <AssemblyVersion>0.1.0.0</AssemblyVersion>
     <FileVersion>0.3.9</FileVersion>
     <VersionPrefix>0.3.9</VersionPrefix>
-    <VersionSuffix>alpha01</VersionSuffix>
+    <VersionSuffix>alpha02</VersionSuffix>
     <Authors>Brian Friesen</Authors>
     <Company>Quicken Loans</Company>
     <Product>XSerializer</Product>
@@ -40,14 +40,7 @@ XSerializer's XML and JSON serializers support the concept of field-level encryp
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Build|netstandard2.0|AnyCPU'">
-    <DefineConstants>TRACE;BUILD;NETSTANDARD2_0</DefineConstants>
-    <AssemblyOriginatorKeyFile>XSerializer.snk</AssemblyOriginatorKeyFile>
-    <SignAssembly>true</SignAssembly>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Build|net40|AnyCPU'">
-    <DefineConstants>TRACE;BUILD;NET40</DefineConstants>
+  <PropertyGroup Condition="'$(Configuration)'=='Build'">
     <AssemblyOriginatorKeyFile>XSerializer.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
   </PropertyGroup>
