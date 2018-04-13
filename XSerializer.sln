@@ -20,26 +20,33 @@ Global
 		XSerializer.Tests\XSerializer.Tests.projitems*{05fc30b7-6c7c-4abf-9feb-a1d4dbcc79ce}*SharedItemsImports = 13
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Build|Any CPU = Build|Any CPU
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5AC7BBCB-50EF-4C71-A4F1-626617A2AF50}.Build|Any CPU.ActiveCfg = Build|Any CPU
+		{5AC7BBCB-50EF-4C71-A4F1-626617A2AF50}.Build|Any CPU.Build.0 = Build|Any CPU
 		{5AC7BBCB-50EF-4C71-A4F1-626617A2AF50}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5AC7BBCB-50EF-4C71-A4F1-626617A2AF50}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5AC7BBCB-50EF-4C71-A4F1-626617A2AF50}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5AC7BBCB-50EF-4C71-A4F1-626617A2AF50}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A3A60FB-0062-4927-98F5-14A6EF557FBF}.Build|Any CPU.ActiveCfg = Release|Any CPU
 		{9A3A60FB-0062-4927-98F5-14A6EF557FBF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9A3A60FB-0062-4927-98F5-14A6EF557FBF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9A3A60FB-0062-4927-98F5-14A6EF557FBF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9A3A60FB-0062-4927-98F5-14A6EF557FBF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F8C33730-6923-4B19-AE53-D34BB125B01D}.Build|Any CPU.ActiveCfg = Release|Any CPU
 		{F8C33730-6923-4B19-AE53-D34BB125B01D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F8C33730-6923-4B19-AE53-D34BB125B01D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F8C33730-6923-4B19-AE53-D34BB125B01D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F8C33730-6923-4B19-AE53-D34BB125B01D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1740C5EA-5791-4F17-9A37-F9DD45BC44C9}.Build|Any CPU.ActiveCfg = Release|Any CPU
 		{1740C5EA-5791-4F17-9A37-F9DD45BC44C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1740C5EA-5791-4F17-9A37-F9DD45BC44C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1740C5EA-5791-4F17-9A37-F9DD45BC44C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1740C5EA-5791-4F17-9A37-F9DD45BC44C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2060E058-8484-4F4D-BC65-18420745C21C}.Build|Any CPU.ActiveCfg = Release|Any CPU
 		{2060E058-8484-4F4D-BC65-18420745C21C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2060E058-8484-4F4D-BC65-18420745C21C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2060E058-8484-4F4D-BC65-18420745C21C}.Release|Any CPU.ActiveCfg = Release|Any CPU

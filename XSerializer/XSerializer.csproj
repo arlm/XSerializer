@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net40;</TargetFrameworks>
+    <Configurations>Debug;Release;Build</Configurations>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -37,6 +38,18 @@ XSerializer's XML and JSON serializers support the concept of field-level encryp
     <AssemblyName>XSerializer</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Build|netstandard2.0|AnyCPU'">
+    <DefineConstants>TRACE;BUILD;NETSTANDARD2_0</DefineConstants>
+    <AssemblyOriginatorKeyFile>XSerializer.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Build|net40|AnyCPU'">
+    <DefineConstants>TRACE;BUILD;NET40</DefineConstants>
+    <AssemblyOriginatorKeyFile>XSerializer.snk</AssemblyOriginatorKeyFile>
+    <SignAssembly>true</SignAssembly>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(TargetFramework)'=='netstandard2.0'">

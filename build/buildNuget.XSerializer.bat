@@ -1,7 +1,7 @@
-msbuild /p:Configuration=Build ..\XSerializer\XSerializer.csproj
+nuget restore -SolutionDirectory ..\  ..\XSerializer\XSerializer.csproj
 
-ildasm ..\XSerializer\bin\Build\XSerializer.dll /out:..\XSerializer\bin\Build\XSerializer.il
-ren ..\XSerializer\bin\Build\XSerializer.dll XSerializer.dll.orig
-ilasm ..\XSerializer\bin\Build\XSerializer.il /res:..\XSerializer\bin\Build\XSerializer.res /dll /key=..\XSerializer\XSerializer.snk
+msbuild /p:Configuration=Build /t:Clean ..\XSerializer\XSerializer.csproj
 
-nuget pack ..\XSerializer\XSerializer.csproj -Properties Configuration=Build
+msbuild /p:Configuration=Build /t:Rebuild ..\XSerializer\XSerializer.csproj
+
+msbuild /t:pack /p:PackageOutputPath=..\build  /p:Configuration=Build ..\XSerializer\XSerializer.csproj
