@@ -30,24 +30,32 @@ namespace XSerializer
                     }
                     catch (TargetInvocationException ex) // True exception gets masked due to reflection. Preserve stacktrace and rethrow
                     {
-                        PreserveStackTrace(ex.InnerException);
-                        throw ex.InnerException;
+                        if (TryPreserveStackTrace(ex.InnerException))
+                        {
+                            throw ex.InnerException;
+                        }
+                        throw;
                     }
                 });
         }
 
-        //Stackoverflow is awesome
-        private static void PreserveStackTrace(Exception e)
+        private static bool TryPreserveStackTrace(Exception e)
         {
-            var ctx = new StreamingContext(StreamingContextStates.CrossAppDomain);
-            var mgr = new ObjectManager(null, ctx);
-            var si = new SerializationInfo(e.GetType(), new FormatterConverter());
+            try
+            {
+                var ctx = new StreamingContext(StreamingContextStates.CrossAppDomain);
+                var mgr = new ObjectManager(null, ctx);
+                var si = new SerializationInfo(e.GetType(), new FormatterConverter());
 
-            e.GetObjectData(si, ctx);
-            mgr.RegisterObject(e, 1, si); // prepare for SetObjectData
-            mgr.DoFixups(); // ObjectManager calls SetObjectData
-
-            // voila, e is unmodified save for _remoteStackTraceString
+                e.GetObjectData(si, ctx);
+                mgr.RegisterObject(e, 1, si);
+                mgr.DoFixups();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 

@@ -56,6 +56,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)NonDefaultConstructorTests.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)NumberJsonSerializerTests.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)NUnit\Has.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ObjectManagerFixups.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)OptionsExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PrimitiveArrayTests.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PropertyNameCycleTests.cs" />

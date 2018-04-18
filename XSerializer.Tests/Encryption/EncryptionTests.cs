@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Dynamic;
+using System.Reflection;
 using System.Xml.Linq;
 using System.Xml.Serialization;
 using NUnit.Framework;
@@ -289,7 +290,7 @@ namespace XSerializer.Tests.Encryption
         [Test]
         public void AListPropertyDecoratedWithXmlElementAndEncryptCannotExistWithOtherNonXmlAttributeProperties()
         {
-            Assert.That(() => new XmlSerializer<Invalid>(), Throws.InvalidOperationException);
+            Assert.That(() => new XmlSerializer<Invalid>(), Throws.InstanceOf(ObjectManagerFixups.CanDoInvalidOperationFixup ? typeof(InvalidOperationException) : typeof(TargetInvocationException)));
         }
 
         [Test]
