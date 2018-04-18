@@ -147,3 +147,4 @@ $RECYCLE.BIN/
 
 # Nuget
 build/*.nupkg
+.vs/

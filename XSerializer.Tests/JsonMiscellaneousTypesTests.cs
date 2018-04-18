@@ -64,7 +64,7 @@ namespace XSerializer.Tests
 
             var json = serializer.Serialize(foo);
 
-            Assert.That(json, Is.EqualTo(@"{""Bar"":""XSerializer.Tests.JsonMiscellaneousTypesTests+Foo3, XSerializer.Tests""}"));
+            Assert.That(json, Is.EqualTo($@"{{""Bar"":""XSerializer.Tests.JsonMiscellaneousTypesTests+Foo3, {typeof(Foo3).Assembly.GetName().Name}""}}"));
         }
 
         [Test]
@@ -72,7 +72,7 @@ namespace XSerializer.Tests
         {
             var serializer = new JsonSerializer<Foo3>();
 
-            var json = @"{""Bar"":""XSerializer.Tests.JsonMiscellaneousTypesTests+Foo3, XSerializer.Tests""}";
+            var json = $@"{{""Bar"":""{typeof(Foo3).AssemblyQualifiedName}""}}";
 
             var foo = serializer.Deserialize(json);
 

@@ -1,4 +1,6 @@
-﻿namespace XSerializer.Encryption
+﻿using System;
+
+namespace XSerializer.Encryption
 {
     /// <summary>
     /// An implementation of <see cref="IEncryptionMechanism"/> that does
@@ -16,6 +18,9 @@
         /// <returns>The value of <paramref name="text"/>.</returns>
         public string Encrypt(string text, object encryptKey, SerializationState serializationState)
         {
+#if !BUILD
+            if (serializationState == null) throw new ArgumentNullException(nameof(serializationState));
+#endif
             return text;
         }
 
@@ -28,6 +33,9 @@
         /// <returns>The value of <paramref name="text"/>.</returns>
         public string Decrypt(string text, object encryptKey, SerializationState serializationState)
         {
+#if !BUILD
+            if (serializationState == null) throw new ArgumentNullException(nameof(serializationState));
+#endif
             return text;
         }
     }

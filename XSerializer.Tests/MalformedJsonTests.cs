@@ -4,11 +4,17 @@ using System.Reflection;
 using System.Reflection.Emit;
 using NUnit.Framework;
 using XSerializer.Encryption;
+using XSerializer.Tests.Encryption;
 
 namespace XSerializer.Tests
 {
     public class MalformedJsonTests
     {
+        static MalformedJsonTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         public class Bar
         {
             public int Baz { get; set; }
@@ -1978,7 +1984,7 @@ namespace XSerializer.Tests
 
         private static string Encrypt(string s)
         {
-            return "\"" + EncryptionMechanism.Current.Encrypt(s, null, null) + "\"";
+            return "\"" + EncryptionMechanism.Current.Encrypt(s, null, new SerializationState()) + "\"";
         }
 
         private static MalformedDocumentException DeserializeFail(
@@ -2047,7 +2053,7 @@ namespace XSerializer.Tests
 
         private static Type GetFooType(Type barPropertyType, bool encrypted, Type bazPropertyType)
         {
-            var assemblyBuilder = AppDomain.CurrentDomain.DefineDynamicAssembly(
+            var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
                 new AssemblyName("FooAssembly"), AssemblyBuilderAccess.Run);
 
             var moduleBuilder = assemblyBuilder.DefineDynamicModule("FooModule");

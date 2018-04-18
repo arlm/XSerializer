@@ -2,12 +2,18 @@
 using System.IO;
 using System.Text;
 using NUnit.Framework;
+using XSerializer.Encryption;
 using XSerializer.Tests.Encryption;
 
 namespace XSerializer.Tests
 {
     internal class JsonReaderTests
     {
+        static JsonReaderTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         [TestCase("true", new[] { JsonNodeType.Boolean })]
         [TestCase("false", new[] { JsonNodeType.Boolean })]
         [TestCase("null", new[] { JsonNodeType.Null })]
@@ -44,6 +50,7 @@ namespace XSerializer.Tests
             var info = new JsonSerializeOperationInfo
             {
                 EncryptionMechanism = new Base64EncryptionMechanism(),
+                SerializationState = new SerializationState()
             };
 
             var reader = new JsonReader(new StringReader(cipherTextJson), info);
@@ -73,6 +80,7 @@ namespace XSerializer.Tests
             var info = new JsonSerializeOperationInfo
             {
                 EncryptionMechanism = new Base64EncryptionMechanism(),
+                SerializationState = new SerializationState()
             };
 
             var reader = new JsonReader(new StringReader(cipherTextJson), info);
@@ -168,7 +176,8 @@ namespace XSerializer.Tests
                 new StringReader("null"),
                 new JsonSerializeOperationInfo
                 {
-                    EncryptionMechanism = new Base64EncryptionMechanism()
+                    EncryptionMechanism = new Base64EncryptionMechanism(),
+                    SerializationState = new SerializationState()
                 });
 
             Assert.That(reader.Read(""), Is.True);

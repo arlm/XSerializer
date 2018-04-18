@@ -1,11 +1,17 @@
 ﻿using System;
 using NUnit.Framework;
+using XSerializer.Encryption;
 using XSerializer.Tests.Encryption;
 
 namespace XSerializer.Tests
 {
     public class StringJsonSerializerTests
     {
+        static StringJsonSerializerTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         [Test]
         public void CanSerialize()
         {

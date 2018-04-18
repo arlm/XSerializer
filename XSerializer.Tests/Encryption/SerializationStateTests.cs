@@ -7,6 +7,11 @@ namespace XSerializer.Tests.Encryption
 {
     public class SerializationStateTests
     {
+        static SerializationStateTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         public class TheGetMethod
         {
             [Test]
@@ -192,10 +197,11 @@ namespace XSerializer.Tests.Encryption
 
             private class MyEncryptionMechanism : IEncryptionMechanism
             {
-                public static SerializationState LastSerializationState;
+                public static SerializationState LastSerializationState { get; set; }
 
                 public string Encrypt(string plainText, object encryptKey, SerializationState serializationState)
                 {
+                    if (serializationState == null) throw new ArgumentNullException(nameof(serializationState));
                     LastSerializationState = serializationState;
 
                     var counts = serializationState.Get(() => new Counts());
@@ -207,6 +213,7 @@ namespace XSerializer.Tests.Encryption
 
                 public string Decrypt(string cipherText, object encryptKey, SerializationState serializationState)
                 {
+                    if (serializationState == null) throw new ArgumentNullException(nameof(serializationState));
                     LastSerializationState = serializationState;
 
                     var counts = serializationState.Get(() => new Counts());

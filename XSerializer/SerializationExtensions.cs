@@ -19,11 +19,18 @@ namespace XSerializer
 {
     internal static class SerializationExtensions
     {
+#if NETSTANDARD2_0
+        internal static readonly string ReadOnlyDictionary = typeof(ReadOnlyDictionary<,>).AssemblyQualifiedName;
+        private static readonly string IReadOnlyDictionary = typeof(IReadOnlyDictionary<,>).AssemblyQualifiedName;
+        private static readonly string IReadOnlyCollection = typeof(IReadOnlyCollection<>).AssemblyQualifiedName;
+        private static readonly string IReadOnlyList = typeof(IReadOnlyList<>).AssemblyQualifiedName;
+#else
         internal const string ReadOnlyDictionary = "System.Collections.ObjectModel.ReadOnlyDictionary`2, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
-        internal const string IReadOnlyDictionary = "System.Collections.Generic.IReadOnlyDictionary`2, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
-        internal const string IReadOnlyCollection = "System.Collections.Generic.IReadOnlyCollection`1, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
-        internal const string IReadOnlyList = "System.Collections.Generic.IReadOnlyList`1, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
-        
+        private const string IReadOnlyDictionary = "System.Collections.Generic.IReadOnlyDictionary`2, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+        private const string IReadOnlyCollection = "System.Collections.Generic.IReadOnlyCollection`1, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+        private const string IReadOnlyList = "System.Collections.Generic.IReadOnlyList`1, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089";
+#endif
+
         private static readonly Type[] _readOnlyCollections = new[] { Type.GetType(IReadOnlyCollection), Type.GetType(IReadOnlyList), typeof(ReadOnlyCollection<>) }.Where(t => t != null).ToArray();
 
         private static readonly ConcurrentDictionary<Tuple<Type, Type>, Func<object, object>> _convertFuncs = new ConcurrentDictionary<Tuple<Type, Type>, Func<object, object>>(); 
@@ -629,11 +636,10 @@ namespace XSerializer
                     return true;
                 }
 
-                switch (openGeneric.AssemblyQualifiedName)
+                if (openGeneric.AssemblyQualifiedName == IReadOnlyCollection
+                    || openGeneric.AssemblyQualifiedName == IReadOnlyList)
                 {
-                    case IReadOnlyCollection:
-                    case IReadOnlyList:
-                        return true;
+                    return true;
                 }
             }
 
@@ -691,11 +697,10 @@ namespace XSerializer
 
             foreach (var openGeneric in openGenerics)
             {
-                switch (openGeneric.AssemblyQualifiedName)
+                if (openGeneric.AssemblyQualifiedName == IReadOnlyDictionary
+                    || openGeneric.AssemblyQualifiedName == ReadOnlyDictionary)
                 {
-                    case IReadOnlyDictionary:
-                    case ReadOnlyDictionary:
-                        return true;
+                    return true;
                 }
             }
 

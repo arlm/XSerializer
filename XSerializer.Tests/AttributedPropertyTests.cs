@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Xml.Serialization;
 using NUnit.Framework;
 
@@ -30,28 +31,28 @@ namespace XSerializer.Tests
         [TestCaseSource("TestCaseData")]
         public void CustomSerializerThrowsExceptionIfAndOnlyIfBclXmlSerializerDoes(Type type)
         {
-            Exception thrownException;
-            try
-            {
-                new System.Xml.Serialization.XmlSerializer(type);
-                thrownException = null;
-            }
-            catch (Exception ex)
-            {
-                thrownException = ex;
-            }
+            Exception expectedEx = null;
+            try { new System.Xml.Serialization.XmlSerializer(type); }
+            catch (Exception ex) { expectedEx = ex; }
 
-            if (thrownException == null)
+            Exception actualEx = null;
+            try { CustomSerializer.GetSerializer(type, null, TestXmlSerializerOptions.Empty); }
+            catch (Exception ex) { actualEx = ex; }
+
+            if (expectedEx == null)
             {
-                Assert.That(() => CustomSerializer.GetSerializer(type, null, TestXmlSerializerOptions.Empty), Throws.Nothing, "Type: " + type.Name + Environment.NewLine);
+                Assert.IsNull(actualEx);
             }
             else
             {
-                Assert.That(() => CustomSerializer.GetSerializer(type, null, TestXmlSerializerOptions.Empty), Throws.InstanceOf(thrownException.GetType()), "Type: " + type.Name + Environment.NewLine);
+                Assert.That(() => 
+                    ObjectManagerFixups.CanDoInvalidOperationFixup ? actualEx : actualEx.InnerException,
+                    Is.TypeOf(expectedEx.GetType()),
+                    "Type: " + type.Name + Environment.NewLine);
             }
         }
 
-        public IEnumerable<TestCaseData> TestCaseData
+        private static IEnumerable<TestCaseData> TestCaseData
         {
             get { return GetTypes()
                 .Select(t => new TestCaseData(t).SetName(
@@ -68,7 +69,7 @@ namespace XSerializer.Tests
             }
         }
 
-        private IEnumerable<Type> GetTypes()
+        private static IEnumerable<Type> GetTypes()
         {
             yield return typeof(DerivedWithEmptyXmlElementDecorationInheritingFromBaseWithEmptyXmlElementDecoration);
             yield return typeof(DerivedWithEmptyXmlElementDecorationInheritingFromBaseWithEmptyXmlAttributeDecoration);

@@ -2,12 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using NUnit.Framework;
+using XSerializer.Encryption;
 using XSerializer.Tests.Encryption;
 
 namespace XSerializer.Tests
 {
     public class JsonArrayTests
     {
+        static JsonArrayTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         #region Non-converting retrieval tests
 
         [TestCase(true)]

@@ -1,10 +1,16 @@
 ﻿using NUnit.Framework;
+using XSerializer.Encryption;
 using XSerializer.Tests.Encryption;
 
 namespace XSerializer.Tests
 {
     public class NumberJsonSerializerTests
     {
+        static NumberJsonSerializerTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         [Test]
         public void CanSerializeDouble()
         {

@@ -51,7 +51,7 @@ namespace XSerializer
                     DateTimeHandler = dateTimeHandler ?? DateTimeHandler.Default,
                     EncryptionMechanism = encryptionMechanism,
                     EncryptKey = encryptKey,
-                    SerializationState = serializationState
+                    SerializationState = serializationState ?? new SerializationState()
                 })
         {
         }

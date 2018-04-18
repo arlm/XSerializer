@@ -9,6 +9,11 @@ namespace XSerializer.Tests
 {
     public class AttributeTests
     {
+        static AttributeTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         [Test]
         public void XmlAttributeDeserializesIntoProperty()
         {
@@ -30,8 +35,8 @@ namespace XSerializer.Tests
 
             var xml = serializer.Serialize(item);
 
-            Assert.That(xml, Is.Not.StringContaining("<Foo>abc</Foo>"));
-            Assert.That(xml, Is.StringContaining(">abc</HasXmlTextAttribute>"));
+            Assert.That(xml, Does.Not.Contain("<Foo>abc</Foo>"));
+            Assert.That(xml, Does.Contain(">abc</HasXmlTextAttribute>"));
         }
 
         [Test]
@@ -43,8 +48,8 @@ namespace XSerializer.Tests
 
             var xml = serializer.Serialize(item);
             Console.WriteLine(xml);
-            Assert.That(xml, Is.Not.StringContaining("<Foo>abc</Foo>"));
-            Assert.That(xml, Is.StringContaining(@"Foo=""abc"""));
+            Assert.That(xml, Does.Not.Contain("<Foo>abc</Foo>"));
+            Assert.That(xml, Does.Contain(@"Foo=""abc"""));
         }
 
         [Test]
@@ -56,8 +61,8 @@ namespace XSerializer.Tests
 
             var xml = serializer.Serialize(item);
 
-            Assert.That(xml, Is.Not.StringContaining("<Foo>abc</Foo>"));
-            Assert.That(xml, Is.StringContaining("<Bar>abc</Bar>"));
+            Assert.That(xml, Does.Not.Contain("<Foo>abc</Foo>"));
+            Assert.That(xml, Does.Contain("<Bar>abc</Bar>"));
         }
 
         [Test]
@@ -72,9 +77,9 @@ namespace XSerializer.Tests
 
             var xml = serializer.Serialize(item);
 
-            Assert.That(xml, Is.Not.StringContaining("<Bazes>"));
-            Assert.That(xml, Is.Not.StringContaining("<Baz>"));
-            Assert.That(xml, Is.StringContaining("<Bar>"));
+            Assert.That(xml, Does.Not.Contain("<Bazes>"));
+            Assert.That(xml, Does.Not.Contain("<Baz>"));
+            Assert.That(xml, Does.Contain("<Bar>"));
         }
 
         [Test]
@@ -89,8 +94,8 @@ namespace XSerializer.Tests
 
             var xml = serializer.Serialize(item);
 
-            Assert.That(xml, Is.Not.StringContaining("<Bazes>"));
-            Assert.That(xml, Is.StringContaining("<Bars>"));
+            Assert.That(xml, Does.Not.Contain("<Bazes>"));
+            Assert.That(xml, Does.Contain("<Bars>"));
         }
 
         [Test]
@@ -105,8 +110,8 @@ namespace XSerializer.Tests
 
             var xml = serializer.Serialize(item);
 
-            Assert.That(xml, Is.Not.StringContaining("<Baz>"));
-            Assert.That(xml, Is.StringContaining("<Bar>"));
+            Assert.That(xml, Does.Not.Contain("<Baz>"));
+            Assert.That(xml, Does.Contain("<Bar>"));
         }
 
         [Test]
@@ -122,8 +127,8 @@ namespace XSerializer.Tests
 
             var xml = serializer.Serialize(item);
 
-            Assert.That(xml, Is.Not.StringContaining("<Foo>abc</Foo>"));
-            Assert.That(xml, Is.StringContaining("<Foo>XXX</Foo>"));
+            Assert.That(xml, Does.Not.Contain("<Foo>abc</Foo>"));
+            Assert.That(xml, Does.Contain("<Foo>XXX</Foo>"));
         }
 
         [Test]
@@ -142,9 +147,9 @@ namespace XSerializer.Tests
 
             var xml = serializer.Serialize(item);
 
-            Assert.That(xml, Is.Not.StringContaining("<Foo>abc</Foo>"));
+            Assert.That(xml, Does.Not.Contain("<Foo>abc</Foo>"));
             var encryptedValue = encryptionMechanism.Encrypt(@"abc", null, new SerializationState());
-            Assert.That(xml, Is.StringContaining(string.Format("<Foo>{0}</Foo>", encryptedValue)));
+            Assert.That(xml, Does.Contain(string.Format("<Foo>{0}</Foo>", encryptedValue)));
         }
 
         [Test]
@@ -166,9 +171,9 @@ namespace XSerializer.Tests
 
             var json = serializer.Serialize(item);
 
-            Assert.That(json, Is.Not.StringContaining(@"""Foo"":""abc"""));
+            Assert.That(json, Does.Not.Contain(@"""Foo"":""abc"""));
             var encryptedValue = encryptionMechanism.Encrypt(@"""abc""", null, new SerializationState());
-            Assert.That(json, Is.StringContaining(string.Format(@"""Foo"":""{0}""", encryptedValue)));
+            Assert.That(json, Does.Contain(string.Format(@"""Foo"":""{0}""", encryptedValue)));
         }
 
         [Test]
@@ -196,8 +201,8 @@ namespace XSerializer.Tests
 
                 var xml = serializer.Serialize(item);
 
-                Assert.That(xml, Is.StringContaining("<Foo>abc</Foo>"));
-                Assert.That(xml, Is.Not.StringContaining("<Bar>abc</Bar>"));
+                Assert.That(xml, Does.Contain("<Foo>abc</Foo>"));
+                Assert.That(xml, Does.Not.Contain("<Bar>abc</Bar>"));
             }
 
             [Test]
@@ -209,8 +214,8 @@ namespace XSerializer.Tests
 
                 var xml = serializer.Serialize(item);
 
-                Assert.That(xml, Is.StringContaining("<Foo>abc</Foo>"));
-                Assert.That(xml, Is.Not.StringContaining("<Bar>abc</Bar>"));
+                Assert.That(xml, Does.Contain("<Foo>abc</Foo>"));
+                Assert.That(xml, Does.Not.Contain("<Bar>abc</Bar>"));
             }
 
             [Test]
@@ -222,8 +227,8 @@ namespace XSerializer.Tests
 
                 var xml = serializer.Serialize(item);
 
-                Assert.That(xml, Is.StringContaining("<Baz>abc</Baz>"));
-                Assert.That(xml, Is.Not.StringContaining("<Foo>abc</Foo>"));
+                Assert.That(xml, Does.Contain("<Baz>abc</Baz>"));
+                Assert.That(xml, Does.Not.Contain("<Foo>abc</Foo>"));
             }
         }
 

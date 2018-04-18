@@ -8,6 +8,11 @@ namespace XSerializer.Tests
 {
     public class DictionaryJsonSerializerTests
     {
+        static DictionaryJsonSerializerTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         [Test]
         public void CanSerializeIDictionaryOfStringToObject()
         {

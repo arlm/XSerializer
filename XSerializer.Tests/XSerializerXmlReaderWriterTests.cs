@@ -10,6 +10,11 @@ namespace XSerializer.Tests
 {
     public class XSerializerXmlReaderWriterTests
     {
+        static XSerializerXmlReaderWriterTests()
+        {
+            EncryptionMechanism.Current = new Base64EncryptionMechanism();
+        }
+
         [Test]
         public void CanEncryptAndDecryptAComplexElementValue()
         {
