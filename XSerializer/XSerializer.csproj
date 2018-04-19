@@ -7,9 +7,9 @@
 
   <PropertyGroup>
     <AssemblyVersion>0.1.0.0</AssemblyVersion>
-    <FileVersion>0.3.9</FileVersion>
-    <VersionPrefix>0.3.9</VersionPrefix>
-    <VersionSuffix>alpha02</VersionSuffix>
+    <FileVersion>0.4.0</FileVersion>
+    <VersionPrefix>0.4.0</VersionPrefix>
+    <VersionSuffix></VersionSuffix>
     <Authors>Brian Friesen</Authors>
     <Company>Quicken Loans</Company>
     <Product>XSerializer</Product>
@@ -21,7 +21,7 @@ JSON serialization in XSerializer has better performance than JSON.NET (Newtonso
 
 Encryption
 XSerializer's XML and JSON serializers support the concept of field-level encryption. Properties that are decorated with an [Encrypt] attribute have their values encrypted/decrypted automatically. The actual mechanism to encrypt these fields is exposed through the IEncryptionMechanism interface - users of the encrypt feature are expected to implement this interface in their project.</Description>
-    <Copyright>Copyright © Quicken Loans 2013-2017</Copyright>
+    <Copyright>Copyright © Quicken Loans 2013-2018</Copyright>
     <Summary>Advanced, high-performance XML and JSON serializers</Summary>
     <NeutralLanguage>en-US</NeutralLanguage>
     <Title>XSerializer - Serialize *anything*</Title>
