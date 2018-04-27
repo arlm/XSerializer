@@ -66,10 +66,23 @@ namespace XSerializer
 
                 if (NodeType != JsonNodeType.String)
                 {
-                    throw new XSerializerException("Cannot decrypt non-string value.");
+                    // All encrypted values are transformed into string nodes. That means this
+                    // node can't possibly be encrypted, so reverse the decision to decrypt reads.
+                    _decryptReads = false;
+                    return;
                 }
 
-                _decryptedReader = new StringReader(_info.EncryptionMechanism.Decrypt((string)Value, _info.EncryptKey, _info.SerializationState));
+                var decrypted = _info.EncryptionMechanism.Decrypt((string)Value, _info.EncryptKey, _info.SerializationState);
+
+                if (decrypted == (string)Value && decrypted != "")
+                {
+                    // If the encryption mechanism returns the same value passed to it, assume
+                    // that the value is plain-text and reverse the decision to decrypt reads.
+                    _decryptReads = false;
+                    return;
+                }
+
+                _decryptedReader = new StringReader(decrypted);
                 _currentReader = _decryptedReader;
                 ReadContent(path);
             }
