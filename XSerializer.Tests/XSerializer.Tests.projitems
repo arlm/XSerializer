@@ -58,6 +58,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)NUnit\Has.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ObjectManagerFixups.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)OptionsExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Encryption\PlaintextEncryptedPropertyTests.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PrimitiveArrayTests.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PropertyNameCycleTests.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ReadOnlyCollectionTests.cs" />
