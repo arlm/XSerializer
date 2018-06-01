@@ -88,12 +88,7 @@ namespace XSerializer
             }
             else
             {
-                if (NodeType == JsonNodeType.Null)
-                {
-                    return;
-                }
-
-                if (_decryptedReader.Peek() != -1)
+                if (NodeType != JsonNodeType.Null && _decryptedReader.Peek() != -1)
                 {
                     throw new InvalidOperationException("Attempted to set DecryptReads to false before the encrypted stream has been consumed.");
                 }

@@ -179,6 +179,11 @@ namespace XSerializer
 
         private object Read(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
+            if (reader.NodeType == JsonNodeType.Null)
+            {
+                return null;
+            }
+
             var factory = _createObjectFactory.Value.Invoke();
 
             foreach (var propertyName in reader.ReadProperties(path))
