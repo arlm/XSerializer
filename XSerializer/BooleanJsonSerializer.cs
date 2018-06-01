@@ -95,7 +95,7 @@ namespace XSerializer
                     {
                         if (!exception)
                         {
-                            if (reader.DecryptReads && (reader.ReadContent(path) || reader.NodeType == JsonNodeType.Invalid))
+                            if (reader.NodeType != JsonNodeType.Null && reader.DecryptReads && (reader.ReadContent(path) || reader.NodeType == JsonNodeType.Invalid))
                             {
                                 throw new MalformedDocumentException(MalformedDocumentError.ExpectedEndOfDecryptedString,
                                     path, reader.Value, reader.Line, reader.Position, null, reader.NodeType);

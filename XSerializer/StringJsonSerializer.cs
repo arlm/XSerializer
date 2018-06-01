@@ -80,6 +80,7 @@ namespace XSerializer
                     case JsonNodeType.Number:
                     case JsonNodeType.String:
                     case JsonNodeType.Boolean:
+                    case JsonNodeType.Null:
                         break;
                     case JsonNodeType.EndOfString:
                         throw new MalformedDocumentException(MalformedDocumentError.MissingValue,

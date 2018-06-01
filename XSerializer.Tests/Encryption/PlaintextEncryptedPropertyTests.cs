@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using System;
 using System.Collections.Generic;
 using XSerializer.Encryption;
 
@@ -47,6 +48,41 @@ namespace XSerializer.Tests.Encryption
             Assert.That(foo.Garply, Is.EqualTo(123.45M));
             Assert.That(foo.Grault.Count, Is.EqualTo(1));
             Assert.That(foo.Grault[0], Is.EqualTo(456));
+        }
+
+        [Test]
+        [TestCase(@"{""Foo"":null,""Baz"":null,""Qux"":null,""Corge"":null,""Garply"":null,""Grault"":null,""Fred"":null,""Waldo"":null}")]
+        [TestCase(@"{""Foo"":""Encrypted::null::Encrypted"",""Baz"":""Encrypted::null::Encrypted"",""Qux"":""Encrypted::null::Encrypted"",""Corge"":""Encrypted::null::Encrypted"",""Garply"":""Encrypted::null::Encrypted"",""Grault"":""Encrypted::null::Encrypted"",""Fred"":""Encrypted::null::Encrypted"",""Waldo"":""Encrypted::null::Encrypted""}")]
+        public void CanJsonDeserializeNullLiteralsIntoEncryptedProperties(string json)
+        {
+            var serializer = new JsonSerializer<Bar>(
+                new JsonSerializerConfiguration
+                {
+                    EncryptionMechanism = new FakeEncryptionMechanism()
+                });
+
+            var bar = serializer.Deserialize(json);
+
+            Assert.That(bar.Foo, Is.Null);
+            Assert.That(bar.Baz, Is.Null);
+            Assert.That(bar.Qux, Is.Null);
+            Assert.That(bar.Corge, Is.Null);
+            Assert.That(bar.Garply, Is.Null);
+            Assert.That(bar.Grault, Is.Null);
+            Assert.That(bar.Fred, Is.Null);
+            Assert.That(bar.Waldo, Is.Null);
+        }
+
+        public class Bar
+        {
+            [Encrypt] public Dictionary<string, object> Foo { get; set; }
+            [Encrypt] public int[] Baz { get; set; }
+            [Encrypt] public Qux Qux { get; set; }
+            [Encrypt] public bool? Corge { get; set; }
+            [Encrypt] public int? Garply { get; set; }
+            [Encrypt] public object Grault { get; set; }
+            [Encrypt] public string Fred { get; set; }
+            [Encrypt] public DateTime? Waldo { get; set; }
         }
 
         public class Foo

@@ -165,6 +165,11 @@ namespace XSerializer
 
         private object Read(JsonReader reader, IJsonSerializeOperationInfo info, string path)
         {
+            if (reader.NodeType == JsonNodeType.Null)
+            {
+                return null;
+            }
+
             var dictionary = _createDictionary();
 
             foreach (var keyString in reader.ReadProperties(path))
