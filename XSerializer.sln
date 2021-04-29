@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.2037
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31205.134
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "XSerializer", "XSerializer\XSerializer.csproj", "{5AC7BBCB-50EF-4C71-A4F1-626617A2AF50}"
 EndProject
@@ -18,6 +18,8 @@ EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		XSerializer.Tests\XSerializer.Tests.projitems*{05fc30b7-6c7c-4abf-9feb-a1d4dbcc79ce}*SharedItemsImports = 13
+		XSerializer.Tests\XSerializer.Tests.projitems*{1740c5ea-5791-4f17-9a37-f9dd45bc44c9}*SharedItemsImports = 5
+		XSerializer.Tests\XSerializer.Tests.projitems*{2060e058-8484-4f4d-bc65-18420745c21c}*SharedItemsImports = 5
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Build|Any CPU = Build|Any CPU
