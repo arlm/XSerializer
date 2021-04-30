@@ -31,7 +31,5 @@ using System.Runtime.InteropServices;
 // [assembly: AssemblyVersion("1.0.*")]
 
 #if !BUILD
-[assembly: InternalsVisibleTo("XSerializer.Tests.net45")]
-[assembly: InternalsVisibleTo("XSerializer.Tests.netcoreapp2.0")]
-[assembly: InternalsVisibleTo("XSerializer.PerformanceTests")]
+[assembly: InternalsVisibleTo("XSerializer.Tests")]
 #endif
