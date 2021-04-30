@@ -471,6 +471,7 @@ namespace XSerializer
                         }
                         break;
                     case XmlNodeType.Text:
+                    case XmlNodeType.CDATA:
                         if (typeof(T).IsPrimitiveLike())
                         {
                             // This is left-over (and commented-out) from an earlier time. Is it even possible to have a CustomSerializer for a primitive type???
