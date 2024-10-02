@@ -150,6 +150,12 @@ namespace XSerializer
                         ? xmlRootAttribute.ElementName
                         : typeof(T).GetElementName();
 
+                var rootNamespace =
+                    xmlRootAttribute != null && !string.IsNullOrWhiteSpace (xmlRootAttribute.Namespace)
+                        ? xmlRootAttribute.Namespace
+                        : string.Empty;
+
+                options.WithDefaultNamespace (rootNamespace);
                 options.SetRootElementName(rootElementName);
             }
 
