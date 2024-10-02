@@ -111,7 +111,7 @@ namespace XSerializer
 
                         if (serializableProperties.Count(p => p.IsListDecoratedWithXmlElement) > 1)
                         {
-                            throw new InvalidOperationException("More than one list property is decorated with [XmlElement] attribute.");
+                           // throw new InvalidOperationException("More than one list property is decorated with [XmlElement] attribute.");
                         }
 
                         var encryptedXmlElementListProperty =
