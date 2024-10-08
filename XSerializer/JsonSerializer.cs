@@ -103,8 +103,9 @@ namespace XSerializer
         /// Serialize the given object to a string.
         /// </summary>
         /// <param name="instance">The object to serialize.</param>
+        /// <param name="useBOM">When true, do not skip BOM bytes, else skip those bytes.</param>
         /// <returns>A string representation of the object.</returns>
-        string IXSerializer.Serialize(object instance)
+        string IXSerializer.Serialize(object instance, bool useBOM = true)
         {
             var sb = new StringBuilder();
 
@@ -131,7 +132,8 @@ namespace XSerializer
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> to serialize the object to.</param>
         /// <param name="instance">The object to serialize.</param>
-        void IXSerializer.Serialize(Stream stream, object instance)
+        /// <param name="useBOM">When true, do not skip BOM bytes, else skip those bytes.</param>
+        void IXSerializer.Serialize(Stream stream, object instance, bool useBOM = true)
         {
             using (var writer = new StreamWriter(stream, _configuration.Encoding))
             {
