@@ -325,7 +325,14 @@ namespace XSerializer
             }
 
             writer.WriteStartDocument();
-            writer.WriteStartElement(_options.RootElementName);
+            if (!string.IsNullOrWhiteSpace(options.RootElementName) && options.RootElementName != _options.RootElementName)
+            {
+                writer.WriteStartElement(options.RootElementName);
+            }
+            else
+            {
+                writer.WriteStartElement(_options.RootElementName);
+            }
             writer.WriteDefaultDocumentNamespaces();
 
             using (writer.WriteDefaultNamespace(_options.DefaultNamespace))

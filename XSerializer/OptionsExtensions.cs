@@ -16,7 +16,8 @@ namespace XSerializer
                 RedactAttribute = options.RedactAttribute,
                 TreatEmptyElementAsString = options.TreatEmptyElementAsString,
                 ShouldAlwaysEmitNil = options.ShouldAlwaysEmitNil,
-                ShouldUseAttributeDefinedInInterface = options.ShouldUseAttributeDefinedInInterface
+                ShouldUseAttributeDefinedInInterface = options.ShouldUseAttributeDefinedInInterface,
+                XmlChoiceElement = options.XmlChoiceElement
             };
         }
 
@@ -35,7 +36,8 @@ namespace XSerializer
                 RedactAttribute = options.RedactAttribute,
                 TreatEmptyElementAsString = options.TreatEmptyElementAsString,
                 ShouldAlwaysEmitNil = options.ShouldAlwaysEmitNil,
-                ShouldUseAttributeDefinedInInterface = options.ShouldUseAttributeDefinedInInterface
+                ShouldUseAttributeDefinedInInterface = options.ShouldUseAttributeDefinedInInterface,
+                XmlChoiceElement = options.XmlChoiceElement
             };
         }
 
@@ -49,7 +51,8 @@ namespace XSerializer
                 RedactAttribute = redactAttribute,
                 TreatEmptyElementAsString = options.TreatEmptyElementAsString,
                 ShouldAlwaysEmitNil = options.ShouldAlwaysEmitNil,
-                ShouldUseAttributeDefinedInInterface = options.ShouldUseAttributeDefinedInInterface
+                ShouldUseAttributeDefinedInInterface = options.ShouldUseAttributeDefinedInInterface,
+                XmlChoiceElement = options.XmlChoiceElement
             };
         }
 
@@ -63,7 +66,23 @@ namespace XSerializer
                 RedactAttribute = options.RedactAttribute,
                 TreatEmptyElementAsString = options.TreatEmptyElementAsString,
                 ShouldAlwaysEmitNil = true,
-                ShouldUseAttributeDefinedInInterface = options.ShouldUseAttributeDefinedInInterface
+                ShouldUseAttributeDefinedInInterface = options.ShouldUseAttributeDefinedInInterface,
+                XmlChoiceElement = options.XmlChoiceElement
+            };
+        }
+
+        public static IXmlSerializerOptions WithXmlChoiceElement(this IXmlSerializerOptions options, string xmlChoiceElement)
+        {
+            return new XmlSerializerOptions
+            {
+                DefaultNamespace = options.DefaultNamespace,
+                ExtraTypes = options.ExtraTypes,
+                RootElementName = options.RootElementName,
+                RedactAttribute = options.RedactAttribute,
+                TreatEmptyElementAsString = options.TreatEmptyElementAsString,
+                ShouldAlwaysEmitNil = options.ShouldAlwaysEmitNil,
+                ShouldUseAttributeDefinedInInterface = options.ShouldUseAttributeDefinedInInterface,
+                XmlChoiceElement = xmlChoiceElement
             };
         }
 
@@ -76,6 +95,7 @@ namespace XSerializer
             public bool TreatEmptyElementAsString { get; set; }
             public bool ShouldAlwaysEmitNil { get; set; }
             public bool ShouldUseAttributeDefinedInInterface { get; set; }
+            public string XmlChoiceElement { get; set; }
         }
     }
 }
