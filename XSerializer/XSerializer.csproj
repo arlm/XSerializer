@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net40;</TargetFrameworks>
+    <TargetFrameworks>net80;</TargetFrameworks>
     <Configurations>Debug;Release;Build</Configurations>
   </PropertyGroup>
 
   <PropertyGroup>
-    <AssemblyVersion>0.1.0.0</AssemblyVersion>
-    <FileVersion>0.4.4</FileVersion>
-    <VersionPrefix>0.4.4</VersionPrefix>
+    <AssemblyVersion>0.1.0.1</AssemblyVersion>
+    <FileVersion>0.4.5</FileVersion>
+    <VersionPrefix>0.4.5</VersionPrefix>
     <VersionSuffix></VersionSuffix>
     <Authors>Brian Friesen</Authors>
     <Company>Quicken Loans</Company>
@@ -48,7 +48,7 @@ XSerializer's XML and JSON serializers support the concept of field-level encryp
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All" />
   </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Build'">
