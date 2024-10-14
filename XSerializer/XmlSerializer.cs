@@ -199,17 +199,29 @@ namespace XSerializer
         /// <param name="stream">The <see cref="Stream"/> to serialize the object to.</param>
         /// <param name="instance">The object to serialize.</param>
         /// <param name="useBOM">When true, do not skip BOM bytes, else skip those bytes.</param>
-        public void Serialize(Stream stream, T instance, bool useBOM = true)
+        public void Serialize(Stream stream, T instance, bool useBOM)
         {
             _serializer.SerializeObject(stream, instance, _encoding, _formatting, _serializeOptions);
 
             if (!useBOM)
             {
-                SkipBOM(stream);
+                var position = SkipBOM (stream);
+
+                using (var buffer = new MemoryStream((int)stream.Length - position))
+                {
+                    stream.Seek (position, SeekOrigin.Begin);
+                    stream.CopyTo (buffer);
+
+                    stream.Seek (0, SeekOrigin.Begin);
+                    stream.SetLength (buffer.Length);
+
+                    buffer.Seek (0, SeekOrigin.Begin);
+                    buffer.CopyTo (stream);
+                }
             }
         }
 
-        void IXSerializer.Serialize(Stream stream, object instance, bool useBOM = true)
+        void IXSerializer.Serialize(Stream stream, object instance, bool useBOM)
         {
             Serialize(stream, (T)instance, useBOM);
         }
@@ -280,7 +292,7 @@ namespace XSerializer
             return Deserialize(reader);
         }
 
-        static void SkipBOM(Stream stream)
+        static int SkipBOM(Stream stream)
         {
             stream.Seek(0, SeekOrigin.Begin);
 
@@ -296,7 +308,7 @@ namespace XSerializer
             if (IsMatch(stream, new byte[] { 0xEF, 0xBB, 0xBF }))
                 cursor = 3;
 
-            stream.Seek(cursor, SeekOrigin.Begin);
+            return cursor;
 
             static bool IsMatch(Stream stream, byte[] match)
             {
