@@ -183,7 +183,28 @@ namespace XSerializer
                 ShouldEncrypt = serializeOptions.ShouldEncrypt,
                 ShouldRedact = serializeOptions.ShouldRedact,
                 ShouldIgnoreCaseForEnum = serializeOptions.ShouldIgnoreCaseForEnum,
-                ShouldSerializeCharAsInt = serializeOptions.ShouldSerializeCharAsInt
+                ShouldSerializeCharAsInt = serializeOptions.ShouldSerializeCharAsInt,
+                XmlChoiceElement = serializeOptions.XmlChoiceElement,
+                RootElementName = serializeOptions.RootElementName
+            };
+        }
+
+        public static ISerializeOptions WithRootElementName(this ISerializeOptions serializeOptions, string rootElementName)
+        {
+            return new SerializeOptions
+            {
+                EncryptionMechanism = serializeOptions.EncryptionMechanism,
+                EncryptKey = serializeOptions.EncryptKey,
+                Namespaces = serializeOptions.Namespaces,
+                SerializationState = new SerializationState(),
+                ShouldAlwaysEmitTypes = serializeOptions.ShouldAlwaysEmitTypes,
+                ShouldEmitNil = serializeOptions.ShouldEmitNil,
+                ShouldEncrypt = serializeOptions.ShouldEncrypt,
+                ShouldRedact = serializeOptions.ShouldRedact,
+                ShouldIgnoreCaseForEnum = serializeOptions.ShouldIgnoreCaseForEnum,
+                ShouldSerializeCharAsInt = serializeOptions.ShouldSerializeCharAsInt,
+                XmlChoiceElement = serializeOptions.XmlChoiceElement,
+                RootElementName = rootElementName
             };
         }
 
@@ -199,6 +220,8 @@ namespace XSerializer
             public SerializationState SerializationState { get; set; }
             public bool ShouldIgnoreCaseForEnum { get; set; }
             public bool ShouldSerializeCharAsInt { get; set; }
+            public string XmlChoiceElement { get; set; }
+            public string RootElementName { get; set; }
         }
 
         public static string AppendProperty(this string path, string property)

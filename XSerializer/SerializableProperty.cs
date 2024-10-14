@@ -21,6 +21,9 @@ namespace XSerializer
         private readonly EncryptAttribute _encryptAttribute;
         private readonly bool _isListDecoratedWithXmlElement;
 
+        private readonly Dictionary<string, Type> _xmlElements;
+        private readonly string _xmlChoiceElement;
+
         private Func<bool> _readsPastLastElement;
 
         public SerializableProperty(PropertyInfo propertyInfo, IXmlSerializerOptions options)
@@ -34,6 +37,10 @@ namespace XSerializer
                 && propertyInfo.GetCustomAttribute<XmlElementAttribute>(options) != null;
 
             _getValueFunc = DynamicMethodFactory.CreateFunc<object>(propertyInfo.GetGetMethod());
+
+            _xmlChoiceElement = propertyInfo.GetCustomAttribute<XmlChoiceIdentifierAttribute>(options)?.MemberName;
+
+            _xmlElements = propertyInfo.GetCustomAttributes<XmlElementAttribute>().ToDictionary(xe => xe.ElementName, xe => xe.Type);
 
             if (!propertyInfo.DeclaringType.IsAnonymous()
                 && !(propertyInfo.IsReadOnlyProperty() && propertyInfo.PropertyType.IsGenericIEnumerable()))
@@ -116,6 +123,29 @@ namespace XSerializer
             if (_shouldSerializeFunc(instance))
             {
                 var value = _getValueFunc(instance);
+
+                if (!string.IsNullOrWhiteSpace(_xmlChoiceElement))
+                {
+                    var instanceType = instance.GetType();
+                    var xmlChoiceProperty = instanceType.GetProperty(_xmlChoiceElement);
+
+                    if (xmlChoiceProperty is not null)
+                    {
+                        var xmlChoiceEnum = xmlChoiceProperty.GetValue(instance) as Enum;
+                        var xmlChoice = xmlChoiceEnum.ToString("G");
+
+                        if (_xmlElements.TryGetValue(xmlChoice, out var propertyType))
+                        {
+                            if (propertyType is not null)
+                            {
+                                var newOptions = options.WithRootElementName(propertyType.Name);
+                                _serializer.Value.SerializeObject(writer, value, newOptions);
+                                return;
+                            }
+                        }
+                    }
+                }
+
                 _serializer.Value.SerializeObject(writer, value, options);
             }
         }

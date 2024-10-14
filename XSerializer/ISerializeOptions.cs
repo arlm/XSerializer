@@ -15,5 +15,7 @@ namespace XSerializer
         SerializationState SerializationState { get; }
         bool ShouldIgnoreCaseForEnum { get; }
         bool ShouldSerializeCharAsInt { get; }
+        string XmlChoiceElement { get; }
+        string RootElementName { get; }
     }
 }

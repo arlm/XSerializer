@@ -150,6 +150,12 @@ namespace XSerializer
                         ? xmlRootAttribute.ElementName
                         : typeof(T).GetElementName();
 
+                var rootNamespace =
+                    xmlRootAttribute != null && !string.IsNullOrWhiteSpace (xmlRootAttribute.Namespace)
+                        ? xmlRootAttribute.Namespace
+                        : string.Empty;
+
+                options.WithDefaultNamespace (rootNamespace);
                 options.SetRootElementName(rootElementName);
             }
 
@@ -182,7 +188,7 @@ namespace XSerializer
             return _serializer.SerializeObject(instance, _encoding, _formatting, _serializeOptions);
         }
 
-        string IXSerializer.Serialize(object instance)
+        string IXSerializer.Serialize(object instance, bool useBOM = true)
         {
             return Serialize((T)instance);
         }
@@ -192,14 +198,32 @@ namespace XSerializer
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> to serialize the object to.</param>
         /// <param name="instance">The object to serialize.</param>
-        public void Serialize(Stream stream, T instance)
+        /// <param name="useBOM">When true, do not skip BOM bytes, else skip those bytes.</param>
+        public void Serialize(Stream stream, T instance, bool useBOM)
         {
             _serializer.SerializeObject(stream, instance, _encoding, _formatting, _serializeOptions);
+
+            if (!useBOM)
+            {
+                var position = SkipBOM (stream);
+
+                using (var buffer = new MemoryStream((int)stream.Length - position))
+                {
+                    stream.Seek (position, SeekOrigin.Begin);
+                    stream.CopyTo (buffer);
+
+                    stream.Seek (0, SeekOrigin.Begin);
+                    stream.SetLength (buffer.Length);
+
+                    buffer.Seek (0, SeekOrigin.Begin);
+                    buffer.CopyTo (stream);
+                }
+            }
         }
 
-        void IXSerializer.Serialize(Stream stream, object instance)
+        void IXSerializer.Serialize(Stream stream, object instance, bool useBOM)
         {
-            Serialize(stream, (T)instance);
+            Serialize(stream, (T)instance, useBOM);
         }
 
         /// <summary>
@@ -266,6 +290,34 @@ namespace XSerializer
         object IXSerializer.Deserialize(TextReader reader)
         {
             return Deserialize(reader);
+        }
+
+        static int SkipBOM(Stream stream)
+        {
+            stream.Seek(0, SeekOrigin.Begin);
+
+            int cursor = 0;
+
+            // UTF-32,
+            if (IsMatch(stream, new byte[] { 0x00, 0x00, 0xFE, 0xFF }) || IsMatch(stream, new byte[] { 0xFF, 0xFE, 0x00, 0x00 }))
+                cursor = 4;
+            // UTF-16
+            if (IsMatch(stream, new byte[] { 0xFE, 0xFF }) || IsMatch(stream, new byte[] { 0xFF, 0xFE }))
+                cursor = 2;
+            // UTF-8
+            if (IsMatch(stream, new byte[] { 0xEF, 0xBB, 0xBF }))
+                cursor = 3;
+
+            return cursor;
+
+            static bool IsMatch(Stream stream, byte[] match)
+            {
+                stream.Position = 0;
+                var buffer = new byte[match.Length];
+                stream.Read(buffer, 0, buffer.Length);
+
+                return !buffer.Where((readByte, index) => readByte != match[index]).Any();
+            }
         }
     }
 }

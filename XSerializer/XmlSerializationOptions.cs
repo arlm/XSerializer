@@ -24,6 +24,7 @@ namespace XSerializer
         private bool _shouldIgnoreCaseForEnum;
         private bool _shouldSerializeCharAsInt;
         private bool _shouldUseAttributeDefinedInInterface;
+        private string _xmlChoiceElement;
 
         public XmlSerializationOptions(
             XmlSerializerNamespaces namespaces,
@@ -44,7 +45,7 @@ namespace XSerializer
             : this(namespaces, encoding, shouldEncryptRootObject, defaultNamespace,
                     shouldIndent, rootElementName, shouldAlwaysEmitTypes, shouldRedact,
                     shouldEncrypt, treatEmptyElementAsString, emitNil, encryptionMechanism,
-                    encryptKey, shouldIgnoreCaseForEnum, shouldSerializeCharAsInt, false)
+                    encryptKey, shouldIgnoreCaseForEnum, shouldSerializeCharAsInt, false, null)
         {
         }
 
@@ -64,7 +65,8 @@ namespace XSerializer
             object encryptKey = null,
             bool shouldIgnoreCaseForEnum = false,
             bool shouldSerializeCharAsInt = false,
-            bool shouldUseAttributeDefinedInInterface = false)
+            bool shouldUseAttributeDefinedInInterface = false,
+            string xmlChoiceElement = null)
         {
             _namespaces = namespaces ?? new XmlSerializerNamespaces();
             _encoding = encoding ?? Encoding.UTF8;
@@ -83,6 +85,7 @@ namespace XSerializer
             _shouldIgnoreCaseForEnum = shouldIgnoreCaseForEnum;
             _shouldSerializeCharAsInt = shouldSerializeCharAsInt;
             _shouldUseAttributeDefinedInInterface = shouldUseAttributeDefinedInInterface;
+            _xmlChoiceElement = xmlChoiceElement;
         }
 
         internal Encoding Encoding { get { return _encoding; } }
@@ -111,6 +114,9 @@ namespace XSerializer
         bool ISerializeOptions.ShouldIgnoreCaseForEnum { get { return _shouldIgnoreCaseForEnum; } }
         bool ISerializeOptions.ShouldSerializeCharAsInt { get { return _shouldSerializeCharAsInt; }}
         bool IXmlSerializerOptions.ShouldUseAttributeDefinedInInterface { get { return _shouldUseAttributeDefinedInInterface; } }
+        string ISerializeOptions.XmlChoiceElement { get { return _xmlChoiceElement; } }
+        string IXmlSerializerOptions.XmlChoiceElement { get { return _xmlChoiceElement; } }
+        string ISerializeOptions.RootElementName { get { return _rootElementName; } }
 
         internal void SetExtraTypes(Type[] extraTypes)
         {
@@ -210,6 +216,12 @@ namespace XSerializer
         public XmlSerializationOptions ShouldUseAttributeDefinedInInterface()
         {
             _shouldUseAttributeDefinedInInterface = true;
+            return this;
+        }
+
+        public XmlSerializationOptions SetXmlChoiceElement(string xmlChoiceElement)
+        {
+            _xmlChoiceElement = xmlChoiceElement;
             return this;
         }
     }

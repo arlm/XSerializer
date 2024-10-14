@@ -12,14 +12,16 @@ namespace XSerializer
         /// </summary>
         /// <param name="instance">The object to serialize.</param>
         /// <returns>A string representation of the object.</returns>
-        string Serialize(object instance);
-        
+        /// <param name="useBOM">When true, do not skip BOM bytes, else skip those bytes.</param>
+        string Serialize(object instance, bool useBOM = true);
+
         /// <summary>
         /// Serialize the given object to the given <see cref="Stream"/>.
         /// </summary>
         /// <param name="stream">The <see cref="Stream"/> to serialize the object to.</param>
         /// <param name="instance">The object to serialize.</param>
-        void Serialize(Stream stream, object instance);
+        /// <param name="useBOM">When true, do not skip BOM bytes, else skip those bytes.</param>
+        void Serialize(Stream stream, object instance, bool useBOM = true);
 
         /// <summary>
         /// Serialize the given object to the given <see cref="Stream"/>.
