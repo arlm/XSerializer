@@ -11,5 +11,6 @@ namespace XSerializer
         bool TreatEmptyElementAsString { get; }
         bool ShouldAlwaysEmitNil { get; }
         bool ShouldUseAttributeDefinedInInterface { get; }
+        string XmlChoiceElement { get; }
     }
 }
