@@ -132,6 +132,9 @@ namespace XSerializer
                     if (xmlChoiceProperty is not null)
                     {
                         var xmlChoiceEnum = xmlChoiceProperty.GetValue(instance) as Enum;
+
+                        // The "G" formatting string for enumerations in C# displays the enumeration entry as a string value if possible, or as an integer value otherwise
+                        // (https://learn.microsoft.com/en-us/dotnet/standard/base-types/enumeration-format-strings).
                         var xmlChoice = xmlChoiceEnum.ToString("G");
 
                         if (_xmlElements.TryGetValue(xmlChoice, out var propertyType))

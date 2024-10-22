@@ -107,6 +107,12 @@ namespace XSerializer
     /// <typeparam name="T">The type of object to serialize and deserialize.</typeparam>
     public class XmlSerializer<T> : IXSerializer
     {
+        private readonly byte [] UTF_32_BIG_ENDIAN = new byte [] { 0x00, 0x00, 0xFE, 0xFF };
+        private readonly byte [] UTF_32_LITTLE_ENDIAN = new byte [] { 0xFF, 0xFE, 0x00, 0x00 };
+        private readonly byte [] UTF_16_BIG_ENDIAN = new byte [] { 0xFE, 0xFF };
+        private readonly byte [] UTF_16_LITTLE_ENDIAN = new byte [] { 0xFF, 0xFE };
+        private readonly byte [] UTF_8 = new byte [] { 0xEF, 0xBB, 0xBF };
+
         private readonly IXmlSerializerInternal _serializer;
         private readonly Encoding _encoding;
         private readonly Formatting _formatting;
@@ -316,20 +322,31 @@ namespace XSerializer
             return Deserialize(reader);
         }
 
-        static int SkipBOM(Stream stream)
+        /// <summary>
+        /// Skips the BOM bytes and places the stream cursor at the beggining of the data.
+        /// </summary>
+        /// <param name="stream">
+        /// A <see cref="Stream"/> that when read, contains a representation of an object.
+        /// </param>
+        /// <remarks>
+        /// The Byte Order Mark (BOM) is a Unicode character used at the start of a text stream to indicate the byte order (endianness) of the encoding
+        /// (https://www.devx.com/terms/byte-order-mark/).
+        /// </remarks>
+        int SkipBOM(Stream stream)
         {
             stream.Seek(0, SeekOrigin.Begin);
 
             int cursor = 0;
 
             // UTF-32,
-            if (IsMatch(stream, new byte[] { 0x00, 0x00, 0xFE, 0xFF }) || IsMatch(stream, new byte[] { 0xFF, 0xFE, 0x00, 0x00 }))
+            if (IsMatch(stream, UTF_32_BIG_ENDIAN) || IsMatch(stream, UTF_32_LITTLE_ENDIAN))
                 cursor = 4;
             // UTF-16
-            if (IsMatch(stream, new byte[] { 0xFE, 0xFF }) || IsMatch(stream, new byte[] { 0xFF, 0xFE }))
+
+            if (IsMatch(stream, UTF_16_BIG_ENDIAN) || IsMatch(stream, UTF_16_LITTLE_ENDIAN))
                 cursor = 2;
             // UTF-8
-            if (IsMatch(stream, new byte[] { 0xEF, 0xBB, 0xBF }))
+            if (IsMatch(stream, UTF_8))
                 cursor = 3;
 
             return cursor;
