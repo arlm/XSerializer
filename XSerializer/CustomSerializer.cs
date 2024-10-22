@@ -325,7 +325,7 @@ namespace XSerializer
             }
 
             writer.WriteStartDocument();
-            if (!string.IsNullOrWhiteSpace(options.RootElementName) && options.RootElementName != _options.RootElementName)
+            if (!string.IsNullOrWhiteSpace(options.RootElementName) && options.RootElementName != _options.RootElementName && !string.IsNullOrWhiteSpace(options.XmlChoiceElement))
             {
                 writer.WriteStartElement(options.RootElementName);
             }

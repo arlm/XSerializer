@@ -141,7 +141,7 @@ namespace XSerializer
                         {
                             if (propertyType is not null)
                             {
-                                var newOptions = options.WithRootElementName(propertyType.Name);
+                                var newOptions = options.WithRootElementName(propertyType.Name).WithXmlChoiceElement(xmlChoice);
                                 _serializer.Value.SerializeObject(writer, value, newOptions);
                                 return;
                             }

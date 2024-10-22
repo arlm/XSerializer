@@ -208,6 +208,25 @@ namespace XSerializer
             };
         }
 
+        public static ISerializeOptions WithXmlChoiceElement(this ISerializeOptions serializeOptions, string xmlChoiceElement)
+        {
+            return new SerializeOptions
+            {
+                EncryptionMechanism = serializeOptions.EncryptionMechanism,
+                EncryptKey = serializeOptions.EncryptKey,
+                Namespaces = serializeOptions.Namespaces,
+                SerializationState = new SerializationState(),
+                ShouldAlwaysEmitTypes = serializeOptions.ShouldAlwaysEmitTypes,
+                ShouldEmitNil = serializeOptions.ShouldEmitNil,
+                ShouldEncrypt = serializeOptions.ShouldEncrypt,
+                ShouldRedact = serializeOptions.ShouldRedact,
+                ShouldIgnoreCaseForEnum = serializeOptions.ShouldIgnoreCaseForEnum,
+                ShouldSerializeCharAsInt = serializeOptions.ShouldSerializeCharAsInt,
+                XmlChoiceElement = xmlChoiceElement,
+                RootElementName = serializeOptions.RootElementName
+            };
+        }
+
         private class SerializeOptions : ISerializeOptions
         {
             public XmlSerializerNamespaces Namespaces { get; set; }
