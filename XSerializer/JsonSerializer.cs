@@ -105,7 +105,11 @@ namespace XSerializer
         /// <param name="instance">The object to serialize.</param>
         /// <param name="useBOM">When true, do not skip BOM bytes, else skip those bytes.</param>
         /// <returns>A string representation of the object.</returns>
-        string IXSerializer.Serialize(object instance, bool useBOM = true)
+        /// <remarks>
+        /// The Byte Order Mark (BOM) is a Unicode character used at the start of a text stream to indicate the byte order (endianness) of the encoding
+        /// (https://www.devx.com/terms/byte-order-mark/).
+        /// </remarks>
+        string IXSerializer.Serialize(object instance, bool useBOM)
         {
             var sb = new StringBuilder();
 
@@ -124,7 +128,7 @@ namespace XSerializer
         /// <returns>A JSON string representation of the object.</returns>
         public string Serialize(T instance)
         {
-            return ((IXSerializer)this).Serialize(instance);
+            return ((IXSerializer)this).Serialize(instance, true);
         }
 
         /// <summary>
@@ -133,7 +137,11 @@ namespace XSerializer
         /// <param name="stream">The <see cref="Stream"/> to serialize the object to.</param>
         /// <param name="instance">The object to serialize.</param>
         /// <param name="useBOM">When true, do not skip BOM bytes, else skip those bytes.</param>
-        void IXSerializer.Serialize(Stream stream, object instance, bool useBOM = true)
+        /// <remarks>
+        /// The Byte Order Mark (BOM) is a Unicode character used at the start of a text stream to indicate the byte order (endianness) of the encoding
+        /// (https://www.devx.com/terms/byte-order-mark/).
+        /// </remarks>
+        void IXSerializer.Serialize(Stream stream, object instance, bool useBOM)
         {
             using (var writer = new StreamWriter(stream, _configuration.Encoding))
             {
@@ -148,7 +156,7 @@ namespace XSerializer
         /// <param name="instance">The object to serialize.</param>
         public void Serialize(Stream stream, T instance)
         {
-            ((IXSerializer)this).Serialize(stream, instance);
+            ((IXSerializer)this).Serialize(stream, instance, true);
         }
 
         /// <summary>

@@ -13,7 +13,11 @@ namespace XSerializer
         /// <param name="instance">The object to serialize.</param>
         /// <returns>A string representation of the object.</returns>
         /// <param name="useBOM">When true, do not skip BOM bytes, else skip those bytes.</param>
-        string Serialize(object instance, bool useBOM = true);
+        /// <remarks>
+        /// The Byte Order Mark (BOM) is a Unicode character used at the start of a text stream to indicate the byte order (endianness) of the encoding
+        /// (https://www.devx.com/terms/byte-order-mark/).
+        /// </remarks>
+        string Serialize(object instance, bool useBOM);
 
         /// <summary>
         /// Serialize the given object to the given <see cref="Stream"/>.
@@ -21,7 +25,11 @@ namespace XSerializer
         /// <param name="stream">The <see cref="Stream"/> to serialize the object to.</param>
         /// <param name="instance">The object to serialize.</param>
         /// <param name="useBOM">When true, do not skip BOM bytes, else skip those bytes.</param>
-        void Serialize(Stream stream, object instance, bool useBOM = true);
+        /// <remarks>
+        /// The Byte Order Mark (BOM) is a Unicode character used at the start of a text stream to indicate the byte order (endianness) of the encoding
+        /// (https://www.devx.com/terms/byte-order-mark/).
+        /// </remarks>
+        void Serialize (Stream stream, object instance, bool useBOM);
 
         /// <summary>
         /// Serialize the given object to the given <see cref="Stream"/>.
